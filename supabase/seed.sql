@@ -1,0 +1,3 @@
+-- Seeds are intentionally kept empty until the application has a local
+-- authentication fixture and a reviewed geography content pack.
+-- Game metadata is inserted by the foundation migration.

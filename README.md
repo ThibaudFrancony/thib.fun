@@ -10,6 +10,6 @@ Projet de plateforme privée de jeux à deux, en français, avec profils, salons
 
 Stack retenue : GitHub, Vercel, Next.js/TypeScript, Supabase et DeepSeek pour la correction des quiz.
 
-Dépôt : [ThibaudFrancony/thib.fun](https://github.com/ThibaudFrancony/thib.fun). Branche de production : `main`. Le propriétaire a activé le déploiement Supabase depuis GitHub ; les futurs fichiers `supabase/migrations/` seront appliqués par cette intégration. Ce premier lot contient uniquement la documentation et les exclusions Git, sans migration SQL.
+Dépôt : [ThibaudFrancony/thib.fun](https://github.com/ThibaudFrancony/thib.fun). Branche de production : `main`. Le propriétaire a activé le déploiement Supabase depuis GitHub ; les fichiers `supabase/migrations/` sont appliqués par cette intégration. Le premier lot d’implémentation prépare le schéma versionné, mais l’application et la validation locale restent à faire.
 
 Exemple de demande future : « Implémente Géographie conformément à `docs/games/03-geographie.md`, en construisant les dépendances communes manquantes et en exécutant la recette à deux sessions. »

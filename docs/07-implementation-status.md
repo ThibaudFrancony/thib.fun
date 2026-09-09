@@ -2,7 +2,7 @@
 
 Dernière mise à jour : 9 septembre 2026.
 
-**Documentation rédigée. Aucune application, migration exécutée, ressource cloud ou banque de contenu de production créée.** La cohérence documentaire peut être vérifiée indépendamment de la recette future du logiciel.
+**Documentation rédigée. Les premières migrations de schéma sont préparées dans la branche `codex/geographie`, mais aucune migration n'a été appliquée à une base distante et aucune banque de contenu de production n'a été créée.** La cohérence documentaire et les fichiers SQL doivent encore être validés sur une base locale avant activation.
 
 Contrôles documentaires effectués : index des neuf jeux dans AGENTS, résolution des liens locaux, blocs de code Markdown équilibrés, absence de placeholders TODO/TBD, couverture des règles/configurations/états/projections/scores/tests. Relecture croisée des droits SQL, reçus système, délais, contenu et résultats coopératifs. Ces contrôles ne sont pas des tests d'une application.
 
@@ -12,10 +12,11 @@ Contrôles documentaires effectués : index des neuf jeux dans AGENTS, résoluti
 | Neuf plans de jeux | Rédigés | Défauts de règles explicités dans les fiches |
 | DA visuelle | Base provisoire documentée | Validation sur écrans réels |
 | Bootstrap Next/Vercel/GitHub | À faire | Accès et versions à vérifier |
-| Supabase schéma/Auth/Storage/RLS | À faire | Bootstrap |
+| Supabase CLI/configuration | Préparée | `supabase/config.toml`, seed vide, validation Docker à faire |
+| Supabase schéma/Auth/Storage/RLS | Migrations préparées, non appliquées | Audit de la cible et validation locale |
 | Salons/transactions/Realtime/jobs | À faire | Base |
 | Profils/historique/duos | À faire | Base + finalisation |
-| Géographie | À faire | Socle + corpus géographique |
+| Géographie | Migrations communes préparées, jeu à faire | Socle + corpus géographique + moteur |
 | Trou Noir | À faire | Socle + quiz + benchmark IA |
 | TTMC | À faire | Socle + couverture niveaux + IA |
 | Bataille navale | À faire | Socle |
