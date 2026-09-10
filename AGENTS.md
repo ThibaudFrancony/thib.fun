@@ -42,7 +42,7 @@ Les détails de SDK évoluent. Vérifier la documentation officielle et les skil
 - Préserver utilisateurs, parties, résultats, contenus et politiques d'accès. Privilégier les ajouts compatibles, reprises de données explicites et changements en plusieurs étapes. Pas de DROP/TRUNCATE/reset distant, ni réparation d'historique de migration à l'aveugle pour faire passer un déploiement.
 - Vercel et Supabase ne constituent pas une transaction de déploiement unique : une fusion ne garantit pas que la base sera prête avant le code. Garder les changements compatibles avec l'ancien et le nouveau code ; pour une dépendance stricte, livrer/vérifier la migration avant d'activer le code qui l'exige.
 - Les données de test des branches ne deviennent pas automatiquement des données de production. Prévoir l'import idempotent/versionné des contenus de production séparément des fixtures.
-- Pour les développements suivants, travailler sur une branche `codex/<sujet>`, sauf instruction contraire. Préserver les changements existants, ne pas forcer un push et ne pas réécrire main. Après un push, vérifier son résultat ; pour une migration, vérifier aussi le statut Supabase avant d'annoncer la base à jour.
+- Pour les développements suivants, travailler directement sur `main`, sauf instruction contraire. Préserver les changements existants, ne pas forcer un push et ne pas réécrire l'historique de `main`. Après un push, vérifier son résultat ; pour une migration, vérifier aussi le statut Supabase avant d'annoncer la base à jour.
 
 L'initialisation et le push de la documentation sur main ont été explicitement demandés. Cette autorisation n'implique pas la création des neuf jeux, l'application de migrations ou la souscription de services dans la même tâche.
 

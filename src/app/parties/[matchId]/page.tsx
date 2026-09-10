@@ -1,6 +1,6 @@
-import { GeographyMatch } from "@/games/geographie/components/geography-match";
+import { MatchGame } from "@/components/match-game";
 
 export default async function MatchPage({ params }: { params: Promise<{ matchId: string }> }) {
   const { matchId } = await params;
-  return <GeographyMatch matchId={matchId} />;
+  return <MatchGame matchId={matchId} />;
 }

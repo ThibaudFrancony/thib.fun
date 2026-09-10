@@ -1,15 +1,15 @@
 import { z } from "zod";
 import { geoConfigSchema } from "@/games/geographie/config";
+import { unoConfigSchema } from "@/games/uno/config";
 import { getAuthenticatedMember } from "@/server/auth";
 import { getSupabaseServerConfig } from "@/server/config";
 import { assertMutationOrigin, jsonError, jsonOk, mapServerError } from "@/server/http";
 import { createRoom } from "@/server/matches/repository";
 
-const createRoomSchema = z.object({
-  requestId: z.string().uuid(),
-  gameSlug: z.literal("geographie"),
-  config: geoConfigSchema,
-});
+const createRoomSchema = z.discriminatedUnion("gameSlug", [
+  z.object({ requestId: z.string().uuid(), gameSlug: z.literal("geographie"), config: geoConfigSchema }),
+  z.object({ requestId: z.string().uuid(), gameSlug: z.literal("uno"), config: unoConfigSchema }),
+]);
 
 export async function POST(request: Request) {
   const originError = assertMutationOrigin(request);

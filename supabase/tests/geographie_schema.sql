@@ -1,6 +1,6 @@
 begin;
 
-select plan(38);
+select plan(40);
 
 select has_schema('private', 'Le schéma privé existe');
 select has_table('public', 'profiles', 'Les profils sont disponibles');
@@ -31,6 +31,8 @@ select is(
   'ready'::text,
   'Géographie est disponible après livraison du moteur et du pack'
 );
+select is((select count(*) from public.games where slug = 'uno'), 1::bigint, 'Le slug uno est disponible dans le catalogue');
+select is((select availability from public.games where slug = 'uno'), 'ready'::text, 'UNO est disponible après livraison du moteur');
 select is((select count(*) from private.content_items), 380::bigint, 'Le pack contient 380 communes');
 select is((select count(*) from private.content_items where category = 'easy'), 40::bigint, 'Le pool facile contient 40 communes');
 select is((select count(*) from private.content_items where category = 'medium'), 120::bigint, 'Le pool moyen contient 120 communes');

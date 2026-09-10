@@ -1,0 +1,24 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { GeographyMatch } from "@/games/geographie/components/geography-match";
+import { UnoMatch } from "@/games/uno/components/uno-match";
+
+export function MatchGame({ matchId }: { matchId: string }) {
+  const [gameSlug, setGameSlug] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    void fetch(`/api/matches/${matchId}`, { cache: "no-store" }).then(async (response) => {
+      const data = await response.json().catch(() => null) as { gameSlug?: string; error?: { message?: string } } | null;
+      if (cancelled) return;
+      if (!response.ok || !data?.gameSlug) setError(data?.error?.message ?? "Partie introuvable.");
+      else setGameSlug(data.gameSlug);
+    }).catch(() => { if (!cancelled) setError("Partie introuvable."); });
+    return () => { cancelled = true; };
+  }, [matchId]);
+  if (error) return <main className="min-h-screen px-5 py-12"><div role="alert" className="mx-auto max-w-xl rounded-2xl bg-red-50 p-5 text-red-700">{error}</div></main>;
+  if (gameSlug === "geographie") return <GeographyMatch matchId={matchId} />;
+  if (gameSlug === "uno") return <UnoMatch matchId={matchId} />;
+  return <main className="min-h-screen px-5 py-12"><div className="mx-auto max-w-xl rounded-3xl border border-[var(--line)] bg-white/70 p-8 text-center text-[var(--muted)]">Chargement de la partie…</div></main>;
+}

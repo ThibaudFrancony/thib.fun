@@ -2,9 +2,9 @@
 
 Dernière mise à jour : 10 septembre 2026.
 
-**Documentation rédigée. Les premières migrations de schéma sont versionnées dans la branche `codex/geographie` et validées sur le Supabase local dans Docker. Aucune migration n'a été appliquée à une base distante et aucune banque de contenu de production n'a été créée.** L'accueil multi-jeux et le module Géographie sont présents dans la branche ; les autres jeux restent à développer.
+**Le cadrage initial et les migrations de schéma sont versionnés ; les migrations sont validées sur le Supabase local dans Docker. Aucune migration n'a été appliquée à une base distante et aucune banque de contenu de production n'a été créée.** L'accueil multi-jeux, Géographie et UNO sont présents dans l'arbre de travail ; les autres jeux restent à développer.
 
-Contrôles effectués : index des neuf jeux dans AGENTS, résolution des liens locaux, blocs de code Markdown équilibrés, absence de marqueurs d'espace réservé, couverture des règles/configurations/états/projections/scores/tests. Relecture croisée des droits SQL, reçus système, délais, contenu et résultats coopératifs. Le lint Supabase local ne signale aucune erreur ; 21 assertions pgTAP du schéma passent. Ces contrôles ne sont pas des tests d'une application.
+Contrôles effectués : index des neuf jeux dans AGENTS, résolution des liens locaux, blocs de code Markdown équilibrés, absence de marqueurs d'espace réservé, couverture des règles/configurations/états/projections/scores/tests. Relecture croisée des droits SQL, reçus système, délais, contenu et résultats coopératifs. Le lint Supabase local ne signale aucune erreur ; 40 assertions pgTAP du schéma passent. Les contrôles applicatifs sont détaillés dans la ligne de chaque lot.
 
 | Lot | État | Dépendances |
 |---|---|---|
@@ -23,7 +23,7 @@ Contrôles effectués : index des neuf jeux dans AGENTS, résolution des liens l
 | Bataille navale | À faire | Socle |
 | BombParty + entraînement | À faire | Socle + lexique + recette timer |
 | Skyjo | À faire | Socle |
-| UNO | À faire | Socle |
+| UNO | Implémenté le 10 septembre 2026 (non commité) | Moteur pur, projection secrète, API/worker, UI, migration `20260910100000_uno_ready.sql` ; 13 tests UNO, typecheck/lint/build Webpack et Supabase local OK ; recette Chromium à deux sessions OK ; migration distante à finaliser |
 | Compatibilité | À faire | Socle + questionnaires |
 | Longueur d'onde | À faire | Socle + axes |
 

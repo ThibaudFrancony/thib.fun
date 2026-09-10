@@ -12,11 +12,12 @@ export async function GET(_request: Request, { params }: { params: Promise<{ mat
   if (!z.string().uuid().safeParse(matchId).success) return jsonError("MATCH_NOT_FOUND", 404, "Partie introuvable.");
   try {
     const snapshot = await getMatchSnapshot(member.id, matchId);
-    if (snapshot.gameSlug !== "geographie") return jsonError("GAME_NOT_READY", 409, "Cette partie n'est pas une partie Géographie.");
+    if (snapshot.gameSlug !== "geographie" && snapshot.gameSlug !== "uno") return jsonError("GAME_NOT_READY", 409, "Cette partie n'est pas disponible.");
     // The persisted projection is the only payload returned to the browser.
     return jsonOk({
       matchId: snapshot.matchId,
       roomId: snapshot.roomId,
+      gameSlug: snapshot.gameSlug,
       status: snapshot.status,
       mode: snapshot.mode,
       version: snapshot.version,

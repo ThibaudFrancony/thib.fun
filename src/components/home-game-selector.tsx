@@ -7,6 +7,7 @@ import { PUBLIC_GAMES, type PublicGame } from "@/games/registry";
 // Only games with an implemented UI can be opened, even if metadata changes.
 const PLAYABLE_ROUTES: Readonly<Partial<Record<string, string>>> = {
   geographie: "/jeux/geographie",
+  uno: "/jeux/uno",
 };
 
 function playableRoute(game: PublicGame) {
