@@ -1,6 +1,26 @@
 import Link from "next/link";
 
-export function SiteHeader() {
+export function SiteHeader({ variant = "default" }: { variant?: "default" | "home" }) {
+  if (variant === "home") {
+    return (
+      <header className="home-header">
+        <Link href="/" className="home-brand" aria-label="Accueil thib.fun">
+          <svg viewBox="0 0 32 32" width="32" height="32" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+            <path d="M10 9h12c3 0 5 3 6 7l1 6c.5 4-3 6-5 3l-4-4h-8l-4 4c-2 3-5.5 1-5-3l1-6c1-4 3-7 6-7Z" />
+            <path d="M10 13v6m-3-3h6" />
+            <circle cx="22" cy="14" r="1.3" fill="currentColor" stroke="none" />
+            <circle cx="25" cy="18" r="1.3" fill="currentColor" stroke="none" />
+          </svg>
+          <span>thib.fun</span>
+        </Link>
+        <nav className="home-auth-nav" aria-label="Accès au compte">
+          <Link href="/connexion" className="home-auth-link">Connexion</Link>
+          <Link href="/connexion?mode=signUp" className="home-auth-link home-signup-link">Inscription</Link>
+        </nav>
+      </header>
+    );
+  }
+
   return (
     <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-5 py-5 sm:px-8">
       <Link href="/" className="flex items-center gap-3" aria-label="Accueil tibo.fun">
