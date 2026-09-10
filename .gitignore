@@ -11,6 +11,7 @@ supabase/.branches/
 
 # Generated application and test output
 node_modules/
+.pnpm-store/
 .next/
 out/
 coverage/

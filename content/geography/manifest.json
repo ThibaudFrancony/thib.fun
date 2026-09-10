@@ -1,0 +1,15 @@
+{
+  "kind": "geography",
+  "slug": "france-metropole",
+  "version": 1,
+  "status": "published",
+  "populationYear": 2023,
+  "citySource": "https://geo.api.gouv.fr/",
+  "mapSource": "https://raw.githubusercontent.com/gregoiredavid/france-geojson/master/departements-version-simplifiee.geojson",
+  "mapLicense": "Licence Ouverte / Etalab",
+  "counts": {
+    "easy": 40,
+    "medium": 120,
+    "hard": 220
+  }
+}
