@@ -8,6 +8,10 @@ import { trouNoirConfigSchema } from "@/games/trou-noir/config";
 import { reduceTrouNoir, TROU_NOIR_ENGINE_VERSION, TROU_NOIR_RULES_VERSION } from "@/games/trou-noir/engine";
 import { projectTrouNoir } from "@/games/trou-noir/projection";
 import { trouNoirActionSchema, trouNoirStateSchema } from "@/games/trou-noir/types";
+import { ttmcConfigSchema } from "@/games/ttmc/config";
+import { reduceTtmc, TTMC_ENGINE_VERSION, TTMC_RULES_VERSION } from "@/games/ttmc/engine";
+import { projectTtmc } from "@/games/ttmc/projection";
+import { ttmcActionSchema, ttmcStateSchema } from "@/games/ttmc/types";
 import { unoActionSchema, type UnoAction } from "@/games/uno/types";
 import { unoConfigSchema } from "@/games/uno/config";
 import { reduceUno, UNO_ENGINE_VERSION, UNO_RULES_VERSION } from "@/games/uno/engine";
@@ -18,6 +22,7 @@ import { entropyValues, hashCommand } from "@/server/hash";
 import { assertMutationOrigin, jsonError, jsonOk, mapServerError } from "@/server/http";
 import { loadGeoContent } from "@/server/geo/content";
 import { loadTrouNoirContent } from "@/server/quiz/content";
+import { loadTtmcContent } from "@/server/ttmc/content";
 import { commitMatch, getMatchSnapshot } from "@/server/matches/repository";
 
 const commandSchema = z.object({
@@ -72,6 +77,19 @@ export async function POST(request: Request, { params }: { params: Promise<{ mat
       const parsedState = trouNoirStateSchema.parse(transition.state);
       const views = participants.map((viewerId) => ({ viewerId, payload: projectTrouNoir(parsedState, config, content, viewerId, participants, identities, config, parsedState) }));
       response = await commitMatch({ matchId, expectedVersion: body.data.expectedVersion, actorId: member.id, commandId: body.data.commandId, commandHash: hashCommand(matchId, member.id, parsedAction.data.type, parsedAction.data), source: "player", previousPhaseId: snapshot.phaseId, next: { state: transition.state, phaseId: transition.phaseId, deadlineAt: transition.deadlineAt, deadlineKind: transition.deadlineKind }, views, jobsToUpsert: transition.jobs, jobsToCancel: [], roundRecords: transition.roundRecords, event: transition.event, result: transition.result, rulesVersion: TROU_NOIR_RULES_VERSION, engineVersion: TROU_NOIR_ENGINE_VERSION });
+    } else if (snapshot.gameSlug === "ttmc") {
+      const parsedAction = ttmcActionSchema.safeParse(body.data.action);
+      if (!parsedAction.success) return jsonError("INVALID_REQUEST", 400, "La commande de jeu est invalide.");
+      if (parsedAction.data.type === "SUBMIT_ANSWER" && parsedAction.data.answer.length > 240) {
+        return jsonError("INVALID_REQUEST", 400, "La réponse ne doit pas dépasser 240 caractères.");
+      }
+      const config = ttmcConfigSchema.parse(snapshot.config);
+      const content = await loadTtmcContent();
+      const context = { nowMs: Date.parse(snapshot.serverNow), actorId: member.id, matchId, participants, content, entropy: entropyValues(), phaseId: snapshot.phaseId, nextPhaseId, currentDeadlineAt: snapshot.deadlineAt, currentDeadlineKind: snapshot.deadlineKind };
+      const transition = reduceTtmc(snapshot.state, parsedAction.data, config, context);
+      const parsedState = ttmcStateSchema.parse(transition.state);
+      const views = participants.map((viewerId) => ({ viewerId, payload: projectTtmc(parsedState, config, content, viewerId, participants, identities, config, parsedState) }));
+      response = await commitMatch({ matchId, expectedVersion: body.data.expectedVersion, actorId: member.id, commandId: body.data.commandId, commandHash: hashCommand(matchId, member.id, parsedAction.data.type, parsedAction.data), source: "player", previousPhaseId: snapshot.phaseId, next: { state: transition.state, phaseId: transition.phaseId, deadlineAt: transition.deadlineAt, deadlineKind: transition.deadlineKind }, views, jobsToUpsert: transition.jobs, jobsToCancel: [], roundRecords: transition.roundRecords, event: transition.event, result: transition.result, rulesVersion: TTMC_RULES_VERSION, engineVersion: TTMC_ENGINE_VERSION });
     } else {
       throw new Error("GAME_NOT_READY");
     }

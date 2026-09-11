@@ -21,7 +21,7 @@ Contrôles effectués : index des neuf jeux dans AGENTS, résolution des liens l
 | Profils/historique/duos | À faire | Base + finalisation |
 | Géographie | Implémenté sur `main` | Tests moteur/projection et parcours E2E présents ; migration distante et recette à deux à finaliser |
 | Trou Noir | À faire | Socle + quiz + benchmark IA |
-| TTMC | À faire | Socle + couverture niveaux + IA |
+| TTMC | Code présent dans l'arbre de travail, non commité (11 septembre 2026, cycle 2 de revue) | Moteur, projection, correction, UI, worker, pack 22 thèmes/440 questions, 116 tests au total, typecheck/lint/build webpack/docs:check OK ; recette à deux sessions, benchmark IA et migration distante à finaliser |
 | Bataille navale | À faire | Socle |
 | BombParty + entraînement | À faire | Socle + lexique + recette timer |
 | Skyjo | À faire | Socle |

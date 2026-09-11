@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { geoConfigSchema } from "@/games/geographie/config";
 import { trouNoirConfigSchema } from "@/games/trou-noir/config";
+import { ttmcConfigSchema } from "@/games/ttmc/config";
 import { unoConfigSchema } from "@/games/uno/config";
 import { getAuthenticatedMember } from "@/server/auth";
 import { getSupabaseServerConfig } from "@/server/config";
@@ -11,6 +12,7 @@ const createRoomSchema = z.discriminatedUnion("gameSlug", [
   z.object({ requestId: z.string().uuid(), gameSlug: z.literal("geographie"), config: geoConfigSchema }),
   z.object({ requestId: z.string().uuid(), gameSlug: z.literal("uno"), config: unoConfigSchema }),
   z.object({ requestId: z.string().uuid(), gameSlug: z.literal("trou-noir"), config: trouNoirConfigSchema }),
+  z.object({ requestId: z.string().uuid(), gameSlug: z.literal("ttmc"), config: ttmcConfigSchema }),
 ]);
 
 export async function POST(request: Request) {
