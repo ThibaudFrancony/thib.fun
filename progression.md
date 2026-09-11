@@ -2,7 +2,7 @@
 
 Dernière mise à jour : 12 septembre 2026
 Branche de référence : `main`  
-Dernier commit observé : `ca5d521` — `feat: implement Longueur d'onde`
+Dernier commit observé : `94dca2b` — `fix: restore Longueur d'onde cooperative triggers`
 
 Ce fichier décrit la réalité du dépôt et non les seules capacités prévues dans les spécifications. Il complète [AGENTS.md](AGENTS.md), [docs/README.md](docs/README.md) et [docs/07-implementation-status.md](docs/07-implementation-status.md). Les statuts utilisés sont :
 
