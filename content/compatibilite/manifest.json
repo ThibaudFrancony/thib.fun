@@ -1,0 +1,18 @@
+{
+  "kind": "compatibility",
+  "slug": "compatibilite",
+  "version": 1,
+  "status": "published",
+  "source": "Rédaction originale pour tibo.fun",
+  "license": "Contenu original tibo.fun, usage privé",
+  "author": "tibo.fun",
+  "questionCount": 160,
+  "coverage": {
+    "quotidien": 40,
+    "absurde": 40,
+    "amitie": 40,
+    "couple": 40
+  },
+  "reviewedBy": "relecture structurelle et éditoriale interne",
+  "reviewedAt": "2026-09-11"
+}

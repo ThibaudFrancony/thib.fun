@@ -1,0 +1,271 @@
+import { createHash } from "node:crypto";
+import { mkdir, writeFile } from "node:fs/promises";
+import { resolve } from "node:path";
+
+const root = resolve(process.cwd());
+const packId = "4f5d8a31-6b2e-4c70-9d14-8e3f2a1b6c57";
+const packVersion = 1;
+
+const source = {
+  quotidien: [
+    ["Pour un week-end improvisé, tu préfères…", ["La mer", "La montagne", "Une grande ville", "Rester chez soi"], "light"],
+    ["Au petit-déjeuner, tu choisis plutôt…", ["Sucré", "Salé", "Juste un café", "Je saute le petit-déjeuner"], "light"],
+    ["Pour traverser une ville inconnue, tu prends…", ["Le métro", "Le vélo", "La marche", "Un taxi"], "light"],
+    ["Quand tu as une heure libre, tu fais plutôt…", ["Une sieste", "Une promenade", "Tu lis", "Tu regardes une série"], "light"],
+    ["Dans un appartement, la pièce la plus importante est…", ["La cuisine", "Le salon", "La chambre", "La salle de bains"], "light"],
+    ["Pour une soirée tranquille, tu choisis…", ["Un film", "Un livre", "Un jeu", "De la musique"], "light"],
+    ["Au restaurant, tu regardes d'abord…", ["Les entrées", "Les plats", "Les desserts", "Les boissons"], "light"],
+    ["Pour noter une idée, tu utilises…", ["Le téléphone", "Un carnet", "Un message à toi-même", "Tu la gardes en tête"], "light"],
+    ["Quand tu visites un quartier, tu cherches en premier…", ["Un café", "Un point de vue", "Une librairie", "Un marché"], "light"],
+    ["Le meilleur moment pour faire les courses est…", ["Le matin", "À midi", "En fin de journée", "Le week-end"], "light"],
+    ["Dans un train, tu préfères t'asseoir…", ["Côté fenêtre", "Côté couloir", "Près de la sortie", "Peu importe"], "light"],
+    ["Pour te réveiller, tu préfères…", ["Une lumière douce", "Une alarme nette", "De la musique", "Un réveil naturel"], "light"],
+    ["Si tu dois choisir une boisson chaude, ce sera…", ["Café", "Thé", "Chocolat", "Infusion"], "light"],
+    ["Pour ranger une pièce, tu commences par…", ["Les surfaces", "Le sol", "Les placards", "Ce qui traîne"], "light"],
+    ["Un dimanche réussi commence par…", ["Un brunch", "Une grasse matinée", "Une sortie", "Un projet personnel"], "light"],
+    ["Pour écouter un podcast, tu es plutôt…", ["En marchant", "Dans les transports", "En cuisinant", "Au calme"], "light"],
+    ["Quand il pleut, tu préfères…", ["Sortir quand même", "Rester au chaud", "Aller au cinéma", "Travailler dans un café"], "light"],
+    ["Pour choisir une adresse, tu fais confiance…", ["Aux avis", "À un ami", "À la carte", "Au hasard"], "light"],
+    ["Dans ton sac, l'objet le plus indispensable est…", ["Le téléphone", "Les écouteurs", "Une bouteille d'eau", "Un carnet"], "light"],
+    ["Pour une courte distance, tu privilégies…", ["La marche", "Le vélo", "Les transports", "La voiture"], "light"],
+    ["Quand tu cuisines, tu suis plutôt…", ["Une recette", "Ton instinct", "Ce qu'il reste", "Une vidéo"], "light"],
+    ["Pour décorer un espace, tu choisis d'abord…", ["Les plantes", "La lumière", "Les couleurs", "Les objets"], "light"],
+    ["Un bon repas se termine idéalement par…", ["Un dessert", "Un café", "Une promenade", "Une longue discussion"], "light"],
+    ["Quand tu reçois des amis, tu prépares surtout…", ["Un grand plat", "Des choses à partager", "Des boissons", "Rien de planifié"], "light"],
+    ["Pour faire une pause au travail, tu préfères…", ["Sortir dehors", "Boire quelque chose", "Discuter", "Ne rien faire"], "light"],
+    ["À la maison, tu règles la température plutôt…", ["Un peu fraîche", "Bien chaude", "Selon la saison", "Comme les autres"], "light"],
+    ["Pour apprendre quelque chose, tu préfères…", ["Une vidéo", "Un article", "Un cours", "Essayer directement"], "light"],
+    ["Quand tu offres un cadeau, tu privilégies…", ["L'utile", "Le drôle", "Le fait maison", "La surprise"], "light"],
+    ["Pour choisir une tenue, tu penses d'abord…", ["Au confort", "À la météo", "À la couleur", "À l'occasion"], "light"],
+    ["Une terrasse idéale est…", ["Au soleil", "À l'ombre", "Calme", "Animée"], "light"],
+    ["Quand tu as une décision simple à prendre, tu…", ["Décides vite", "Fais une liste", "Demandes un avis", "Tires au sort"], "light"],
+    ["Pour te concentrer, tu préfères…", ["Le silence", "Un fond musical", "Un lieu animé", "Changer souvent de lieu"], "light"],
+    ["Dans une ville, tu apprécies le plus…", ["Les parcs", "Les restaurants", "Les musées", "Les petites rues"], "light"],
+    ["Pour une matinée libre, tu choisis…", ["Sortir tôt", "Traîner chez toi", "Faire du sport", "Avancer sur un projet"], "light"],
+    ["Quand tu lis les actualités, tu préfères…", ["Un résumé", "Les articles longs", "La radio", "En parler avec quelqu'un"], "light"],
+    ["Pour un trajet quotidien, le plus agréable est…", ["La rapidité", "Le confort", "La vue", "La compagnie"], "light"],
+    ["Si tu dois supprimer une notification, tu commences par…", ["Les promotions", "Les réseaux", "Les actualités", "Les messages de groupe"], "light"],
+    ["Pour choisir un film, tu regardes…", ["Le réalisateur", "Les acteurs", "La durée", "Le résumé"], "light"],
+    ["Une journée bien organisée laisse toujours de la place pour…", ["L'imprévu", "Le repos", "Les amis", "La créativité"], "light"],
+    ["Au marché, tu t'arrêtes d'abord devant…", ["Les fruits", "Le pain", "Le fromage", "Les fleurs"], "light"],
+  ],
+  absurde: [
+    ["Si les pigeons avaient un métier, ce serait…", ["Facteur", "Inspecteur", "Chef de gare", "Critique gastronomique"], "light"],
+    ["Tu préfères avoir des chaussettes qui parlent ou un chapeau qui chante ?", ["Les chaussettes", "Le chapeau", "Les deux", "Aucun des deux"], "light"],
+    ["Si ton frigo pouvait te donner un conseil, il dirait…", ["Mange les légumes", "Ferme la porte", "Fais une liste", "Commande quelque chose"], "light"],
+    ["Pour remplacer les poignées de porte, tu installerais…", ["Des boutons rouges", "Des leviers dorés", "Des cordes", "Des poignées en forme de banane"], "light"],
+    ["Si tu devais vivre dans un objet, tu choisirais…", ["Une lampe", "Une valise", "Un fauteuil", "Une boîte aux lettres"], "light"],
+    ["Le meilleur nom pour un groupe de légumes serait…", ["Les Croquants", "La Salade générale", "Les Racines", "Les Épluchures"], "light"],
+    ["Si la pluie avait une saveur, tu choisirais…", ["Citron", "Menthe", "Pop-corn", "Caramel"], "light"],
+    ["Pour gagner une course d'escargots, tu miserais sur…", ["Le plus gros", "Le plus brillant", "Celui qui prend des raccourcis", "Personne"], "light"],
+    ["Si tu pouvais donner un prénom à la Lune, ce serait…", ["Mina", "Bulle", "Clémentine", "Marcel"], "light"],
+    ["Tu préfères combattre un canard géant ou cent mini-chevaux ?", ["Le canard géant", "Les mini-chevaux", "Je négocie", "Je m'enfuis"], "light"],
+    ["Si les nuages avaient un programme télé, tu regarderais…", ["La météo", "Un concours de formes", "Une série dramatique", "Les coulisses du vent"], "light"],
+    ["Un robot devrait absolument savoir…", ["Faire des crêpes", "Raconter des blagues", "Plier un drap", "Trouver les chaussettes"], "light"],
+    ["Si tu devais remplacer ton prénom par un bruit, tu choisirais…", ["Plop", "Froufrou", "Bip", "Tadam"], "light"],
+    ["Le superpouvoir le moins pratique serait…", ["Parler aux miettes", "Voler à dix centimètres", "Voir les bananes mûrir", "Changer la sonnerie des ascenseurs"], "light"],
+    ["Si les meubles se réunissaient la nuit, tu voudrais entendre…", ["Le canapé", "La table", "La lampe", "Le porte-manteau"], "light"],
+    ["Pour voyager dans le temps, tu emporterais…", ["Un guide", "Un sandwich", "Une batterie", "Un pull"], "light"],
+    ["Si tu pouvais légaliser un bruit comme musique, ce serait…", ["Le micro-ondes", "Le klaxon", "Le papier froissé", "Le bip de caisse"], "light"],
+    ["Le meilleur animal pour diriger une entreprise serait…", ["Un poulpe", "Un corbeau", "Un golden retriever", "Une tortue"], "light"],
+    ["Si les plantes donnaient des notes, tu voudrais être noté sur…", ["L'arrosage", "La conversation", "La lumière", "La décoration"], "light"],
+    ["Une planète idéale pour les vacances serait couverte de…", ["Coussins", "Gelée", "Sable chaud", "Tapis moelleux"], "light"],
+    ["Si tu devais porter une texture toute une journée, tu choisirais…", ["Du velours", "Du papier bulle", "De la mousse", "Des plumes"], "light"],
+    ["Pour résoudre un mystère, tu appellerais…", ["Un chat", "Une grand-mère", "Un détective privé", "Un voisin curieux"], "light"],
+    ["Si ton ombre pouvait partir en vacances, tu l'enverrais…", ["À la plage", "En forêt", "Dans un musée", "Sur un canapé"], "light"],
+    ["Le sport olympique le plus improbable serait…", ["Le lancer de coussin", "La marche arrière", "Le rangement express", "Le regard sérieux"], "light"],
+    ["Si tu devais manger une couleur, tu choisirais…", ["Bleu", "Orange", "Vert", "Violet"], "light"],
+    ["Une porte secrète devrait mener vers…", ["Une bibliothèque", "Un buffet", "Une plage", "Une salle de sieste"], "light"],
+    ["Si tu devenais minuscule, ton premier refuge serait…", ["Une poche", "Une tasse", "Une boîte à chaussures", "Une maison de poupée"], "light"],
+    ["Le meilleur slogan pour une chaussette célibataire serait…", ["Je cherche ma moitié", "Libre comme l'air", "Pas besoin de paire", "Toujours à gauche"], "light"],
+    ["Si les ascenseurs avaient une humeur, tu préférerais…", ["Optimiste", "Mystérieuse", "Bavarde", "Très calme"], "light"],
+    ["Pour décorer un château de sable, tu ajoutes…", ["Des fenêtres", "Un toboggan", "Un drapeau", "Une douve en chocolat"], "light"],
+    ["Si tu devais dormir dans un lieu public, tu choisirais…", ["Une bibliothèque", "Un cinéma", "Une gare", "Un musée"], "light"],
+    ["Le meilleur nom pour un café tenu par des fantômes serait…", ["Le Revenant", "Café Après-vie", "Chez Casper", "La Tasse hantée"], "light"],
+    ["Si la gravité prenait une pause, tu ferais…", ["Un bond", "Un pique-nique au plafond", "Une sieste", "Tu t'accroches"], "light"],
+    ["Quel objet gagnerait un concours de beauté ?", ["Une théière", "Un réveil", "Une cuillère", "Une paire de lunettes"], "light"],
+    ["Si tu pouvais apprivoiser un phénomène météo, ce serait…", ["Le brouillard", "Le tonnerre", "Le vent", "La neige"], "light"],
+    ["Pour cacher un trésor ridicule, tu choisirais…", ["Un pot de fleurs", "Un tiroir à couverts", "Une peluche", "Le congélateur"], "light"],
+    ["Si les miroirs racontaient la vérité, ils diraient surtout…", ["Tu es fatigué", "Ta coiffure tient", "Tu as oublié quelque chose", "Tout va bien"], "light"],
+    ["Le véhicule le plus élégant pour une tortue serait…", ["Un monocycle", "Une limousine", "Un skateboard", "Un dirigeable"], "light"],
+    ["Si tu devais donner un conseil à un volcan, ce serait…", ["Respire", "Prends ton temps", "Reste au chaud", "Préviens avant d'exploser"], "light"],
+    ["Une réunion d'objets perdus devrait élire…", ["Un parapluie", "Une clé", "Un gant", "Un ticket de caisse"], "light"],
+  ],
+  amitie: [
+    ["Pour organiser une sortie entre amis, tu proposes d'abord…", ["Une date", "Une activité", "Un lieu", "Un sondage"], "light"],
+    ["Chez un ami, tu apprécies surtout…", ["L'humour", "L'écoute", "La spontanéité", "La fiabilité"], "light"],
+    ["Un message d'ami qui fait toujours plaisir est…", ["Je pensais à toi", "On se voit ?", "J'ai une histoire", "Tu avais raison"], "light"],
+    ["Pour fêter une bonne nouvelle d'un ami, tu choisis…", ["Un dîner", "Un verre", "Un cadeau", "Un appel"], "light"],
+    ["Dans un voyage entre amis, tu prends naturellement le rôle de…", ["Organisateur", "Photographe", "Éclaireur", "Suiveur heureux"], "light"],
+    ["Quand un ami a besoin de parler, tu…", ["Écoutes", "Poses des questions", "Proposes une solution", "Changes les idées"], "light"],
+    ["Une tradition d'amitié idéale serait…", ["Un repas mensuel", "Un voyage annuel", "Un message rituel", "Un jeu récurrent"], "light"],
+    ["Pour choisir un cadeau commun, tu préfères…", ["Un souvenir", "Une expérience", "Quelque chose d'utile", "Une surprise drôle"], "light"],
+    ["Si un ami arrive en retard, tu réagis plutôt…", ["Tu attends sans souci", "Tu envoies un message", "Tu plaisantes", "Tu avances"], "light"],
+    ["Une soirée entre amis est réussie quand…", ["Tout le monde parle", "On rit beaucoup", "On apprend quelque chose", "On reste longtemps"], "light"],
+    ["Pour présenter un nouvel ami au groupe, tu…", ["Racontes une anecdote", "Lances une activité", "Le laisses observer", "Organises un petit dîner"], "light"],
+    ["Quand un ami déménage, tu offres plutôt…", ["De l'aide", "Un objet pour chez lui", "Une lettre", "Une sortie"], "light"],
+    ["Le meilleur souvenir à fabriquer à deux est…", ["Une randonnée", "Un repas", "Un projet", "Un fou rire"], "light"],
+    ["Pour garder le contact, tu préfères…", ["Des messages réguliers", "Des appels longs", "Des rendez-vous", "Des nouvelles spontanées"], "light"],
+    ["Si un ami te propose une activité inconnue, tu…", ["Acceptes immédiatement", "Demandes des détails", "Proposes une variante", "Regardes d'abord"], "light"],
+    ["Entre amis, un débat amusant porte plutôt sur…", ["La nourriture", "Les films", "Les voyages", "Les habitudes"], "light"],
+    ["Pour réconforter un ami, tu apportes…", ["Du temps", "De la nourriture", "Une distraction", "Un câlin"], "personal"],
+    ["Une qualité qui rend une amitié durable est…", ["La confiance", "La franchise", "La patience", "La légèreté"], "personal"],
+    ["Quand tu fais une erreur avec un ami, tu préfères…", ["T'excuser vite", "En parler calmement", "Écrire un message", "Laisser retomber"], "personal"],
+    ["Pour remercier un ami, tu choisis…", ["Des mots", "Un service", "Une invitation", "Une attention"], "light"],
+    ["Dans un groupe d'amis, tu es plutôt celui qui…", ["Lance les idées", "Fait rire", "Apaise", "Observe"], "light"],
+    ["Une activité parfaite pour retrouver un ami est…", ["Un café", "Une promenade", "Un jeu", "Un concert"], "light"],
+    ["Si un ami partage une passion, tu…", ["Lui poses des questions", "Essaies avec lui", "Lui offres quelque chose", "L'écoutes en parler"], "light"],
+    ["Pour un anniversaire d'ami, tu préfères…", ["Une petite surprise", "Une fête", "Un dîner calme", "Une escapade"], "light"],
+    ["Quand un groupe hésite, tu proposes…", ["Un vote", "Le premier choix", "Un compromis", "De remettre à plus tard"], "light"],
+    ["Le meilleur compliment d'un ami serait…", ["Tu me fais rire", "Je peux compter sur toi", "Tu me comprends", "Tu rends tout plus simple"], "personal"],
+    ["Pour partager une découverte avec un ami, tu envoies…", ["Un lien", "Une photo", "Une note vocale", "Une invitation"], "light"],
+    ["Un souvenir d'amitié tient surtout à…", ["Un lieu", "Une phrase", "Une odeur", "Une photo"], "light"],
+    ["Pour faire participer tout le monde à une discussion, tu…", ["Poses une question", "Racontes une histoire", "Proposes un tour de table", "Laisses venir"], "light"],
+    ["Si un ami réussit quelque chose, tu…", ["Le félicites", "Fêtes ça avec lui", "Lui demandes les détails", "Lui offres un souvenir"], "light"],
+    ["Un bon ami de voyage est quelqu'un qui…", ["S'adapte", "Planifie", "Reste curieux", "Sait rire des imprévus"], "light"],
+    ["Pour une soirée jeux, tu choisis un jeu…", ["Rapide", "Stratégique", "Coopératif", "Très drôle"], "light"],
+    ["Quand une conversation s'essouffle, tu…", ["Poses une question", "Changes de sujet", "Proposes une pause", "Acceptes le silence"], "light"],
+    ["La meilleure façon de commencer une nouvelle amitié est…", ["Partager une activité", "Faire rire", "Poser des questions", "Rendre service"], "light"],
+    ["Pour un ami qui vient en ville, tu montres d'abord…", ["Ton adresse préférée", "Un lieu connu", "Un coin secret", "Un bon restaurant"], "light"],
+    ["Un groupe d'amis devrait avoir un symbole…", ["Une chanson", "Une photo", "Un lieu", "Une expression"], "light"],
+    ["Quand tu penses à un ami loin de toi, tu…", ["Écris", "Appelles", "Envoies une photo", "Prépares une visite"], "personal"],
+    ["Un désaccord entre amis se résout mieux avec…", ["De la franchise", "De l'humour", "Du temps", "Une discussion en face à face"], "personal"],
+    ["Pour remercier tout un groupe d'amis, tu organises…", ["Un repas", "Une sortie", "Un jeu", "Une soirée souvenirs"], "light"],
+    ["Une amitié idéale laisse toujours de la place pour…", ["L'imprévu", "Le silence", "Les projets", "Les retrouvailles"], "personal"],
+  ],
+  couple: [
+    ["Pour une soirée à deux, tu préfères…", ["Cuisiner ensemble", "Sortir dîner", "Regarder un film", "Marcher longtemps"], "personal"],
+    ["Un petit geste qui fait plaisir au quotidien est…", ["Un message", "Un café préparé", "Une attention surprise", "Un moment sans téléphone"], "personal"],
+    ["Pour décider d'une destination, tu regardes d'abord…", ["Le paysage", "La cuisine", "Le rythme", "Le budget"], "light"],
+    ["À deux, un dimanche idéal commence par…", ["Un brunch", "Une promenade", "Une grasse matinée", "Un projet maison"], "personal"],
+    ["Quand tu veux faire plaisir, tu offres plutôt…", ["Une expérience", "Un objet choisi", "Du temps", "Une surprise"], "personal"],
+    ["Le meilleur rituel de fin de journée serait…", ["Raconter sa journée", "Cuisiner", "Lire côte à côte", "Faire une promenade"], "personal"],
+    ["Pour choisir une série à deux, tu privilégies…", ["Le suspense", "La comédie", "Le documentaire", "Une mini-série"], "light"],
+    ["Un voyage réussi à deux laisse surtout de la place pour…", ["L'improvisation", "Le repos", "Les découvertes", "Les bons repas"], "personal"],
+    ["Quand tu as besoin de calme, tu préfères…", ["Le dire clairement", "Mettre un casque", "Sortir marcher", "Lire dans un coin"], "personal"],
+    ["Pour célébrer une date importante, tu choisis…", ["Un dîner", "Une escapade", "Un cadeau symbolique", "Une soirée maison"], "personal"],
+    ["Dans un logement partagé, tu veux surtout…", ["Une grande cuisine", "Un coin calme", "Une belle lumière", "Un espace extérieur"], "light"],
+    ["Le meilleur petit-déjeuner à deux est…", ["Au lit", "Dans un café", "Préparé ensemble", "Après une promenade"], "light"],
+    ["Quand un plan change au dernier moment, tu…", ["Improvises", "Cherches une alternative", "Profites de la pause", "Préfères maintenir le plan"], "personal"],
+    ["Une soirée sans programme devient souvent…", ["Un apéro", "Une conversation", "Un film", "Une balade nocturne"], "personal"],
+    ["Pour choisir un restaurant à deux, tu préfères…", ["Tester une nouveauté", "Retourner à une valeur sûre", "Suivre l'ambiance", "Cuisiner à la maison"], "light"],
+    ["Un souvenir commun devrait être gardé…", ["Dans un album", "Dans une boîte", "Sur une étagère", "Dans une histoire racontée"], "light"],
+    ["Pour se retrouver après une longue journée, tu proposes…", ["Un câlin", "Un repas", "Une discussion", "Un moment tranquille"], "personal"],
+    ["Une activité à apprendre ensemble serait…", ["La danse", "La cuisine", "Une langue", "La photo"], "light"],
+    ["Quand tu fais une surprise, tu préfères qu'elle soit…", ["Très préparée", "Petite et spontanée", "Utile", "Complètement inattendue"], "personal"],
+    ["Un espace partagé devrait toujours avoir…", ["Des plantes", "Une grande table", "Une bonne enceinte", "Un canapé confortable"], "light"],
+    ["Pour parler d'un projet commun, tu préfères…", ["Une longue discussion", "Une liste", "Une promenade", "Un café"], "personal"],
+    ["La meilleure façon de se motiver à deux est…", ["Se fixer une date", "S'encourager", "Commencer ensemble", "Rendre ça amusant"], "personal"],
+    ["Pour une photo à deux, tu préfères…", ["Un paysage", "Un moment spontané", "Une photo drôle", "Pas de photo"], "light"],
+    ["Un week-end à deux devrait comporter…", ["Un bon repas", "Une découverte", "Du repos", "Un imprévu"], "personal"],
+    ["Quand quelque chose te préoccupe, tu préfères…", ["En parler tout de suite", "Prendre un peu de temps", "Écrire tes idées", "Sortir marcher"], "personal"],
+    ["Pour accueillir l'autre après un déplacement, tu prépares…", ["Son plat préféré", "Un espace calme", "Une petite surprise", "Rien de spécial, juste ta présence"], "personal"],
+    ["Une dépense plaisir à deux serait plutôt…", ["Un restaurant", "Un voyage", "Un objet pour chez soi", "Un spectacle"], "light"],
+    ["Le meilleur endroit pour discuter longtemps est…", ["Un canapé", "Un café calme", "Une promenade", "Une terrasse"], "personal"],
+    ["Pour répartir une tâche, tu préfères…", ["Partager chaque étape", "Choisir selon les goûts", "Alterner", "Faire au feeling"], "personal"],
+    ["Un soir de pluie à deux devient…", ["Une soirée cuisine", "Un marathon de films", "Un jeu", "Une lecture"], "light"],
+    ["Pour se faire rire, tu envoies plutôt…", ["Un mème", "Une photo", "Une imitation", "Une anecdote"], "light"],
+    ["La meilleure manière de fêter une réussite commune est…", ["Un dîner", "Un week-end", "Un toast", "Un souvenir à garder"], "personal"],
+    ["À deux, tu préfères planifier…", ["Les voyages", "Les repas", "Les sorties", "Le moins possible"], "light"],
+    ["Un moment de complicité arrive souvent…", ["En cuisinant", "En marchant", "En voyageant", "Dans les petits silences"], "personal"],
+    ["Pour rendre une journée ordinaire spéciale, tu ajoutes…", ["Une musique", "Un dessert", "Une promenade", "Une surprise"], "personal"],
+    ["Si vous aviez une tradition annuelle, ce serait…", ["Une escapade", "Un dîner", "Une photo au même endroit", "Un projet créatif"], "light"],
+    ["Quand tu veux remercier l'autre, tu choisis…", ["Le dire", "Écrire un mot", "Préparer quelque chose", "Organiser un moment"], "personal"],
+    ["Un désaccord se traverse mieux avec…", ["De l'écoute", "Une pause", "De l'humour", "Une discussion structurée"], "personal"],
+    ["Le plus beau luxe à deux est…", ["Du temps", "Un voyage", "Une maison confortable", "La liberté d'improviser"], "personal"],
+    ["Une journée idéale ensemble se termine par…", ["Un dessert", "Une conversation", "Une promenade", "Un film"], "personal"],
+  ],
+};
+
+function stableUuid(key) {
+  const hex = createHash("sha256").update(`compatibilite:${key}`).digest("hex").slice(0, 32).split("");
+  hex[12] = "4";
+  hex[16] = (Number.parseInt(hex[16], 16) & 0x3 | 0x8).toString(16);
+  return `${hex.slice(0, 8).join("")}-${hex.slice(8, 12).join("")}-${hex.slice(12, 16).join("")}-${hex.slice(16, 20).join("")}-${hex.slice(20).join("")}`;
+}
+
+const questions = Object.entries(source).flatMap(([category, entries]) =>
+  entries.map(([prompt, labels, sensitivity], index) => ({
+    itemId: stableUuid(`${category}:${index + 1}`),
+    packId,
+    logicalKey: `compatibilite-${category}-${String(index + 1).padStart(2, "0")}`,
+    category,
+    prompt,
+    options: labels.map((label, optionIndex) => ({ id: String.fromCharCode(97 + optionIndex), label })),
+    sensitivity,
+  })),
+);
+
+if (questions.length !== 160) throw new Error(`Compatibilité doit fournir 160 questions, reçu ${questions.length}.`);
+const keys = new Set();
+for (const question of questions) {
+  if (keys.has(question.logicalKey)) throw new Error(`logicalKey dupliquée: ${question.logicalKey}`);
+  keys.add(question.logicalKey);
+  if (question.prompt.length > 240) throw new Error(`Question trop longue: ${question.logicalKey}`);
+  if (question.options.length < 2 || question.options.length > 4) throw new Error(`Options invalides: ${question.logicalKey}`);
+  if (new Set(question.options.map((option) => option.id)).size !== question.options.length) throw new Error(`IDs d'options dupliqués: ${question.logicalKey}`);
+  if (question.options.some((option) => option.label.length > 80)) throw new Error(`Option trop longue: ${question.logicalKey}`);
+}
+
+const manifest = {
+  kind: "compatibility",
+  slug: "compatibilite",
+  version: packVersion,
+  status: "published",
+  source: "Rédaction originale pour tibo.fun",
+  license: "Contenu original tibo.fun, usage privé",
+  author: "tibo.fun",
+  questionCount: questions.length,
+  coverage: Object.fromEntries(Object.entries(source).map(([category, entries]) => [category, entries.length])),
+  reviewedBy: "relecture structurelle et éditoriale interne",
+  reviewedAt: "2026-09-11",
+};
+const pack = { packId, packVersion, questions };
+
+await mkdir(resolve(root, "content/compatibilite"), { recursive: true });
+await writeFile(resolve(root, "content/compatibilite/compatibilite.json"), `${JSON.stringify(pack, null, 2)}\n`);
+await writeFile(resolve(root, "content/compatibilite/manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
+
+const quoteJson = (value) => `'${JSON.stringify(value).replaceAll("'", "''")}'`;
+const sql = [
+  "-- tibo.fun — pack Compatibilité Même réponse ? v1, contenu original versionné.",
+  "-- Migration additive et idempotente : aucune suppression ni réinitialisation.",
+  `insert into private.content_packs (id, kind, slug, version, status, manifest, published_at) values ('${packId}', 'compatibility', 'compatibilite', ${packVersion}, 'published', ${quoteJson(manifest)}::jsonb, now())`,
+  "on conflict (kind, slug, version) do update set status = excluded.status, manifest = excluded.manifest, published_at = coalesce(private.content_packs.published_at, now());",
+  "",
+];
+for (const question of questions) {
+  sql.push(`insert into private.content_items (id, pack_id, logical_key, category, difficulty, payload) values ('${question.itemId}', '${packId}', '${question.logicalKey}', '${question.category}', null, ${quoteJson({ logicalKey: question.logicalKey, category: question.category, prompt: question.prompt, options: question.options, sensitivity: question.sensitivity })}::jsonb) on conflict (pack_id, logical_key) do nothing;`);
+}
+sql.push(
+  "",
+  "create or replace function public.server_get_compatibilite_content()",
+  "returns jsonb",
+  "language sql",
+  "security invoker",
+  "set search_path = ''",
+  "as $$",
+  "  with pack as (",
+  "    select id, version from private.content_packs",
+  "    where kind = 'compatibility' and slug = 'compatibilite' and status = 'published'",
+  "    order by version desc limit 1",
+  "  )",
+  "  select jsonb_build_object(",
+  "    'packId', pack.id, 'packVersion', pack.version,",
+  "    'questions', coalesce((",
+  "      select jsonb_agg(jsonb_strip_nulls(jsonb_build_object(",
+  "        'itemId', ci.id, 'packId', pack.id, 'logicalKey', ci.logical_key,",
+  "        'category', ci.payload ->> 'category', 'prompt', ci.payload ->> 'prompt',",
+  "        'options', ci.payload -> 'options', 'sensitivity', ci.payload ->> 'sensitivity'",
+  "      )) order by ci.logical_key) from private.content_items ci where ci.pack_id = pack.id",
+  "    ), '[]'::jsonb)",
+  "  ) from pack;",
+  "$$;",
+  "",
+  "revoke all on function public.server_get_compatibilite_content() from public, anon, authenticated;",
+  "grant execute on function public.server_get_compatibilite_content() to service_role;",
+  "",
+  "update public.games set availability = 'ready', rules_version = 'compatibilite-1' where slug = 'compatibilite';",
+);
+await writeFile(resolve(root, "supabase/migrations/20260911200000_compatibilite_ready.sql"), `${sql.join("\n")}\n`);
+console.log(`Compatibilité: ${questions.length} questions, 4 catégories, pack ${packId}`);
