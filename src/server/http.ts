@@ -26,6 +26,8 @@ export function mapServerError(error: unknown): NextResponse {
   const known: Record<string, { status: number; message: string }> = {
     MEMBER_REQUIRED: { status: 403, message: "Ce compte n'est pas encore admis." },
     GAME_NOT_READY: { status: 409, message: "Ce jeu n'est pas encore disponible." },
+    TTMC_CONTENT_UNAVAILABLE: { status: 503, message: "Le contenu de ce jeu est temporairement indisponible." },
+    QUESTION_NOT_IN_PACK: { status: 503, message: "La question de cette partie est indisponible." },
     ROOM_NOT_FOUND: { status: 404, message: "Salon introuvable." },
     ROOM_CLOSED: { status: 409, message: "Ce salon est fermé ou expiré." },
     ROOM_FULL: { status: 409, message: "Ce salon est déjà complet." },

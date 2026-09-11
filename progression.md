@@ -2,7 +2,7 @@
 
 Dernière mise à jour : 11 septembre 2026  
 Branche de référence : `main`  
-Dernier commit observé : `6c6a79f` — `feat: refondre la homepage violette`
+Dernier commit observé : `b5a49b5` — `feat: implement TTMC` (intégration locale, push à effectuer après cette recette)
 
 Ce fichier décrit la réalité du dépôt et non les seules capacités prévues dans les spécifications. Il complète [AGENTS.md](AGENTS.md), [docs/README.md](docs/README.md) et [docs/07-implementation-status.md](docs/07-implementation-status.md). Les statuts utilisés sont :
 
@@ -24,18 +24,18 @@ Ce fichier décrit la réalité du dépôt et non les seules capacités prévues
 | PostgreSQL/Supabase | 🟡 | Migrations versionnées et tests locaux présents ; aucune migration de production ne doit être considérée comme appliquée sans vérification distante. |
 | Transactions de partie | 🟡 | Repository, versionnement, reçus et commits sont amorcés ; la recette complète des conflits, doublons et finalisations reste nécessaire. |
 | Realtime | 🟡 | Helper client et invalidations existent ; reconnexion, message manqué et vérification réseau complète restent à finaliser. |
-| Jobs et échéances | 🟡 | Worker Géographie/UNO présent ; Cron, pg_net, Vault, baux, reprise après crash et latence de production ne sont pas déclarés vérifiés. |
+| Jobs et échéances | 🟡 | Worker Géographie/UNO/Trou Noir/TTMC présent ; Cron, pg_net, Vault, baux, reprise après crash et latence de production ne sont pas déclarés vérifiés. |
 | Profils, statistiques et historique | 🟡 | Routes/repository d'historique existent ; le parcours complet profils, stats et agrégats de duo reste à achever. |
-| Contenus | 🟡 | Pack Géographie local versionné présent ; aucun corpus de production publié, ni banque quiz DeepSeek prête. |
-| Tests et CI | 🟡 | Audit du 11/09 : 28 tests, typecheck, lint et build réussis ; E2E : 2 tests accueil réussis, 4 tests de jeu ignorés faute de `E2E_PASSWORD`. Après intégration TTMC (arbre de travail, non commité) : 18 fichiers / 100 tests, typecheck, lint (0 erreur) et build webpack réussis ; E2E TTMC à deux navigateurs ajoutée, ignorée sans `E2E_PASSWORD`. Après cycle 1 de revue TTMC (arbre de travail, non commité) : 18 fichiers / 110 tests, typecheck, lint, build webpack et docs:check (22 fichiers) réussis. Après cycle 2 de revue TTMC (arbre de travail, non commité) : 18 fichiers / 116 tests, typecheck, lint, build webpack et docs:check (22 fichiers) réussis. Aucun workflow CI versionné ; transactions et multijoueur restent à valider sur une base isolée. |
+| Contenus | 🟡 | Packs Géographie, Trou Noir et TTMC versionnés localement ; aucune banque de production distante ni benchmark DeepSeek daté n'est déclaré vérifié. |
+| Tests et CI | 🟡 | Audit du 11/09 : 28 tests, typecheck, lint et build réussis ; E2E : 2 tests accueil réussis, jeux ignorés faute de `E2E_PASSWORD`. Après les deux cycles TTMC : 18 fichiers / 116 tests, typecheck, lint, build webpack et docs:check (22 fichiers) réussis ; E2E TTMC à deux navigateurs ajoutée mais non exécutée sans `E2E_PASSWORD`. Aucun workflow CI versionné ; transactions et multijoueur restent à valider sur une base isolée. |
 | Déploiement Vercel/Supabase | ⚠️ | Le dépôt et `main` sont configurés côté Git ; les dashboards, protections, environnements et migrations distantes n'ont pas été inspectés dans cette tâche. |
 
 ## Progression par jeu
 
 | Jeu | Slug | Statut actuel | Ce qui existe | À faire avant de le déclarer réellement prêt |
 |---|---|---:|---|---|
-| Trou Noir | `trou-noir` | 🟡 | Clone de revue : moteur answering/judging/reveal, correction déterministe + DeepSeek serveur, projections sans fuite, UI, pack 120 questions, RPC `server_get_quiz_content` (`20260911130000_trou_noir_quiz_rpc.sql`), `contestsAccepted` réel dans perPlayer/ResultSpec. Code présent dans l'arbre de travail, non commité. | Valider SQL sur base isolée, recette à deux sessions, benchmark DeepSeek daté, puis commit/déploiement explicites. |
-| TTMC | `ttmc` | 🟢 | Moteur pur (choose_level/answering/judging/reveal/finished), types/config, projection sans fuite, correction déterministe + DeepSeek serveur, UI setup/match, pack 22 thèmes/440 questions via `server_get_ttmc_content()`, worker durable, registry `ready`, routes create/start/commands/get match. Code présent dans l'arbre de travail, non commité. | Recette à deux sessions, benchmark DeepSeek daté, exécution SQL sur base isolée, puis commit/déploiement explicites. Validation Supabase distante non faite ; aucune migration déclarée appliquée. |
+| Trou Noir | `trou-noir` | 🟢 | Moteur answering/judging/reveal, correction déterministe + DeepSeek serveur, projections sans fuite, UI, pack 120 questions, RPC `server_get_quiz_content` (`20260911130000_trou_noir_quiz_rpc.sql`), `contestsAccepted` réel dans perPlayer/ResultSpec. Commits `11f3662` et `ec9e4ee` présents sur `main` et poussés selon la recette précédente. | Valider SQL sur base isolée, recette à deux sessions et benchmark DeepSeek daté. |
+| TTMC | `ttmc` | 🟢 | Moteur pur (choose_level/answering/judging/reveal/finished), types/config, projection sans fuite, correction déterministe + DeepSeek serveur, UI setup/match, pack 22 thèmes/440 questions via `server_get_ttmc_content()`, worker durable, registry `ready`, routes create/start/commands/get match. Commit local `b5a49b5` après deux cycles CLI Muse ; push, recette à deux sessions, benchmark DeepSeek daté et validation Supabase distante restent à faire. | Pousser puis vérifier le commit, valider SQL/RPC sur base distante, recette à deux sessions et benchmark DeepSeek daté. |
 | Géographie / HexaPoint | `geographie` | 🟢 | Moteur pur, types/config, projection privée, scoring Haversine, carte, UI, API, worker, pack local, tests unitaires et E2E. Le registre TS le marque `ready`. | Vérifier le socle complet, la migration/activation distante, le contenu de production et une partie avec deux comptes indépendants. |
 | Skyjo | `skyjo` | ⏳ | Spécification et métadonnées du registre. | Moteur de cartes, secrets, score plus petit meilleur, persistance, UI et tests. |
 | UNO / Dernière carte | `uno` | 🟢 | Moteur, deck, types/config, projection de main secrète, UI, API de commandes, worker, migration `20260910100000_uno_ready.sql`, tests moteur/projection et E2E. Le code est présent sur `main`. | Vérifier le socle transactionnel complet, l'activation Supabase distante et une recette indépendante à deux comptes. |

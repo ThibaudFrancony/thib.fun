@@ -20,7 +20,9 @@
     "geo:pack": "node scripts/build-geography-pack.mjs",
     "quiz:pack": "node scripts/build-trou-noir-pack.mjs",
     "quiz:migration": "node scripts/build-trou-noir-migration.mjs",
-    "content:validate": "node scripts/validate-geography-pack.mjs && node scripts/build-trou-noir-pack.mjs",
+    "ttmc:pack": "node scripts/build-ttmc-pack.mjs",
+    "ttmc:migration": "node scripts/build-ttmc-migration.mjs",
+    "content:validate": "node scripts/validate-geography-pack.mjs && node scripts/build-trou-noir-pack.mjs && node scripts/build-ttmc-pack.mjs",
     "docs:check": "node scripts/check-docs.mjs",
     "local:fixture": "node scripts/seed-local-members.mjs"
   },
