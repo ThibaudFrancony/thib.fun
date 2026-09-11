@@ -21,10 +21,10 @@ Contrôles effectués : index des neuf jeux dans AGENTS, résolution des liens l
 | Profils/historique/duos | À faire | Base + finalisation |
 | Géographie | Implémenté sur `main` | Tests moteur/projection et parcours E2E présents ; migration distante et recette à deux à finaliser |
 | Trou Noir | Implémenté sur `main` (11 septembre 2026) | Moteur, projection, correction, UI, worker, pack/RPC et tests présents ; recette à deux sessions, benchmark IA et migration distante à finaliser |
-| TTMC | Implémenté sur `main`, commit `b5a49b5` (11 septembre 2026, cycle 2 terminé) | Moteur, projection, correction, UI, worker, pack 22 thèmes/440 questions, 116 tests au total, typecheck/lint/build webpack/docs:check OK ; push groupé avec Skyjo, recette à deux sessions, benchmark IA et migration distante à finaliser |
+| TTMC | Implémenté sur `main`, commit `b5a49b5` (11 septembre 2026, cycle 2 terminé) | Moteur, projection, correction, UI, worker, pack 22 thèmes/440 questions, 116 tests au total, typecheck/lint/build webpack/docs:check OK ; push groupé avec Skyjo vérifié, recette à deux sessions, benchmark IA et migration distante à finaliser |
 | Bataille navale | À faire | Socle |
 | BombParty + entraînement | À faire | Socle + lexique + recette timer |
-| Skyjo | Implémenté sur `main`, commit `2745261` (11 septembre 2026, deux cycles Muse terminés) | Moteur pur, projection sans fuite, API/worker, UI, migration `20260911180344_skyjo_activate.sql` ; 43 tests Skyjo et 166 tests au total, typecheck/lint/build Webpack/docs:check OK ; recette à deux sessions et migration distante à finaliser |
+| Skyjo | Implémenté sur `main`, commit `2745261` (11 septembre 2026, deux cycles Muse terminés) | Moteur pur, projection sans fuite, API/worker, UI, migration `20260911180344_skyjo_activate.sql` ; 43 tests Skyjo et 166 tests au total, typecheck/lint/build Webpack/docs:check OK ; push vérifié, recette à deux sessions et migration distante à finaliser |
 | UNO | Implémenté sur `main` le 10 septembre 2026 | Moteur pur, projection secrète, API/worker, UI, migration `20260910100000_uno_ready.sql` ; 13 tests UNO, typecheck/lint/build Webpack et Supabase local OK selon le suivi ; recette Chromium à deux sessions et migration distante à finaliser |
 | Compatibilité | À faire | Socle + questionnaires |
 | Longueur d'onde | À faire | Socle + axes |
