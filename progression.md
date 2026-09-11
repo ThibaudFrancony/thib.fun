@@ -2,7 +2,7 @@
 
 Dernière mise à jour : 11 septembre 2026  
 Branche de référence : `main`  
-Dernier commit observé : `2a33854` — `feat: add UNO game flow and geography updates`
+Dernier commit observé : `6c6a79f` — `feat: refondre la homepage violette`
 
 Ce fichier décrit la réalité du dépôt et non les seules capacités prévues dans les spécifications. Il complète [AGENTS.md](AGENTS.md), [docs/README.md](docs/README.md) et [docs/07-implementation-status.md](docs/07-implementation-status.md). Les statuts utilisés sont :
 
@@ -27,7 +27,7 @@ Ce fichier décrit la réalité du dépôt et non les seules capacités prévues
 | Jobs et échéances | 🟡 | Worker Géographie/UNO présent ; Cron, pg_net, Vault, baux, reprise après crash et latence de production ne sont pas déclarés vérifiés. |
 | Profils, statistiques et historique | 🟡 | Routes/repository d'historique existent ; le parcours complet profils, stats et agrégats de duo reste à achever. |
 | Contenus | 🟡 | Pack Géographie local versionné présent ; aucun corpus de production publié, ni banque quiz DeepSeek prête. |
-| Tests et CI | 🟡 | `pnpm test` (5 fichiers, 28 tests), `pnpm typecheck`, `pnpm lint` et l'E2E homepage desktop/mobile passent localement ; la CI complète reste à vérifier. |
+| Tests et CI | 🟡 | Audit du 11/09 : 28 tests, typecheck, lint et build réussis ; E2E : 2 tests accueil réussis, 4 tests de jeu ignorés faute de `E2E_PASSWORD`. Validation du contenu en échec sous Windows. Aucun workflow CI versionné ; transactions et multijoueur restent à valider sur une base isolée. |
 | Déploiement Vercel/Supabase | ⚠️ | Le dépôt et `main` sont configurés côté Git ; les dashboards, protections, environnements et migrations distantes n'ont pas été inspectés dans cette tâche. |
 
 ## Progression par jeu
@@ -62,6 +62,19 @@ Ne pas y inventer de risques théoriques. Si la cause n'est pas confirmée, l'in
 - Cause confirmée : l'alias Vitest utilisait `URL.pathname`, incompatible avec le chemin Windows ; les navigateurs Chromium et WebKit n'étaient pas installés dans l'environnement.
 - Résolution : remplacement par `fileURLToPath` dans `vitest.config.ts`, puis installation des navigateurs Playwright nécessaires à la recette desktop/mobile.
 - Vérification : `pnpm test` valide 5 fichiers et 28 tests ; `pnpm typecheck`, `pnpm lint` et `tests/e2e/home.spec.ts` passent sur Chromium et mobile.
+
+### 11/09/2026 — Diagnostic transversal du code
+
+- Demande : examiner les erreurs, incohérences et problèmes de maintenance, puis proposer des corrections. Aucune contradiction avec AGENTS.md ; aucune autorisation de correction générale ou de déploiement n'est déduite de cet audit.
+- Rapport : [diagnostic du code et correctifs proposés](docs/audit-code-2026-09-11.md). Les constats sont distingués des fonctionnalités encore incomplètes et des configurations distantes non vérifiées.
+- Erreur reproduite : `pnpm content:validate` échoue avec `ENOENT` sur un chemin Windows commençant par `C:\\C:\\` et contenant `%20`. Cause confirmée : `URL.pathname` utilisé comme chemin système. Le même motif existe dans les scripts de génération du pack et du SQL ; correctif proposé avec `fileURLToPath`, non appliqué dans cette tâche.
+- Bugs établis par lecture croisée : attribution inversée du forfait Géographie ; annulation des timers lors d'actions conservant la phase ; traitement des commandes avant recherche du reçu ; absence de heartbeat UNO ; absence de contrôle d'une partie active par joueur ; jobs en échec définitif sans finalisation technique. Voir le rapport pour preuves, scénarios et autres écarts. Les scénarios SQL ne sont pas déclarés reproduits en base.
+- Vérifications exécutées : `pnpm test` (5 fichiers/28 tests), `pnpm typecheck`, `pnpm lint`, `pnpm build` réussis. `pnpm test:e2e` : 2 tests accueil réussis et 4 tests de jeu ignorés faute de mot de passe de fixture. `pnpm docs:check` valide les 21 fichiers préexistants avant rédaction du rapport.
+- Vérifications complémentaires : les probes déléguées de moteur reproduisent le forfait Géographie attribué à l'adversaire et le rejet `NOT_YOUR_TURN` d'une action UNO répétée après changement de tour. Double transformation des marqueurs de carte confirmée par lecture du composant et de la projection. Après ajout du rapport, `pnpm docs:check` valide 22 fichiers.
+- Limites réelles : Docker et CLI Supabase absents du PATH ; un worker a confirmé l'échec de `supabase --version`. Pas d'exécution SQL locale ni de recette multijoueur dans cet audit. Aucun dashboard ou statut de migration distant inspecté.
+- Incidents d'outillage : certaines lectures d'inventaire et de routes dynamiques ont été refusées par le garde de lecture ; poursuite par extraits ciblés autorisés et lectures déléguées. Des recherches sur un dossier `.github` absent ou un glob Windows invalide ont échoué ; l'inventaire ciblé a ensuite permis de conclure. Ces incidents ne sont pas des bugs de l'application.
+- Nettoyage des vérifications : Next a régénéré `next-env.d.ts` pendant le build. La tentative de restauration Git a échoué car `.git/index.lock` n'était pas accessible en écriture ; une lecture programmatique pour normaliser ce fichier a aussi été refusée par le garde. Son contenu initial connu et ses fins de ligne ont ensuite été rétablis directement, et le statut Git confirme l'absence de modification applicative.
+- Statut : diagnostic et propositions uniquement. Aucun correctif applicatif, migration, commit ou déploiement. Prochaine étape utile : corriger les bugs de forfait/timers/reçus/présence avec leurs tests de régression, puis réaliser la recette transactionnelle sur une base isolée.
 
 ### Format des prochaines entrées
 
