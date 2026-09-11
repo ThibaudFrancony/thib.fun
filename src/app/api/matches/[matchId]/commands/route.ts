@@ -17,6 +17,10 @@ import { unoConfigSchema } from "@/games/uno/config";
 import { reduceUno, UNO_ENGINE_VERSION, UNO_RULES_VERSION } from "@/games/uno/engine";
 import { projectUno } from "@/games/uno/projection";
 import { skyjoActionSchema } from "@/games/skyjo/types";
+import { bombpartyActionSchema } from "@/games/bombparty/types";
+import { bombpartyConfigSchema } from "@/games/bombparty/config";
+import { reduceBombparty, BOMBPARTY_ENGINE_VERSION, BOMBPARTY_RULES_VERSION } from "@/games/bombparty/engine";
+import { projectBombparty } from "@/games/bombparty/projection";
 import { skyjoConfigSchema } from "@/games/skyjo/config";
 import { reduceSkyjo, SKYJO_ENGINE_VERSION, SKYJO_RULES_VERSION } from "@/games/skyjo/engine";
 import { projectSkyjo } from "@/games/skyjo/projection";
@@ -25,6 +29,7 @@ import { getSupabaseServerConfig } from "@/server/config";
 import { entropyValues, hashCommand } from "@/server/hash";
 import { assertMutationOrigin, jsonError, jsonOk, mapServerError } from "@/server/http";
 import { loadGeoContent } from "@/server/geo/content";
+import { loadBombpartyContent } from "@/server/bombparty/content";
 import { loadTrouNoirContent } from "@/server/quiz/content";
 import { loadTtmcContent } from "@/server/ttmc/content";
 import { commitMatch, getMatchSnapshot } from "@/server/matches/repository";
@@ -102,6 +107,18 @@ export async function POST(request: Request, { params }: { params: Promise<{ mat
       const transition = reduceSkyjo(snapshot.state, parsedAction.data, config, context);
       const views = participants.map((viewerId) => ({ viewerId, payload: projectSkyjo(transition.state, config, viewerId, participants, identities) }));
       response = await commitMatch({ matchId, expectedVersion: body.data.expectedVersion, actorId: member.id, commandId: body.data.commandId, commandHash: hashCommand(matchId, member.id, parsedAction.data.type, parsedAction.data), source: "player", previousPhaseId: snapshot.phaseId, next: { state: transition.state, phaseId: transition.phaseId, deadlineAt: transition.deadlineAt, deadlineKind: transition.deadlineKind }, views, jobsToUpsert: transition.jobs, jobsToCancel: [], roundRecords: transition.roundRecords, event: transition.event, result: transition.result, rulesVersion: SKYJO_RULES_VERSION, engineVersion: SKYJO_ENGINE_VERSION });
+    } else if (snapshot.gameSlug === "bombparty") {
+      const parsedAction = bombpartyActionSchema.safeParse(body.data.action);
+      if (!parsedAction.success) return jsonError("INVALID_REQUEST", 400, "La commande de jeu est invalide.");
+      if (parsedAction.data.type === "SUBMIT_WORD" && parsedAction.data.word.length > 60) {
+        return jsonError("INVALID_REQUEST", 400, "Le mot ne doit pas dépasser 60 caractères.");
+      }
+      const config = bombpartyConfigSchema.parse(snapshot.config);
+      const content = await loadBombpartyContent();
+      const context = { nowMs: Date.parse(snapshot.serverNow), actorId: member.id, matchId, participants, content, entropy: entropyValues(), phaseId: snapshot.phaseId, nextPhaseId, currentDeadlineAt: snapshot.deadlineAt, currentDeadlineKind: snapshot.deadlineKind };
+      const transition = reduceBombparty(snapshot.state, parsedAction.data, config, context);
+      const views = participants.map((viewerId) => ({ viewerId, payload: projectBombparty(transition.state, config, viewerId, participants, identities) }));
+      response = await commitMatch({ matchId, expectedVersion: body.data.expectedVersion, actorId: member.id, commandId: body.data.commandId, commandHash: hashCommand(matchId, member.id, parsedAction.data.type, parsedAction.data), source: "player", previousPhaseId: snapshot.phaseId, next: { state: transition.state, phaseId: transition.phaseId, deadlineAt: transition.deadlineAt, deadlineKind: transition.deadlineKind }, views, jobsToUpsert: transition.jobs, jobsToCancel: [], roundRecords: transition.roundRecords, event: transition.event, result: transition.result, rulesVersion: BOMBPARTY_RULES_VERSION, engineVersion: BOMBPARTY_ENGINE_VERSION });
     } else {
       throw new Error("GAME_NOT_READY");
     }

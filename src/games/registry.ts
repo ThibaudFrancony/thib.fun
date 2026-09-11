@@ -63,7 +63,7 @@ export const PUBLIC_GAMES: readonly PublicGame[] = [
     description: "Trouve le bon mot avant la fin du chrono.",
     priority: 1,
     kind: "competitive",
-    availability: "coming_soon",
+    availability: "ready",
     duration: "5–10 min",
   },
   {

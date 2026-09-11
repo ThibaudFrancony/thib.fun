@@ -1,5 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
+import { bombpartyConfigSchema } from "@/games/bombparty/config";
+import { initializeBombparty, BOMBPARTY_ENGINE_VERSION, BOMBPARTY_RULES_VERSION } from "@/games/bombparty/engine";
+import { projectBombparty } from "@/games/bombparty/projection";
 import { geoConfigSchema } from "@/games/geographie/config";
 import { GEO_ENGINE_VERSION, GEO_RULES_VERSION, initializeGeo } from "@/games/geographie/engine";
 import { projectGeo } from "@/games/geographie/projection";
@@ -22,6 +25,7 @@ import { getSupabaseServerConfig } from "@/server/config";
 import { entropyValues, newCommandId } from "@/server/hash";
 import { assertMutationOrigin, jsonError, jsonOk, mapServerError } from "@/server/http";
 import { loadGeoContent } from "@/server/geo/content";
+import { loadBombpartyContent, bombpartyContentManifest } from "@/server/bombparty/content";
 import { loadTrouNoirContent } from "@/server/quiz/content";
 import { loadTtmcContent } from "@/server/ttmc/content";
 import { startMatch, getRoomView } from "@/server/matches/repository";
@@ -125,6 +129,20 @@ export async function POST(request: Request, { params }: { params: Promise<{ roo
         matchId, mode: "random", config, state: transition.state, phaseId: transition.phaseId,
         deadlineAt: transition.deadlineAt, deadlineKind: transition.deadlineKind, views, jobs: transition.jobs,
         contentManifest: {}, rulesVersion: SKYJO_RULES_VERSION, engineVersion: SKYJO_ENGINE_VERSION, stateSchemaVersion: 1,
+      });
+    } else if (room.gameSlug === "bombparty") {
+      const config = bombpartyConfigSchema.parse(room.config);
+      const content = await loadBombpartyContent();
+      const transition = initializeBombparty(config, {
+        nowMs: Date.now(), actorId: member.id, matchId, participants, content,
+        entropy: entropyValues(), phaseId, nextPhaseId: phaseId,
+      });
+      const views = participants.map((viewerId) => ({ viewerId, payload: projectBombparty(transition.state, config, viewerId, participants, identities) }));
+      result = await startMatch({
+        actorId: member.id, commandId: body.data.commandId ?? newCommandId(), roomId, expectedVersion: room.version,
+        matchId, mode: "random", config, state: transition.state, phaseId: transition.phaseId,
+        deadlineAt: transition.deadlineAt, deadlineKind: transition.deadlineKind, views, jobs: transition.jobs,
+        contentManifest: bombpartyContentManifest(content), rulesVersion: BOMBPARTY_RULES_VERSION, engineVersion: BOMBPARTY_ENGINE_VERSION, stateSchemaVersion: 1,
       });
     } else {
       throw new Error("GAME_NOT_READY");

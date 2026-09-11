@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { bombpartyConfigSchema } from "@/games/bombparty/config";
 import { geoConfigSchema } from "@/games/geographie/config";
 import { skyjoConfigSchema } from "@/games/skyjo/config";
 import { trouNoirConfigSchema } from "@/games/trou-noir/config";
@@ -15,6 +16,7 @@ const createRoomSchema = z.discriminatedUnion("gameSlug", [
   z.object({ requestId: z.string().uuid(), gameSlug: z.literal("skyjo"), config: skyjoConfigSchema }),
   z.object({ requestId: z.string().uuid(), gameSlug: z.literal("trou-noir"), config: trouNoirConfigSchema }),
   z.object({ requestId: z.string().uuid(), gameSlug: z.literal("ttmc"), config: ttmcConfigSchema }),
+  z.object({ requestId: z.string().uuid(), gameSlug: z.literal("bombparty"), config: bombpartyConfigSchema }),
 ]);
 
 export async function POST(request: Request) {
