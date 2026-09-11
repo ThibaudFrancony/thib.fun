@@ -7,12 +7,20 @@ export default function HomePage() {
       <a className="home-skip-link" href="#home-games">Aller aux jeux</a>
       <SiteHeader variant="home" />
       <main id="home-games" className="home-main">
-        <div className="home-intro">
-          <p className="home-eyebrow">À deux, c’est mieux</p>
-          <h1>On joue à quoi ?</h1>
-          <p>Choisis un jeu, retrouve ton ami et partage un bon moment.</p>
+        <div className="home-content">
+          <div className="home-intro">
+            <div className="home-intro-copy">
+              <p className="home-eyebrow">La table est ouverte</p>
+              <h1>On joue à quoi&nbsp;?</h1>
+              <p>Choisis un jeu, invite ton ami et lance une partie sans détour.</p>
+            </div>
+            <div className="home-intro-note" aria-label="Informations sur les parties">
+              <span>2 joueurs</span>
+              <span>Parties privées</span>
+            </div>
+          </div>
+          <HomeGameSelector />
         </div>
-        <HomeGameSelector />
       </main>
       <footer className="home-footer">Deux joueurs. Un lien privé. Votre prochain rendez-vous.</footer>
     </div>

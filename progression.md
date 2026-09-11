@@ -18,7 +18,7 @@ Ce fichier décrit la réalité du dépôt et non les seules capacités prévues
 |---|---:|---|
 | Cadrage produit et architecture | ✅ | Neuf jeux, V1 à deux joueurs, contrats d'architecture, base, API et moteurs documentés. |
 | Dépôt et branche de travail | 🟢 | Remote GitHub configuré ; `main` suit `origin/main` et constitue la branche de production déclarée. Ne pas forcer ni réécrire son historique. |
-| Shell Next.js et accueil | 🟢 | App Router, layout, header, accueil et rail responsive des neuf jeux présents. Les jeux non prêts restent désactivés. |
+| Shell Next.js et accueil | 🟢 | App Router, layout, header, accueil et rail responsive des neuf jeux présents. Homepage refondue en DA violette sobre : sélection prioritaire visible, jeux secondaires en rail, palette unifiée et responsive validé en E2E. Les jeux non prêts restent désactivés. |
 | Authentification et admission privée | 🟡 | Écran de connexion et helpers serveur présents ; invitations, admission complète, SMTP réel, reset et administration restent à vérifier/terminer. |
 | Salons et lancement de partie | 🟡 | Routes, vues, schémas et appels RPC existent ; le socle complet à deux sessions, concurrence et reprises doit encore être validé de bout en bout. |
 | PostgreSQL/Supabase | 🟡 | Migrations versionnées et tests locaux présents ; aucune migration de production ne doit être considérée comme appliquée sans vérification distante. |
@@ -27,7 +27,7 @@ Ce fichier décrit la réalité du dépôt et non les seules capacités prévues
 | Jobs et échéances | 🟡 | Worker Géographie/UNO présent ; Cron, pg_net, Vault, baux, reprise après crash et latence de production ne sont pas déclarés vérifiés. |
 | Profils, statistiques et historique | 🟡 | Routes/repository d'historique existent ; le parcours complet profils, stats et agrégats de duo reste à achever. |
 | Contenus | 🟡 | Pack Géographie local versionné présent ; aucun corpus de production publié, ni banque quiz DeepSeek prête. |
-| Tests et CI | 🟡 | Tests moteur/projection et E2E sont présents ; l'installation des navigateurs Playwright et la CI complète restent à vérifier. |
+| Tests et CI | 🟡 | `pnpm test` (5 fichiers, 28 tests), `pnpm typecheck`, `pnpm lint` et l'E2E homepage desktop/mobile passent localement ; la CI complète reste à vérifier. |
 | Déploiement Vercel/Supabase | ⚠️ | Le dépôt et `main` sont configurés côté Git ; les dashboards, protections, environnements et migrations distantes n'ont pas été inspectés dans cette tâche. |
 
 ## Progression par jeu
@@ -56,6 +56,13 @@ Ne pas y inventer de risques théoriques. Si la cause n'est pas confirmée, l'in
 - Résolution : utilisation de `fileURLToPath` et ajout de `progression.md` à la vérification.
 - Vérification : `node scripts/check-docs.mjs` valide 21 fichiers Markdown.
 
+### 11/09/2026 — Vérifications après refonte de la homepage
+
+- Problème : `pnpm test` échouait sur quatre suites avec `Cannot find package '@/games/...'` ; la suite E2E était également bloquée au départ par l'absence des navigateurs Playwright.
+- Cause confirmée : l'alias Vitest utilisait `URL.pathname`, incompatible avec le chemin Windows ; les navigateurs Chromium et WebKit n'étaient pas installés dans l'environnement.
+- Résolution : remplacement par `fileURLToPath` dans `vitest.config.ts`, puis installation des navigateurs Playwright nécessaires à la recette desktop/mobile.
+- Vérification : `pnpm test` valide 5 fichiers et 28 tests ; `pnpm typecheck`, `pnpm lint` et `tests/e2e/home.spec.ts` passent sur Chromium et mobile.
+
 ### Format des prochaines entrées
 
 `date — problème` : signalement ou erreur, contexte, cause si connue, correction ou statut actuel, puis test ou vérification effectuée.
@@ -81,6 +88,7 @@ Cette rubrique concerne uniquement les demandes explicites de l'utilisateur qui 
 | 11/09/2026 | Récupérer le dépôt GitHub et configurer le push sur `main`. | `main` est déjà la branche de production et le remote de référence. | Aucun changement de règle. | Demande conforme aux guidelines existantes. | Consigné, sans dérogation |
 | 11/09/2026 | Demande de maintenir un suivi de progression et d'actualiser `AGENTS.md` de manière proactive. | Mise à jour du statut seulement en fin d'implémentation. | `progression.md` devient le suivi opérationnel ; l'agent doit le mettre à jour après chaque changement significatif et journaliser les contradictions explicites. | Améliore la traçabilité du projet. | Appliqué |
 | 11/09/2026 | Documenter automatiquement les problèmes signalés pendant le code ou détectés par les tests. | La section mélangeait difficultés réelles et risques anticipés. | La section devient un journal simple des problèmes réellement rencontrés ; les risques théoriques n'y sont plus ajoutés. | Permet de retrouver les erreurs et leurs résolutions sans bruit. | Appliqué |
+| 11/09/2026 | Refonte de la homepage en violet, clean, responsive et sobre. | Aucune règle métier ou technique ne prescrivait une exception pour la homepage. | Aucun changement de règle ; le périmètre reste visuel et conserve les flux réels ainsi que les jeux non disponibles désactivés. | Demande conforme aux contrats UI et d'accessibilité existants. | Consigné, sans dérogation |
 
 ### Incohérences documentaires corrigées, sans décision utilisateur
 

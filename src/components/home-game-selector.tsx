@@ -15,6 +15,8 @@ function playableRoute(game: PublicGame) {
 }
 
 const availableCount = PUBLIC_GAMES.filter((game) => playableRoute(game)).length;
+const PRIORITY_GAMES = PUBLIC_GAMES.filter((game) => game.priority === 0);
+const OTHER_GAMES = PUBLIC_GAMES.filter((game) => game.priority !== 0);
 
 export function HomeGameSelector() {
   const railRef = useRef<HTMLDivElement>(null);
@@ -68,9 +70,29 @@ export function HomeGameSelector() {
 
   return (
     <section className="home-selector" aria-label="Les jeux à deux">
-      <div className="home-selector-meta">
-        <span>{PUBLIC_GAMES.length} jeux à découvrir</span>
-        <span className="home-available-count">{availableCount} {availableCount === 1 ? "disponible" : "disponibles"}</span>
+      <div className="home-selector-heading">
+        <div>
+          <p className="home-section-kicker">La sélection</p>
+          <h2>À jouer maintenant</h2>
+        </div>
+        <div className="home-selector-meta">
+          <span>{PUBLIC_GAMES.length} jeux à découvrir</span>
+          <span className="home-available-count">{availableCount} {availableCount === 1 ? "disponible" : "disponibles"}</span>
+        </div>
+      </div>
+      <ul className="home-featured-grid">
+        {PRIORITY_GAMES.map((game, index) => (
+          <li key={game.slug} className="home-game-slide">
+            <GameCard game={game} index={index} featured />
+          </li>
+        ))}
+      </ul>
+      <div className="home-secondary-heading">
+        <div>
+          <p className="home-section-kicker">À découvrir ensuite</p>
+          <h2>Le reste de la table</h2>
+        </div>
+        <span>{OTHER_GAMES.length} jeux en préparation</span>
       </div>
       <div className="home-rail-shell">
         <button
@@ -88,16 +110,16 @@ export function HomeGameSelector() {
           id="home-game-rail"
           className="home-game-rail"
           role="region"
-          aria-label="Catalogue des jeux"
+          aria-label="Jeux en préparation"
           aria-roledescription="carrousel"
           aria-describedby="home-rail-help"
           tabIndex={0}
           onKeyDown={onRailKeyDown}
         >
           <ul className="home-game-track">
-            {PUBLIC_GAMES.map((game, index) => (
+            {OTHER_GAMES.map((game, index) => (
               <li key={game.slug} className="home-game-slide">
-                <GameCard game={game} index={index} />
+                <GameCard game={game} index={PRIORITY_GAMES.length + index} />
               </li>
             ))}
           </ul>
@@ -114,14 +136,14 @@ export function HomeGameSelector() {
         </button>
       </div>
       <p id="home-rail-help" className="home-rail-help">
-        Fais défiler les jeux ou utilise les flèches.
+        Fais défiler les jeux en préparation ou utilise les flèches.
         <span className="sr-only"> Au clavier, place le focus sur le catalogue et utilise les flèches gauche et droite. Début et Fin vont au premier et au dernier jeu.</span>
       </p>
     </section>
   );
 }
 
-function GameCard({ game, index }: { game: PublicGame; index: number }) {
+function GameCard({ game, index, featured = false }: { game: PublicGame; index: number; featured?: boolean }) {
   const href = playableRoute(game);
   const titleId = `home-game-${game.slug}`;
   const statusId = `${titleId}-status`;
@@ -132,7 +154,7 @@ function GameCard({ game, index }: { game: PublicGame; index: number }) {
         <span id={statusId} className="home-card-status">{href ? (game.availability === "beta" ? "Bêta" : "Disponible") : "Bientôt"}</span>
       </div>
       <div className="home-card-art"><GameIcon slug={game.slug} /></div>
-      <h2 id={titleId} className="home-card-title">{game.displayName}</h2>
+      <h3 id={titleId} className="home-card-title">{game.displayName}</h3>
       <p className="home-card-description">{game.description}</p>
       <div className="home-card-details">
         <span>2 joueurs · {game.kind === "cooperative" ? "Coop" : "Duel"}</span>
@@ -145,11 +167,11 @@ function GameCard({ game, index }: { game: PublicGame; index: number }) {
   );
 
   return href ? (
-    <Link href={href} className="home-game-card" data-game={game.slug} data-ready="true" aria-labelledby={titleId} aria-describedby={statusId}>
+    <Link href={href} className="home-game-card" data-game={game.slug} data-ready="true" data-featured={featured} aria-labelledby={titleId} aria-describedby={statusId}>
       {content}
     </Link>
   ) : (
-    <article className="home-game-card" data-game={game.slug} aria-labelledby={titleId} aria-describedby={statusId}>
+    <article className="home-game-card" data-game={game.slug} data-featured={featured} aria-labelledby={titleId} aria-describedby={statusId}>
       {content}
     </article>
   );
