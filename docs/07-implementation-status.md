@@ -4,7 +4,7 @@ Dernière mise à jour : 11 septembre 2026.
 
 Le suivi opérationnel détaillé et maintenu après chaque changement se trouve dans [progression.md](../progression.md). Ce document conserve le suivi de réalisation par lots et doit rester cohérent avec lui.
 
-**Le cadrage initial et les migrations de schéma sont versionnés ; les contrôles applicatifs et statiques de TTMC sont validés localement, sans utiliser Docker. Aucune migration n'a été appliquée à une base distante et aucune banque de contenu de production n'a été créée.** L'accueil multi-jeux, Géographie, Trou Noir, TTMC et UNO sont présents dans `main` ; les autres jeux restent à développer.
+**Le cadrage initial et les migrations de schéma sont versionnés ; les contrôles applicatifs et statiques de TTMC et Skyjo sont validés localement, sans utiliser Docker. Aucune migration n'a été appliquée à une base distante et aucune banque de contenu de production n'a été créée.** L'accueil multi-jeux, Géographie, Trou Noir, TTMC, Skyjo et UNO sont présents dans `main` ; les autres jeux restent à développer.
 
 Contrôles effectués : index des neuf jeux dans AGENTS, résolution des liens locaux, blocs de code Markdown équilibrés, absence de marqueurs d'espace réservé, couverture des règles/configurations/états/projections/scores/tests. Relecture croisée des droits SQL, reçus système, délais, contenu et résultats coopératifs. Le lint Supabase local ne signale aucune erreur ; 40 assertions pgTAP du schéma passent. Les contrôles applicatifs sont détaillés dans la ligne de chaque lot.
 
@@ -21,10 +21,10 @@ Contrôles effectués : index des neuf jeux dans AGENTS, résolution des liens l
 | Profils/historique/duos | À faire | Base + finalisation |
 | Géographie | Implémenté sur `main` | Tests moteur/projection et parcours E2E présents ; migration distante et recette à deux à finaliser |
 | Trou Noir | Implémenté sur `main` (11 septembre 2026) | Moteur, projection, correction, UI, worker, pack/RPC et tests présents ; recette à deux sessions, benchmark IA et migration distante à finaliser |
-| TTMC | Implémenté localement, commit `b5a49b5` (11 septembre 2026, cycle 2 terminé) | Moteur, projection, correction, UI, worker, pack 22 thèmes/440 questions, 116 tests au total, typecheck/lint/build webpack/docs:check OK ; push, recette à deux sessions, benchmark IA et migration distante à finaliser |
+| TTMC | Implémenté sur `main`, commit `b5a49b5` (11 septembre 2026, cycle 2 terminé) | Moteur, projection, correction, UI, worker, pack 22 thèmes/440 questions, 116 tests au total, typecheck/lint/build webpack/docs:check OK ; push groupé avec Skyjo, recette à deux sessions, benchmark IA et migration distante à finaliser |
 | Bataille navale | À faire | Socle |
 | BombParty + entraînement | À faire | Socle + lexique + recette timer |
-| Skyjo | Implémenté localement, non committé (11 septembre 2026) | Moteur pur, projection sans fuite, API/worker, UI, migration `20260911180344_skyjo_activate.sql` ; 42 tests Skyjo, typecheck/lint/build Webpack OK ; recette à deux sessions et migration distante à finaliser |
+| Skyjo | Implémenté sur `main`, commit `2745261` (11 septembre 2026, deux cycles Muse terminés) | Moteur pur, projection sans fuite, API/worker, UI, migration `20260911180344_skyjo_activate.sql` ; 43 tests Skyjo et 166 tests au total, typecheck/lint/build Webpack/docs:check OK ; recette à deux sessions et migration distante à finaliser |
 | UNO | Implémenté sur `main` le 10 septembre 2026 | Moteur pur, projection secrète, API/worker, UI, migration `20260910100000_uno_ready.sql` ; 13 tests UNO, typecheck/lint/build Webpack et Supabase local OK selon le suivi ; recette Chromium à deux sessions et migration distante à finaliser |
 | Compatibilité | À faire | Socle + questionnaires |
 | Longueur d'onde | À faire | Socle + axes |
