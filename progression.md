@@ -1,6 +1,6 @@
 # Progression du projet
 
-Dernière mise à jour : 11 septembre 2026  
+Dernière mise à jour : 12 septembre 2026
 Branche de référence : `main`  
 Dernier commit observé : `ca5d521` — `feat: implement Longueur d'onde`
 
@@ -19,7 +19,7 @@ Ce fichier décrit la réalité du dépôt et non les seules capacités prévues
 | Cadrage produit et architecture | ✅ | Neuf jeux, V1 à deux joueurs, contrats d'architecture, base, API et moteurs documentés. |
 | Dépôt et branche de travail | 🟢 | Remote GitHub configuré ; `main` suit `origin/main` et constitue la branche de production déclarée. Ne pas forcer ni réécrire son historique. |
 | Shell Next.js et accueil | 🟢 | App Router, layout, header, accueil et rail responsive des neuf jeux présents. Homepage refondue en DA violette sobre : sélection prioritaire visible, jeux secondaires en rail, palette unifiée et responsive validé en E2E. Les jeux non prêts restent désactivés. |
-| Authentification et admission privée | 🟡 | Écran de connexion et helpers serveur présents ; invitations, admission complète, SMTP réel, reset et administration restent à vérifier/terminer. |
+| Authentification et admission privée | 🟢 | Inscription e-mail/mot de passe sans invitation, provisionnement automatique/rattrapage des profils, callback de confirmation et écran `/profil` présents dans le code ; migration, configuration Auth distante et recette réelle restent à vérifier. |
 | Salons et lancement de partie | 🟡 | Routes, vues, schémas et appels RPC existent ; le socle complet à deux sessions, concurrence et reprises doit encore être validé de bout en bout. |
 | PostgreSQL/Supabase | 🟡 | Migrations versionnées et tests locaux présents ; aucune migration de production ne doit être considérée comme appliquée sans vérification distante. |
 | Transactions de partie | 🟡 | Repository, versionnement, reçus et commits sont amorcés ; la recette complète des conflits, doublons et finalisations reste nécessaire. |
@@ -27,7 +27,7 @@ Ce fichier décrit la réalité du dépôt et non les seules capacités prévues
 | Jobs et échéances | 🟡 | Worker Géographie/UNO/Trou Noir/TTMC/Skyjo/BombParty présent ; Cron, pg_net, Vault, baux, reprise après crash et latence de production ne sont pas déclarés vérifiés. |
 | Profils, statistiques et historique | 🟡 | Routes/repository d'historique existent ; le parcours complet profils, stats et agrégats de duo reste à achever. |
 | Contenus | 🟡 | Packs Géographie, Trou Noir, TTMC, Compatibilité, Longueur d'onde et lexique BombParty versionnés localement ; Compatibilité contient 160 questions originales et Longueur d'onde 80 axes originaux (30 quotidien, 25 culture, 25 absurde) avec migrations/RPC préparées ; aucune banque de production distante ni benchmark DeepSeek daté n'est déclaré vérifié. |
-| Tests et CI | 🟡 | Après l'implémentation Longueur d'onde : 37 fichiers / 308 tests, `pnpm typecheck`, `pnpm lint`, build `next build --webpack`, `pnpm docs:check` et `git diff --check` réussis ; E2E homepage Chromium réussie, les 7 parcours authentifiés sont ignorés faute de `E2E_PASSWORD`. Aucun workflow CI versionné ; transactions et multijoueur restent à valider sur une base isolée. |
+| Tests et CI | 🟡 | Après la correction Auth : 37 fichiers / 308 tests, `pnpm typecheck`, `pnpm lint`, build `pnpm exec next build --webpack`, `pnpm docs:check` et `git diff --check` réussis ; le build Turbopack par défaut et Supabase local sont bloqués par les restrictions de l'environnement, et les parcours Auth restent à valider avec une base isolée. |
 | Déploiement Vercel/Supabase | ⚠️ | Le dépôt et `main` sont configurés côté Git ; les dashboards, protections, environnements et migrations distantes n'ont pas été inspectés dans cette tâche. |
 
 ## Progression par jeu
@@ -285,6 +285,16 @@ Ne pas y inventer de risques théoriques. Si la cause n'est pas confirmée, l'in
 - Résolution : utilisation du runner Playwright déjà versionné dans le dépôt ; le test Chromium de l'accueil passe et le lancement complet Chromium compte 1 succès et 7 tests authentifiés ignorés faute de mot de passe. Un probe initial du formulaire d'inscription ciblait deux rôles `alert` (dont l'annonceur Next vide) ; le sélecteur a été resserré et le formulaire affiche bien le garde Supabase attendu quand les variables navigateur sont absentes.
 - Vérification distante en lecture seule : `https://thibfun.vercel.app` répond 200, l'accueil expose les neuf `data-game` et le compteur `9 disponibles`, et les neuf routes de jeu répondent 200 après le push `ca5d521`.
 
+### 12/09/2026 — Inscription libre et espace compte
+
+- Demande : supprimer l’obligation d’invitation ; permettre l’inscription e-mail/mot de passe, puis afficher clairement le compte une fois connecté. Cette demande contredit l’ancienne décision documentaire « comptes sur invitation » ; la décision, l’ancien comportement, le nouveau comportement, le périmètre et la raison sont consignés dans `AGENTS.md`, `docs/README.md` et les contrats concernés.
+- Cause confirmée : `auth.signUp` existait déjà côté client, mais aucune ligne `public.profiles` ni `private.site_members` n’était créée. `server_get_actor` exige pourtant les deux lignes et les routes métier refusaient donc les nouveaux comptes comme non admis. La production affichait encore « compte invité » et « membres admis ».
+- Réalisation dans l’arbre de travail : migration CLI `20260911231740_self_service_signup.sql` avec provisionnement serveur idempotent, trigger après création `auth.users`, rattrapage des comptes Auth existants sans profil, pseudo initial dérivé de l’e-mail sans stockage de l’e-mail dans `profiles`, conservation des membres désactivés et RPC `service_role` uniquement ; route `/api/auth/provision` de rattrapage ; callback `/auth/callback` sécurisé sur une redirection relative ; inscription avec `emailRedirectTo` ; redirection vers `/profil` ; écran `/profil`, navigation « Mon compte » et déconnexion. Les invitations admin restent documentées comme mécanisme historique optionnel et ne contrôlent plus l’admission.
+- Configuration locale préparée : `supabase/config.toml` conserve `enable_signup = true`, ajoute les callback URLs locales et `https://thibfun.vercel.app/auth/callback`. Lecture publique de `https://ttogfwnlknmiscnmlhof.supabase.co/auth/v1/settings` vérifiée : inscription non désactivée (`disable_signup=false`), e-mail activé et confirmation d’e-mail actuellement requise (`mailer_autoconfirm=false`). La allow-list exacte, le SMTP et le schéma distant n’ont pas pu être inspectés : le dashboard Supabase ouvert dans Safari n’a pas exposé de projet et la CLI n’a pas de `SUPABASE_ACCESS_TOKEN`.
+- Vérifications réussies : `pnpm test` (37 fichiers / 308 tests), `pnpm typecheck`, `pnpm lint`, `pnpm exec next build --webpack`, `pnpm docs:check` (22 fichiers) et `git diff --check`.
+- Difficultés rencontrées : `pnpm build` avec Turbopack a échoué sur `Operation not permitted` lors de la création d’un processus/port dans l’environnement isolé ; le build Webpack équivalent a réussi. `SUPABASE_TELEMETRY_DISABLED=1 supabase status` a échoué car Docker n’est pas démarré (`Cannot connect to the Docker daemon`), donc la migration et les tests pgTAP n’ont pas été exécutés sur une base locale. Aucune migration distante, commit, push ou déploiement n’est déclaré.
+- Prochaine étape utile : démarrer Docker ou utiliser une base Supabase isolée, appliquer/valider la migration, vérifier les droits `service_role`/RLS et tester deux inscriptions réelles (confirmation activée puis désactivée), une connexion existante, un compte désactivé et l’affichage `/profil` avec deux sessions séparées. Sur le projet distant, vérifier manuellement les réglages Auth et ajouter exactement les callback URLs de chaque environnement.
+
 ## Points à savoir pour les prochains développements
 
 - Une fiche Markdown est un contrat de conception, pas la preuve qu'une fonction existe.
@@ -307,6 +317,7 @@ Cette rubrique concerne uniquement les demandes explicites de l'utilisateur qui 
 | 11/09/2026 | Demande de maintenir un suivi de progression et d'actualiser `AGENTS.md` de manière proactive. | Mise à jour du statut seulement en fin d'implémentation. | `progression.md` devient le suivi opérationnel ; l'agent doit le mettre à jour après chaque changement significatif et journaliser les contradictions explicites. | Améliore la traçabilité du projet. | Appliqué |
 | 11/09/2026 | Documenter automatiquement les problèmes signalés pendant le code ou détectés par les tests. | La section mélangeait difficultés réelles et risques anticipés. | La section devient un journal simple des problèmes réellement rencontrés ; les risques théoriques n'y sont plus ajoutés. | Permet de retrouver les erreurs et leurs résolutions sans bruit. | Appliqué |
 | 11/09/2026 | Refonte de la homepage en violet, clean, responsive et sobre. | Aucune règle métier ou technique ne prescrivait une exception pour la homepage. | Aucun changement de règle ; le périmètre reste visuel et conserve les flux réels ainsi que les jeux non disponibles désactivés. | Demande conforme aux contrats UI et d'accessibilité existants. | Consigné, sans dérogation |
+| 12/09/2026 | Supprimer l’obligation d’invitation et permettre l’inscription e-mail/mot de passe avec un compte visible après connexion. | Les comptes étaient admis uniquement via invitation et le profil/membre étaient créés après admission. | Inscription libre ; provisionnement automatique/rattrapage du profil et de l’admission, confirmation e-mail selon la configuration Auth, espace `/profil`. | Permettre à deux amis de créer leurs comptes sans intervention manuelle, tout en conservant Auth Supabase, les contrôles serveur et RLS. | Implémenté dans l’arbre de travail ; migration et configuration distante non vérifiées |
 
 ### Incohérences documentaires corrigées, sans décision utilisateur
 

@@ -73,7 +73,7 @@ Les mélanges sont réalisés avec une source cryptographique serveur et Fisher�
 
 ## 3. Commande et commit
 
-1. Authentifier et vérifier compte invité actif ; déduire `actorId`.
+1. Authentifier et vérifier compte Auth actif/admis ; déduire `actorId` (l’admission est provisionnée automatiquement à l’inscription, sans invitation).
 2. Valider taille, schéma, limites et appartenance ; lire état privé + version + heure DB via RPC serveur.
 3. Répondre immédiatement depuis le reçu si le même `commandId` est déjà enregistré et le même contenu métier correspond.
 4. Exécuter le moteur et construire les deux projections.

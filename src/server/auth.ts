@@ -10,7 +10,12 @@ export type AuthenticatedMember = {
   avatarPath: string | null;
 };
 
-export async function getAuthenticatedMember(): Promise<AuthenticatedMember | null> {
+export type AuthenticatedAccount = {
+  email: string | null;
+  member: AuthenticatedMember;
+};
+
+async function getAuthenticatedAccountInternal(): Promise<AuthenticatedAccount | null> {
   const supabase = await createRequestSupabaseClient();
   if (!supabase) return null;
   const { data, error } = await supabase.auth.getUser();
@@ -18,7 +23,16 @@ export async function getAuthenticatedMember(): Promise<AuthenticatedMember | nu
   const admin = createAdminClient();
   const actor = await admin.rpc("server_get_actor", { p_actor: data.user.id });
   if (actor.error || !actor.data) return null;
-  return actor.data as AuthenticatedMember;
+  return { email: data.user.email ?? null, member: actor.data as AuthenticatedMember };
+}
+
+export async function getAuthenticatedMember(): Promise<AuthenticatedMember | null> {
+  const account = await getAuthenticatedAccountInternal();
+  return account?.member ?? null;
+}
+
+export async function getAuthenticatedAccount(): Promise<AuthenticatedAccount | null> {
+  return getAuthenticatedAccountInternal();
 }
 
 export async function getAuthenticatedUserId(): Promise<string | null> {

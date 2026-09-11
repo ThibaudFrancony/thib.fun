@@ -17,7 +17,7 @@ Contrat V1. Générer les migrations lors de l'implémentation avec `supabase mi
 
 `id uuid PK FK auth.users.id`, `pseudo text` (2–24 caractères après trim, lettres/chiffres/espace/underscore/tiret), `pseudo_key text UNIQUE` (normalisé casse et espaces, accents conservés), `avatar_path text?`, `avatar_preset text DEFAULT 'orbit-1'`, `created_at`, `updated_at`.
 
-Ne pas stocker e-mail dans cette table lisible. Un avatar personnalisé et un preset sont autorisés dans le schéma ; si `avatar_path` est renseigné il prime. Mise à jour uniquement via API serveur, qui impose que l'acteur modifie son profil. Au signup, profil provisionné après admission, jamais automatiquement à partir de métadonnées non vérifiées.
+Ne pas stocker e-mail dans cette table lisible. Un avatar personnalisé et un preset sont autorisés dans le schéma ; si `avatar_path` est renseigné il prime. Mise à jour uniquement via API serveur, qui impose que l'acteur modifie son profil. Au signup libre, le profil minimal et l’admission sont provisionnés côté serveur à partir de l’identité Auth ; les métadonnées éventuelles ne servent jamais à une décision d’autorisation.
 
 ### `private.site_members`
 
@@ -29,7 +29,7 @@ Source de vérité de l'admission. Ne jamais utiliser `user_metadata` pour autor
 
 `id uuid PK`, `token_hash text UNIQUE`, `email_key text?`, `created_by uuid FK profiles`, `expires_at`, `max_uses integer DEFAULT 1 CHECK 1..10`, `used_count integer DEFAULT 0`, `revoked_at timestamptz?`, `created_at`. CHECK `used_count<=max_uses`.
 
-Token aléatoire 32 octets URL-safe ; seul SHA-256 conservé. Consommation après connexion et e-mail vérifié, dans une transaction qui verrouille invitation et vérifie expiration/limite/e-mail éventuel. À ce moment créer membre et profil ; un compte Auth non admis ne voit aucune donnée métier. Premier admin initialisé par opération serveur documentée à partir de son UUID Auth vérifié, pas par « premier inscrit » public.
+Token aléatoire 32 octets URL-safe ; seul SHA-256 conservé. Les invitations peuvent rester disponibles pour des usages historiques/admin, mais elles ne sont plus nécessaires : à l’inscription Auth, le trigger serveur crée le membre et le profil minimal ; un compte Auth non admis ne voit aucune donnée métier. Premier admin initialisé par opération serveur documentée à partir de son UUID Auth vérifié, pas par « premier inscrit » public.
 
 ## 3. Salons et parties
 
@@ -173,7 +173,7 @@ Toutes les tables public : activer RLS, révoquer INSERT/UPDATE/DELETE de anon/a
 | history_entries | même filtre viewer |
 | player_game_stats | `is_site_member()` ; stats agrégées de membres, jamais historique tiers |
 
-`anon` ne lit aucune donnée métier. Les pages login/invitation sont publiques, leur contenu vient du code statique. Les RPC serveur exposées dans public sont `SECURITY INVOKER`, `SET search_path=''`, noms qualifiés, EXECUTE révoqué de PUBLIC/anon/authenticated et accordé au seul `service_role` effectif de la clé secrète serveur. Ce rôle reçoit USAGE privé et les droits nécessaires. Le serveur vérifie admission et acteur pour chaque opération ; le fait de posséder une clé serveur contourne RLS, donc aucun p_actor venant du body client.
+`anon` ne lit aucune donnée métier. Les pages de connexion sont publiques, leur contenu vient du code statique. Les RPC serveur exposées dans public sont `SECURITY INVOKER` ou, pour le provisionnement interne strictement nécessaire, `SECURITY DEFINER` avec `search_path=''`, noms qualifiés, EXECUTE révoqué de PUBLIC/anon/authenticated et accordé au seul `service_role` effectif de la clé secrète serveur. Ce rôle reçoit USAGE privé et les droits nécessaires. Le serveur vérifie admission et acteur pour chaque opération ; le fait de posséder une clé serveur contourne RLS, donc aucun p_actor venant du body client.
 
 Pour Realtime : canal `user:<auth.uid()>`, privé. Politique SELECT sur `realtime.messages` limitée à ce topic, extension broadcast et membre actif. Pas de droit d'envoyer des événements métier aux clients. Presence peut être ajouté au topic `presence:room:<roomId>` avec vérification d'appartenance par helper restreint ; **V1 utilise les heartbeats persistants et projections pour éviter ce second canal**. Ne pas confondre signal présence avec droit de jouer.
 
@@ -185,7 +185,7 @@ Toutes les RPC `server_*` suivantes sont exécutables uniquement par rôle serve
 
 | RPC | Contrat |
 |---|---|
-| `server_admit_member(actor, tokenHash, profile)` | verrou invitation, vérification utilisateur/email, consommation et création atomiques |
+| `server_provision_account(actor, pseudo?)` | provisionnement/rattrapage idempotent du profil et de l’admission du compte Auth courant |
 | `server_create_room(actor, requestId, slug, config)` | membre actif, limite salons, code unique, siège 0 + projection + reçu |
 | `server_join_room(actor, requestId, code)` | verrou salon, existe/en attente/non expiré, place, join idempotent |
 | `server_change_room(actor, commandId, expectedVersion, action)` | ready/config/leave/rematch, droits hôte, projections atomiques |

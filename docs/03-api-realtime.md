@@ -27,7 +27,7 @@ type MatchCommand = {
 
 | Méthode / route | Entrée | Résultat / règles |
 |---|---|---|
-| POST `/membership/redeem` | token, pseudo | membre + profil ; Auth e-mail vérifié exigé |
+| POST `/auth/provision` | pseudo? | provisionnement/rattrapage idempotent du profil du compte Auth courant |
 | GET `/me` | — | profil, admission, statistiques globales |
 | PATCH `/me` | pseudo?, avatarPreset? | contrôle unicité et propriétaire |
 | POST `/me/avatar` | multipart fichier | image réencodée, chemin sauvegardé |

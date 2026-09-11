@@ -52,7 +52,7 @@ CI : installation frozen-lockfile ; lint/typecheck ; unitaires moteurs ; validat
 
 ## 6. Matrice commune de tests
 
-- Auth : invité valide/invalide/expiré/déjà consommé, e-mail vérifié, compte non admis, compte désactivé, reset de mot de passe.
+- Auth : inscription libre e-mail/mot de passe, provisionnement automatique/rattrapage idempotent, e-mail vérifié ou en attente selon l’environnement, compte désactivé, reset de mot de passe.
 - Salon : deux joins concurrents au dernier siège, ready simultanés, config annule ready, hôte quitte, start double, un utilisateur démarre deux salons concurrents, code expiré.
 - Transaction : duplication exacte et payload modifié, versions concurrentes, rollback complet, score/finalisation unique, CAS échoué puis retry légal.
 - Secrets : tier C via REST/RPC/Broadcast, participant voulant lire vue adverse, état privé inaccessible, solution quiz avant révélation, main/pioche/bateaux/target non divulgués.

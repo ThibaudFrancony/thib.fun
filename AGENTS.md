@@ -80,6 +80,14 @@ Les slugs techniques sont stables. Les noms d'affichage sont des propositions mo
 
 ## Façon de travailler
 
+### Décision produit — inscription libre (12 septembre 2026)
+
+- Demande utilisateur : arrêter d’exiger une invitation pour créer et utiliser un compte ; permettre une inscription classique par e-mail et mot de passe, puis afficher l’espace du compte une fois connecté.
+- Ancienne règle : les comptes étaient admis uniquement via invitation et les parcours métier exigeaient un membre actif.
+- Nouvelle règle : Supabase Auth accepte l’inscription e-mail/mot de passe ; chaque nouvel utilisateur Auth reçoit automatiquement un profil minimal et une admission active. Une confirmation d’e-mail reste appliquée si elle est activée dans l’environnement Supabase, mais ne dépend d’aucune invitation.
+- Périmètre : admission, provisionnement/rattrapage des profils, callback de confirmation, écran de compte et navigation ; les invitations admin restent disponibles comme mécanisme historique optionnel et ne contrôlent plus l’accès.
+- Raison : permettre à deux amis de créer leur compte eux-mêmes sans intervention manuelle, tout en conservant l’authentification Supabase et les contrôles serveur/RLS.
+
 ### Mise à jour proactive du suivi
 
 - Lire `AGENTS.md` et `progression.md` avant toute modification substantielle.

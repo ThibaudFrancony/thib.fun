@@ -10,8 +10,7 @@ Base proposée : fond crème `#F7F7F2`, surfaces blanches, texte `#17211B`, seco
 
 | URL | Accès | Contenu |
 |---|---|---|
-| `/connexion` | public | e-mail/mot de passe, oubli mot de passe, lien invitation |
-| `/invitation/[token]` | public | inscription ou connexion, admission après vérification e-mail |
+| `/connexion` | public | inscription/connexion e-mail-mot de passe, confirmation e-mail, oubli mot de passe |
 | `/auth/callback` | public technique | échange Auth, redirection contrôlée relative |
 | `/mot-de-passe` | lien Auth valide | définir nouveau mot de passe |
 | `/` | membre | accueil neuf jeux |
@@ -39,7 +38,7 @@ Descriptions seed : Chute libre « Réponds juste pour éviter la chute. » ; À
 
 ## 4. Compte et profil
 
-Compte e-mail/mot de passe Supabase Auth, confirmation e-mail, accès sur invitation. SMTP réel à configurer pour usage entre amis ; documenter reset/confirmation avant mise en service. Pas de pseudo comme identifiant de connexion. Pseudo 2–24 caractères, unique sans distinction de casse ; erreur de collision lisible. Presets d'avatar fournis (8 symboles/couleurs), possibilité d'upload JPEG/PNG/WebP <= 2 Mo, réencodé en WebP 256×256 après vérification dimensions <= 4096×4096. Images signées privées, affichage de secours en cas d'URL expirée.
+Compte e-mail/mot de passe Supabase Auth, inscription libre et confirmation e-mail si activée par l’environnement. À la création Auth, un profil minimal et l’admission membre sont provisionnés automatiquement côté serveur ; aucune invitation n’est requise. SMTP réel à configurer pour usage entre amis ; documenter reset/confirmation avant mise en service. Pas de pseudo comme identifiant de connexion. Un pseudo initial est dérivé de l’e-mail puis reste distinct de l’e-mail ; il est 2–24 caractères et unique sans distinction de casse. Presets d’avatar fournis (8 symboles/couleurs), possibilité d'upload JPEG/PNG/WebP <= 2 Mo, réencodé en WebP 256×256 après vérification dimensions <= 4096×4096. Images signées privées, affichage de secours en cas d'URL expirée.
 
 Profil personnel : édition pseudo/avatar, parties terminées, victoires, défaites, égalités, parties coopératives ; section par jeu. Dénominateur taux de victoire = wins+losses+draws, hors coop/abandoned ; pas de pourcentage si zéro duel. Afficher séparément les interruptions. Profil d'autrui : ces agrégats, bouton « Notre historique », pas ses parties avec un tiers ni son e-mail.
 

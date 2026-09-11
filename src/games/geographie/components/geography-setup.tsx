@@ -36,7 +36,7 @@ export function GeographySetup() {
         <select id="difficulty" value={config.difficulty} onChange={(event) => update("difficulty", event.target.value as GeoConfig["difficulty"])} className="geo-select"><option value="easy">Grandes villes</option><option value="medium">Villes moyennes</option><option value="hard">Toutes les communes du pack</option></select>
       </div>
       <fieldset className="geo-radio-fieldset"><legend className="geo-label">Sélection des villes</legend><div className="geo-radio-grid"><label className="geo-radio-card" data-selected={config.selection === "random"}><input className="geo-visually-hidden" type="radio" name="selection" checked={config.selection === "random"} onChange={() => update("selection", "random")} /> <span><strong>Aléatoire</strong><small>Sans remise</small></span></label><label className="geo-radio-card" data-selected={config.selection === "challenge"}><input className="geo-visually-hidden" type="radio" name="selection" checked={config.selection === "challenge"} onChange={() => update("selection", "challenge")} /> <span><strong>Défi</strong><small>Vous les proposez</small></span></label></div></fieldset>
-      <p className="geo-panel-note">Le salon sera accessible avec un code à partager. Il faut deux comptes membres admis pour lancer la partie.</p>
+      <p className="geo-panel-note">Le salon sera accessible avec un code à partager. Il faut deux comptes connectés pour lancer la partie.</p>
       {error && <p role="alert" className="geo-error">{error}</p>}
       <button disabled={busy} onClick={createRoom} className="geo-primary-button">{busy ? "Création…" : "Créer le salon"}</button>
     </section>

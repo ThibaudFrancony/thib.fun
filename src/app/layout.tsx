@@ -6,6 +6,8 @@ export const metadata: Metadata = {
   description: "Une table privée de jeux à deux, en français.",
 };
 
+export const dynamic = "force-dynamic";
+
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="fr">

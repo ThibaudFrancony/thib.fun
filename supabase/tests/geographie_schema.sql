@@ -1,6 +1,6 @@
 begin;
 
-select plan(40);
+select plan(43);
 
 select has_schema('private', 'Le schéma privé existe');
 select has_table('public', 'profiles', 'Les profils sont disponibles');
@@ -134,6 +134,9 @@ select ok(exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.prona
 
 select ok(exists (select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname = 'public' and p.proname = 'server_room_heartbeat'), 'Le heartbeat du salon existe');
 select ok(exists (select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname = 'public' and p.proname = 'server_get_pair_history'), 'La lecture du duo est restreinte à une RPC serveur');
+select ok(exists (select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname = 'private' and p.proname = 'provision_account'), 'Le provisionnement de compte est privé');
+select ok(exists (select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname = 'public' and p.proname = 'server_provision_account'), 'Le rattrapage de compte est une RPC serveur');
+select ok(exists (select 1 from pg_trigger where tgname = 'auth_user_provision_account'), 'Les nouveaux comptes Auth reçoivent un profil automatiquement');
 
 select * from finish();
 rollback;
