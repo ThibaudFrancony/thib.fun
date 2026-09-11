@@ -24,6 +24,10 @@ import { projectBombparty } from "@/games/bombparty/projection";
 import { skyjoConfigSchema } from "@/games/skyjo/config";
 import { reduceSkyjo, SKYJO_ENGINE_VERSION, SKYJO_RULES_VERSION } from "@/games/skyjo/engine";
 import { projectSkyjo } from "@/games/skyjo/projection";
+import { navalActionSchema } from "@/games/bataille-navale/types";
+import { navalConfigSchema } from "@/games/bataille-navale/config";
+import { reduceNaval, NAVAL_ENGINE_VERSION, NAVAL_RULES_VERSION } from "@/games/bataille-navale/engine";
+import { projectNaval } from "@/games/bataille-navale/projection";
 import { getAuthenticatedMember } from "@/server/auth";
 import { getSupabaseServerConfig } from "@/server/config";
 import { entropyValues, hashCommand } from "@/server/hash";
@@ -119,6 +123,14 @@ export async function POST(request: Request, { params }: { params: Promise<{ mat
       const transition = reduceBombparty(snapshot.state, parsedAction.data, config, context);
       const views = participants.map((viewerId) => ({ viewerId, payload: projectBombparty(transition.state, config, viewerId, participants, identities) }));
       response = await commitMatch({ matchId, expectedVersion: body.data.expectedVersion, actorId: member.id, commandId: body.data.commandId, commandHash: hashCommand(matchId, member.id, parsedAction.data.type, parsedAction.data), source: "player", previousPhaseId: snapshot.phaseId, next: { state: transition.state, phaseId: transition.phaseId, deadlineAt: transition.deadlineAt, deadlineKind: transition.deadlineKind }, views, jobsToUpsert: transition.jobs, jobsToCancel: [], roundRecords: transition.roundRecords, event: transition.event, result: transition.result, rulesVersion: BOMBPARTY_RULES_VERSION, engineVersion: BOMBPARTY_ENGINE_VERSION });
+    } else if (snapshot.gameSlug === "bataille-navale") {
+      const parsedAction = navalActionSchema.safeParse(body.data.action);
+      if (!parsedAction.success) return jsonError("INVALID_REQUEST", 400, "La commande de jeu est invalide.");
+      const config = navalConfigSchema.parse(snapshot.config);
+      const context = { nowMs: Date.parse(snapshot.serverNow), actorId: member.id, matchId, participants, content: null, entropy: entropyValues(), phaseId: snapshot.phaseId, nextPhaseId, currentDeadlineAt: snapshot.deadlineAt, currentDeadlineKind: snapshot.deadlineKind };
+      const transition = reduceNaval(snapshot.state, parsedAction.data, config, context);
+      const views = participants.map((viewerId) => ({ viewerId, payload: projectNaval(transition.state, config, viewerId, participants, identities) }));
+      response = await commitMatch({ matchId, expectedVersion: body.data.expectedVersion, actorId: member.id, commandId: body.data.commandId, commandHash: hashCommand(matchId, member.id, parsedAction.data.type, parsedAction.data), source: "player", previousPhaseId: snapshot.phaseId, next: { state: transition.state, phaseId: transition.phaseId, deadlineAt: transition.deadlineAt, deadlineKind: transition.deadlineKind }, views, jobsToUpsert: transition.jobs, jobsToCancel: [], roundRecords: transition.roundRecords, event: transition.event, result: transition.result, rulesVersion: NAVAL_RULES_VERSION, engineVersion: NAVAL_ENGINE_VERSION });
     } else {
       throw new Error("GAME_NOT_READY");
     }

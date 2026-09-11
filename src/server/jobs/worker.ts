@@ -59,6 +59,16 @@ import {
 } from "@/games/bombparty/engine";
 import { projectBombparty } from "@/games/bombparty/projection";
 import { loadBombpartyContent } from "@/server/bombparty/content";
+import { navalConfigSchema } from "@/games/bataille-navale/config";
+import {
+  isNavalDeadlineJobStale,
+  onNavalAbsence,
+  onNavalDeadline,
+  shouldAbandonForNavalAbsence,
+  NAVAL_ENGINE_VERSION,
+  NAVAL_RULES_VERSION,
+} from "@/games/bataille-navale/engine";
+import { projectNaval } from "@/games/bataille-navale/projection";
 
 export const workerJobSchema = z.object({
   jobId: z.string().uuid(),
@@ -746,6 +756,66 @@ async function processBombpartyAbsenceJob(job: WorkerJob, context: JobContext): 
   return { jobId: job.jobId, matchId: context.matchId, status: "committed", version: response.version };
 }
 
+async function processNavalJob(job: WorkerJob, context: JobContext): Promise<Record<string, unknown>> {
+  if (context.jobKind === "check_absence") return processNavalAbsenceJob(job, context);
+  if (context.jobKind !== "preparation_timeout" && context.jobKind !== "turn_timeout") {
+    await cancelIfClaimStillExists(job, "UNSUPPORTED_JOB");
+    return { jobId: job.jobId, status: "cancelled", reason: "UNSUPPORTED_JOB" };
+  }
+  // Un job d'une ancienne phase ne mute jamais la phase courante.
+  if (isNavalDeadlineJobStale(context.jobPhaseId, context.phaseId)) {
+    await cancelIfClaimStillExists(job, "STALE_DEADLINE");
+    return { jobId: job.jobId, status: "cancelled", reason: "STALE_DEADLINE" };
+  }
+  const config = navalConfigSchema.parse(context.config);
+  const players = orderedPlayers(context.players);
+  const participants = [players[0].id, players[1].id] as const;
+  const identities = players.map((player) => ({ id: player.id, pseudo: player.pseudo })) as [{ id: string; pseudo: string }, { id: string; pseudo: string }];
+  const transition = onNavalDeadline(context.state, context.jobKind, config, {
+    nowMs: Date.parse(context.serverNow), actorId: null, matchId: context.matchId, participants,
+    content: null, entropy: entropyValues(), phaseId: context.phaseId, nextPhaseId: randomUUID(),
+    currentDeadlineAt: context.deadlineAt, currentDeadlineKind: context.deadlineKind,
+  });
+  const views = participants.map((viewerId) => ({ viewerId, payload: projectNaval(transition.state, config, viewerId, participants, identities) }));
+  const response = await commitMatch({
+    matchId: context.matchId, expectedVersion: context.version, actorId: null, commandId: job.jobId,
+    commandHash: hashCommand(context.matchId, job.jobId, context.jobKind, { jobPhaseId: context.jobPhaseId, payload: context.jobPayload }),
+    source: "job", jobId: job.jobId, leaseToken: job.leaseToken, jobKind: context.jobKind,
+    previousPhaseId: context.phaseId,
+    next: { state: transition.state, phaseId: transition.phaseId, deadlineAt: transition.deadlineAt, deadlineKind: transition.deadlineKind },
+    views, jobsToUpsert: transition.jobs, jobsToCancel: [], roundRecords: transition.roundRecords,
+    event: transition.event, result: transition.result, rulesVersion: NAVAL_RULES_VERSION, engineVersion: NAVAL_ENGINE_VERSION,
+  });
+  return { jobId: job.jobId, matchId: context.matchId, status: "committed", version: response.version };
+}
+
+async function processNavalAbsenceJob(job: WorkerJob, context: JobContext): Promise<Record<string, unknown>> {
+  const players = orderedPlayers(context.players);
+  const lastSeenAt = players.map((player) => player.lastSeenAt).filter((value): value is string => typeof value === "string") as string[];
+  if (lastSeenAt.length !== 2 || !shouldAbandonForNavalAbsence([lastSeenAt[0], lastSeenAt[1]], Date.parse(context.serverNow))) {
+    const response = await finishJob(job.jobId, job.leaseToken, "done");
+    return { jobId: job.jobId, matchId: context.matchId, status: "checked", response };
+  }
+  const config = navalConfigSchema.parse(context.config);
+  const participants = [players[0].id, players[1].id] as const;
+  const identities = players.map((player) => ({ id: player.id, pseudo: player.pseudo })) as [{ id: string; pseudo: string }, { id: string; pseudo: string }];
+  const transition = onNavalAbsence(context.state, config, {
+    nowMs: Date.parse(context.serverNow), actorId: null, matchId: context.matchId, participants,
+    content: null, entropy: [], phaseId: context.phaseId, nextPhaseId: randomUUID(),
+    currentDeadlineAt: context.deadlineAt, currentDeadlineKind: context.deadlineKind,
+  });
+  const views = participants.map((viewerId) => ({ viewerId, payload: projectNaval(transition.state, config, viewerId, participants, identities) }));
+  const response = await commitMatch({
+    matchId: context.matchId, expectedVersion: context.version, actorId: null, commandId: job.jobId,
+    commandHash: hashCommand(context.matchId, job.jobId, context.jobKind, { lastSeenAt }), source: "job",
+    jobId: job.jobId, leaseToken: job.leaseToken, jobKind: context.jobKind, previousPhaseId: context.phaseId,
+    next: { state: transition.state, phaseId: transition.phaseId, deadlineAt: transition.deadlineAt, deadlineKind: transition.deadlineKind },
+    views, jobsToUpsert: transition.jobs, jobsToCancel: [], roundRecords: transition.roundRecords,
+    event: transition.event, result: transition.result, rulesVersion: NAVAL_RULES_VERSION, engineVersion: NAVAL_ENGINE_VERSION,
+  });
+  return { jobId: job.jobId, matchId: context.matchId, status: "committed", version: response.version };
+}
+
 export async function processWorkerJob(job: WorkerJob): Promise<Record<string, unknown>> {
   try {
     const context = await getJobContext(job.jobId, job.leaseToken);
@@ -754,6 +824,7 @@ export async function processWorkerJob(job: WorkerJob): Promise<Record<string, u
     if (context.gameSlug === "trou-noir") return await processTrouNoirJob(job, context);
     if (context.gameSlug === "ttmc") return await processTtmcJob(job, context);
     if (context.gameSlug === "bombparty") return await processBombpartyJob(job, context);
+    if (context.gameSlug === "bataille-navale") return await processNavalJob(job, context);
     if (context.gameSlug !== "geographie") {
       await cancelIfClaimStillExists(job, "GAME_NOT_IMPLEMENTED");
       return { jobId: job.jobId, status: "cancelled", reason: "GAME_NOT_IMPLEMENTED" };

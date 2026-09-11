@@ -6,6 +6,7 @@ import { SkyjoMatch } from "@/games/skyjo/components/skyjo-match";
 import { TrouNoirMatch } from "@/games/trou-noir/components/trou-noir-match";
 import { TtmcMatch } from "@/games/ttmc/components/ttmc-match";
 import { BombpartyMatch } from "@/games/bombparty/components/bombparty-match";
+import { BatailleNavaleMatch } from "@/games/bataille-navale/components/bataille-navale-match";
 import { UnoMatch } from "@/games/uno/components/uno-match";
 
 export function MatchGame({ matchId }: { matchId: string }) {
@@ -28,5 +29,6 @@ export function MatchGame({ matchId }: { matchId: string }) {
   if (gameSlug === "uno") return <UnoMatch matchId={matchId} />;
   if (gameSlug === "skyjo") return <SkyjoMatch matchId={matchId} />;
   if (gameSlug === "bombparty") return <BombpartyMatch matchId={matchId} />;
+  if (gameSlug === "bataille-navale") return <BatailleNavaleMatch matchId={matchId} />;
   return <main className="min-h-screen px-5 py-12"><div className="mx-auto max-w-xl rounded-3xl border border-[var(--line)] bg-white/70 p-8 text-center text-[var(--muted)]">Chargement de la partie…</div></main>;
 }

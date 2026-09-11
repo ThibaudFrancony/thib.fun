@@ -72,7 +72,7 @@ export const PUBLIC_GAMES: readonly PublicGame[] = [
     description: "Repère et coule la flotte adverse.",
     priority: 1,
     kind: "competitive",
-    availability: "coming_soon",
+    availability: "ready",
     duration: "10–20 min",
   },
   {
