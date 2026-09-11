@@ -1,8 +1,10 @@
 # État de réalisation
 
-Dernière mise à jour : 10 septembre 2026.
+Dernière mise à jour : 11 septembre 2026.
 
-**Le cadrage initial et les migrations de schéma sont versionnés ; les migrations sont validées sur le Supabase local dans Docker. Aucune migration n'a été appliquée à une base distante et aucune banque de contenu de production n'a été créée.** L'accueil multi-jeux, Géographie et UNO sont présents dans l'arbre de travail ; les autres jeux restent à développer.
+Le suivi opérationnel détaillé et maintenu après chaque changement se trouve dans [progression.md](../progression.md). Ce document conserve le suivi de réalisation par lots et doit rester cohérent avec lui.
+
+**Le cadrage initial et les migrations de schéma sont versionnés ; les migrations sont validées sur le Supabase local dans Docker. Aucune migration n'a été appliquée à une base distante et aucune banque de contenu de production n'a été créée.** L'accueil multi-jeux, Géographie et UNO sont présents sur `main` ; les autres jeux restent à développer.
 
 Contrôles effectués : index des neuf jeux dans AGENTS, résolution des liens locaux, blocs de code Markdown équilibrés, absence de marqueurs d'espace réservé, couverture des règles/configurations/états/projections/scores/tests. Relecture croisée des droits SQL, reçus système, délais, contenu et résultats coopératifs. Le lint Supabase local ne signale aucune erreur ; 40 assertions pgTAP du schéma passent. Les contrôles applicatifs sont détaillés dans la ligne de chaque lot.
 
@@ -17,13 +19,13 @@ Contrôles effectués : index des neuf jeux dans AGENTS, résolution des liens l
 | Supabase schéma/Auth/Storage/RLS | Migrations validées localement, non appliquées à distance | Revue puis fusion sur `main` pour l'intégration GitHub |
 | Salons/transactions/Realtime/jobs | À faire | Base |
 | Profils/historique/duos | À faire | Base + finalisation |
-| Géographie | Implémenté sur `codex/geographie` | Tests moteur/projection et parcours E2E présents ; migration distante et recette à deux à finaliser |
+| Géographie | Implémenté sur `main` | Tests moteur/projection et parcours E2E présents ; migration distante et recette à deux à finaliser |
 | Trou Noir | À faire | Socle + quiz + benchmark IA |
 | TTMC | À faire | Socle + couverture niveaux + IA |
 | Bataille navale | À faire | Socle |
 | BombParty + entraînement | À faire | Socle + lexique + recette timer |
 | Skyjo | À faire | Socle |
-| UNO | Implémenté le 10 septembre 2026 (non commité) | Moteur pur, projection secrète, API/worker, UI, migration `20260910100000_uno_ready.sql` ; 13 tests UNO, typecheck/lint/build Webpack et Supabase local OK ; recette Chromium à deux sessions OK ; migration distante à finaliser |
+| UNO | Implémenté sur `main` le 10 septembre 2026 | Moteur pur, projection secrète, API/worker, UI, migration `20260910100000_uno_ready.sql` ; 13 tests UNO, typecheck/lint/build Webpack et Supabase local OK selon le suivi ; recette Chromium à deux sessions et migration distante à finaliser |
 | Compatibilité | À faire | Socle + questionnaires |
 | Longueur d'onde | À faire | Socle + axes |
 

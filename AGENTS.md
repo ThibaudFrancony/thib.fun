@@ -4,17 +4,18 @@
 
 Créer un site privé en français regroupant neuf jeux pour deux amis en ligne. Les priorités produit sont Trou Noir, TTMC et Géographie. Le site partage comptes, salons, profils, résultats et historique des confrontations. L'expérience doit fonctionner sur desktop et mobile, sans transmission manuelle des questions et sans arbitre humain obligatoire.
 
-**Le dépôt contient actuellement des spécifications, pas une application.** Ne pas présenter une fonctionnalité documentée comme développée ou testée. La demande qui a créé ces fichiers autorisait uniquement la documentation. Une demande ultérieure d'implémentation autorise les changements nécessaires à son périmètre, pas la réalisation arbitraire des neuf jeux.
+**Le dépôt contient les spécifications et un premier socle applicatif.** L'accueil multi-jeux, Géographie et UNO ont du code versionné ; le reste du produit demeure partiel ou à construire. Ne pas présenter une fonctionnalité documentée comme développée ou testée. Une demande d'implémentation autorise les changements nécessaires à son périmètre, pas la réalisation arbitraire des neuf jeux. Consulter [progression.md](progression.md) pour l'état réel courant.
 
 ## Lecture obligatoire et ordre de priorité
 
 1. Instructions explicites de l'utilisateur dans la conversation active.
 2. Ce fichier.
-3. [Index et décisions](docs/README.md), notamment le statut des décisions.
-4. [Architecture](docs/01-architecture.md), [base de données](docs/02-database.md), [API et synchronisation](docs/03-api-realtime.md), [contrats du moteur](docs/08-engine-contracts.md).
-5. [Produit et interface](docs/04-product-ui.md), [contenu et IA](docs/05-content-ai.md).
-6. La spécification du jeu demandé dans le tableau ci-dessous.
-7. [Livraison et recette](docs/06-delivery-testing.md).
+3. [Progression](progression.md), qui décrit la réalité du dépôt, les validations effectuées et les décisions opérationnelles.
+4. [Index et décisions](docs/README.md), notamment le statut des décisions.
+5. [Architecture](docs/01-architecture.md), [base de données](docs/02-database.md), [API et synchronisation](docs/03-api-realtime.md), [contrats du moteur](docs/08-engine-contracts.md).
+6. [Produit et interface](docs/04-product-ui.md), [contenu et IA](docs/05-content-ai.md).
+7. La spécification du jeu demandé dans le tableau ci-dessous.
+8. [Livraison et recette](docs/06-delivery-testing.md).
 
 Ne pas implémenter un jeu à partir du seul résumé du README. Lire ses dépendances communes. Si deux documents se contredisent, privilégier le contrat commun pour sécurité, transactions et réseau ; la fiche du jeu est l'autorité pour ses règles. Résoudre et documenter une contradiction réelle avant de coder la partie affectée.
 
@@ -36,8 +37,8 @@ Les détails de SDK évoluent. Vérifier la documentation officielle et les skil
 - Branche de production : **`main`**. L'utilisateur a confirmé avoir relié ce dépôt à Supabase et activé **Deploy to production** sur cette branche. Cette configuration est déclarée par l'utilisateur ; ne pas prétendre avoir inspecté le dashboard tant que ce n'est pas fait.
 - L'intégration GitHub native Supabase est le mécanisme prévu d'application des migrations de production. Un push/merge sur main contenant de nouvelles migrations doit être traité comme un déploiement potentiel de base de données.
 - Ne pas ajouter un deuxième déploiement automatique via GitHub Actions, `supabase db push` dans le build Vercel ou un script de démarrage. La CI teste les migrations ; l'intégration Supabase les applique en production.
-- Les fichiers SQL versionnés iront dans `supabase/migrations/` à la racine. Le working directory de l'intégration doit être `.` ; vérifier ce réglage au bootstrap. Le présent dépôt de cadrage ne contient aucune migration à appliquer.
-- Avant la première migration, inspecter le schéma distant et son historique : si des objets métier existent déjà, les récupérer dans une migration de référence et réconcilier l'historique sans réinitialiser la base. Ne pas supposer que le projet est vide parce que le dépôt l'est.
+- Les fichiers SQL versionnés vont dans `supabase/migrations/` à la racine. Le working directory de l'intégration doit être `.` ; vérifier ce réglage au bootstrap. La présence d'une migration dans Git ne prouve pas qu'elle a été appliquée à distance ; consulter `progression.md`.
+- Avant toute première migration de production, inspecter le schéma distant et son historique : si des objets métier existent déjà, les récupérer dans une migration de référence et réconcilier l'historique sans réinitialiser la base. Ne pas supposer que le projet est vide parce qu'une migration existe dans le dépôt.
 - Créer les migrations avec la CLI, les tester localement ou sur un environnement isolé, puis les committer avec le code concerné. Une migration déjà appliquée est immuable ; toute correction crée une nouvelle migration.
 - Préserver utilisateurs, parties, résultats, contenus et politiques d'accès. Privilégier les ajouts compatibles, reprises de données explicites et changements en plusieurs étapes. Pas de DROP/TRUNCATE/reset distant, ni réparation d'historique de migration à l'aveugle pour faire passer un déploiement.
 - Vercel et Supabase ne constituent pas une transaction de déploiement unique : une fusion ne garantit pas que la base sera prête avant le code. Garder les changements compatibles avec l'ancien et le nouveau code ; pour une dépendance stricte, livrer/vérifier la migration avant d'activer le code qui l'exige.
@@ -79,10 +80,21 @@ Les slugs techniques sont stables. Les noms d'affichage sont des propositions mo
 
 ## Façon de travailler
 
+### Mise à jour proactive du suivi
+
+- Lire `AGENTS.md` et `progression.md` avant toute modification substantielle.
+- Après chaque implémentation, correction, migration, test significatif ou décision de périmètre, mettre à jour `progression.md` dans le même changement. Y noter les fonctionnalités réellement présentes, les tests réellement exécutés, les limitations, les difficultés rencontrées et la prochaine étape utile.
+- Ne jamais cocher une fonctionnalité sur la base d'une spécification seule. Distinguer `documenté`, `présent dans le code`, `validé localement`, `validé à deux sessions` et `déployé`.
+- Si l'utilisateur signale un problème pendant le code (« ça ne marche pas », « j'ai une erreur », formulation équivalente), ou si une commande, un test ou une implémentation échoue, documenter automatiquement le problème dans la section `Difficultés rencontrées pendant le développement` de `progression.md`. Rester factuel, distinguer cause confirmée et hypothèse, puis ajouter la résolution et la vérification lorsqu'elles existent.
+- Ce journal est append-only pour les problèmes réels : ne pas y ajouter de risques théoriques et ne pas supprimer un problème résolu ; compléter son entrée ou ajouter sa résolution.
+- Comparer chaque demande explicite de l'utilisateur aux règles de ce fichier. Si elle les contredit, traiter cette demande comme une décision de projet : mettre à jour `AGENTS.md`, `progression.md` et les documents dépendants dans le même changement, en conservant la date, la demande, l'ancienne règle, la nouvelle règle, le périmètre et la raison. Ne pas créer silencieusement une exception temporaire.
+- Ne pas qualifier de contradiction une simple contrainte d'outil, une panne, une hypothèse de l'agent ou une documentation obsolète : les consigner dans la bonne rubrique de `progression.md`.
+- Si aucune contradiction utilisateur n'est détectée, le journal doit l'indiquer explicitement plutôt que d'en inventer une.
+
 Pour « implémente X suivant le plan » : auditer le socle existant, construire les dépendances manquantes de X, implémenter son moteur et ses tests, sa persistance, ses projections, son UI, puis tester avec deux sessions séparées. Ne pas créer de boutons simulant une fonctionnalité présentée comme réelle. Un jeu incomplet reste `coming_soon` et son démarrage est refusé côté serveur.
 
 Les décisions marquées **défaut de spécification** sont exécutables sans redemander chaque détail. Elles ne sont pas des règles officielles revendiquées ni une validation visuelle du propriétaire. Ne solliciter l'utilisateur que pour une contradiction de périmètre, une décision structurante non couverte ou des identifiants/accès manquants. Continuer les travaux indépendants pendant un blocage externe.
 
 Chaque ajout à la base utilise des migrations versionnées créées avec la CLI Supabase. Conserver scripts de contenu et tests reproductibles. Ne pas modifier silencieusement une migration déjà déployée. Ne pas lancer de reset de production, publier des secrets ou enregistrer des données de production dans Git.
 
-À la fin d'une implémentation, donner : fonctionnalités réelles, tests effectués, limitations, configuration restante. Mettre à jour [le suivi](docs/07-implementation-status.md), sans annoncer tous les jeux terminés lorsque seul un module l'est. Ne pas committer ou déployer automatiquement sans instruction de la tâche active.
+À la fin d'une implémentation, donner : fonctionnalités réelles, tests effectués, limitations, configuration restante. Mettre à jour [la progression opérationnelle](progression.md) et, si nécessaire, [le suivi de spécification](docs/07-implementation-status.md), sans annoncer tous les jeux terminés lorsque seul un module l'est. Ne pas committer ou déployer automatiquement sans instruction de la tâche active.

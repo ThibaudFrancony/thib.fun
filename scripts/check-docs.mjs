@@ -1,8 +1,9 @@
 import { access, readdir, readFile } from "node:fs/promises";
 import { constants } from "node:fs";
 import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const root = resolve(new URL("..", import.meta.url).pathname);
+const root = resolve(fileURLToPath(new URL("..", import.meta.url)));
 const docsRoot = resolve(root, "docs");
 const files = [];
 
@@ -15,7 +16,7 @@ async function collect(directory) {
 }
 
 await collect(docsRoot);
-files.push(resolve(root, "README.md"), resolve(root, "AGENTS.md"));
+files.push(resolve(root, "README.md"), resolve(root, "AGENTS.md"), resolve(root, "progression.md"));
 const errors = [];
 for (const file of files) {
   const text = await readFile(file, "utf8");
