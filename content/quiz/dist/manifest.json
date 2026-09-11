@@ -1,0 +1,13 @@
+{
+  "kind": "quiz",
+  "slug": "trou-noir",
+  "version": 1,
+  "status": "published",
+  "source": "Rédaction originale pour tibo.fun",
+  "license": "Contenu original tibo.fun, usage privé",
+  "author": "tibo.fun",
+  "questionCount": 120,
+  "reviewedBy": "relecture ciblée du 11/09/2026 (corpus de production 300 questions restant à publier)",
+  "reviewedAt": "2026-09-11",
+  "coverage": "6 questions par (catégorie, difficulté 3-6) ; configuration complète à 5 catégories garantie, sous-ensembles restreints ou formats longs pouvant refuser le démarrage (CONTENT_UNAVAILABLE)"
+}

@@ -18,7 +18,9 @@
     "test:db": "supabase test db --local",
     "test:e2e": "playwright test",
     "geo:pack": "node scripts/build-geography-pack.mjs",
-    "content:validate": "node scripts/validate-geography-pack.mjs",
+    "quiz:pack": "node scripts/build-trou-noir-pack.mjs",
+    "quiz:migration": "node scripts/build-trou-noir-migration.mjs",
+    "content:validate": "node scripts/validate-geography-pack.mjs && node scripts/build-trou-noir-pack.mjs",
     "docs:check": "node scripts/check-docs.mjs",
     "local:fixture": "node scripts/seed-local-members.mjs"
   },

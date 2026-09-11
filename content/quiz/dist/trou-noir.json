@@ -1,0 +1,3059 @@
+{
+  "packId": "trou-noir-v1",
+  "packVersion": 1,
+  "questions": [
+    {
+      "itemId": "tn1-0001",
+      "packId": "trou-noir-v1",
+      "logicalKey": "culture-livre-petit-prince",
+      "category": "culture",
+      "themeLabel": "Littérature",
+      "difficulty": 3,
+      "prompt": "Qui a écrit « Le Petit Prince », publié en 1943 ?",
+      "canonical": "Antoine de Saint-Exupéry",
+      "aliases": [
+        "Saint-Exupéry",
+        "Saint Exupéry"
+      ],
+      "answerType": "person",
+      "requiredPrecision": "Le nom de l'auteur suffit.",
+      "allowSurnameOnly": true,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "« Le Petit Prince » est l'œuvre d'Antoine de Saint-Exupéry, parue en 1943.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Le_Petit_Prince",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0002",
+      "packId": "trou-noir-v1",
+      "logicalKey": "culture-peinture-mona-lisa",
+      "category": "culture",
+      "themeLabel": "Peinture",
+      "difficulty": 3,
+      "prompt": "Quel peintre italien a réalisé « La Joconde » ?",
+      "canonical": "Léonard de Vinci",
+      "aliases": [
+        "Leonard de Vinci",
+        "Leonardo da Vinci"
+      ],
+      "answerType": "person",
+      "requiredPrecision": "Le nom du peintre suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "« La Joconde » est l'œuvre de Léonard de Vinci, conservée au musée du Louvre.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/La_Joconde",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0003",
+      "packId": "trou-noir-v1",
+      "logicalKey": "culture-musique-quatre-saisons",
+      "category": "culture",
+      "themeLabel": "Musique",
+      "difficulty": 3,
+      "prompt": "Quel compositeur italien a écrit « Les Quatre Saisons » ?",
+      "canonical": "Antonio Vivaldi",
+      "aliases": [
+        "Vivaldi"
+      ],
+      "answerType": "person",
+      "requiredPrecision": "Le nom du compositeur suffit.",
+      "allowSurnameOnly": true,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "« Les Quatre Saisons » sont quatre concertos pour violon d'Antonio Vivaldi.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Les_Quatre_Saisons_(Vivaldi)",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0004",
+      "packId": "trou-noir-v1",
+      "logicalKey": "culture-cinema-tour-eiffel",
+      "category": "culture",
+      "themeLabel": "Cinéma",
+      "difficulty": 3,
+      "prompt": "Dans quelle ville se déroule principalement le film « Ratatouille » ?",
+      "canonical": "Paris",
+      "aliases": [],
+      "answerType": "place",
+      "requiredPrecision": "Le nom de la ville suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "« Ratatouille » se déroule à Paris, dans les cuisines d'un grand restaurant.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Ratatouille_(film)",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0005",
+      "packId": "trou-noir-v1",
+      "logicalKey": "culture-bd-asterix-village",
+      "category": "culture",
+      "themeLabel": "Bande dessinée",
+      "difficulty": 3,
+      "prompt": "Quel petit animal accompagne toujours le héros dans « Astérix » ?",
+      "canonical": "Idéfix",
+      "aliases": [
+        "Idefix"
+      ],
+      "answerType": "text",
+      "requiredPrecision": "Le nom exact du personnage.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "Idéfix est le petit chien blanc d'Obélix dans la série « Astérix ».",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Id%C3%A9fix",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0006",
+      "packId": "trou-noir-v1",
+      "logicalKey": "culture-livre-miserables",
+      "category": "culture",
+      "themeLabel": "Littérature",
+      "difficulty": 3,
+      "prompt": "Qui est l'auteur du roman « Les Misérables », publié en 1862 ?",
+      "canonical": "Victor Hugo",
+      "aliases": [
+        "Hugo"
+      ],
+      "answerType": "person",
+      "requiredPrecision": "Le nom de l'auteur suffit.",
+      "allowSurnameOnly": true,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "« Les Misérables » est un roman de Victor Hugo paru en 1862.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Les_Mis%C3%A9rables",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0007",
+      "packId": "trou-noir-v1",
+      "logicalKey": "culture-peinture-nuit-etoilee",
+      "category": "culture",
+      "themeLabel": "Peinture",
+      "difficulty": 4,
+      "prompt": "Quel peintre néerlandais a réalisé « La Nuit étoilée » en 1889 ?",
+      "canonical": "Vincent van Gogh",
+      "aliases": [
+        "Van Gogh",
+        "Vincent Van Gogh"
+      ],
+      "answerType": "person",
+      "requiredPrecision": "Le nom du peintre suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "« La Nuit étoilée » a été peinte par Vincent van Gogh en 1889 à Saint-Rémy-de-Provence.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/La_Nuit_%C3%A9toil%C3%A9e_(Van_Gogh)",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0008",
+      "packId": "trou-noir-v1",
+      "logicalKey": "culture-theatre-moliere-avare",
+      "category": "culture",
+      "themeLabel": "Théâtre",
+      "difficulty": 4,
+      "prompt": "Quel dramaturge français a écrit la comédie « L'Avare » en 1668 ?",
+      "canonical": "Molière",
+      "aliases": [
+        "Moliere",
+        "Jean-Baptiste Poquelin"
+      ],
+      "answerType": "person",
+      "requiredPrecision": "Le nom de l'auteur suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "« L'Avare » est une comédie de Molière créée en 1668.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/L%27Avare",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0009",
+      "packId": "trou-noir-v1",
+      "logicalKey": "culture-musique-bolero",
+      "category": "culture",
+      "themeLabel": "Musique",
+      "difficulty": 4,
+      "prompt": "Quel compositeur français a écrit le « Boléro », créé en 1928 ?",
+      "canonical": "Maurice Ravel",
+      "aliases": [
+        "Ravel"
+      ],
+      "answerType": "person",
+      "requiredPrecision": "Le nom du compositeur suffit.",
+      "allowSurnameOnly": true,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "Le « Boléro » est une œuvre de Maurice Ravel créée en 1928.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Bol%C3%A9ro_(Ravel)",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0010",
+      "packId": "trou-noir-v1",
+      "logicalKey": "culture-cinema-palmares-2024",
+      "category": "culture",
+      "themeLabel": "Cinéma",
+      "difficulty": 4,
+      "prompt": "Quel film de Justine Triet a remporté la Palme d'or au Festival de Cannes en 2023 ?",
+      "canonical": "Anatomie d'une chute",
+      "aliases": [
+        "Anatomie d une chute"
+      ],
+      "answerType": "text",
+      "requiredPrecision": "Le titre exact du film.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "« Anatomie d'une chute » de Justine Triet a obtenu la Palme d'or à Cannes en 2023.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Anatomie_d%27une_chute",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0011",
+      "packId": "trou-noir-v1",
+      "logicalKey": "culture-architecture-chambord",
+      "category": "culture",
+      "themeLabel": "Architecture",
+      "difficulty": 4,
+      "prompt": "Quel château de la Loire, célèbre pour son escalier à double révolution, fut commandé par François Ier ?",
+      "canonical": "Chambord",
+      "aliases": [
+        "Château de Chambord",
+        "Chateau de Chambord"
+      ],
+      "answerType": "place",
+      "requiredPrecision": "Le nom du château suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "Le château de Chambord, commandé par François Ier, possède un escalier à double révolution.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Ch%C3%A2teau_de_Chambord",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0012",
+      "packId": "trou-noir-v1",
+      "logicalKey": "culture-poesie-fables-fontaine",
+      "category": "culture",
+      "themeLabel": "Littérature",
+      "difficulty": 4,
+      "prompt": "Quel fabuliste français du XVIIe siècle a écrit « Le Corbeau et le Renard » ?",
+      "canonical": "Jean de La Fontaine",
+      "aliases": [
+        "La Fontaine"
+      ],
+      "answerType": "person",
+      "requiredPrecision": "Le nom de l'auteur suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "« Le Corbeau et le Renard » est une fable de Jean de La Fontaine.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Jean_de_La_Fontaine",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0013",
+      "packId": "trou-noir-v1",
+      "logicalKey": "culture-peinture-radeau-meduse",
+      "category": "culture",
+      "themeLabel": "Peinture",
+      "difficulty": 5,
+      "prompt": "Quel peintre romantique français a réalisé « Le Radeau de La Méduse » entre 1818 et 1819 ?",
+      "canonical": "Théodore Géricault",
+      "aliases": [
+        "Géricault",
+        "Gericault",
+        "Theodore Gericault"
+      ],
+      "answerType": "person",
+      "requiredPrecision": "Le nom du peintre suffit.",
+      "allowSurnameOnly": true,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "« Le Radeau de La Méduse » est l'œuvre de Théodore Géricault, peinte entre 1818 et 1819.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Le_Radeau_de_La_M%C3%A9duse",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0014",
+      "packId": "trou-noir-v1",
+      "logicalKey": "culture-livre-recherche-temps",
+      "category": "culture",
+      "themeLabel": "Littérature",
+      "difficulty": 5,
+      "prompt": "Quel écrivain français est l'auteur d'« À la recherche du temps perdu » ?",
+      "canonical": "Marcel Proust",
+      "aliases": [
+        "Proust"
+      ],
+      "answerType": "person",
+      "requiredPrecision": "Le nom de l'auteur suffit.",
+      "allowSurnameOnly": true,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "« À la recherche du temps perdu » est l'œuvre de Marcel Proust, publiée entre 1913 et 1927.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/%C3%80_la_recherche_du_temps_perdu",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0015",
+      "packId": "trou-noir-v1",
+      "logicalKey": "culture-musique-sacre-printemps",
+      "category": "culture",
+      "themeLabel": "Musique",
+      "difficulty": 5,
+      "prompt": "Quel compositeur russe a écrit « Le Sacre du printemps », créé en 1913 à Paris ?",
+      "canonical": "Igor Stravinsky",
+      "aliases": [
+        "Stravinsky",
+        "Igor Stravinski"
+      ],
+      "answerType": "person",
+      "requiredPrecision": "Le nom du compositeur suffit.",
+      "allowSurnameOnly": true,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "« Le Sacre du printemps » d'Igor Stravinsky fut créé en 1913 au théâtre des Champs-Élysées.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Le_Sacre_du_printemps",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0016",
+      "packId": "trou-noir-v1",
+      "logicalKey": "culture-opera-carmen-bizet",
+      "category": "culture",
+      "themeLabel": "Musique",
+      "difficulty": 5,
+      "prompt": "Quel compositeur français a écrit l'opéra « Carmen », créé en 1875 ?",
+      "canonical": "Georges Bizet",
+      "aliases": [
+        "Bizet"
+      ],
+      "answerType": "person",
+      "requiredPrecision": "Le nom du compositeur suffit.",
+      "allowSurnameOnly": true,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "« Carmen » est un opéra de Georges Bizet créé en 1875 à l'Opéra-Comique de Paris.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Carmen_(op%C3%A9ra)",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0017",
+      "packId": "trou-noir-v1",
+      "logicalKey": "culture-sculpture-penseur",
+      "category": "culture",
+      "themeLabel": "Sculpture",
+      "difficulty": 5,
+      "prompt": "Quel sculpteur français est l'auteur du « Penseur », conçu en 1880 ?",
+      "canonical": "Auguste Rodin",
+      "aliases": [
+        "Rodin"
+      ],
+      "answerType": "person",
+      "requiredPrecision": "Le nom du sculpteur suffit.",
+      "allowSurnameOnly": true,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "« Le Penseur » est une sculpture d'Auguste Rodin conçue en 1880.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Le_Penseur",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0018",
+      "packId": "trou-noir-v1",
+      "logicalKey": "culture-cinema-regle-jeu",
+      "category": "culture",
+      "themeLabel": "Cinéma",
+      "difficulty": 5,
+      "prompt": "Quel cinéaste français a réalisé « La Règle du jeu », sorti en 1939 ?",
+      "canonical": "Jean Renoir",
+      "aliases": [
+        "Renoir"
+      ],
+      "answerType": "person",
+      "requiredPrecision": "Le nom du réalisateur suffit.",
+      "allowSurnameOnly": true,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "« La Règle du jeu » est un film de Jean Renoir sorti en 1939.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/La_R%C3%A8gle_du_jeu",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0019",
+      "packId": "trou-noir-v1",
+      "logicalKey": "culture-livre-etranger-camus",
+      "category": "culture",
+      "themeLabel": "Littérature",
+      "difficulty": 6,
+      "prompt": "Quel écrivain a publié le roman « L'Étranger » en 1942 ?",
+      "canonical": "Albert Camus",
+      "aliases": [
+        "Camus"
+      ],
+      "answerType": "person",
+      "requiredPrecision": "Le nom de l'auteur suffit.",
+      "allowSurnameOnly": true,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "« L'Étranger » est un roman d'Albert Camus publié en 1942.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/L%27%C3%89tranger",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0020",
+      "packId": "trou-noir-v1",
+      "logicalKey": "culture-peinture-demoiselles-avignon",
+      "category": "culture",
+      "themeLabel": "Peinture",
+      "difficulty": 6,
+      "prompt": "Quel peintre espagnol a réalisé « Les Demoiselles d'Avignon » en 1907 ?",
+      "canonical": "Pablo Picasso",
+      "aliases": [
+        "Picasso"
+      ],
+      "answerType": "person",
+      "requiredPrecision": "Le nom du peintre suffit.",
+      "allowSurnameOnly": true,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "« Les Demoiselles d'Avignon » est une œuvre de Pablo Picasso peinte en 1907.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Les_Demoiselles_d%27Avignon",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0021",
+      "packId": "trou-noir-v1",
+      "logicalKey": "culture-musique-pelleas-melisande",
+      "category": "culture",
+      "themeLabel": "Musique",
+      "difficulty": 6,
+      "prompt": "Quel compositeur français a écrit l'opéra « Pelléas et Mélisande », créé en 1902 ?",
+      "canonical": "Claude Debussy",
+      "aliases": [
+        "Debussy"
+      ],
+      "answerType": "person",
+      "requiredPrecision": "Le nom du compositeur suffit.",
+      "allowSurnameOnly": true,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "« Pelléas et Mélisande » est l'unique opéra de Claude Debussy, créé en 1902.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Pell%C3%A9as_et_M%C3%A9lisande_(op%C3%A9ra)",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0022",
+      "packId": "trou-noir-v1",
+      "logicalKey": "culture-archi-villa-savoye",
+      "category": "culture",
+      "themeLabel": "Architecture",
+      "difficulty": 6,
+      "prompt": "Quel architecte franco-suisse a conçu la villa Savoye à Poissy, achevée en 1931 ?",
+      "canonical": "Le Corbusier",
+      "aliases": [
+        "Corbusier",
+        "Charles-Édouard Jeanneret"
+      ],
+      "answerType": "person",
+      "requiredPrecision": "Le nom de l'architecte suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "La villa Savoye à Poissy, achevée en 1931, est l'œuvre de Le Corbusier.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Villa_Savoye",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0023",
+      "packId": "trou-noir-v1",
+      "logicalKey": "culture-livre-voyage-bout-nuit",
+      "category": "culture",
+      "themeLabel": "Littérature",
+      "difficulty": 6,
+      "prompt": "Quel écrivain français a publié « Voyage au bout de la nuit » en 1932 ?",
+      "canonical": "Louis-Ferdinand Céline",
+      "aliases": [
+        "Céline",
+        "Celine"
+      ],
+      "answerType": "person",
+      "requiredPrecision": "Le nom de l'auteur suffit.",
+      "allowSurnameOnly": true,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "« Voyage au bout de la nuit » est le premier roman de Louis-Ferdinand Céline, paru en 1932.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Voyage_au_bout_de_la_nuit",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0024",
+      "packId": "trou-noir-v1",
+      "logicalKey": "culture-danse-sacre-ballets-russes",
+      "category": "culture",
+      "themeLabel": "Danse",
+      "difficulty": 6,
+      "prompt": "Quelle compagnie fondée par Serge de Diaghilev a créé « Le Sacre du printemps » à Paris en 1913 ?",
+      "canonical": "Les Ballets russes",
+      "aliases": [
+        "Ballets russes"
+      ],
+      "answerType": "text",
+      "requiredPrecision": "Le nom de la compagnie suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "« Le Sacre du printemps » fut créé en 1913 par les Ballets russes de Diaghilev.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Ballets_russes",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0025",
+      "packId": "trou-noir-v1",
+      "logicalKey": "histoire-geo-capitale-france",
+      "category": "histoire-geo",
+      "themeLabel": "Capitales",
+      "difficulty": 3,
+      "prompt": "Quelle est la capitale de la France ?",
+      "canonical": "Paris",
+      "aliases": [],
+      "answerType": "place",
+      "requiredPrecision": "Le nom de la ville suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "Paris est la capitale de la France.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Paris",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0026",
+      "packId": "trou-noir-v1",
+      "logicalKey": "histoire-geo-fleuve-seine",
+      "category": "histoire-geo",
+      "themeLabel": "Fleuves",
+      "difficulty": 3,
+      "prompt": "Quel fleuve traverse la ville de Paris ?",
+      "canonical": "La Seine",
+      "aliases": [
+        "Seine"
+      ],
+      "answerType": "place",
+      "requiredPrecision": "Le nom du fleuve suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "La Seine traverse Paris avant de se jeter dans la Manche.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Seine",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0027",
+      "packId": "trou-noir-v1",
+      "logicalKey": "histoire-geo-revolution-1789",
+      "category": "histoire-geo",
+      "themeLabel": "Histoire de France",
+      "difficulty": 3,
+      "prompt": "En quelle année a éclaté la Révolution française, avec la prise de la Bastille ?",
+      "canonical": "1789",
+      "aliases": [],
+      "answerType": "number",
+      "requiredPrecision": "L'année exacte en chiffres.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericValue": 1789,
+      "numericTolerance": 0,
+      "explanation": "La prise de la Bastille, le 14 juillet 1789, marque le début de la Révolution française.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/R%C3%A9volution_fran%C3%A7aise",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0028",
+      "packId": "trou-noir-v1",
+      "logicalKey": "histoire-geo-mont-blanc",
+      "category": "histoire-geo",
+      "themeLabel": "Montagnes",
+      "difficulty": 3,
+      "prompt": "Quel est le plus haut sommet des Alpes, à la frontière franco-italienne ?",
+      "canonical": "Le mont Blanc",
+      "aliases": [
+        "Mont Blanc",
+        "Mont-Blanc"
+      ],
+      "answerType": "place",
+      "requiredPrecision": "Le nom du sommet suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "Le mont Blanc, avec ses 4 808 mètres, est le plus haut sommet des Alpes.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Mont_Blanc",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0029",
+      "packId": "trou-noir-v1",
+      "logicalKey": "histoire-geo-premier-homme-lune",
+      "category": "histoire-geo",
+      "themeLabel": "Exploration",
+      "difficulty": 3,
+      "prompt": "Quel astronaute américain a marché le premier sur la Lune en 1969 ?",
+      "canonical": "Neil Armstrong",
+      "aliases": [
+        "Armstrong"
+      ],
+      "answerType": "person",
+      "requiredPrecision": "Le nom de l'astronaute suffit.",
+      "allowSurnameOnly": true,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "Neil Armstrong est le premier homme à avoir marché sur la Lune, le 21 juillet 1969.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Neil_Armstrong",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0030",
+      "packId": "trou-noir-v1",
+      "logicalKey": "histoire-geo-empire-romain-langue",
+      "category": "histoire-geo",
+      "themeLabel": "Antiquité",
+      "difficulty": 3,
+      "prompt": "Quelle langue parlaient les Romains dans l'Empire romain ?",
+      "canonical": "Le latin",
+      "aliases": [
+        "Latin"
+      ],
+      "answerType": "text",
+      "requiredPrecision": "Le nom de la langue suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "Le latin était la langue de l'Empire romain.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Latin",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0031",
+      "packId": "trou-noir-v1",
+      "logicalKey": "histoire-geo-capitale-italie",
+      "category": "histoire-geo",
+      "themeLabel": "Capitales",
+      "difficulty": 4,
+      "prompt": "Quelle est la capitale de l'Italie ?",
+      "canonical": "Rome",
+      "aliases": [
+        "Roma"
+      ],
+      "answerType": "place",
+      "requiredPrecision": "Le nom de la ville suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "Rome est la capitale de l'Italie.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Rome",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0032",
+      "packId": "trou-noir-v1",
+      "logicalKey": "histoire-geo-napoleon-waterloo",
+      "category": "histoire-geo",
+      "themeLabel": "Histoire de France",
+      "difficulty": 4,
+      "prompt": "En quelle année Napoléon Ier a-t-il été défait à Waterloo ?",
+      "canonical": "1815",
+      "aliases": [],
+      "answerType": "number",
+      "requiredPrecision": "L'année exacte en chiffres.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericValue": 1815,
+      "numericTolerance": 0,
+      "explanation": "Napoléon Ier est défait à Waterloo le 18 juin 1815.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Bataille_de_Waterloo",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0033",
+      "packId": "trou-noir-v1",
+      "logicalKey": "histoire-geo-canal-suez",
+      "category": "histoire-geo",
+      "themeLabel": "Géographie",
+      "difficulty": 4,
+      "prompt": "Quel canal relie la mer Méditerranée à la mer Rouge ?",
+      "canonical": "Le canal de Suez",
+      "aliases": [
+        "Canal de Suez",
+        "Suez"
+      ],
+      "answerType": "place",
+      "requiredPrecision": "Le nom du canal suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "Le canal de Suez, en Égypte, relie la Méditerranée à la mer Rouge.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Canal_de_Suez",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0034",
+      "packId": "trou-noir-v1",
+      "logicalKey": "histoire-geo-mur-berlin",
+      "category": "histoire-geo",
+      "themeLabel": "Histoire contemporaine",
+      "difficulty": 4,
+      "prompt": "En quelle année le mur de Berlin est-il tombé ?",
+      "canonical": "1989",
+      "aliases": [],
+      "answerType": "number",
+      "requiredPrecision": "L'année exacte en chiffres.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericValue": 1989,
+      "numericTolerance": 0,
+      "explanation": "Le mur de Berlin est tombé le 9 novembre 1989.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Mur_de_Berlin",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0035",
+      "packId": "trou-noir-v1",
+      "logicalKey": "histoire-geo-pyramide-kheops",
+      "category": "histoire-geo",
+      "themeLabel": "Antiquité",
+      "difficulty": 4,
+      "prompt": "Dans quel pays se trouvent les pyramides de Gizeh ?",
+      "canonical": "L'Égypte",
+      "aliases": [
+        "Égypte",
+        "Egypte"
+      ],
+      "answerType": "place",
+      "requiredPrecision": "Le nom du pays suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "Les pyramides de Gizeh se trouvent en Égypte, près du Caire.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Pyramides_de_Gizeh",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0036",
+      "packId": "trou-noir-v1",
+      "logicalKey": "histoire-geo-charlemagne-800",
+      "category": "histoire-geo",
+      "themeLabel": "Moyen Âge",
+      "difficulty": 4,
+      "prompt": "Quel roi des Francs a été couronné empereur à Rome en l'an 800 ?",
+      "canonical": "Charlemagne",
+      "aliases": [
+        "Charles Ier",
+        "Charles le Grand"
+      ],
+      "answerType": "person",
+      "requiredPrecision": "Le nom du souverain suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "Charlemagne a été couronné empereur à Rome en l'an 800.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Charlemagne",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0037",
+      "packId": "trou-noir-v1",
+      "logicalKey": "histoire-geo-capitale-australie",
+      "category": "histoire-geo",
+      "themeLabel": "Capitales",
+      "difficulty": 5,
+      "prompt": "Quelle est la capitale de l'Australie ?",
+      "canonical": "Canberra",
+      "aliases": [],
+      "answerType": "place",
+      "requiredPrecision": "Le nom exact de la ville (ni Sydney ni Melbourne).",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "La capitale de l'Australie est Canberra, et non Sydney.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Canberra",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0038",
+      "packId": "trou-noir-v1",
+      "logicalKey": "histoire-geo-empire-byzantin-chute",
+      "category": "histoire-geo",
+      "themeLabel": "Moyen Âge",
+      "difficulty": 5,
+      "prompt": "En quelle année la ville de Constantinople est-elle tombée aux mains des Ottomans ?",
+      "canonical": "1453",
+      "aliases": [],
+      "answerType": "number",
+      "requiredPrecision": "L'année exacte en chiffres.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericValue": 1453,
+      "numericTolerance": 0,
+      "explanation": "Constantinople est tombée en 1453, marquant la fin de l'Empire byzantin.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Chute_de_Constantinople",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0039",
+      "packId": "trou-noir-v1",
+      "logicalKey": "histoire-geo-detroit-gibraltar",
+      "category": "histoire-geo",
+      "themeLabel": "Géographie",
+      "difficulty": 5,
+      "prompt": "Quel détroit sépare l'Espagne du Maroc ?",
+      "canonical": "Le détroit de Gibraltar",
+      "aliases": [
+        "Détroit de Gibraltar",
+        "Gibraltar"
+      ],
+      "answerType": "place",
+      "requiredPrecision": "Le nom du détroit suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "Le détroit de Gibraltar sépare l'Espagne du Maroc.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/D%C3%A9troit_de_Gibraltar",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0040",
+      "packId": "trou-noir-v1",
+      "logicalKey": "histoire-geo-louis-xiv-versailles",
+      "category": "histoire-geo",
+      "themeLabel": "Histoire de France",
+      "difficulty": 5,
+      "prompt": "Quel roi de France a fait construire le château de Versailles ?",
+      "canonical": "Louis XIV",
+      "aliases": [
+        "Louis 14",
+        "Le Roi-Soleil",
+        "Roi-Soleil"
+      ],
+      "answerType": "person",
+      "requiredPrecision": "Le nom du roi suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "Louis XIV a fait de Versailles le siège de la cour à partir de 1682.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Ch%C3%A2teau_de_Versailles",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0041",
+      "packId": "trou-noir-v1",
+      "logicalKey": "histoire-geo-fleuve-amazone",
+      "category": "histoire-geo",
+      "themeLabel": "Fleuves",
+      "difficulty": 5,
+      "prompt": "Dans quel océan se jette le fleuve Amazone ?",
+      "canonical": "L'océan Atlantique",
+      "aliases": [
+        "Océan Atlantique",
+        "Atlantique"
+      ],
+      "answerType": "place",
+      "requiredPrecision": "Le nom de l'océan suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "L'Amazone se jette dans l'océan Atlantique, au nord du Brésil.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Amazone_(fleuve)",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0042",
+      "packId": "trou-noir-v1",
+      "logicalKey": "histoire-geo-route-soie-marco-polo",
+      "category": "histoire-geo",
+      "themeLabel": "Exploration",
+      "difficulty": 5,
+      "prompt": "Quel marchand vénitien du XIIIe siècle a raconté son voyage jusqu'en Chine ?",
+      "canonical": "Marco Polo",
+      "aliases": [
+        "Marco-Polo"
+      ],
+      "answerType": "person",
+      "requiredPrecision": "Le nom du voyageur suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "Marco Polo a raconté son voyage en Chine dans « Le Devisement du monde ».",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Marco_Polo",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0043",
+      "packId": "trou-noir-v1",
+      "logicalKey": "histoire-geo-capitale-turquie",
+      "category": "histoire-geo",
+      "themeLabel": "Capitales",
+      "difficulty": 6,
+      "prompt": "Quelle est la capitale de la Turquie ?",
+      "canonical": "Ankara",
+      "aliases": [],
+      "answerType": "place",
+      "requiredPrecision": "Le nom exact de la ville (ni Istanbul ni Constantinople).",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "La capitale de la Turquie est Ankara, et non Istanbul.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Ankara",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0044",
+      "packId": "trou-noir-v1",
+      "logicalKey": "histoire-geo-traite-versailles-1919",
+      "category": "histoire-geo",
+      "themeLabel": "Histoire contemporaine",
+      "difficulty": 6,
+      "prompt": "En quelle année a été signé le traité de Versailles qui a mis fin à la Première Guerre mondiale ?",
+      "canonical": "1919",
+      "aliases": [],
+      "answerType": "number",
+      "requiredPrecision": "L'année exacte en chiffres.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericValue": 1919,
+      "numericTolerance": 0,
+      "explanation": "Le traité de Versailles a été signé le 28 juin 1919.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Trait%C3%A9_de_Versailles",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0045",
+      "packId": "trou-noir-v1",
+      "logicalKey": "histoire-geo-lac-titicaca",
+      "category": "histoire-geo",
+      "themeLabel": "Géographie",
+      "difficulty": 6,
+      "prompt": "Quels deux pays d'Amérique du Sud se partagent le lac Titicaca ?",
+      "canonical": "Le Pérou et la Bolivie",
+      "aliases": [
+        "Pérou et Bolivie",
+        "Perou et Bolivie"
+      ],
+      "answerType": "text",
+      "requiredPrecision": "Les deux pays sont exigés.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "Le lac Titicaca est partagé entre le Pérou et la Bolivie.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Lac_Titicaca",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0046",
+      "packId": "trou-noir-v1",
+      "logicalKey": "histoire-geo-bataille-marignan",
+      "category": "histoire-geo",
+      "themeLabel": "Histoire de France",
+      "difficulty": 6,
+      "prompt": "En quelle année François Ier a-t-il remporté la bataille de Marignan ?",
+      "canonical": "1515",
+      "aliases": [],
+      "answerType": "number",
+      "requiredPrecision": "L'année exacte en chiffres.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericValue": 1515,
+      "numericTolerance": 0,
+      "explanation": "François Ier remporte la bataille de Marignan en 1515.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Bataille_de_Marignan",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0047",
+      "packId": "trou-noir-v1",
+      "logicalKey": "histoire-geo-ile-paques",
+      "category": "histoire-geo",
+      "themeLabel": "Géographie",
+      "difficulty": 6,
+      "prompt": "À quel pays l'île de Pâques est-elle rattachée ?",
+      "canonical": "Le Chili",
+      "aliases": [
+        "Chili"
+      ],
+      "answerType": "place",
+      "requiredPrecision": "Le nom du pays suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "L'île de Pâques, célèbre pour ses moaïs, est rattachée au Chili.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/%C3%8Ele_de_P%C3%A2ques",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0048",
+      "packId": "trou-noir-v1",
+      "logicalKey": "histoire-geo-paix-westphalie",
+      "category": "histoire-geo",
+      "themeLabel": "Histoire moderne",
+      "difficulty": 6,
+      "prompt": "En quelle année les traités de Westphalie ont-ils mis fin à la guerre de Trente Ans ?",
+      "canonical": "1648",
+      "aliases": [],
+      "answerType": "number",
+      "requiredPrecision": "L'année exacte en chiffres.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericValue": 1648,
+      "numericTolerance": 0,
+      "explanation": "Les traités de Westphalie, signés en 1648, ont mis fin à la guerre de Trente Ans.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Trait%C3%A9s_de_Westphalie",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0049",
+      "packId": "trou-noir-v1",
+      "logicalKey": "cuisine-ingredient-ratatouille",
+      "category": "cuisine",
+      "themeLabel": "Plats",
+      "difficulty": 3,
+      "prompt": "Quel légume violet est l'ingrédient principal de la ratatouille, avec la courgette et la tomate ?",
+      "canonical": "L'aubergine",
+      "aliases": [
+        "Aubergine"
+      ],
+      "answerType": "text",
+      "requiredPrecision": "Le nom du légume suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "La ratatouille niçoise associe aubergine, courgette, tomate, poivron et oignon.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Ratatouille",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0050",
+      "packId": "trou-noir-v1",
+      "logicalKey": "cuisine-fromage-pizza",
+      "category": "cuisine",
+      "themeLabel": "Ingrédients",
+      "difficulty": 3,
+      "prompt": "Quel fromage italien fond traditionnellement sur une pizza margherita ?",
+      "canonical": "La mozzarella",
+      "aliases": [
+        "Mozzarella"
+      ],
+      "answerType": "text",
+      "requiredPrecision": "Le nom du fromage suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "La pizza margherita associe tomate, mozzarella et basilic.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Pizza_Margherita",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0051",
+      "packId": "trou-noir-v1",
+      "logicalKey": "cuisine-dessert-tiramisu",
+      "category": "cuisine",
+      "themeLabel": "Desserts",
+      "difficulty": 3,
+      "prompt": "De quel pays le tiramisu est-il originaire ?",
+      "canonical": "L'Italie",
+      "aliases": [
+        "Italie"
+      ],
+      "answerType": "place",
+      "requiredPrecision": "Le nom du pays suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "Le tiramisu est un dessert originaire d'Italie, à base de mascarpone et de café.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Tiramisu",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0052",
+      "packId": "trou-noir-v1",
+      "logicalKey": "cuisine-epice-curcuma",
+      "category": "cuisine",
+      "themeLabel": "Épices",
+      "difficulty": 3,
+      "prompt": "Quelle épice jaune, issue d'une racine, colore le curry ?",
+      "canonical": "Le curcuma",
+      "aliases": [
+        "Curcuma"
+      ],
+      "answerType": "text",
+      "requiredPrecision": "Le nom de l'épice suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "Le curcuma est l'épice jaune qui colore de nombreux currys.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Curcuma",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0053",
+      "packId": "trou-noir-v1",
+      "logicalKey": "cuisine-boisson-champagne",
+      "category": "cuisine",
+      "themeLabel": "Boissons",
+      "difficulty": 3,
+      "prompt": "Dans quelle région française produit-on le champagne ?",
+      "canonical": "La Champagne",
+      "aliases": [
+        "Champagne"
+      ],
+      "answerType": "place",
+      "requiredPrecision": "Le nom de la région suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "Le champagne est produit dans la région de Champagne, à l'est de Paris.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Champagne_(AOC)",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0054",
+      "packId": "trou-noir-v1",
+      "logicalKey": "cuisine-fruit-avocat",
+      "category": "cuisine",
+      "themeLabel": "Ingrédients",
+      "difficulty": 3,
+      "prompt": "Quel fruit vert à gros noyau est la base du guacamole ?",
+      "canonical": "L'avocat",
+      "aliases": [
+        "Avocat"
+      ],
+      "answerType": "text",
+      "requiredPrecision": "Le nom du fruit suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "Le guacamole mexicain est préparé à base d'avocats écrasés.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Guacamole",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0055",
+      "packId": "trou-noir-v1",
+      "logicalKey": "cuisine-plat-boeuf-bourguignon",
+      "category": "cuisine",
+      "themeLabel": "Plats",
+      "difficulty": 4,
+      "prompt": "Quel vin donne son nom au bœuf bourguignon ?",
+      "canonical": "Le bourgogne",
+      "aliases": [
+        "Bourgogne",
+        "Vin de Bourgogne"
+      ],
+      "answerType": "text",
+      "requiredPrecision": "Le nom du vin suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "Le bœuf bourguignon est mijoté dans du vin rouge de Bourgogne.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/B%C5%93uf_bourguignon",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0056",
+      "packId": "trou-noir-v1",
+      "logicalKey": "cuisine-patisserie-croissant",
+      "category": "cuisine",
+      "themeLabel": "Viennoiseries",
+      "difficulty": 4,
+      "prompt": "Quelle matière grasse entre traditionnellement dans la pâte d'un croissant au beurre ?",
+      "canonical": "Le beurre",
+      "aliases": [
+        "Beurre"
+      ],
+      "answerType": "text",
+      "requiredPrecision": "Le nom de l'ingrédient suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "Le croissant au beurre est feuilleté avec du beurre.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Croissant_(viennoiserie)",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0057",
+      "packId": "trou-noir-v1",
+      "logicalKey": "cuisine-fromage-comte",
+      "category": "cuisine",
+      "themeLabel": "Fromages",
+      "difficulty": 4,
+      "prompt": "Dans quel massif montagneux fabrique-t-on le comté ?",
+      "canonical": "Le Jura",
+      "aliases": [
+        "Jura",
+        "Massif du Jura"
+      ],
+      "answerType": "place",
+      "requiredPrecision": "Le nom du massif suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "Le comté est un fromage au lait de vache fabriqué dans le massif du Jura.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Comt%C3%A9_(fromage)",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0058",
+      "packId": "trou-noir-v1",
+      "logicalKey": "cuisine-epice-safran",
+      "category": "cuisine",
+      "themeLabel": "Épices",
+      "difficulty": 4,
+      "prompt": "Quelle épice, la plus chère du monde, parfume la paella ?",
+      "canonical": "Le safran",
+      "aliases": [
+        "Safran"
+      ],
+      "answerType": "text",
+      "requiredPrecision": "Le nom de l'épice suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "Le safran, issu des stigmates du crocus, parfume et colore la paella.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Safran_(%C3%A9pice)",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0059",
+      "packId": "trou-noir-v1",
+      "logicalKey": "cuisine-plat-cassoulet",
+      "category": "cuisine",
+      "themeLabel": "Plats",
+      "difficulty": 4,
+      "prompt": "Quelle légumineuse est la base du cassoulet ?",
+      "canonical": "Le haricot blanc",
+      "aliases": [
+        "Haricot blanc",
+        "Haricots blancs",
+        "Lingot"
+      ],
+      "answerType": "text",
+      "requiredPrecision": "Le nom de la légumineuse suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "Le cassoulet est un plat à base de haricots blancs mijotés avec des viandes.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Cassoulet",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0060",
+      "packId": "trou-noir-v1",
+      "logicalKey": "cuisine-dessert-clafoutis",
+      "category": "cuisine",
+      "themeLabel": "Desserts",
+      "difficulty": 4,
+      "prompt": "Quel fruit noir entre traditionnellement dans le clafoutis limousin ?",
+      "canonical": "La cerise",
+      "aliases": [
+        "Cerise",
+        "Cerises",
+        "Cerises noires"
+      ],
+      "answerType": "text",
+      "requiredPrecision": "Le nom du fruit suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "Le clafoutis limousin est préparé avec des cerises noires.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Clafoutis",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0061",
+      "packId": "trou-noir-v1",
+      "logicalKey": "cuisine-sauce-bechamel",
+      "category": "cuisine",
+      "themeLabel": "Techniques",
+      "difficulty": 5,
+      "prompt": "Quels sont les deux ingrédients du roux qui épaissit la sauce béchamel, en plus du lait ?",
+      "canonical": "Le beurre et la farine",
+      "aliases": [
+        "Beurre et farine",
+        "Farine et beurre"
+      ],
+      "answerType": "text",
+      "requiredPrecision": "Les deux ingrédients sont exigés.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "La béchamel se prépare avec un roux de beurre et de farine mouillé de lait.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Sauce_b%C3%A9chamel",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0062",
+      "packId": "trou-noir-v1",
+      "logicalKey": "cuisine-fromage-roquefort-lait",
+      "category": "cuisine",
+      "themeLabel": "Fromages",
+      "difficulty": 5,
+      "prompt": "Avec le lait de quel animal fabrique-t-on le roquefort ?",
+      "canonical": "La brebis",
+      "aliases": [
+        "Brebis",
+        "Mouton"
+      ],
+      "answerType": "text",
+      "requiredPrecision": "Le nom de l'animal suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "Le roquefort est un fromage au lait de brebis affiné dans les caves de Roquefort.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Roquefort",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0063",
+      "packId": "trou-noir-v1",
+      "logicalKey": "cuisine-plat-bouillabaisse",
+      "category": "cuisine",
+      "themeLabel": "Plats",
+      "difficulty": 5,
+      "prompt": "De quelle ville la bouillabaisse est-elle la spécialité ?",
+      "canonical": "Marseille",
+      "aliases": [],
+      "answerType": "place",
+      "requiredPrecision": "Le nom de la ville suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "La bouillabaisse est une soupe de poissons spécialité de Marseille.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Bouillabaisse",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0064",
+      "packId": "trou-noir-v1",
+      "logicalKey": "cuisine-cuisson-vapeur-couscous",
+      "category": "cuisine",
+      "themeLabel": "Plats",
+      "difficulty": 5,
+      "prompt": "Quelle graine, roulée à partir de blé dur, est la base du couscous ?",
+      "canonical": "La semoule",
+      "aliases": [
+        "Semoule",
+        "Semoule de blé"
+      ],
+      "answerType": "text",
+      "requiredPrecision": "Le nom de l'ingrédient suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "Le couscous est préparé à partir de semoule de blé dur cuite à la vapeur.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Couscous",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0065",
+      "packId": "trou-noir-v1",
+      "logicalKey": "cuisine-dessert-tarte-tatin",
+      "category": "cuisine",
+      "themeLabel": "Desserts",
+      "difficulty": 5,
+      "prompt": "Quel fruit caramélisé garnit la tarte Tatin ?",
+      "canonical": "La pomme",
+      "aliases": [
+        "Pomme",
+        "Pommes"
+      ],
+      "answerType": "text",
+      "requiredPrecision": "Le nom du fruit suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "La tarte Tatin est une tarte aux pommes caramélisées cuite à l'envers.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Tarte_Tatin",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0066",
+      "packId": "trou-noir-v1",
+      "logicalKey": "cuisine-boisson-sake",
+      "category": "cuisine",
+      "themeLabel": "Boissons",
+      "difficulty": 5,
+      "prompt": "À partir de quelle céréale fermentée fabrique-t-on le saké japonais ?",
+      "canonical": "Le riz",
+      "aliases": [
+        "Riz"
+      ],
+      "answerType": "text",
+      "requiredPrecision": "Le nom de la céréale suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "Le saké est une boisson japonaise obtenue par fermentation du riz.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Sak%C3%A9",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0067",
+      "packId": "trou-noir-v1",
+      "logicalKey": "cuisine-champignon-cepe",
+      "category": "cuisine",
+      "themeLabel": "Ingrédients",
+      "difficulty": 6,
+      "prompt": "Quel champignon forestier au chapeau brun, très recherché en cuisine, appelle-t-on aussi bolet ?",
+      "canonical": "Le cèpe",
+      "aliases": [
+        "Cèpe",
+        "Cepe",
+        "Cèpe de Bordeaux"
+      ],
+      "answerType": "text",
+      "requiredPrecision": "Le nom du champignon suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "Le cèpe, ou bolet, est un champignon forestier très recherché.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/C%C3%A8pe",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0068",
+      "packId": "trou-noir-v1",
+      "logicalKey": "cuisine-sauce-hollandaise",
+      "category": "cuisine",
+      "themeLabel": "Techniques",
+      "difficulty": 6,
+      "prompt": "Quel ingrédient émulsionne la sauce hollandaise avec le beurre fondu ?",
+      "canonical": "Le jaune d'œuf",
+      "aliases": [
+        "Jaune d'œuf",
+        "Jaune d oeuf",
+        "Œuf"
+      ],
+      "answerType": "text",
+      "requiredPrecision": "Le nom de l'ingrédient suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "La sauce hollandaise est une émulsion de jaunes d'œufs et de beurre fondu.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Sauce_hollandaise",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0069",
+      "packId": "trou-noir-v1",
+      "logicalKey": "cuisine-epice-vanille-orchidee",
+      "category": "cuisine",
+      "themeLabel": "Épices",
+      "difficulty": 6,
+      "prompt": "De quelle famille de plantes est issue la gousse de vanille ?",
+      "canonical": "Les orchidées",
+      "aliases": [
+        "Orchidées",
+        "Orchidée",
+        "Orchidee"
+      ],
+      "answerType": "text",
+      "requiredPrecision": "Le nom de la famille suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "La vanille est le fruit d'une orchidée, la Vanilla planifolia.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Vanille",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0070",
+      "packId": "trou-noir-v1",
+      "logicalKey": "cuisine-fromage-morbier-raie",
+      "category": "cuisine",
+      "themeLabel": "Fromages",
+      "difficulty": 6,
+      "prompt": "Quelle particularité visuelle traverse la pâte du morbier ?",
+      "canonical": "Une raie de cendre",
+      "aliases": [
+        "Raie de cendre",
+        "Une ligne de cendre",
+        "Cendre"
+      ],
+      "answerType": "text",
+      "requiredPrecision": "La description de la marque suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": true,
+      "numericTolerance": 0,
+      "explanation": "Le morbier se reconnaît à la raie de cendre qui traverse sa pâte.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Morbier_(fromage)",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0071",
+      "packId": "trou-noir-v1",
+      "logicalKey": "cuisine-plat-pot-au-feu",
+      "category": "cuisine",
+      "themeLabel": "Plats",
+      "difficulty": 6,
+      "prompt": "Quel mode de cuisson, dans un liquide frémissant, caractérise le pot-au-feu ?",
+      "canonical": "Le bouilli",
+      "aliases": [
+        "Bouilli",
+        "La cuisson bouillie",
+        "Ébullition douce"
+      ],
+      "answerType": "text",
+      "requiredPrecision": "Le nom du mode de cuisson suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": true,
+      "numericTolerance": 0,
+      "explanation": "Le pot-au-feu est un bouilli de viande de bœuf et de légumes.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Pot-au-feu",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0072",
+      "packId": "trou-noir-v1",
+      "logicalKey": "cuisine-agrumes-yuzu",
+      "category": "cuisine",
+      "themeLabel": "Ingrédients",
+      "difficulty": 6,
+      "prompt": "Quel agrume japonais au parfum puissant entre dans la sauce ponzu ?",
+      "canonical": "Le yuzu",
+      "aliases": [
+        "Yuzu"
+      ],
+      "answerType": "text",
+      "requiredPrecision": "Le nom de l'agrume suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "Le yuzu est un agrume japonais utilisé notamment dans la sauce ponzu.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Yuzu",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0073",
+      "packId": "trou-noir-v1",
+      "logicalKey": "sport-football-mondial-1998",
+      "category": "sport",
+      "themeLabel": "Football",
+      "difficulty": 3,
+      "prompt": "Quelle équipe a remporté la Coupe du monde de football organisée en France en 1998 ?",
+      "canonical": "La France",
+      "aliases": [
+        "France",
+        "Équipe de France",
+        "Les Bleus"
+      ],
+      "answerType": "text",
+      "requiredPrecision": "Le nom de l'équipe suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "La France a remporté la Coupe du monde 1998 face au Brésil.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Coupe_du_monde_de_football_1998",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0074",
+      "packId": "trou-noir-v1",
+      "logicalKey": "sport-tennis-roland-garros",
+      "category": "sport",
+      "themeLabel": "Tennis",
+      "difficulty": 3,
+      "prompt": "Sur quelle surface se joue le tournoi de Roland-Garros ?",
+      "canonical": "La terre battue",
+      "aliases": [
+        "Terre battue"
+      ],
+      "answerType": "text",
+      "requiredPrecision": "Le nom de la surface suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "Roland-Garros se joue sur terre battue, à Paris.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Internationaux_de_France_de_tennis",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0075",
+      "packId": "trou-noir-v1",
+      "logicalKey": "sport-cyclisme-maillot-jaune",
+      "category": "sport",
+      "themeLabel": "Cyclisme",
+      "difficulty": 3,
+      "prompt": "Quelle couleur porte le maillot du leader du classement général du Tour de France ?",
+      "canonical": "Jaune",
+      "aliases": [
+        "Maillot jaune"
+      ],
+      "answerType": "text",
+      "requiredPrecision": "La couleur suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "Le leader du Tour de France porte le maillot jaune.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Maillot_jaune",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0076",
+      "packId": "trou-noir-v1",
+      "logicalKey": "sport-basket-taille-panier",
+      "category": "sport",
+      "themeLabel": "Basket-ball",
+      "difficulty": 3,
+      "prompt": "Combien de points vaut un tir réussi derrière la ligne des trois points au basket ?",
+      "canonical": "3",
+      "aliases": [
+        "Trois",
+        "Trois points"
+      ],
+      "answerType": "number",
+      "requiredPrecision": "Le nombre exact en chiffres.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericValue": 3,
+      "numericTolerance": 0,
+      "explanation": "Un tir derrière la ligne des trois points rapporte trois points.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Basket-ball",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0077",
+      "packId": "trou-noir-v1",
+      "logicalKey": "sport-natation-papillon",
+      "category": "sport",
+      "themeLabel": "Natation",
+      "difficulty": 3,
+      "prompt": "Quelle nage, avec un mouvement symétrique des bras au-dessus de l'eau, porte un nom d'insecte ?",
+      "canonical": "Le papillon",
+      "aliases": [
+        "Papillon"
+      ],
+      "answerType": "text",
+      "requiredPrecision": "Le nom de la nage suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "Le papillon est une nage symétrique où les bras passent ensemble au-dessus de l'eau.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Papillon_(natation)",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0078",
+      "packId": "trou-noir-v1",
+      "logicalKey": "sport-jo-2024-ville",
+      "category": "sport",
+      "themeLabel": "Jeux olympiques",
+      "difficulty": 3,
+      "prompt": "Quelle ville a accueilli les Jeux olympiques d'été en 2024 ?",
+      "canonical": "Paris",
+      "aliases": [],
+      "answerType": "place",
+      "requiredPrecision": "Le nom de la ville suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "Paris a accueilli les Jeux olympiques d'été de 2024.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Jeux_olympiques_d%27%C3%A9t%C3%A9_de_2024",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0079",
+      "packId": "trou-noir-v1",
+      "logicalKey": "sport-rugby-nombre-joueurs",
+      "category": "sport",
+      "themeLabel": "Rugby",
+      "difficulty": 4,
+      "prompt": "Combien de joueurs compte une équipe de rugby à XV sur le terrain ?",
+      "canonical": "15",
+      "aliases": [
+        "Quinze"
+      ],
+      "answerType": "number",
+      "requiredPrecision": "Le nombre exact en chiffres.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericValue": 15,
+      "numericTolerance": 0,
+      "explanation": "Une équipe de rugby à XV aligne quinze joueurs.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Rugby_%C3%A0_XV",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0080",
+      "packId": "trou-noir-v1",
+      "logicalKey": "sport-tennis-nadal-roland",
+      "category": "sport",
+      "themeLabel": "Tennis",
+      "difficulty": 4,
+      "prompt": "Quel joueur espagnol a remporté quatorze fois le tournoi de Roland-Garros ?",
+      "canonical": "Rafael Nadal",
+      "aliases": [
+        "Nadal",
+        "Rafa Nadal"
+      ],
+      "answerType": "person",
+      "requiredPrecision": "Le nom du joueur suffit.",
+      "allowSurnameOnly": true,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "Rafael Nadal a remporté Roland-Garros à quatorze reprises entre 2005 et 2022.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Rafael_Nadal",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0081",
+      "packId": "trou-noir-v1",
+      "logicalKey": "sport-formule1-drapeau-damier",
+      "category": "sport",
+      "themeLabel": "Sports mécaniques",
+      "difficulty": 4,
+      "prompt": "Quel drapeau signale la fin d'un Grand Prix de Formule 1 ?",
+      "canonical": "Le drapeau à damier",
+      "aliases": [
+        "Drapeau à damier",
+        "Damier"
+      ],
+      "answerType": "text",
+      "requiredPrecision": "Le nom du drapeau suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "Le drapeau à damier signale l'arrivée d'un Grand Prix.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Drapeaux_en_Formule_1",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0082",
+      "packId": "trou-noir-v1",
+      "logicalKey": "sport-judo-ceinture",
+      "category": "sport",
+      "themeLabel": "Arts martiaux",
+      "difficulty": 4,
+      "prompt": "Dans quel pays le judo a-t-il été inventé ?",
+      "canonical": "Le Japon",
+      "aliases": [
+        "Japon"
+      ],
+      "answerType": "place",
+      "requiredPrecision": "Le nom du pays suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "Le judo a été fondé au Japon par Jigoro Kano à la fin du XIXe siècle.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Judo",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0083",
+      "packId": "trou-noir-v1",
+      "logicalKey": "sport-athletisme-marathon-distance",
+      "category": "sport",
+      "themeLabel": "Athlétisme",
+      "difficulty": 4,
+      "prompt": "Quelle distance, en kilomètres, fait un marathon (au dixième près) ?",
+      "canonical": "42,2",
+      "aliases": [
+        "42,195",
+        "42.195",
+        "42,2 km",
+        "42 kilomètres"
+      ],
+      "answerType": "number",
+      "requiredPrecision": "La distance en kilomètres, tolérance de 0,5 km.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericValue": 42.195,
+      "numericTolerance": 0.5,
+      "explanation": "Un marathon mesure officiellement 42,195 kilomètres.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Marathon_(sport)",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0084",
+      "packId": "trou-noir-v1",
+      "logicalKey": "sport-handball-france-etoiles",
+      "category": "sport",
+      "themeLabel": "Handball",
+      "difficulty": 4,
+      "prompt": "Quel surnom porte l'équipe de France masculine de handball, multiple championne olympique ?",
+      "canonical": "Les Experts",
+      "aliases": [
+        "Experts"
+      ],
+      "answerType": "text",
+      "requiredPrecision": "Le surnom exact de l'équipe.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "L'équipe de France masculine de handball est surnommée « Les Experts ».",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/%C3%89quipe_de_France_masculine_de_handball",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0085",
+      "packId": "trou-noir-v1",
+      "logicalKey": "sport-football-zidane-1998",
+      "category": "sport",
+      "themeLabel": "Football",
+      "difficulty": 5,
+      "prompt": "Quel joueur français a marqué deux buts de la tête en finale de la Coupe du monde 1998 ?",
+      "canonical": "Zinédine Zidane",
+      "aliases": [
+        "Zidane",
+        "Zinedine Zidane"
+      ],
+      "answerType": "person",
+      "requiredPrecision": "Le nom du joueur suffit.",
+      "allowSurnameOnly": true,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "Zinédine Zidane a marqué deux fois de la tête en finale France-Brésil en 1998.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Zin%C3%A9dine_Zidane",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0086",
+      "packId": "trou-noir-v1",
+      "logicalKey": "sport-cyclisme-tour-premier",
+      "category": "sport",
+      "themeLabel": "Cyclisme",
+      "difficulty": 5,
+      "prompt": "En quelle année a eu lieu le premier Tour de France ?",
+      "canonical": "1903",
+      "aliases": [],
+      "answerType": "number",
+      "requiredPrecision": "L'année exacte en chiffres.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericValue": 1903,
+      "numericTolerance": 0,
+      "explanation": "Le premier Tour de France, remporté par Maurice Garin, a eu lieu en 1903.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Tour_de_France_1903",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0087",
+      "packId": "trou-noir-v1",
+      "logicalKey": "sport-escrime-trois-armes",
+      "category": "sport",
+      "themeLabel": "Escrime",
+      "difficulty": 5,
+      "prompt": "Quelles sont les trois armes pratiquées en escrime sportive ?",
+      "canonical": "Le fleuret, l'épée et le sabre",
+      "aliases": [
+        "Fleuret, épée et sabre",
+        "Fleuret épée sabre"
+      ],
+      "answerType": "text",
+      "requiredPrecision": "Les trois armes sont exigées.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "L'escrime sportive compte trois armes : le fleuret, l'épée et le sabre.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Escrime",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0088",
+      "packId": "trou-noir-v1",
+      "logicalKey": "sport-biathlon-deux-disciplines",
+      "category": "sport",
+      "themeLabel": "Sports d'hiver",
+      "difficulty": 5,
+      "prompt": "Quelles sont les deux disciplines combinées dans le biathlon ?",
+      "canonical": "Le ski de fond et le tir à la carabine",
+      "aliases": [
+        "Ski de fond et tir",
+        "Ski et tir"
+      ],
+      "answerType": "text",
+      "requiredPrecision": "Les deux disciplines sont exigées.",
+      "allowSurnameOnly": false,
+      "allowDescription": true,
+      "numericTolerance": 0,
+      "explanation": "Le biathlon combine le ski de fond et le tir à la carabine.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Biathlon",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0089",
+      "packId": "trou-noir-v1",
+      "logicalKey": "sport-volley-nombre-touches",
+      "category": "sport",
+      "themeLabel": "Volley-ball",
+      "difficulty": 5,
+      "prompt": "Combien de touches de balle au maximum une équipe peut-elle faire avant de renvoyer le ballon ?",
+      "canonical": "3",
+      "aliases": [
+        "Trois"
+      ],
+      "answerType": "number",
+      "requiredPrecision": "Le nombre exact en chiffres.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericValue": 3,
+      "numericTolerance": 0,
+      "explanation": "Au volley-ball, une équipe dispose de trois touches maximum avant de renvoyer le ballon.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Volley-ball",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0090",
+      "packId": "trou-noir-v1",
+      "logicalKey": "sport-golf-parcours-trous",
+      "category": "sport",
+      "themeLabel": "Golf",
+      "difficulty": 5,
+      "prompt": "Combien de trous compte un parcours de golf réglementaire ?",
+      "canonical": "18",
+      "aliases": [
+        "Dix-huit"
+      ],
+      "answerType": "number",
+      "requiredPrecision": "Le nombre exact en chiffres.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericValue": 18,
+      "numericTolerance": 0,
+      "explanation": "Un parcours de golf réglementaire compte dix-huit trous.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Golf",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0091",
+      "packId": "trou-noir-v1",
+      "logicalKey": "sport-football-hors-jeu",
+      "category": "sport",
+      "themeLabel": "Football",
+      "difficulty": 6,
+      "prompt": "Comment s'appelle la règle qui interdit à un attaquant de recevoir le ballon derrière le dernier défenseur ?",
+      "canonical": "Le hors-jeu",
+      "aliases": [
+        "Hors-jeu",
+        "Hors jeu"
+      ],
+      "answerType": "text",
+      "requiredPrecision": "Le nom de la règle suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "La règle du hors-jeu interdit à un attaquant de se trouver derrière l'avant-dernier défenseur.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Hors-jeu_(football)",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0092",
+      "packId": "trou-noir-v1",
+      "logicalKey": "sport-tennis-grand-chelem",
+      "category": "sport",
+      "themeLabel": "Tennis",
+      "difficulty": 6,
+      "prompt": "Quels sont les quatre tournois du Grand Chelem de tennis ?",
+      "canonical": "L'Open d'Australie, Roland-Garros, Wimbledon et l'US Open",
+      "aliases": [
+        "Australie, Roland-Garros, Wimbledon, US Open"
+      ],
+      "answerType": "text",
+      "requiredPrecision": "Les quatre tournois sont exigés.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "Le Grand Chelem comprend l'Open d'Australie, Roland-Garros, Wimbledon et l'US Open.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Grand_Chelem_(tennis)",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0093",
+      "packId": "trou-noir-v1",
+      "logicalKey": "sport-aviron-sens-marche",
+      "category": "sport",
+      "themeLabel": "Aviron",
+      "difficulty": 6,
+      "prompt": "Dans quel sens rame-t-on en aviron : face ou dos au sens de la marche ?",
+      "canonical": "Dos au sens de la marche",
+      "aliases": [
+        "Dos à la marche",
+        "À reculons"
+      ],
+      "answerType": "text",
+      "requiredPrecision": "Le sens suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": true,
+      "numericTolerance": 0,
+      "explanation": "En aviron, les rameurs rament dos au sens de la marche.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Aviron_(sport)",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0094",
+      "packId": "trou-noir-v1",
+      "logicalKey": "sport-petanque-distance-cochonnet",
+      "category": "sport",
+      "themeLabel": "Pétanque",
+      "difficulty": 6,
+      "prompt": "À quelle distance réglementaire, entre 6 et 10 mètres, lance-t-on le cochonnet à la pétanque ?",
+      "canonical": "Entre 6 et 10 mètres",
+      "aliases": [
+        "6 à 10 mètres",
+        "6-10 mètres"
+      ],
+      "answerType": "text",
+      "requiredPrecision": "La fourchette réglementaire suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": true,
+      "numericTolerance": 0,
+      "explanation": "À la pétanque, le cochonnet doit être lancé entre 6 et 10 mètres du cercle.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/P%C3%A9tanque",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0095",
+      "packId": "trou-noir-v1",
+      "logicalKey": "sport-f1-24-courses",
+      "category": "sport",
+      "themeLabel": "Sports mécaniques",
+      "difficulty": 6,
+      "prompt": "Quel pilote allemand a remporté sept titres de champion du monde de Formule 1, à égalité avec Lewis Hamilton en 2024 ?",
+      "canonical": "Michael Schumacher",
+      "aliases": [
+        "Schumacher"
+      ],
+      "answerType": "person",
+      "requiredPrecision": "Le nom du pilote suffit.",
+      "allowSurnameOnly": true,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "Michael Schumacher compte sept titres mondiaux, comme Lewis Hamilton en 2024.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Michael_Schumacher",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0096",
+      "packId": "trou-noir-v1",
+      "logicalKey": "sport-ski-combine",
+      "category": "sport",
+      "themeLabel": "Sports d'hiver",
+      "difficulty": 6,
+      "prompt": "Quelles sont les deux épreuves du combiné nordique ?",
+      "canonical": "Le saut à ski et le ski de fond",
+      "aliases": [
+        "Saut à ski et ski de fond",
+        "Saut et fond"
+      ],
+      "answerType": "text",
+      "requiredPrecision": "Les deux épreuves sont exigées.",
+      "allowSurnameOnly": false,
+      "allowDescription": true,
+      "numericTolerance": 0,
+      "explanation": "Le combiné nordique associe le saut à ski et le ski de fond.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Combin%C3%A9_nordique",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0097",
+      "packId": "trou-noir-v1",
+      "logicalKey": "sciences-eau-formule",
+      "category": "sciences",
+      "themeLabel": "Chimie",
+      "difficulty": 3,
+      "prompt": "Quelle est la formule chimique de l'eau ?",
+      "canonical": "H2O",
+      "aliases": [
+        "H₂O",
+        "H2o"
+      ],
+      "answerType": "text",
+      "requiredPrecision": "La formule exacte.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "La molécule d'eau est composée de deux atomes d'hydrogène et d'un atome d'oxygène : H2O.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Eau",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0098",
+      "packId": "trou-noir-v1",
+      "logicalKey": "sciences-planete-soleil-proche",
+      "category": "sciences",
+      "themeLabel": "Astronomie",
+      "difficulty": 3,
+      "prompt": "Quelle est la planète la plus proche du Soleil ?",
+      "canonical": "Mercure",
+      "aliases": [],
+      "answerType": "place",
+      "requiredPrecision": "Le nom de la planète suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "Mercure est la planète la plus proche du Soleil.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Mercure_(plan%C3%A8te)",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0099",
+      "packId": "trou-noir-v1",
+      "logicalKey": "sciences-corps-os",
+      "category": "sciences",
+      "themeLabel": "Biologie",
+      "difficulty": 3,
+      "prompt": "Quel est l'os le plus long du corps humain ?",
+      "canonical": "Le fémur",
+      "aliases": [
+        "Fémur",
+        "Femur"
+      ],
+      "answerType": "text",
+      "requiredPrecision": "Le nom de l'os suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "Le fémur, dans la cuisse, est l'os le plus long du corps humain.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/F%C3%A9mur",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0100",
+      "packId": "trou-noir-v1",
+      "logicalKey": "sciences-gravite-newton",
+      "category": "sciences",
+      "themeLabel": "Physique",
+      "difficulty": 3,
+      "prompt": "Quel savant anglais a formulé la loi de la gravitation universelle ?",
+      "canonical": "Isaac Newton",
+      "aliases": [
+        "Newton"
+      ],
+      "answerType": "person",
+      "requiredPrecision": "Le nom du savant suffit.",
+      "allowSurnameOnly": true,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "Isaac Newton a formulé la loi de la gravitation universelle.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Isaac_Newton",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0101",
+      "packId": "trou-noir-v1",
+      "logicalKey": "sciences-photosynthese",
+      "category": "sciences",
+      "themeLabel": "Biologie",
+      "difficulty": 3,
+      "prompt": "Quel gaz les plantes absorbent-elles pour réaliser la photosynthèse ?",
+      "canonical": "Le dioxyde de carbone",
+      "aliases": [
+        "Dioxyde de carbone",
+        "CO2",
+        "Gaz carbonique"
+      ],
+      "answerType": "text",
+      "requiredPrecision": "Le nom du gaz suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "Les plantes absorbent du dioxyde de carbone pour la photosynthèse.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Photosynth%C3%A8se",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0102",
+      "packId": "trou-noir-v1",
+      "logicalKey": "sciences-temperature-ebullition",
+      "category": "sciences",
+      "themeLabel": "Physique",
+      "difficulty": 3,
+      "prompt": "À quelle température, en degrés Celsius, l'eau bout-elle au niveau de la mer ?",
+      "canonical": "100",
+      "aliases": [
+        "100 degrés",
+        "100°C",
+        "Cent"
+      ],
+      "answerType": "number",
+      "requiredPrecision": "Le nombre exact en chiffres.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericValue": 100,
+      "numericTolerance": 0,
+      "explanation": "Au niveau de la mer, l'eau bout à 100 degrés Celsius.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/%C3%89bullition",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0103",
+      "packId": "trou-noir-v1",
+      "logicalKey": "sciences-adn-lettres",
+      "category": "sciences",
+      "themeLabel": "Biologie",
+      "difficulty": 4,
+      "prompt": "Combien de bases différentes composent l'ADN (adénine, thymine, cytosine, guanine) ?",
+      "canonical": "4",
+      "aliases": [
+        "Quatre"
+      ],
+      "answerType": "number",
+      "requiredPrecision": "Le nombre exact en chiffres.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericValue": 4,
+      "numericTolerance": 0,
+      "explanation": "L'ADN est composé de quatre bases : adénine, thymine, cytosine et guanine.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Acide_d%C3%A9soxyribonucl%C3%A9ique",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0104",
+      "packId": "trou-noir-v1",
+      "logicalKey": "sciences-vitesse-lumiere",
+      "category": "sciences",
+      "themeLabel": "Physique",
+      "difficulty": 4,
+      "prompt": "Quelle est la vitesse de la lumière dans le vide, en kilomètres par seconde (valeur arrondie) ?",
+      "canonical": "300 000",
+      "aliases": [
+        "300000",
+        "300 000 km/s",
+        "Trois cent mille"
+      ],
+      "answerType": "number",
+      "requiredPrecision": "La valeur arrondie en km/s, tolérance de 5 000.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericValue": 300000,
+      "numericTolerance": 5000,
+      "explanation": "La lumière se déplace à environ 300 000 kilomètres par seconde dans le vide.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Vitesse_de_la_lumi%C3%A8re",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0105",
+      "packId": "trou-noir-v1",
+      "logicalKey": "sciences-tableau-mendeleiev",
+      "category": "sciences",
+      "themeLabel": "Chimie",
+      "difficulty": 4,
+      "prompt": "Quel chimiste russe a établi le tableau périodique des éléments en 1869 ?",
+      "canonical": "Dmitri Mendeleïev",
+      "aliases": [
+        "Mendeleïev",
+        "Mendeleiev",
+        "Mendeleev"
+      ],
+      "answerType": "person",
+      "requiredPrecision": "Le nom du chimiste suffit.",
+      "allowSurnameOnly": true,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "Dmitri Mendeleïev a publié le tableau périodique des éléments en 1869.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Dmitri_Mendele%C3%AFev",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0106",
+      "packId": "trou-noir-v1",
+      "logicalKey": "sciences-saturne-anneaux",
+      "category": "sciences",
+      "themeLabel": "Astronomie",
+      "difficulty": 4,
+      "prompt": "Quelle planète du Système solaire est célèbre pour ses anneaux spectaculaires ?",
+      "canonical": "Saturne",
+      "aliases": [],
+      "answerType": "place",
+      "requiredPrecision": "Le nom de la planète suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "Saturne est entourée d'anneaux spectaculaires composés de glace et de roches.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Saturne_(plan%C3%A8te)",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0107",
+      "packId": "trou-noir-v1",
+      "logicalKey": "sciences-pasteur-rage",
+      "category": "sciences",
+      "themeLabel": "Médecine",
+      "difficulty": 4,
+      "prompt": "Quel savant français a mis au point le vaccin contre la rage en 1885 ?",
+      "canonical": "Louis Pasteur",
+      "aliases": [
+        "Pasteur"
+      ],
+      "answerType": "person",
+      "requiredPrecision": "Le nom du savant suffit.",
+      "allowSurnameOnly": true,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "Louis Pasteur a mis au point le vaccin contre la rage en 1885.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Louis_Pasteur",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0108",
+      "packId": "trou-noir-v1",
+      "logicalKey": "sciences-coeur-cavites",
+      "category": "sciences",
+      "themeLabel": "Biologie",
+      "difficulty": 4,
+      "prompt": "Combien de cavités compte le cœur humain ?",
+      "canonical": "4",
+      "aliases": [
+        "Quatre"
+      ],
+      "answerType": "number",
+      "requiredPrecision": "Le nombre exact en chiffres.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericValue": 4,
+      "numericTolerance": 0,
+      "explanation": "Le cœur humain compte quatre cavités : deux oreillettes et deux ventricules.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/C%C5%93ur_humain",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0109",
+      "packId": "trou-noir-v1",
+      "logicalKey": "sciences-relativite-einstein",
+      "category": "sciences",
+      "themeLabel": "Physique",
+      "difficulty": 5,
+      "prompt": "Quel physicien a publié la théorie de la relativité restreinte en 1905 ?",
+      "canonical": "Albert Einstein",
+      "aliases": [
+        "Einstein"
+      ],
+      "answerType": "person",
+      "requiredPrecision": "Le nom du physicien suffit.",
+      "allowSurnameOnly": true,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "Albert Einstein a publié la relativité restreinte en 1905, son « année miraculeuse ».",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Albert_Einstein",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0110",
+      "packId": "trou-noir-v1",
+      "logicalKey": "sciences-penicilline-fleming",
+      "category": "sciences",
+      "themeLabel": "Médecine",
+      "difficulty": 5,
+      "prompt": "Quel bactériologiste écossais a découvert la pénicilline en 1928 ?",
+      "canonical": "Alexander Fleming",
+      "aliases": [
+        "Fleming"
+      ],
+      "answerType": "person",
+      "requiredPrecision": "Le nom du savant suffit.",
+      "allowSurnameOnly": true,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "Alexander Fleming a découvert la pénicilline en 1928.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Alexander_Fleming",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0111",
+      "packId": "trou-noir-v1",
+      "logicalKey": "sciences-naissance-univers",
+      "category": "sciences",
+      "themeLabel": "Astronomie",
+      "difficulty": 5,
+      "prompt": "Comment appelle-t-on le modèle d'expansion de l'Univers à partir d'un état dense et chaud ?",
+      "canonical": "Le Big Bang",
+      "aliases": [
+        "Big Bang",
+        "Big-Bang"
+      ],
+      "answerType": "text",
+      "requiredPrecision": "Le nom du modèle suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "Le Big Bang est le modèle cosmologique de l'expansion de l'Univers.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Big_Bang",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0112",
+      "packId": "trou-noir-v1",
+      "logicalKey": "sciences-symbole-or",
+      "category": "sciences",
+      "themeLabel": "Chimie",
+      "difficulty": 5,
+      "prompt": "Quel est le symbole chimique de l'or ?",
+      "canonical": "Au",
+      "aliases": [
+        "AU"
+      ],
+      "answerType": "text",
+      "requiredPrecision": "Le symbole exact (deux lettres).",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "Le symbole chimique de l'or est Au, du latin aurum.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Or",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0113",
+      "packId": "trou-noir-v1",
+      "logicalKey": "sciences-darwin-especes",
+      "category": "sciences",
+      "themeLabel": "Biologie",
+      "difficulty": 5,
+      "prompt": "Quel naturaliste anglais a publié « De l'origine des espèces » en 1859 ?",
+      "canonical": "Charles Darwin",
+      "aliases": [
+        "Darwin"
+      ],
+      "answerType": "person",
+      "requiredPrecision": "Le nom du naturaliste suffit.",
+      "allowSurnameOnly": true,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "Charles Darwin a publié « De l'origine des espèces » en 1859.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Charles_Darwin",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0114",
+      "packId": "trou-noir-v1",
+      "logicalKey": "sciences-marees-lune",
+      "category": "sciences",
+      "themeLabel": "Physique",
+      "difficulty": 5,
+      "prompt": "Quel astre est la principale cause des marées sur Terre ?",
+      "canonical": "La Lune",
+      "aliases": [
+        "Lune"
+      ],
+      "answerType": "place",
+      "requiredPrecision": "Le nom de l'astre suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "L'attraction de la Lune est la principale cause des marées.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Mar%C3%A9e",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0115",
+      "packId": "trou-noir-v1",
+      "logicalKey": "sciences-trou-noir-photo",
+      "category": "sciences",
+      "themeLabel": "Astronomie",
+      "difficulty": 6,
+      "prompt": "En quelle année la première image d'un trou noir (M87*) a-t-elle été publiée ?",
+      "canonical": "2019",
+      "aliases": [],
+      "answerType": "number",
+      "requiredPrecision": "L'année exacte en chiffres.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericValue": 2019,
+      "numericTolerance": 0,
+      "explanation": "La première image d'un trou noir, M87*, a été publiée en avril 2019.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Trou_noir",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0116",
+      "packId": "trou-noir-v1",
+      "logicalKey": "sciences-curie-deux-nobel",
+      "category": "sciences",
+      "themeLabel": "Physique",
+      "difficulty": 6,
+      "prompt": "Quelle scientifique, née en Pologne, a reçu le prix Nobel de physique puis celui de chimie ?",
+      "canonical": "Marie Curie",
+      "aliases": [
+        "Curie",
+        "Marie Skłodowska-Curie"
+      ],
+      "answerType": "person",
+      "requiredPrecision": "Le nom de la scientifique suffit.",
+      "allowSurnameOnly": true,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "Marie Curie a reçu le Nobel de physique en 1903 et celui de chimie en 1911.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Marie_Curie",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0117",
+      "packId": "trou-noir-v1",
+      "logicalKey": "sciences-double-helice",
+      "category": "sciences",
+      "themeLabel": "Biologie",
+      "difficulty": 6,
+      "prompt": "Quelle forme géométrique décrit la structure de la molécule d'ADN ?",
+      "canonical": "La double hélice",
+      "aliases": [
+        "Double hélice",
+        "Hélice"
+      ],
+      "answerType": "text",
+      "requiredPrecision": "Le nom de la structure suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "L'ADN a la forme d'une double hélice, décrite en 1953 par Watson et Crick.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Acide_d%C3%A9soxyribonucl%C3%A9ique",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0118",
+      "packId": "trou-noir-v1",
+      "logicalKey": "sciences-ozone-couche",
+      "category": "sciences",
+      "themeLabel": "Chimie",
+      "difficulty": 6,
+      "prompt": "Quelle formule chimique désigne la molécule d'ozone ?",
+      "canonical": "O3",
+      "aliases": [
+        "O₃"
+      ],
+      "answerType": "text",
+      "requiredPrecision": "La formule exacte.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "La molécule d'ozone est composée de trois atomes d'oxygène : O3.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Ozone",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0119",
+      "packId": "trou-noir-v1",
+      "logicalKey": "sciences-sommeil-paradoxal",
+      "category": "sciences",
+      "themeLabel": "Médecine",
+      "difficulty": 6,
+      "prompt": "Comment appelle-t-on la phase du sommeil pendant laquelle surviennent la plupart des rêves ?",
+      "canonical": "Le sommeil paradoxal",
+      "aliases": [
+        "Sommeil paradoxal",
+        "Phase paradoxale"
+      ],
+      "answerType": "text",
+      "requiredPrecision": "Le nom de la phase suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "Le sommeil paradoxal est la phase du sommeil associée aux rêves.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Sommeil_paradoxal",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    },
+    {
+      "itemId": "tn1-0120",
+      "packId": "trou-noir-v1",
+      "logicalKey": "sciences-fusion-soleil",
+      "category": "sciences",
+      "themeLabel": "Physique",
+      "difficulty": 6,
+      "prompt": "Quel élément chimique le Soleil fusionne-t-il principalement en hélium ?",
+      "canonical": "L'hydrogène",
+      "aliases": [
+        "Hydrogène",
+        "Hydrogene"
+      ],
+      "answerType": "text",
+      "requiredPrecision": "Le nom de l'élément suffit.",
+      "allowSurnameOnly": false,
+      "allowDescription": false,
+      "numericTolerance": 0,
+      "explanation": "Le Soleil tire son énergie de la fusion de l'hydrogène en hélium.",
+      "sources": [
+        {
+          "url": "https://fr.wikipedia.org/wiki/Soleil",
+          "checkedAt": "2026-09-11"
+        }
+      ]
+    }
+  ]
+}

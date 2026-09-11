@@ -3,6 +3,10 @@ import { z } from "zod";
 import { geoConfigSchema } from "@/games/geographie/config";
 import { GEO_ENGINE_VERSION, GEO_RULES_VERSION, initializeGeo } from "@/games/geographie/engine";
 import { projectGeo } from "@/games/geographie/projection";
+import { trouNoirConfigSchema } from "@/games/trou-noir/config";
+import { initializeTrouNoir, TROU_NOIR_ENGINE_VERSION, TROU_NOIR_RULES_VERSION } from "@/games/trou-noir/engine";
+import { projectTrouNoir } from "@/games/trou-noir/projection";
+import { trouNoirStateSchema } from "@/games/trou-noir/types";
 import { unoConfigSchema } from "@/games/uno/config";
 import { initializeUno, UNO_ENGINE_VERSION, UNO_RULES_VERSION } from "@/games/uno/engine";
 import { projectUno } from "@/games/uno/projection";
@@ -11,6 +15,7 @@ import { getSupabaseServerConfig } from "@/server/config";
 import { entropyValues, newCommandId } from "@/server/hash";
 import { assertMutationOrigin, jsonError, jsonOk, mapServerError } from "@/server/http";
 import { loadGeoContent } from "@/server/geo/content";
+import { loadTrouNoirContent } from "@/server/quiz/content";
 import { startMatch, getRoomView } from "@/server/matches/repository";
 import { roomViewSchema } from "@/server/rooms/schemas";
 
@@ -61,6 +66,25 @@ export async function POST(request: Request, { params }: { params: Promise<{ roo
         matchId, mode: "random", config, state: transition.state, phaseId: transition.phaseId,
         deadlineAt: transition.deadlineAt, deadlineKind: transition.deadlineKind, views, jobs: transition.jobs,
         contentManifest: {}, rulesVersion: UNO_RULES_VERSION, engineVersion: UNO_ENGINE_VERSION, stateSchemaVersion: 1,
+      });
+    } else if (room.gameSlug === "trou-noir") {
+      const config = trouNoirConfigSchema.parse(room.config);
+      const content = await loadTrouNoirContent();
+      const transition = initializeTrouNoir(config, {
+        nowMs: Date.now(), actorId: member.id, matchId, participants, content,
+        entropy: entropyValues(), phaseId, nextPhaseId: phaseId,
+      });
+      const parsedState = trouNoirStateSchema.parse(transition.state);
+      const views = participants.map((viewerId) => ({
+        viewerId,
+        payload: projectTrouNoir(parsedState, config, content, viewerId, participants, identities, config, parsedState),
+      }));
+      result = await startMatch({
+        actorId: member.id, commandId: body.data.commandId ?? newCommandId(), roomId, expectedVersion: room.version,
+        matchId, mode: "random", config, state: transition.state, phaseId: transition.phaseId,
+        deadlineAt: transition.deadlineAt, deadlineKind: transition.deadlineKind, views, jobs: transition.jobs,
+        contentManifest: { packId: content.packId, packVersion: content.packVersion },
+        rulesVersion: TROU_NOIR_RULES_VERSION, engineVersion: TROU_NOIR_ENGINE_VERSION, stateSchemaVersion: 1,
       });
     } else {
       throw new Error("GAME_NOT_READY");

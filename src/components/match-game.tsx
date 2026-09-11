@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { GeographyMatch } from "@/games/geographie/components/geography-match";
+import { TrouNoirMatch } from "@/games/trou-noir/components/trou-noir-match";
 import { UnoMatch } from "@/games/uno/components/uno-match";
 
 export function MatchGame({ matchId }: { matchId: string }) {
@@ -19,6 +20,7 @@ export function MatchGame({ matchId }: { matchId: string }) {
   }, [matchId]);
   if (error) return <main className="min-h-screen px-5 py-12"><div role="alert" className="mx-auto max-w-xl rounded-2xl bg-red-50 p-5 text-red-700">{error}</div></main>;
   if (gameSlug === "geographie") return <GeographyMatch matchId={matchId} />;
+  if (gameSlug === "trou-noir") return <TrouNoirMatch matchId={matchId} />;
   if (gameSlug === "uno") return <UnoMatch matchId={matchId} />;
   return <main className="min-h-screen px-5 py-12"><div className="mx-auto max-w-xl rounded-3xl border border-[var(--line)] bg-white/70 p-8 text-center text-[var(--muted)]">Chargement de la partie…</div></main>;
 }

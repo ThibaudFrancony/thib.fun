@@ -18,7 +18,7 @@ export const PUBLIC_GAMES: readonly PublicGame[] = [
     description: "Réponds juste pour éviter la chute.",
     priority: 0,
     kind: "competitive",
-    availability: "coming_soon",
+    availability: "ready",
     duration: "8–12 min",
   },
   {
