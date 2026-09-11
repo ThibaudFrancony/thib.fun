@@ -76,6 +76,14 @@ Ne pas y inventer de risques théoriques. Si la cause n'est pas confirmée, l'in
 - Nettoyage des vérifications : Next a régénéré `next-env.d.ts` pendant le build. La tentative de restauration Git a échoué car `.git/index.lock` n'était pas accessible en écriture ; une lecture programmatique pour normaliser ce fichier a aussi été refusée par le garde. Son contenu initial connu et ses fins de ligne ont ensuite été rétablis directement, et le statut Git confirme l'absence de modification applicative.
 - Statut : diagnostic et propositions uniquement. Aucun correctif applicatif, migration, commit ou déploiement. Prochaine étape utile : corriger les bugs de forfait/timers/reçus/présence avec leurs tests de régression, puis réaliser la recette transactionnelle sur une base isolée.
 
+### 11/09/2026 — Vérifications d’outillage pour l’implémentation complète
+
+- Problème : la CLI Supabase installée (`2.104.0`) ne peut pas consulter les projets distants dans ce shell car aucun `SUPABASE_ACCESS_TOKEN` n’est fourni ; la première commande sans désactivation de télémétrie a aussi été bloquée par une écriture EPERM dans `~/.supabase/telemetry.json`.
+- Résolution partielle : `SUPABASE_TELEMETRY_DISABLED=1 supabase --version` fonctionne. La vérification distante reste en attente d’une authentification/connexion effective ; aucune migration distante n’est déclarée appliquée.
+- Problème : l’exécution non interactive OpenCode/Muse a signalé `Error starting FSEvents stream` puis est restée sans réponse dans l’environnement shell isolé ; le catalogue du modèle était toutefois disponible.
+- Résolution : un test CLI relancé avec l’accès réseau et aux fichiers nécessaires a fonctionné avec `opencode 1.18.30` et `opencode/muse-spark-1.3-contributor-free`, en retournant `READY` avec un coût `0`. Aucun fichier du dépôt n’a été modifié par OpenCode.
+- Statut : le CLI est utilisable ; l’erreur précédente était liée à l’environnement shell isolé. La vérification Supabase distante reste en attente d’une authentification effective.
+
 ### Format des prochaines entrées
 
 `date — problème` : signalement ou erreur, contexte, cause si connue, correction ou statut actuel, puis test ou vérification effectuée.
@@ -95,6 +103,12 @@ Ne pas y inventer de risques théoriques. Si la cause n'est pas confirmée, l'in
 - Vérifications : `pnpm typecheck` OK, `pnpm lint` OK, `pnpm test` OK (12 fichiers / 64 tests), `pnpm build` OK (routes `/jeux/trou-noir`, `/api/matches/[matchId]/commands`, `/api/internal/jobs/run` présentes).
 - Non vérifiable sans Supabase distant (ni Docker/CLI ici) : exécution réelle de `server_get_quiz_content()` en base (résolution UUID->jsonb, `ORDER BY` dans `jsonb_agg`, comportement 0-ligne sans pack, application effective des `revoke/grant` et idempotence par rejouement), historique/hypothèses d'objets distants préexistants, recette à deux sessions avec `commitMatch`/`lease`/`deadlines` réels, benchmark DeepSeek daté. Aucune migration n'est déclarée appliquée en production ; les deux fichiers SQL restent non committés dans ce clone.
 - Statut : audit + durcissements présents dans l'arbre de travail uniquement. Aucun commit, push, déploiement ou migration distante.
+
+### 11/09/2026 — Validation du build après intégration Trou Noir
+
+- Problème : `pnpm build` avec le bundler Turbopack échoue dans cet environnement avant compilation (`Failed to write app endpoint /page`, processus CSS incapable de binder un port, `Operation not permitted`). Cause confirmée comme restriction système/outillage ; ce n’est pas une erreur TypeScript ou applicative.
+- Résolution : `pnpm exec next build --webpack` compile et génère toutes les pages/routes avec succès ; le projet garde sa configuration existante, sans contournement ajouté pour Turbopack. Le fichier généré `next-env.d.ts` a été restauré à son contenu versionné.
+- Vérifications : `pnpm typecheck`, `pnpm lint` et `pnpm test` passent dans `main` (12 fichiers / 64 tests) ; build webpack OK. Le build Turbopack reste un incident d’environnement documenté.
 
 ## Points à savoir pour les prochains développements
 
