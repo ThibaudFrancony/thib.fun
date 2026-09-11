@@ -16,6 +16,10 @@ import { unoActionSchema, type UnoAction } from "@/games/uno/types";
 import { unoConfigSchema } from "@/games/uno/config";
 import { reduceUno, UNO_ENGINE_VERSION, UNO_RULES_VERSION } from "@/games/uno/engine";
 import { projectUno } from "@/games/uno/projection";
+import { skyjoActionSchema } from "@/games/skyjo/types";
+import { skyjoConfigSchema } from "@/games/skyjo/config";
+import { reduceSkyjo, SKYJO_ENGINE_VERSION, SKYJO_RULES_VERSION } from "@/games/skyjo/engine";
+import { projectSkyjo } from "@/games/skyjo/projection";
 import { getAuthenticatedMember } from "@/server/auth";
 import { getSupabaseServerConfig } from "@/server/config";
 import { entropyValues, hashCommand } from "@/server/hash";
@@ -90,6 +94,14 @@ export async function POST(request: Request, { params }: { params: Promise<{ mat
       const parsedState = ttmcStateSchema.parse(transition.state);
       const views = participants.map((viewerId) => ({ viewerId, payload: projectTtmc(parsedState, config, content, viewerId, participants, identities, config, parsedState) }));
       response = await commitMatch({ matchId, expectedVersion: body.data.expectedVersion, actorId: member.id, commandId: body.data.commandId, commandHash: hashCommand(matchId, member.id, parsedAction.data.type, parsedAction.data), source: "player", previousPhaseId: snapshot.phaseId, next: { state: transition.state, phaseId: transition.phaseId, deadlineAt: transition.deadlineAt, deadlineKind: transition.deadlineKind }, views, jobsToUpsert: transition.jobs, jobsToCancel: [], roundRecords: transition.roundRecords, event: transition.event, result: transition.result, rulesVersion: TTMC_RULES_VERSION, engineVersion: TTMC_ENGINE_VERSION });
+    } else if (snapshot.gameSlug === "skyjo") {
+      const parsedAction = skyjoActionSchema.safeParse(body.data.action);
+      if (!parsedAction.success) return jsonError("INVALID_REQUEST", 400, "La commande de jeu est invalide.");
+      const config = skyjoConfigSchema.parse(snapshot.config);
+      const context = { nowMs: Date.parse(snapshot.serverNow), actorId: member.id, matchId, participants, content: null, entropy: entropyValues(), phaseId: snapshot.phaseId, nextPhaseId, currentDeadlineAt: snapshot.deadlineAt, currentDeadlineKind: snapshot.deadlineKind };
+      const transition = reduceSkyjo(snapshot.state, parsedAction.data, config, context);
+      const views = participants.map((viewerId) => ({ viewerId, payload: projectSkyjo(transition.state, config, viewerId, participants, identities) }));
+      response = await commitMatch({ matchId, expectedVersion: body.data.expectedVersion, actorId: member.id, commandId: body.data.commandId, commandHash: hashCommand(matchId, member.id, parsedAction.data.type, parsedAction.data), source: "player", previousPhaseId: snapshot.phaseId, next: { state: transition.state, phaseId: transition.phaseId, deadlineAt: transition.deadlineAt, deadlineKind: transition.deadlineKind }, views, jobsToUpsert: transition.jobs, jobsToCancel: [], roundRecords: transition.roundRecords, event: transition.event, result: transition.result, rulesVersion: SKYJO_RULES_VERSION, engineVersion: SKYJO_ENGINE_VERSION });
     } else {
       throw new Error("GAME_NOT_READY");
     }

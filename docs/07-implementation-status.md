@@ -24,7 +24,7 @@ Contrôles effectués : index des neuf jeux dans AGENTS, résolution des liens l
 | TTMC | Implémenté localement, commit `b5a49b5` (11 septembre 2026, cycle 2 terminé) | Moteur, projection, correction, UI, worker, pack 22 thèmes/440 questions, 116 tests au total, typecheck/lint/build webpack/docs:check OK ; push, recette à deux sessions, benchmark IA et migration distante à finaliser |
 | Bataille navale | À faire | Socle |
 | BombParty + entraînement | À faire | Socle + lexique + recette timer |
-| Skyjo | À faire | Socle |
+| Skyjo | Implémenté localement, non committé (11 septembre 2026) | Moteur pur, projection sans fuite, API/worker, UI, migration `20260911180344_skyjo_activate.sql` ; 42 tests Skyjo, typecheck/lint/build Webpack OK ; recette à deux sessions et migration distante à finaliser |
 | UNO | Implémenté sur `main` le 10 septembre 2026 | Moteur pur, projection secrète, API/worker, UI, migration `20260910100000_uno_ready.sql` ; 13 tests UNO, typecheck/lint/build Webpack et Supabase local OK selon le suivi ; recette Chromium à deux sessions et migration distante à finaliser |
 | Compatibilité | À faire | Socle + questionnaires |
 | Longueur d'onde | À faire | Socle + axes |

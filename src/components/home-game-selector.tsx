@@ -8,6 +8,7 @@ import { PUBLIC_GAMES, type PublicGame } from "@/games/registry";
 const PLAYABLE_ROUTES: Readonly<Partial<Record<string, string>>> = {
   geographie: "/jeux/geographie",
   uno: "/jeux/uno",
+  skyjo: "/jeux/skyjo",
   "trou-noir": "/jeux/trou-noir",
   ttmc: "/jeux/ttmc",
 };

@@ -12,6 +12,16 @@ import { finishJob, failJob, getJobContext, commitMatch, type JobContext, type M
 import { unoConfigSchema } from "@/games/uno/config";
 import { onUnoAbsence, onUnoDeadline, shouldAbandonForUnoAbsence, UNO_ENGINE_VERSION, UNO_RULES_VERSION } from "@/games/uno/engine";
 import { projectUno } from "@/games/uno/projection";
+import { skyjoConfigSchema } from "@/games/skyjo/config";
+import {
+  isSkyjoDeadlineJobStale,
+  onSkyjoAbsence,
+  onSkyjoDeadline,
+  shouldAbandonForSkyjoAbsence,
+  SKYJO_ENGINE_VERSION,
+  SKYJO_RULES_VERSION,
+} from "@/games/skyjo/engine";
+import { projectSkyjo } from "@/games/skyjo/projection";
 import { trouNoirConfigSchema } from "@/games/trou-noir/config";
 import {
   applyTrouNoirJudgment,
@@ -605,10 +615,70 @@ async function processTtmcAbsenceJob(job: WorkerJob, context: JobContext): Promi
   return { jobId: job.jobId, matchId: context.matchId, status: "committed", version: response.version };
 }
 
+async function processSkyjoJob(job: WorkerJob, context: JobContext): Promise<Record<string, unknown>> {
+  if (context.jobKind === "check_absence") return processSkyjoAbsenceJob(job, context);
+  if (!["preparation_timeout", "turn_timeout", "advance_reveal"].includes(context.jobKind)) {
+    await cancelIfClaimStillExists(job, "UNSUPPORTED_JOB");
+    return { jobId: job.jobId, status: "cancelled", reason: "UNSUPPORTED_JOB" };
+  }
+  if (isSkyjoDeadlineJobStale(context.jobPhaseId, context.phaseId)) {
+    await cancelIfClaimStillExists(job, "STALE_DEADLINE");
+    return { jobId: job.jobId, status: "cancelled", reason: "STALE_DEADLINE" };
+  }
+  const config = skyjoConfigSchema.parse(context.config);
+  const players = orderedPlayers(context.players);
+  const participants = [players[0].id, players[1].id] as const;
+  const identities = players.map((player) => ({ id: player.id, pseudo: player.pseudo })) as [{ id: string; pseudo: string }, { id: string; pseudo: string }];
+  const transition = onSkyjoDeadline(context.state, context.jobKind, config, {
+    nowMs: Date.parse(context.serverNow), actorId: null, matchId: context.matchId, participants,
+    content: null, entropy: entropyValues(), phaseId: context.phaseId, nextPhaseId: randomUUID(),
+    currentDeadlineAt: context.deadlineAt, currentDeadlineKind: context.deadlineKind,
+  });
+  const views = participants.map((viewerId) => ({ viewerId, payload: projectSkyjo(transition.state, config, viewerId, participants, identities) }));
+  const response = await commitMatch({
+    matchId: context.matchId, expectedVersion: context.version, actorId: null, commandId: job.jobId,
+    commandHash: hashCommand(context.matchId, job.jobId, context.jobKind, { jobPhaseId: context.jobPhaseId, payload: context.jobPayload }),
+    source: "job", jobId: job.jobId, leaseToken: job.leaseToken, jobKind: context.jobKind,
+    previousPhaseId: context.phaseId,
+    next: { state: transition.state, phaseId: transition.phaseId, deadlineAt: transition.deadlineAt, deadlineKind: transition.deadlineKind },
+    views, jobsToUpsert: transition.jobs, jobsToCancel: [], roundRecords: transition.roundRecords,
+    event: transition.event, result: transition.result, rulesVersion: SKYJO_RULES_VERSION, engineVersion: SKYJO_ENGINE_VERSION,
+  });
+  return { jobId: job.jobId, matchId: context.matchId, status: "committed", version: response.version };
+}
+
+async function processSkyjoAbsenceJob(job: WorkerJob, context: JobContext): Promise<Record<string, unknown>> {
+  const players = orderedPlayers(context.players);
+  const lastSeenAt = players.map((player) => player.lastSeenAt).filter((value): value is string => typeof value === "string") as string[];
+  if (lastSeenAt.length !== 2 || !shouldAbandonForSkyjoAbsence([lastSeenAt[0], lastSeenAt[1]], Date.parse(context.serverNow))) {
+    const response = await finishJob(job.jobId, job.leaseToken, "done");
+    return { jobId: job.jobId, matchId: context.matchId, status: "checked", response };
+  }
+  const config = skyjoConfigSchema.parse(context.config);
+  const participants = [players[0].id, players[1].id] as const;
+  const identities = players.map((player) => ({ id: player.id, pseudo: player.pseudo })) as [{ id: string; pseudo: string }, { id: string; pseudo: string }];
+  const transition = onSkyjoAbsence(context.state, config, {
+    nowMs: Date.parse(context.serverNow), actorId: null, matchId: context.matchId, participants,
+    content: null, entropy: [], phaseId: context.phaseId, nextPhaseId: randomUUID(),
+    currentDeadlineAt: context.deadlineAt, currentDeadlineKind: context.deadlineKind,
+  });
+  const views = participants.map((viewerId) => ({ viewerId, payload: projectSkyjo(transition.state, config, viewerId, participants, identities) }));
+  const response = await commitMatch({
+    matchId: context.matchId, expectedVersion: context.version, actorId: null, commandId: job.jobId,
+    commandHash: hashCommand(context.matchId, job.jobId, context.jobKind, { lastSeenAt }), source: "job",
+    jobId: job.jobId, leaseToken: job.leaseToken, jobKind: context.jobKind, previousPhaseId: context.phaseId,
+    next: { state: transition.state, phaseId: transition.phaseId, deadlineAt: transition.deadlineAt, deadlineKind: transition.deadlineKind },
+    views, jobsToUpsert: transition.jobs, jobsToCancel: [], roundRecords: transition.roundRecords,
+    event: transition.event, result: transition.result, rulesVersion: SKYJO_RULES_VERSION, engineVersion: SKYJO_ENGINE_VERSION,
+  });
+  return { jobId: job.jobId, matchId: context.matchId, status: "committed", version: response.version };
+}
+
 export async function processWorkerJob(job: WorkerJob): Promise<Record<string, unknown>> {
   try {
     const context = await getJobContext(job.jobId, job.leaseToken);
     if (context.gameSlug === "uno") return await processUnoJob(job, context);
+    if (context.gameSlug === "skyjo") return await processSkyjoJob(job, context);
     if (context.gameSlug === "trou-noir") return await processTrouNoirJob(job, context);
     if (context.gameSlug === "ttmc") return await processTtmcJob(job, context);
     if (context.gameSlug !== "geographie") {

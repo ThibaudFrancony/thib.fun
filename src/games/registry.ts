@@ -45,7 +45,7 @@ export const PUBLIC_GAMES: readonly PublicGame[] = [
     description: "Révèle et échange tes cartes pour réduire ton total.",
     priority: 1,
     kind: "competitive",
-    availability: "coming_soon",
+    availability: "ready",
     duration: "10–20 min",
   },
   {

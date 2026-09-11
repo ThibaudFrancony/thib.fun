@@ -14,6 +14,9 @@ import { ttmcStateSchema } from "@/games/ttmc/types";
 import { unoConfigSchema } from "@/games/uno/config";
 import { initializeUno, UNO_ENGINE_VERSION, UNO_RULES_VERSION } from "@/games/uno/engine";
 import { projectUno } from "@/games/uno/projection";
+import { skyjoConfigSchema } from "@/games/skyjo/config";
+import { initializeSkyjo, SKYJO_ENGINE_VERSION, SKYJO_RULES_VERSION } from "@/games/skyjo/engine";
+import { projectSkyjo } from "@/games/skyjo/projection";
 import { getAuthenticatedMember } from "@/server/auth";
 import { getSupabaseServerConfig } from "@/server/config";
 import { entropyValues, newCommandId } from "@/server/hash";
@@ -109,6 +112,19 @@ export async function POST(request: Request, { params }: { params: Promise<{ roo
         deadlineAt: transition.deadlineAt, deadlineKind: transition.deadlineKind, views, jobs: transition.jobs,
         contentManifest: { packId: content.packId, packVersion: content.packVersion },
         rulesVersion: TTMC_RULES_VERSION, engineVersion: TTMC_ENGINE_VERSION, stateSchemaVersion: 1,
+      });
+    } else if (room.gameSlug === "skyjo") {
+      const config = skyjoConfigSchema.parse(room.config);
+      const transition = initializeSkyjo(config, {
+        nowMs: Date.now(), actorId: member.id, matchId, participants, content: null,
+        entropy: entropyValues(), phaseId, nextPhaseId: phaseId,
+      });
+      const views = participants.map((viewerId) => ({ viewerId, payload: projectSkyjo(transition.state, config, viewerId, participants, identities) }));
+      result = await startMatch({
+        actorId: member.id, commandId: body.data.commandId ?? newCommandId(), roomId, expectedVersion: room.version,
+        matchId, mode: "random", config, state: transition.state, phaseId: transition.phaseId,
+        deadlineAt: transition.deadlineAt, deadlineKind: transition.deadlineKind, views, jobs: transition.jobs,
+        contentManifest: {}, rulesVersion: SKYJO_RULES_VERSION, engineVersion: SKYJO_ENGINE_VERSION, stateSchemaVersion: 1,
       });
     } else {
       throw new Error("GAME_NOT_READY");
