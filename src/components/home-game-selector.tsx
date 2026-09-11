@@ -14,6 +14,7 @@ const PLAYABLE_ROUTES: Readonly<Partial<Record<string, string>>> = {
   bombparty: "/jeux/bombparty",
   "bataille-navale": "/jeux/bataille-navale",
   compatibilite: "/jeux/compatibilite",
+  "longueur-onde": "/jeux/longueur-onde",
 };
 
 function playableRoute(game: PublicGame) {
@@ -23,6 +24,8 @@ function playableRoute(game: PublicGame) {
 const availableCount = PUBLIC_GAMES.filter((game) => playableRoute(game)).length;
 const PRIORITY_GAMES = PUBLIC_GAMES.filter((game) => game.priority === 0);
 const OTHER_GAMES = PUBLIC_GAMES.filter((game) => game.priority !== 0);
+const OTHER_AVAILABLE_COUNT = OTHER_GAMES.filter((game) => playableRoute(game)).length;
+const OTHER_COMING_SOON_COUNT = OTHER_GAMES.length - OTHER_AVAILABLE_COUNT;
 
 export function HomeGameSelector() {
   const railRef = useRef<HTMLDivElement>(null);
@@ -98,7 +101,7 @@ export function HomeGameSelector() {
           <p className="home-section-kicker">À découvrir ensuite</p>
           <h2>Le reste de la table</h2>
         </div>
-        <span>{OTHER_GAMES.length} jeux en préparation</span>
+        <span>{OTHER_AVAILABLE_COUNT} disponibles{OTHER_COMING_SOON_COUNT ? ` · ${OTHER_COMING_SOON_COUNT} en préparation` : ""}</span>
       </div>
       <div className="home-rail-shell">
         <button
@@ -116,7 +119,7 @@ export function HomeGameSelector() {
           id="home-game-rail"
           className="home-game-rail"
           role="region"
-          aria-label="Jeux en préparation"
+          aria-label="Autres jeux"
           aria-roledescription="carrousel"
           aria-describedby="home-rail-help"
           tabIndex={0}
@@ -142,7 +145,7 @@ export function HomeGameSelector() {
         </button>
       </div>
       <p id="home-rail-help" className="home-rail-help">
-        Fais défiler les jeux en préparation ou utilise les flèches.
+        Fais défiler les autres jeux ou utilise les flèches.
         <span className="sr-only"> Au clavier, place le focus sur le catalogue et utilise les flèches gauche et droite. Début et Fin vont au premier et au dernier jeu.</span>
       </p>
     </section>

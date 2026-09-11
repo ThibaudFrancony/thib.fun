@@ -41,6 +41,11 @@ import { loadBombpartyContent } from "@/server/bombparty/content";
 import { loadTrouNoirContent } from "@/server/quiz/content";
 import { loadTtmcContent } from "@/server/ttmc/content";
 import { loadCompatibiliteContent } from "@/server/compatibilite/content";
+import { longueurOndeActionSchema } from "@/games/longueur-onde/types";
+import { longueurOndeConfigSchema } from "@/games/longueur-onde/config";
+import { LONGUEUR_ONDE_ENGINE_VERSION, LONGUEUR_ONDE_RULES_VERSION, reduceLongueurOnde } from "@/games/longueur-onde/engine";
+import { projectLongueurOnde } from "@/games/longueur-onde/projection";
+import { loadLongueurOndeContent } from "@/server/longueur-onde/content";
 import { commitMatch, getMatchSnapshot } from "@/server/matches/repository";
 
 const commandSchema = z.object({
@@ -145,6 +150,15 @@ export async function POST(request: Request, { params }: { params: Promise<{ mat
       const transition = reduceCompatibilite(snapshot.state, parsedAction.data, config, context);
       const views = participants.map((viewerId) => ({ viewerId, payload: projectCompatibilite(transition.state, config, content, viewerId, participants, identities) }));
       response = await commitMatch({ matchId, expectedVersion: body.data.expectedVersion, actorId: member.id, commandId: body.data.commandId, commandHash: hashCommand(matchId, member.id, parsedAction.data.type, parsedAction.data), source: "player", previousPhaseId: snapshot.phaseId, next: { state: transition.state, phaseId: transition.phaseId, deadlineAt: transition.deadlineAt, deadlineKind: transition.deadlineKind }, views, jobsToUpsert: transition.jobs, jobsToCancel: [], roundRecords: transition.roundRecords, event: transition.event, result: transition.result, rulesVersion: COMPATIBILITE_RULES_VERSION, engineVersion: COMPATIBILITE_ENGINE_VERSION });
+    } else if (snapshot.gameSlug === "longueur-onde") {
+      const parsedAction = longueurOndeActionSchema.safeParse(body.data.action);
+      if (!parsedAction.success) return jsonError("INVALID_REQUEST", 400, "La commande de jeu est invalide.");
+      const config = longueurOndeConfigSchema.parse(snapshot.config);
+      const content = await loadLongueurOndeContent();
+      const context = { nowMs: Date.parse(snapshot.serverNow), actorId: member.id, matchId, participants, content, entropy: entropyValues(), phaseId: snapshot.phaseId, nextPhaseId, currentDeadlineAt: snapshot.deadlineAt, currentDeadlineKind: snapshot.deadlineKind };
+      const transition = reduceLongueurOnde(snapshot.state, parsedAction.data, config, context);
+      const views = participants.map((viewerId) => ({ viewerId, payload: projectLongueurOnde(transition.state, config, content, viewerId, participants, identities) }));
+      response = await commitMatch({ matchId, expectedVersion: body.data.expectedVersion, actorId: member.id, commandId: body.data.commandId, commandHash: hashCommand(matchId, member.id, parsedAction.data.type, parsedAction.data), source: "player", previousPhaseId: snapshot.phaseId, next: { state: transition.state, phaseId: transition.phaseId, deadlineAt: transition.deadlineAt, deadlineKind: transition.deadlineKind }, views, jobsToUpsert: transition.jobs, jobsToCancel: [], roundRecords: transition.roundRecords, event: transition.event, result: transition.result, rulesVersion: LONGUEUR_ONDE_RULES_VERSION, engineVersion: LONGUEUR_ONDE_ENGINE_VERSION });
     } else {
       throw new Error("GAME_NOT_READY");
     }

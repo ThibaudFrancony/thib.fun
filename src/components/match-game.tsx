@@ -9,6 +9,7 @@ import { BombpartyMatch } from "@/games/bombparty/components/bombparty-match";
 import { BatailleNavaleMatch } from "@/games/bataille-navale/components/bataille-navale-match";
 import { UnoMatch } from "@/games/uno/components/uno-match";
 import { CompatibiliteMatch } from "@/games/compatibilite/components/compatibilite-match";
+import { LongueurOndeMatch } from "@/games/longueur-onde/components/longueur-onde-match";
 
 export function MatchGame({ matchId }: { matchId: string }) {
   const [gameSlug, setGameSlug] = useState<string | null>(null);
@@ -32,5 +33,6 @@ export function MatchGame({ matchId }: { matchId: string }) {
   if (gameSlug === "bombparty") return <BombpartyMatch matchId={matchId} />;
   if (gameSlug === "bataille-navale") return <BatailleNavaleMatch matchId={matchId} />;
   if (gameSlug === "compatibilite") return <CompatibiliteMatch matchId={matchId} />;
+  if (gameSlug === "longueur-onde") return <LongueurOndeMatch matchId={matchId} />;
   return <main className="min-h-screen px-5 py-12"><div className="mx-auto max-w-xl rounded-3xl border border-[var(--line)] bg-white/70 p-8 text-center text-[var(--muted)]">Chargement de la partie…</div></main>;
 }

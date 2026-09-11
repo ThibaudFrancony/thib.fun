@@ -12,7 +12,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ mat
   if (!z.string().uuid().safeParse(matchId).success) return jsonError("MATCH_NOT_FOUND", 404, "Partie introuvable.");
   try {
     const snapshot = await getMatchSnapshot(member.id, matchId);
-    if (snapshot.gameSlug !== "geographie" && snapshot.gameSlug !== "uno" && snapshot.gameSlug !== "trou-noir" && snapshot.gameSlug !== "ttmc" && snapshot.gameSlug !== "skyjo" && snapshot.gameSlug !== "bombparty" && snapshot.gameSlug !== "bataille-navale" && snapshot.gameSlug !== "compatibilite") return jsonError("GAME_NOT_READY", 409, "Cette partie n'est pas disponible.");
+    if (snapshot.gameSlug !== "geographie" && snapshot.gameSlug !== "uno" && snapshot.gameSlug !== "trou-noir" && snapshot.gameSlug !== "ttmc" && snapshot.gameSlug !== "skyjo" && snapshot.gameSlug !== "bombparty" && snapshot.gameSlug !== "bataille-navale" && snapshot.gameSlug !== "compatibilite" && snapshot.gameSlug !== "longueur-onde") return jsonError("GAME_NOT_READY", 409, "Cette partie n'est pas disponible.");
     // The persisted projection is the only payload returned to the browser.
     return jsonOk({
       matchId: snapshot.matchId,

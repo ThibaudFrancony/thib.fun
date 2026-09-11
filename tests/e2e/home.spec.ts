@@ -10,8 +10,8 @@ test("présente les neuf jeux et active les jeux implémentés", async ({ page }
   await expect(page.getByRole("link", { name: "Syllabe Express", exact: true })).toHaveAttribute("href", "/jeux/bombparty");
   await expect(page.getByRole("link", { name: "Flotte cachée", exact: true })).toHaveAttribute("href", "/jeux/bataille-navale");
   await expect(page.getByRole("link", { name: "Même réponse ?", exact: true })).toHaveAttribute("href", "/jeux/compatibilite");
-  await expect(page.locator("article.home-game-card")).toHaveCount(1);
-  await expect(page.locator("article.home-game-card")).toContainText("À l'unisson");
+  await expect(page.getByRole("link", { name: "À l'unisson", exact: true })).toHaveAttribute("href", "/jeux/longueur-onde");
+  await expect(page.locator("article.home-game-card")).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Inscription" })).toHaveAttribute("href", "/connexion?mode=signUp");
 
   const rail = page.locator("#home-game-rail");

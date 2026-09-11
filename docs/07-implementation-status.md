@@ -4,7 +4,7 @@ Dernière mise à jour : 11 septembre 2026.
 
 Le suivi opérationnel détaillé et maintenu après chaque changement se trouve dans [progression.md](../progression.md). Ce document conserve le suivi de réalisation par lots et doit rester cohérent avec lui.
 
-**Le cadrage initial et les migrations de schéma sont versionnés ; les contrôles applicatifs et statiques de TTMC, Skyjo, BombParty, Bataille navale et Compatibilité sont validés localement, sans utiliser Docker. Aucune migration n'a été appliquée à une base distante et aucune banque de contenu de production n'a été créée.** L'accueil multi-jeux, Géographie, Trou Noir, TTMC, Skyjo, UNO, BombParty, Bataille navale et Compatibilité sont présents dans `main` ; seule Longueur d'onde reste à développer.
+**Le cadrage initial et les migrations de schéma sont versionnés ; les contrôles applicatifs et statiques des neuf jeux sont validés localement, sans utiliser Docker. Aucune migration n'a été appliquée à une base distante et aucune banque de contenu de production n'a été créée.** L'accueil multi-jeux, Géographie, Trou Noir, TTMC, Skyjo, UNO, BombParty, Bataille navale, Compatibilité et Longueur d'onde sont présents dans `main` ; aucun jeu ne reste à développer dans le périmètre des neuf fiches.
 
 Contrôles effectués : index des neuf jeux dans AGENTS, résolution des liens locaux, blocs de code Markdown équilibrés, absence de marqueurs d'espace réservé, couverture des règles/configurations/états/projections/scores/tests. Relecture croisée des droits SQL, reçus système, délais, contenu et résultats coopératifs. Le lint Supabase local ne signale aucune erreur ; 40 assertions pgTAP du schéma passent. Les contrôles applicatifs sont détaillés dans la ligne de chaque lot.
 
@@ -27,6 +27,6 @@ Contrôles effectués : index des neuf jeux dans AGENTS, résolution des liens l
 | Skyjo | Implémenté sur `main`, commit `2745261` (11 septembre 2026, deux cycles Muse terminés) | Moteur pur, projection sans fuite, API/worker, UI, migration `20260911180344_skyjo_activate.sql` ; 43 tests Skyjo et 166 tests au total, typecheck/lint/build Webpack/docs:check OK ; push vérifié, recette à deux sessions et migration distante à finaliser |
 | UNO | Implémenté sur `main` le 10 septembre 2026 | Moteur pur, projection secrète, API/worker, UI, migration `20260910100000_uno_ready.sql` ; 13 tests UNO, typecheck/lint/build Webpack et Supabase local OK selon le suivi ; recette Chromium à deux sessions et migration distante à finaliser |
 | Compatibilité | Implémenté le 11 septembre 2026 | Moteur, projection sans fuite, contenu 160 questions, API/worker, UI, migration/RPC, 13 tests dédiés ; E2E à deux comptes et migration distante à finaliser |
-| Longueur d'onde | À faire | Socle + axes |
+| Longueur d'onde | Implémenté en cours de validation locale | Moteur, projection, cible/indice/estimation, cadran SVG, UI responsive, API/worker, pack de 80 axes, migration/RPC `20260911210000_longueur_onde_ready.sql`, 15 tests dédiés ; E2E à deux sessions et migration distante restent à finaliser |
 
 Pour chaque lot terminé ajouter date, version/commit si existant, tests effectués et limitations réelles. Ne pas cocher « terminé » sur la base du plan seul.

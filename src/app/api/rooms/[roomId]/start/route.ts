@@ -35,6 +35,10 @@ import { loadBombpartyContent, bombpartyContentManifest } from "@/server/bombpar
 import { loadTrouNoirContent } from "@/server/quiz/content";
 import { loadTtmcContent } from "@/server/ttmc/content";
 import { loadCompatibiliteContent } from "@/server/compatibilite/content";
+import { longueurOndeConfigSchema } from "@/games/longueur-onde/config";
+import { initializeLongueurOnde, LONGUEUR_ONDE_ENGINE_VERSION, LONGUEUR_ONDE_RULES_VERSION } from "@/games/longueur-onde/engine";
+import { projectLongueurOnde } from "@/games/longueur-onde/projection";
+import { loadLongueurOndeContent } from "@/server/longueur-onde/content";
 import { startMatch, getRoomView } from "@/server/matches/repository";
 import { roomViewSchema } from "@/server/rooms/schemas";
 
@@ -178,6 +182,21 @@ export async function POST(request: Request, { params }: { params: Promise<{ roo
         deadlineAt: transition.deadlineAt, deadlineKind: transition.deadlineKind, views, jobs: transition.jobs,
         contentManifest: { packId: content.packId, packVersion: content.packVersion },
         rulesVersion: COMPATIBILITE_RULES_VERSION, engineVersion: COMPATIBILITE_ENGINE_VERSION, stateSchemaVersion: 1,
+      });
+    } else if (room.gameSlug === "longueur-onde") {
+      const config = longueurOndeConfigSchema.parse(room.config);
+      const content = await loadLongueurOndeContent();
+      const transition = initializeLongueurOnde(config, {
+        nowMs: Date.now(), actorId: member.id, matchId, participants, content,
+        entropy: entropyValues(), phaseId, nextPhaseId: phaseId,
+      });
+      const views = participants.map((viewerId) => ({ viewerId, payload: projectLongueurOnde(transition.state, config, content, viewerId, participants, identities) }));
+      result = await startMatch({
+        actorId: member.id, commandId: body.data.commandId ?? newCommandId(), roomId, expectedVersion: room.version,
+        matchId, mode: "random", config, state: transition.state, phaseId: transition.phaseId,
+        deadlineAt: transition.deadlineAt, deadlineKind: transition.deadlineKind, views, jobs: transition.jobs,
+        contentManifest: { packId: content.packId, packVersion: content.packVersion },
+        rulesVersion: LONGUEUR_ONDE_RULES_VERSION, engineVersion: LONGUEUR_ONDE_ENGINE_VERSION, stateSchemaVersion: 1,
       });
     } else {
       throw new Error("GAME_NOT_READY");
