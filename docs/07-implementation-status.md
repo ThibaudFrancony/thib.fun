@@ -4,7 +4,7 @@ Dernière mise à jour : 11 septembre 2026.
 
 Le suivi opérationnel détaillé et maintenu après chaque changement se trouve dans [progression.md](../progression.md). Ce document conserve le suivi de réalisation par lots et doit rester cohérent avec lui.
 
-**Le cadrage initial et les migrations de schéma sont versionnés ; les contrôles applicatifs et statiques de TTMC, Skyjo, BombParty et Bataille navale sont validés localement, sans utiliser Docker. Aucune migration n'a été appliquée à une base distante et aucune banque de contenu de production n'a été créée.** L'accueil multi-jeux, Géographie, Trou Noir, TTMC, Skyjo, UNO, BombParty et Bataille navale sont présents dans `main` ; Compatibilité et Longueur d'onde restent à développer.
+**Le cadrage initial et les migrations de schéma sont versionnés ; les contrôles applicatifs et statiques de TTMC, Skyjo, BombParty, Bataille navale et Compatibilité sont validés localement, sans utiliser Docker. Aucune migration n'a été appliquée à une base distante et aucune banque de contenu de production n'a été créée.** L'accueil multi-jeux, Géographie, Trou Noir, TTMC, Skyjo, UNO, BombParty, Bataille navale et Compatibilité sont présents dans `main` ; seule Longueur d'onde reste à développer.
 
 Contrôles effectués : index des neuf jeux dans AGENTS, résolution des liens locaux, blocs de code Markdown équilibrés, absence de marqueurs d'espace réservé, couverture des règles/configurations/états/projections/scores/tests. Relecture croisée des droits SQL, reçus système, délais, contenu et résultats coopératifs. Le lint Supabase local ne signale aucune erreur ; 40 assertions pgTAP du schéma passent. Les contrôles applicatifs sont détaillés dans la ligne de chaque lot.
 
@@ -26,7 +26,7 @@ Contrôles effectués : index des neuf jeux dans AGENTS, résolution des liens l
 | BombParty + entraînement | Implémenté sur `main`, commit `cb88b8c` (11 septembre 2026, deux cycles Muse terminés) | Moteur pur, projection sans fuite, index serveur, API/worker, entraînement solo, UI, migration `20260911183307_bombparty_activate.sql` ; 60 tests BombParty et 226 tests au total, typecheck/lint/build Webpack/docs:check OK ; pack `content/bombparty/lexicon.json` inchangé (431 formes, CC0-1.0, sha256 vérifié) ; push GitHub vérifié sur `origin/main`, recette à deux sessions, migration distante et mesure latence à finaliser |
 | Skyjo | Implémenté sur `main`, commit `2745261` (11 septembre 2026, deux cycles Muse terminés) | Moteur pur, projection sans fuite, API/worker, UI, migration `20260911180344_skyjo_activate.sql` ; 43 tests Skyjo et 166 tests au total, typecheck/lint/build Webpack/docs:check OK ; push vérifié, recette à deux sessions et migration distante à finaliser |
 | UNO | Implémenté sur `main` le 10 septembre 2026 | Moteur pur, projection secrète, API/worker, UI, migration `20260910100000_uno_ready.sql` ; 13 tests UNO, typecheck/lint/build Webpack et Supabase local OK selon le suivi ; recette Chromium à deux sessions et migration distante à finaliser |
-| Compatibilité | À faire | Socle + questionnaires |
+| Compatibilité | Implémenté le 11 septembre 2026 | Moteur, projection sans fuite, contenu 160 questions, API/worker, UI, migration/RPC, 13 tests dédiés ; E2E à deux comptes et migration distante à finaliser |
 | Longueur d'onde | À faire | Socle + axes |
 
 Pour chaque lot terminé ajouter date, version/commit si existant, tests effectués et limitations réelles. Ne pas cocher « terminé » sur la base du plan seul.

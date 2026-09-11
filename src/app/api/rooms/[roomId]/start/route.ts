@@ -3,6 +3,9 @@ import { z } from "zod";
 import { navalConfigSchema } from "@/games/bataille-navale/config";
 import { initializeNaval, NAVAL_ENGINE_VERSION, NAVAL_RULES_VERSION } from "@/games/bataille-navale/engine";
 import { projectNaval } from "@/games/bataille-navale/projection";
+import { compatibiliteConfigSchema } from "@/games/compatibilite/config";
+import { COMPATIBILITE_ENGINE_VERSION, COMPATIBILITE_RULES_VERSION, initializeCompatibilite } from "@/games/compatibilite/engine";
+import { projectCompatibilite } from "@/games/compatibilite/projection";
 import { bombpartyConfigSchema } from "@/games/bombparty/config";
 import { initializeBombparty, BOMBPARTY_ENGINE_VERSION, BOMBPARTY_RULES_VERSION } from "@/games/bombparty/engine";
 import { projectBombparty } from "@/games/bombparty/projection";
@@ -31,6 +34,7 @@ import { loadGeoContent } from "@/server/geo/content";
 import { loadBombpartyContent, bombpartyContentManifest } from "@/server/bombparty/content";
 import { loadTrouNoirContent } from "@/server/quiz/content";
 import { loadTtmcContent } from "@/server/ttmc/content";
+import { loadCompatibiliteContent } from "@/server/compatibilite/content";
 import { startMatch, getRoomView } from "@/server/matches/repository";
 import { roomViewSchema } from "@/server/rooms/schemas";
 
@@ -159,6 +163,21 @@ export async function POST(request: Request, { params }: { params: Promise<{ roo
         matchId, mode: "random", config, state: transition.state, phaseId: transition.phaseId,
         deadlineAt: transition.deadlineAt, deadlineKind: transition.deadlineKind, views, jobs: transition.jobs,
         contentManifest: {}, rulesVersion: NAVAL_RULES_VERSION, engineVersion: NAVAL_ENGINE_VERSION, stateSchemaVersion: 1,
+      });
+    } else if (room.gameSlug === "compatibilite") {
+      const config = compatibiliteConfigSchema.parse(room.config);
+      const content = await loadCompatibiliteContent();
+      const transition = initializeCompatibilite(config, {
+        nowMs: Date.now(), actorId: member.id, matchId, participants, content,
+        entropy: entropyValues(), phaseId, nextPhaseId: phaseId,
+      });
+      const views = participants.map((viewerId) => ({ viewerId, payload: projectCompatibilite(transition.state, config, content, viewerId, participants, identities) }));
+      result = await startMatch({
+        actorId: member.id, commandId: body.data.commandId ?? newCommandId(), roomId, expectedVersion: room.version,
+        matchId, mode: "random", config, state: transition.state, phaseId: transition.phaseId,
+        deadlineAt: transition.deadlineAt, deadlineKind: transition.deadlineKind, views, jobs: transition.jobs,
+        contentManifest: { packId: content.packId, packVersion: content.packVersion },
+        rulesVersion: COMPATIBILITE_RULES_VERSION, engineVersion: COMPATIBILITE_ENGINE_VERSION, stateSchemaVersion: 1,
       });
     } else {
       throw new Error("GAME_NOT_READY");

@@ -81,7 +81,7 @@ export const PUBLIC_GAMES: readonly PublicGame[] = [
     description: "Comparez vos choix et découvrez vos points communs.",
     priority: 1,
     kind: "cooperative",
-    availability: "coming_soon",
+    availability: "ready",
     duration: "8–12 min",
   },
   {

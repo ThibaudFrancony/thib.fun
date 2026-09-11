@@ -2522,7 +2522,7 @@
           "label": "Un câlin"
         }
       ],
-      "sensitivity": "personal"
+      "sensitivity": "light"
     },
     {
       "itemId": "25f189cf-ea5b-4643-b15f-66317643c2f8",
@@ -2548,7 +2548,7 @@
           "label": "La légèreté"
         }
       ],
-      "sensitivity": "personal"
+      "sensitivity": "light"
     },
     {
       "itemId": "1b5d3834-e753-4066-9bea-d6f729773072",
@@ -2574,7 +2574,7 @@
           "label": "Laisser retomber"
         }
       ],
-      "sensitivity": "personal"
+      "sensitivity": "light"
     },
     {
       "itemId": "e92da0bc-ad72-4e93-bd32-77387a89611a",
@@ -2756,7 +2756,7 @@
           "label": "Tu rends tout plus simple"
         }
       ],
-      "sensitivity": "personal"
+      "sensitivity": "light"
     },
     {
       "itemId": "2beaffc1-5b2f-4b4e-b6ac-f8eec3e561fa",
@@ -3042,7 +3042,7 @@
           "label": "Prépares une visite"
         }
       ],
-      "sensitivity": "personal"
+      "sensitivity": "light"
     },
     {
       "itemId": "1b3ec732-612c-47c4-bd20-72fb347a9569",
@@ -3068,7 +3068,7 @@
           "label": "Une discussion en face à face"
         }
       ],
-      "sensitivity": "personal"
+      "sensitivity": "light"
     },
     {
       "itemId": "364606db-bc78-4fbf-9c39-75d77d551de7",
@@ -3120,7 +3120,7 @@
           "label": "Les retrouvailles"
         }
       ],
-      "sensitivity": "personal"
+      "sensitivity": "light"
     },
     {
       "itemId": "652ec170-7556-4374-bd5a-996cddfc5359",

@@ -28,6 +28,10 @@ import { navalActionSchema } from "@/games/bataille-navale/types";
 import { navalConfigSchema } from "@/games/bataille-navale/config";
 import { reduceNaval, NAVAL_ENGINE_VERSION, NAVAL_RULES_VERSION } from "@/games/bataille-navale/engine";
 import { projectNaval } from "@/games/bataille-navale/projection";
+import { compatibiliteActionSchema } from "@/games/compatibilite/types";
+import { compatibiliteConfigSchema } from "@/games/compatibilite/config";
+import { COMPATIBILITE_ENGINE_VERSION, COMPATIBILITE_RULES_VERSION, reduceCompatibilite } from "@/games/compatibilite/engine";
+import { projectCompatibilite } from "@/games/compatibilite/projection";
 import { getAuthenticatedMember } from "@/server/auth";
 import { getSupabaseServerConfig } from "@/server/config";
 import { entropyValues, hashCommand } from "@/server/hash";
@@ -36,6 +40,7 @@ import { loadGeoContent } from "@/server/geo/content";
 import { loadBombpartyContent } from "@/server/bombparty/content";
 import { loadTrouNoirContent } from "@/server/quiz/content";
 import { loadTtmcContent } from "@/server/ttmc/content";
+import { loadCompatibiliteContent } from "@/server/compatibilite/content";
 import { commitMatch, getMatchSnapshot } from "@/server/matches/repository";
 
 const commandSchema = z.object({
@@ -131,6 +136,15 @@ export async function POST(request: Request, { params }: { params: Promise<{ mat
       const transition = reduceNaval(snapshot.state, parsedAction.data, config, context);
       const views = participants.map((viewerId) => ({ viewerId, payload: projectNaval(transition.state, config, viewerId, participants, identities) }));
       response = await commitMatch({ matchId, expectedVersion: body.data.expectedVersion, actorId: member.id, commandId: body.data.commandId, commandHash: hashCommand(matchId, member.id, parsedAction.data.type, parsedAction.data), source: "player", previousPhaseId: snapshot.phaseId, next: { state: transition.state, phaseId: transition.phaseId, deadlineAt: transition.deadlineAt, deadlineKind: transition.deadlineKind }, views, jobsToUpsert: transition.jobs, jobsToCancel: [], roundRecords: transition.roundRecords, event: transition.event, result: transition.result, rulesVersion: NAVAL_RULES_VERSION, engineVersion: NAVAL_ENGINE_VERSION });
+    } else if (snapshot.gameSlug === "compatibilite") {
+      const parsedAction = compatibiliteActionSchema.safeParse(body.data.action);
+      if (!parsedAction.success) return jsonError("INVALID_REQUEST", 400, "La commande de jeu est invalide.");
+      const config = compatibiliteConfigSchema.parse(snapshot.config);
+      const content = await loadCompatibiliteContent();
+      const context = { nowMs: Date.parse(snapshot.serverNow), actorId: member.id, matchId, participants, content, entropy: entropyValues(), phaseId: snapshot.phaseId, nextPhaseId, currentDeadlineAt: snapshot.deadlineAt, currentDeadlineKind: snapshot.deadlineKind };
+      const transition = reduceCompatibilite(snapshot.state, parsedAction.data, config, context);
+      const views = participants.map((viewerId) => ({ viewerId, payload: projectCompatibilite(transition.state, config, content, viewerId, participants, identities) }));
+      response = await commitMatch({ matchId, expectedVersion: body.data.expectedVersion, actorId: member.id, commandId: body.data.commandId, commandHash: hashCommand(matchId, member.id, parsedAction.data.type, parsedAction.data), source: "player", previousPhaseId: snapshot.phaseId, next: { state: transition.state, phaseId: transition.phaseId, deadlineAt: transition.deadlineAt, deadlineKind: transition.deadlineKind }, views, jobsToUpsert: transition.jobs, jobsToCancel: [], roundRecords: transition.roundRecords, event: transition.event, result: transition.result, rulesVersion: COMPATIBILITE_RULES_VERSION, engineVersion: COMPATIBILITE_ENGINE_VERSION });
     } else {
       throw new Error("GAME_NOT_READY");
     }

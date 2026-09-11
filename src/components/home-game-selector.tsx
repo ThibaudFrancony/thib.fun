@@ -11,6 +11,9 @@ const PLAYABLE_ROUTES: Readonly<Partial<Record<string, string>>> = {
   skyjo: "/jeux/skyjo",
   "trou-noir": "/jeux/trou-noir",
   ttmc: "/jeux/ttmc",
+  bombparty: "/jeux/bombparty",
+  "bataille-navale": "/jeux/bataille-navale",
+  compatibilite: "/jeux/compatibilite",
 };
 
 function playableRoute(game: PublicGame) {
