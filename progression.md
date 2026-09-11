@@ -2,7 +2,7 @@
 
 Dernière mise à jour : 11 septembre 2026  
 Branche de référence : `main`  
-Dernier commit observé : `35fb821` — `content: add Longueur d'onde axis pack` (l'implémentation de Longueur d'onde est en cours de validation)
+Dernier commit observé : `ca5d521` — `feat: implement Longueur d'onde`
 
 Ce fichier décrit la réalité du dépôt et non les seules capacités prévues dans les spécifications. Il complète [AGENTS.md](AGENTS.md), [docs/README.md](docs/README.md) et [docs/07-implementation-status.md](docs/07-implementation-status.md). Les statuts utilisés sont :
 
@@ -282,7 +282,8 @@ Ne pas y inventer de risques théoriques. Si la cause n'est pas confirmée, l'in
 ### 11/09/2026 — Vérification navigateur CLI de Longueur d'onde
 
 - Problème : le binaire `agent-browser` recommandé par la procédure de vérification n'est pas installé (`command not found`).
-- Résolution : utilisation du runner Playwright déjà versionné dans le dépôt ; le test Chromium de l'accueil passe et le lancement complet Chromium compte 1 succès et 7 tests authentifiés ignorés faute de mot de passe.
+- Résolution : utilisation du runner Playwright déjà versionné dans le dépôt ; le test Chromium de l'accueil passe et le lancement complet Chromium compte 1 succès et 7 tests authentifiés ignorés faute de mot de passe. Un probe initial du formulaire d'inscription ciblait deux rôles `alert` (dont l'annonceur Next vide) ; le sélecteur a été resserré et le formulaire affiche bien le garde Supabase attendu quand les variables navigateur sont absentes.
+- Vérification distante en lecture seule : `https://thibfun.vercel.app` répond 200, l'accueil expose les neuf `data-game` et le compteur `9 disponibles`, et les neuf routes de jeu répondent 200 après le push `ca5d521`.
 
 ## Points à savoir pour les prochains développements
 
