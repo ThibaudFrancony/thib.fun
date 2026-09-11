@@ -2,7 +2,7 @@
 
 Dernière mise à jour : 11 septembre 2026  
 Branche de référence : `main`  
-Dernier commit observé : `4254a1f` — `content: add Compatibility question pack` (Compatibilité est en cours d'intégration)
+Dernier commit observé : `385c1e4` — `feat: implement Compatibilité` (Longueur d'onde est en cours d'intégration)
 
 Ce fichier décrit la réalité du dépôt et non les seules capacités prévues dans les spécifications. Il complète [AGENTS.md](AGENTS.md), [docs/README.md](docs/README.md) et [docs/07-implementation-status.md](docs/07-implementation-status.md). Les statuts utilisés sont :
 
@@ -26,7 +26,7 @@ Ce fichier décrit la réalité du dépôt et non les seules capacités prévues
 | Realtime | 🟡 | Helper client et invalidations existent ; reconnexion, message manqué et vérification réseau complète restent à finaliser. |
 | Jobs et échéances | 🟡 | Worker Géographie/UNO/Trou Noir/TTMC/Skyjo/BombParty présent ; Cron, pg_net, Vault, baux, reprise après crash et latence de production ne sont pas déclarés vérifiés. |
 | Profils, statistiques et historique | 🟡 | Routes/repository d'historique existent ; le parcours complet profils, stats et agrégats de duo reste à achever. |
-| Contenus | 🟡 | Packs Géographie, Trou Noir, TTMC, Compatibilité et lexique BombParty versionnés localement ; le pack Compatibilité contient 160 questions originales (40 par catégorie) et sa migration/RPC est préparée ; aucune banque de production distante ni benchmark DeepSeek daté n'est déclaré vérifié. |
+| Contenus | 🟡 | Packs Géographie, Trou Noir, TTMC, Compatibilité, Longueur d'onde et lexique BombParty versionnés localement ; Compatibilité contient 160 questions originales et Longueur d'onde 80 axes originaux (30 quotidien, 25 culture, 25 absurde) avec migrations/RPC préparées ; aucune banque de production distante ni benchmark DeepSeek daté n'est déclaré vérifié. |
 | Tests et CI | 🟡 | Après l'implémentation Compatibilité : 32 fichiers / 293 tests (dont 13 Compatibilité), `pnpm typecheck`, `pnpm lint`, build `next build --webpack`, `pnpm docs:check` et `git diff --check` réussis ; E2E homepage Chromium réussie, E2E Compatibilité à deux comptes ajoutée mais ignorée faute de `E2E_PASSWORD`. Les jalons précédents TTMC, Skyjo, BombParty et Bataille navale restent documentés ci-dessous. Aucun workflow CI versionné ; transactions et multijoueur restent à valider sur une base isolée. |
 | Déploiement Vercel/Supabase | ⚠️ | Le dépôt et `main` sont configurés côté Git ; les dashboards, protections, environnements et migrations distantes n'ont pas été inspectés dans cette tâche. |
 
@@ -42,7 +42,7 @@ Ce fichier décrit la réalité du dépôt et non les seules capacités prévues
 | BombParty | `bombparty` | 🟢 | Moteur pur versionné (`bombparty-1`/`bombparty-engine-1`), normalisation serveur stricte, refus `DEADLINE_EXPIRED` moteur avant mutation sur `SUBMIT_WORD` tardif (RESIGN/CLAIM_FORFEIT restant possibles), métriques individuelles par siège (`sumResponseMs`/`responseCount`/`longestWordLength` en tuples 0/1), index séquence→mots privé via `loadBombpartyContent()` (pack `bombparty-fr-seed-2026-09`, 431 formes, CC0-1.0, sha256 `a6b74cd6…`, fichier inchangé), projection sans fuite (ni index, ni `usedWords`, ni `packId`/`packChecksum`), routes create/start/commands/get, worker durable (`turn_timeout` + `check_absence` avec garde `phaseId`), entraînement solo `/entrainement/syllabes` + 3 routes refusées pendant un match actif (`server_has_active_match`, suggestions max 20), UI violette sobre, migration CLI `20260911183307_bombparty_activate.sql` (non appliquée à distance), registre TS `ready`. Cycles 1+2 relus par Muse ; commit `cb88b8c` intégré dans `main`, push vérifié sur `origin/main`. | Valider SQL/RPC sur base isolée, recette à deux sessions, E2E et mesure latence p95 <2 s. |
 | Bataille navale | `bataille-navale` | 🟢 | Moteur pur versionné (`bataille-navale-1`/`bataille-navale-engine-1`), grille 10×10, catalogue serveur carrier5/battleship4/cruiser3/submarine3/destroyer2 (17 cases, contacts autorisés), setup 180 s avec `SET_FLEET` partiel/`RANDOMIZE_FLEET` (backtracking fini)/`READY`/`UNREADY`, premier tireur aléatoire serveur, `FIRE` un tir par tour sans rejouer, victoire immédiate à 17, config stricte `{turnSeconds:null\|60}` default null, tir auto serveur sur case inconnue, projection sans `shipId` avant coulé et sans flotte adverse avant fin, coulé avec `shipId`/`shipType`/`sunkCells` serveur, UI violette (tirs gauche/flotte droite desktop, onglets mobile, zoom, roving tabindex, tirer-en-B7), routes rooms/start/commands/get, worker `preparation_timeout`/`turn_timeout`/`check_absence` avec garde `phaseId`, migration CLI `20260911190958_bataille_navale_activate.sql` (non appliquée à distance), registre TS `ready`, 54 tests moteur/projection. Deux cycles de comparaison et une revue de contrat ont été réalisés via CLI OpenCode/Muse ; commit `34fcd67` intégré dans `main` (push à vérifier). | Valider SQL sur base isolée, recette à deux sessions, E2E. |
 | Compatibilité | `compatibilite` | 🟢 | Pack local original versionné : 160 questions, 40 par catégorie ; moteur pur et projection sans fuite, réponses simultanées, cinq réserves pour trois passages, révélation temporisée, score coopératif, résultat/historique sans victoire-défaite, API/worker, UI violette sobre, migration additive et RPC de contenu `service_role` uniquement. 13 tests dédiés. | Vérifier la migration/RPC sur Supabase distant et exécuter l'E2E à deux comptes avec `E2E_PASSWORD`. |
-| Longueur d'onde | `longueur-onde` | ⏳ | Spécification et métadonnées du registre. | Axes et contenu originaux, indice contrôlé, score coopératif, moteur, UI et tests. |
+| Longueur d'onde | `longueur-onde` | 🟡 | Pack local original généré et validé : 80 axes opposés, 30 quotidien/25 culture/25 absurde, labels bornés, exemples de tutoriel hors partie, manifest et migration/RPC versionnés. | Indices contrôlés, cadran et score coopératif, moteur, UI, API/worker, tests et activation. |
 
 ## Difficultés rencontrées pendant le développement
 
@@ -265,6 +265,12 @@ Ne pas y inventer de risques théoriques. Si la cause n'est pas confirmée, l'in
 - Problème corrigé : le premier test de fin attendait 55 % alors que son scénario comportait 5 accords sur 10 ; assertion corrigée à 50 %, puis suites ciblées et typecheck validés.
 - Problème externe confirmé à trois reprises : le CLI OpenCode avec `opencode/muse-spark-1.3-contributor-free` a lu le contexte puis s'est arrêté sur `Rate limit exceeded`, sans produire de code dans le clone. N'étendre aucune conclusion de comparaison à partir de cette tentative ; nouvelle tentative à faire avant les cycles de revue.
 - Problème E2E corrigé : le premier lancement sans privilège ne pouvait pas binder le port 3000 (`listen EPERM`), puis l'exécution autorisée a révélé une assertion `toHaveText` trop stricte sur la carte Longueur d'onde ; remplacement par `toContainText`, sans défaut produit confirmé à ce stade.
+
+### 11/09/2026 — Préparation du pack Longueur d'onde
+
+- Réalisation : création de `scripts/build-longueur-onde-pack.mjs`, source originale reproductible de 80 axes opposés (30 `quotidien`, 25 `culture`, 25 `absurde`), labels limités à 60 caractères, trois exemples de tutoriel et IDs stables ; génération de `content/longueur-onde/longueur-onde.json`, `manifest.json` et de la migration additive `20260911210000_longueur_onde_ready.sql`.
+- Problème corrigé : la première version du générateur déduisait mal les catégories lorsque les exemples facultatifs étaient absents (`78/1/1` au lieu de `30/25/25`) ; la catégorie est maintenant déterminée par blocs d'axes et le générateur refuse toute couverture inattendue.
+- Vérification : `pnpm longueur-onde:pack` produit 80 axes avec la couverture attendue. Aucune implémentation de jeu n'est encore déclarée dans ce jalon.
 
 ## Points à savoir pour les prochains développements
 

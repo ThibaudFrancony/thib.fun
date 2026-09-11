@@ -1,0 +1,649 @@
+{
+  "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+  "packVersion": 1,
+  "axes": [
+    {
+      "itemId": "0595827b-1cfe-4d9a-b194-eaf4fb2b4b3f",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-quotidien-01",
+      "leftLabel": "Silencieux",
+      "rightLabel": "Bruyant",
+      "category": "quotidien",
+      "exampleClue": "Une bibliothèque calme"
+    },
+    {
+      "itemId": "9ffc6c5f-f402-4ce0-bc1f-768f03d965a0",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-quotidien-02",
+      "leftLabel": "Lent",
+      "rightLabel": "Rapide",
+      "category": "quotidien"
+    },
+    {
+      "itemId": "624b2010-4784-4292-a7dc-bc767adc72f0",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-quotidien-03",
+      "leftLabel": "Rangé",
+      "rightLabel": "En désordre",
+      "category": "quotidien"
+    },
+    {
+      "itemId": "733b3802-fbac-4769-9774-8293f6c6dd84",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-quotidien-04",
+      "leftLabel": "Spontané",
+      "rightLabel": "Planifié",
+      "category": "quotidien"
+    },
+    {
+      "itemId": "4b832834-634f-4596-bedd-2b82c1b477d6",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-quotidien-05",
+      "leftLabel": "Solitaire",
+      "rightLabel": "Collectif",
+      "category": "quotidien"
+    },
+    {
+      "itemId": "5f8ab6d6-e0cc-41eb-9dc4-edf9f19531cb",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-quotidien-06",
+      "leftLabel": "Minimal",
+      "rightLabel": "Abondant",
+      "category": "quotidien"
+    },
+    {
+      "itemId": "e681b47a-8c1e-4777-8492-0972d691511d",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-quotidien-07",
+      "leftLabel": "Le matin",
+      "rightLabel": "La nuit",
+      "category": "quotidien"
+    },
+    {
+      "itemId": "5c08aa60-d6b1-40f7-ae3b-5b8e5e07287a",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-quotidien-08",
+      "leftLabel": "La ville",
+      "rightLabel": "La nature",
+      "category": "quotidien"
+    },
+    {
+      "itemId": "dbb10f37-9767-4cae-9643-8e8aa35d4de9",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-quotidien-09",
+      "leftLabel": "Pratique",
+      "rightLabel": "Esthétique",
+      "category": "quotidien"
+    },
+    {
+      "itemId": "6f8436e6-4ad0-4c8c-9e83-9afc74ea6f20",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-quotidien-10",
+      "leftLabel": "Économique",
+      "rightLabel": "Luxueux",
+      "category": "quotidien"
+    },
+    {
+      "itemId": "d753f7d4-df78-4622-a0c6-aab2119b457d",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-quotidien-11",
+      "leftLabel": "Classique",
+      "rightLabel": "Original",
+      "category": "quotidien"
+    },
+    {
+      "itemId": "ab8ee3d0-ceea-4089-ab92-f47583745745",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-quotidien-12",
+      "leftLabel": "Local",
+      "rightLabel": "Lointain",
+      "category": "quotidien"
+    },
+    {
+      "itemId": "ada2fd7f-72b6-465d-9264-326d8793cc88",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-quotidien-13",
+      "leftLabel": "Chez soi",
+      "rightLabel": "Dehors",
+      "category": "quotidien"
+    },
+    {
+      "itemId": "11040868-305c-45d7-8868-72da5a14c64f",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-quotidien-14",
+      "leftLabel": "Simple",
+      "rightLabel": "Sophistiqué",
+      "category": "quotidien"
+    },
+    {
+      "itemId": "c5558423-76de-4589-be83-d55d61a97a9a",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-quotidien-15",
+      "leftLabel": "La tradition",
+      "rightLabel": "La nouveauté",
+      "category": "quotidien"
+    },
+    {
+      "itemId": "e339bc91-5fee-48c3-8167-c1e45ad80986",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-quotidien-16",
+      "leftLabel": "Le papier",
+      "rightLabel": "L'écran",
+      "category": "quotidien"
+    },
+    {
+      "itemId": "d0ff7193-ebb4-43b9-8287-d75e984b26cf",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-quotidien-17",
+      "leftLabel": "Sucré",
+      "rightLabel": "Salé",
+      "category": "quotidien"
+    },
+    {
+      "itemId": "c4bb4398-8780-48e1-81ca-bb19cd53d023",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-quotidien-18",
+      "leftLabel": "Chaud",
+      "rightLabel": "Froid",
+      "category": "quotidien"
+    },
+    {
+      "itemId": "f154188e-4639-428c-8d51-d56b9ee72069",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-quotidien-19",
+      "leftLabel": "Petite équipe",
+      "rightLabel": "Grande équipe",
+      "category": "quotidien"
+    },
+    {
+      "itemId": "f789c93e-ee6b-43a9-8a2b-3244a6a0aad3",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-quotidien-20",
+      "leftLabel": "La routine",
+      "rightLabel": "L'aventure",
+      "category": "quotidien"
+    },
+    {
+      "itemId": "02ffbf8b-ec91-4e26-8ea7-f655e307b84a",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-quotidien-21",
+      "leftLabel": "Le confort",
+      "rightLabel": "Le défi",
+      "category": "quotidien"
+    },
+    {
+      "itemId": "18847a62-b6e9-4631-9f32-c69b02e7e86f",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-quotidien-22",
+      "leftLabel": "Calme",
+      "rightLabel": "Énergique",
+      "category": "quotidien"
+    },
+    {
+      "itemId": "3fec78ce-2b24-4c2d-bd85-063a1f262de9",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-quotidien-23",
+      "leftLabel": "Direct",
+      "rightLabel": "Détourné",
+      "category": "quotidien"
+    },
+    {
+      "itemId": "c7d1fc9d-6eb1-4b7e-8042-3bdb02004417",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-quotidien-24",
+      "leftLabel": "Prévisible",
+      "rightLabel": "Surprenant",
+      "category": "quotidien"
+    },
+    {
+      "itemId": "89fe3926-8198-4127-9719-877ac9780057",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-quotidien-25",
+      "leftLabel": "Intime",
+      "rightLabel": "Public",
+      "category": "quotidien"
+    },
+    {
+      "itemId": "d82a6ec4-2c8b-4a95-8eee-8c7e256002ea",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-quotidien-26",
+      "leftLabel": "Matériel",
+      "rightLabel": "Immatériel",
+      "category": "quotidien"
+    },
+    {
+      "itemId": "d90bf397-7ab6-4d47-a093-65c1d7311df0",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-quotidien-27",
+      "leftLabel": "La marche",
+      "rightLabel": "Les roues",
+      "category": "quotidien"
+    },
+    {
+      "itemId": "442333dc-3057-4523-9b81-7c1b8c55b662",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-quotidien-28",
+      "leftLabel": "Immédiat",
+      "rightLabel": "Patient",
+      "category": "quotidien"
+    },
+    {
+      "itemId": "75664186-6957-44d7-a510-07c781d0b8cb",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-quotidien-29",
+      "leftLabel": "Net",
+      "rightLabel": "Flou",
+      "category": "quotidien"
+    },
+    {
+      "itemId": "b894aa9c-4838-4b75-b4fc-b484cefd6517",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-quotidien-30",
+      "leftLabel": "Réparer",
+      "rightLabel": "Remplacer",
+      "category": "quotidien"
+    },
+    {
+      "itemId": "dc25b986-cd4a-4d5d-9dee-c45800b92e58",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-culture-31",
+      "leftLabel": "Indépendant",
+      "rightLabel": "Populaire",
+      "category": "culture",
+      "exampleClue": "Un film qui passe dans une petite salle"
+    },
+    {
+      "itemId": "1decdabf-5c3b-4365-9965-9e4f032b2f5f",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-culture-32",
+      "leftLabel": "Ancien",
+      "rightLabel": "Contemporain",
+      "category": "culture"
+    },
+    {
+      "itemId": "89da7c10-c147-489d-aeaa-f4aa9a6801a2",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-culture-33",
+      "leftLabel": "Fiction",
+      "rightLabel": "Documentaire",
+      "category": "culture"
+    },
+    {
+      "itemId": "89279741-12eb-44f9-abe6-f6469005813c",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-culture-34",
+      "leftLabel": "Comédie",
+      "rightLabel": "Drame",
+      "category": "culture"
+    },
+    {
+      "itemId": "c6a4b6eb-854a-4436-ae77-17ae500f18be",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-culture-35",
+      "leftLabel": "Instrumental",
+      "rightLabel": "Chanté",
+      "category": "culture"
+    },
+    {
+      "itemId": "8efaa174-5b68-4ba9-8ec8-c37f9b337854",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-culture-36",
+      "leftLabel": "Musée",
+      "rightLabel": "Festival",
+      "category": "culture"
+    },
+    {
+      "itemId": "d53307b5-e783-4a79-9a5a-189e23fde3f6",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-culture-37",
+      "leftLabel": "Roman",
+      "rightLabel": "Essai",
+      "category": "culture"
+    },
+    {
+      "itemId": "49a5bc03-13c5-4712-a3b4-86c6c93a6860",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-culture-38",
+      "leftLabel": "Vers",
+      "rightLabel": "Prose",
+      "category": "culture"
+    },
+    {
+      "itemId": "e01d6914-a0f2-421b-aa00-ae1e4cbd512c",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-culture-39",
+      "leftLabel": "Peinture",
+      "rightLabel": "Sculpture",
+      "category": "culture"
+    },
+    {
+      "itemId": "0a1d7684-19e7-4579-b8aa-bc2f0be4ccf2",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-culture-40",
+      "leftLabel": "Architecture",
+      "rightLabel": "Paysage",
+      "category": "culture"
+    },
+    {
+      "itemId": "8fd7e755-4d41-4c81-b575-da0e70a02242",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-culture-41",
+      "leftLabel": "Classique",
+      "rightLabel": "Expérimental",
+      "category": "culture"
+    },
+    {
+      "itemId": "239d5338-e90e-456a-9ed9-7e7ef8b24d06",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-culture-42",
+      "leftLabel": "Solo",
+      "rightLabel": "Orchestre",
+      "category": "culture"
+    },
+    {
+      "itemId": "0fded7cf-6e64-4be7-aeda-ef186ad4a6cf",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-culture-43",
+      "leftLabel": "Local",
+      "rightLabel": "International",
+      "category": "culture"
+    },
+    {
+      "itemId": "1106974b-e9c2-4a54-b41e-3390ca603a8d",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-culture-44",
+      "leftLabel": "Débutant",
+      "rightLabel": "Expert",
+      "category": "culture"
+    },
+    {
+      "itemId": "1dd3c96a-8893-4e10-a205-5ea310b000f9",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-culture-45",
+      "leftLabel": "Chef-d'œuvre",
+      "rightLabel": "Plaisir coupable",
+      "category": "culture"
+    },
+    {
+      "itemId": "6e4d3e76-7054-4d03-8403-28d2029cbcb1",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-culture-46",
+      "leftLabel": "Adaptation fidèle",
+      "rightLabel": "Réinterprétation",
+      "category": "culture"
+    },
+    {
+      "itemId": "b878dc76-a907-408b-94b8-352c742b2047",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-culture-47",
+      "leftLabel": "Petite salle",
+      "rightLabel": "Grand écran",
+      "category": "culture"
+    },
+    {
+      "itemId": "cdf092e4-fde8-4052-82ee-a1db9c681f6b",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-culture-48",
+      "leftLabel": "Lire",
+      "rightLabel": "Regarder",
+      "category": "culture"
+    },
+    {
+      "itemId": "f15ad09a-98fd-41f5-a326-464b859a5ccd",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-culture-49",
+      "leftLabel": "Écouter",
+      "rightLabel": "Participer",
+      "category": "culture"
+    },
+    {
+      "itemId": "2f198f27-8406-4e85-83f1-0ceeba5c1473",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-culture-50",
+      "leftLabel": "Questionner",
+      "rightLabel": "Admirer",
+      "category": "culture"
+    },
+    {
+      "itemId": "8668a409-8f4d-4f5e-8f71-05036a806d0c",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-culture-51",
+      "leftLabel": "L'énigme",
+      "rightLabel": "L'évidence",
+      "category": "culture"
+    },
+    {
+      "itemId": "4ae109b9-5d69-4dce-93f8-0038e21cc47e",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-culture-52",
+      "leftLabel": "La chronique",
+      "rightLabel": "L'épopée",
+      "category": "culture"
+    },
+    {
+      "itemId": "69e8b33a-d78d-4b9b-9d44-263836a001fc",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-culture-53",
+      "leftLabel": "Réaliste",
+      "rightLabel": "Onirique",
+      "category": "culture"
+    },
+    {
+      "itemId": "6b8e412f-e94c-4421-a37b-74fbec947074",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-culture-54",
+      "leftLabel": "Épuré",
+      "rightLabel": "Foisonnant",
+      "category": "culture"
+    },
+    {
+      "itemId": "82feb0af-6bb0-46c2-a1fd-26d797f591ad",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-culture-55",
+      "leftLabel": "La référence",
+      "rightLabel": "La découverte",
+      "category": "culture"
+    },
+    {
+      "itemId": "68051a58-646c-4156-a27e-be402bb72473",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-absurde-56",
+      "leftLabel": "Minuscule",
+      "rightLabel": "Immense",
+      "category": "absurde",
+      "exampleClue": "Un monde où tout tient dans une tasse"
+    },
+    {
+      "itemId": "d0560d0b-d4c0-4957-baf7-4f9955d83c9c",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-absurde-57",
+      "leftLabel": "Tout droit",
+      "rightLabel": "En zigzag",
+      "category": "absurde"
+    },
+    {
+      "itemId": "6cb489e1-3281-4cf8-b982-749bf5c22251",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-absurde-58",
+      "leftLabel": "Très tôt",
+      "rightLabel": "Très tard",
+      "category": "absurde"
+    },
+    {
+      "itemId": "265e9d5e-736c-4689-a400-1b9f860fec2d",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-absurde-59",
+      "leftLabel": "Canapé",
+      "rightLabel": "Trampoline",
+      "category": "absurde"
+    },
+    {
+      "itemId": "b9bd37aa-f153-470f-b507-54e6b6eb7468",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-absurde-60",
+      "leftLabel": "Escargot",
+      "rightLabel": "Fusée",
+      "category": "absurde"
+    },
+    {
+      "itemId": "d3e0f1d7-445f-4457-91d6-1d151bd0e3ce",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-absurde-61",
+      "leftLabel": "Chaussettes assorties",
+      "rightLabel": "Chaussettes dépareillées",
+      "category": "absurde"
+    },
+    {
+      "itemId": "9d35c7fa-4150-4459-97e1-ab1022e6defc",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-absurde-62",
+      "leftLabel": "Chocolat",
+      "rightLabel": "Cornichon",
+      "category": "absurde"
+    },
+    {
+      "itemId": "e315ded5-8534-4501-9aea-628905056f31",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-absurde-63",
+      "leftLabel": "Dragon",
+      "rightLabel": "Pigeon",
+      "category": "absurde"
+    },
+    {
+      "itemId": "1b626aa8-6d17-41aa-a1d2-0193a544c5a6",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-absurde-64",
+      "leftLabel": "Confettis",
+      "rightLabel": "Spaghettis",
+      "category": "absurde"
+    },
+    {
+      "itemId": "b8c07bb2-7b76-41d5-8c14-c0a82fd7b37b",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-absurde-65",
+      "leftLabel": "Très sérieux",
+      "rightLabel": "Complètement louche",
+      "category": "absurde"
+    },
+    {
+      "itemId": "53a30319-74a8-46d8-8944-eab96bc4ed7e",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-absurde-66",
+      "leftLabel": "Parler à une plante",
+      "rightLabel": "Négocier avec une chaise",
+      "category": "absurde"
+    },
+    {
+      "itemId": "e6086b48-bbf9-49d4-aa3e-c819e822d0e2",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-absurde-67",
+      "leftLabel": "À roulettes",
+      "rightLabel": "À ressorts",
+      "category": "absurde"
+    },
+    {
+      "itemId": "ef429795-3aa7-4429-9f3c-2f3d50eabaa1",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-absurde-68",
+      "leftLabel": "Une porte",
+      "rightLabel": "Un rideau",
+      "category": "absurde"
+    },
+    {
+      "itemId": "226f415c-da27-4599-a243-c31b1f66d5c0",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-absurde-69",
+      "leftLabel": "Un bouton",
+      "rightLabel": "Une manivelle",
+      "category": "absurde"
+    },
+    {
+      "itemId": "6bce792b-e5a6-46ea-a539-ac248b1bd390",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-absurde-70",
+      "leftLabel": "Un rire",
+      "rightLabel": "Un klaxon",
+      "category": "absurde"
+    },
+    {
+      "itemId": "ab3468ce-10ee-4191-bc12-d98d63d7a766",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-absurde-71",
+      "leftLabel": "Un château",
+      "rightLabel": "Une cabane",
+      "category": "absurde"
+    },
+    {
+      "itemId": "734b8e9a-d265-48bf-aa6c-3e766626ca0b",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-absurde-72",
+      "leftLabel": "Un robot",
+      "rightLabel": "Un fantôme",
+      "category": "absurde"
+    },
+    {
+      "itemId": "42e50f8d-9760-4c3f-b6c4-b596d301ca31",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-absurde-73",
+      "leftLabel": "Une moustache",
+      "rightLabel": "Un monocle",
+      "category": "absurde"
+    },
+    {
+      "itemId": "f33c461f-42d7-45a3-8c8f-cc0fbecac56f",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-absurde-74",
+      "leftLabel": "Un secret",
+      "rightLabel": "Un panneau",
+      "category": "absurde"
+    },
+    {
+      "itemId": "21340ba9-f7fc-40ba-8435-ead016922ffc",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-absurde-75",
+      "leftLabel": "Un détour",
+      "rightLabel": "Un raccourci",
+      "category": "absurde"
+    },
+    {
+      "itemId": "435e3a2e-f5d0-43ea-b930-9dc250893f63",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-absurde-76",
+      "leftLabel": "Une cuillère",
+      "rightLabel": "Une fourchette",
+      "category": "absurde"
+    },
+    {
+      "itemId": "52d73994-8949-4c14-86ed-387517a0ba8a",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-absurde-77",
+      "leftLabel": "Un pull",
+      "rightLabel": "Un parapluie",
+      "category": "absurde"
+    },
+    {
+      "itemId": "fc029a78-e25d-49fa-b56c-ec3ddf794f2b",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-absurde-78",
+      "leftLabel": "Une fusée",
+      "rightLabel": "Un sous-marin",
+      "category": "absurde"
+    },
+    {
+      "itemId": "167c00ad-5e5c-4a14-8806-8996942bdafc",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-absurde-79",
+      "leftLabel": "Un cri",
+      "rightLabel": "Un chuchotement",
+      "category": "absurde"
+    },
+    {
+      "itemId": "f0187e81-bc8a-4701-8671-b29b71032d0b",
+      "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
+      "logicalKey": "longueur-onde-absurde-80",
+      "leftLabel": "Une idée brillante",
+      "rightLabel": "Une idée farfelue",
+      "category": "absurde"
+    }
+  ]
+}

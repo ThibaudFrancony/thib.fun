@@ -1,0 +1,17 @@
+{
+  "kind": "spectrums",
+  "slug": "longueur-onde",
+  "version": 1,
+  "status": "published",
+  "source": "Axes originaux rédigés pour tibo.fun",
+  "license": "Contenu original tibo.fun, usage privé",
+  "author": "tibo.fun",
+  "axisCount": 80,
+  "coverage": {
+    "quotidien": 30,
+    "culture": 25,
+    "absurde": 25
+  },
+  "reviewedBy": "relecture structurelle et éditoriale interne",
+  "reviewedAt": "2026-09-11"
+}

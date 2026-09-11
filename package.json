@@ -23,7 +23,8 @@
     "ttmc:pack": "node scripts/build-ttmc-pack.mjs",
     "ttmc:migration": "node scripts/build-ttmc-migration.mjs",
     "compatibilite:pack": "node scripts/build-compatibilite-pack.mjs",
-    "content:validate": "node scripts/validate-geography-pack.mjs && node scripts/build-trou-noir-pack.mjs && node scripts/build-ttmc-pack.mjs && node scripts/build-compatibilite-pack.mjs",
+    "longueur-onde:pack": "node scripts/build-longueur-onde-pack.mjs",
+    "content:validate": "node scripts/validate-geography-pack.mjs && node scripts/build-trou-noir-pack.mjs && node scripts/build-ttmc-pack.mjs && node scripts/build-compatibilite-pack.mjs && node scripts/build-longueur-onde-pack.mjs",
     "docs:check": "node scripts/check-docs.mjs",
     "local:fixture": "node scripts/seed-local-members.mjs"
   },
