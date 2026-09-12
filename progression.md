@@ -2,7 +2,7 @@
 
 Dernière mise à jour : 12 septembre 2026
 Branche de référence : `main`  
-Dernier commit observé : `94dca2b` — `fix: restore Longueur d'onde cooperative triggers`
+Dernier commit de fonctionnalité observé : `02efcda` — `feat: add anonymous guest access`
 
 Ce fichier décrit la réalité du dépôt et non les seules capacités prévues dans les spécifications. Il complète [AGENTS.md](AGENTS.md), [docs/README.md](docs/README.md) et [docs/07-implementation-status.md](docs/07-implementation-status.md). Les statuts utilisés sont :
 
