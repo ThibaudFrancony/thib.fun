@@ -89,6 +89,7 @@ export function mapServerError(error: unknown): NextResponse {
     MATCH_NOT_ACTIVE: { status: 409, message: "Cette partie est terminée." },
     NOT_A_PARTICIPANT: { status: 403, message: "Tu ne participes pas à cette partie." },
     HISTORY_UNAVAILABLE: { status: 503, message: "L'historique est momentanément indisponible." },
+    ACCOUNT_REQUIRED: { status: 403, message: "Crée un compte pour conserver cette progression." },
   };
   const resolved = known[message] ?? { status: 500, message: "Une erreur serveur est survenue." };
   return jsonError(message, resolved.status, resolved.message);

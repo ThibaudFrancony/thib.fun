@@ -10,6 +10,10 @@ export default async function ProfilePage() {
     return <main className="min-h-screen"><SiteHeader /><div className="mx-auto max-w-xl px-5 py-16 text-center"><h1 className="text-4xl font-black">Ton compte</h1><p className="mt-4 text-[var(--muted)]">Connecte-toi pour retrouver ton espace personnel.</p><Link href="/connexion" className="mt-7 inline-flex rounded-full bg-[var(--green)] px-5 py-3 font-bold text-white">Se connecter</Link></div></main>;
   }
 
+  if (account.isGuest) {
+    return <main className="min-h-screen"><SiteHeader /><div className="mx-auto max-w-xl px-5 pb-16 pt-8 sm:px-8"><Link href="/" className="text-sm font-bold text-[var(--muted)]">← Jeux</Link><section className="mt-8 rounded-[1.5rem] border border-[var(--line)] bg-[var(--card)] p-6 shadow-[0_12px_30px_rgba(20,33,29,0.06)] sm:p-8"><p className="text-sm font-bold uppercase tracking-[0.16em] text-[var(--orange)]">Mode invité</p><h1 className="mt-3 text-4xl font-black tracking-[-0.05em]">Tu joues sous le pseudo {account.member.pseudo}.</h1><p className="mt-5 leading-7 text-[var(--muted)]">Cette session te permet de rejoindre des salons et de jouer, mais ton pseudo, tes résultats et ta progression ne sont pas conservés dans un compte.</p><div className="mt-7 flex flex-wrap gap-3"><Link href="/connexion?mode=signUp" className="inline-flex min-h-11 items-center rounded-full bg-[var(--green)] px-5 py-3 font-bold text-white">Créer un compte</Link><Link href="/" className="inline-flex min-h-11 items-center rounded-full border border-[var(--line)] px-5 py-3 font-bold">Retour aux jeux</Link></div></section></div></main>;
+  }
+
   return (
     <main className="min-h-screen">
       <SiteHeader />

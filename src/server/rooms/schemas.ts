@@ -3,6 +3,7 @@ import { z } from "zod";
 export const roomMemberViewSchema = z.object({
   id: z.string().uuid(),
   pseudo: z.string(),
+  isGuest: z.boolean().default(false),
   seat: z.union([z.literal(0), z.literal(1)]),
   ready: z.boolean(),
 });

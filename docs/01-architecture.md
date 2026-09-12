@@ -111,3 +111,7 @@ La soumission quiz enregistre la réponse à temps, passe la phase en `judging`,
 Les cartes des neuf jeux existent dans le registre. `availability = coming_soon | beta | ready` est validé aussi côté serveur. Une partie exige un corpus publié compatible et les fonctionnalités requises actives. Déployer un module ne doit pas activer automatiquement un jeu encore incomplet.
 
 Supabase conserve données/états et Vercel exécute des requêtes courtes ; aucune dépendance à la mémoire d'une instance. Utiliser des caches immuables indexés par version de contenu, jamais comme seule source de vérité. Ne pas mettre en cache les routes privées avec un cache partagé. Une panne réseau montre un état de reconnexion et bloque les actions engageantes ; pas de victoire optimiste.
+
+## Accès invité
+
+L'accès invité repose sur une session Auth anonyme Supabase. Le serveur détermine le statut via le claim `is_anonymous`, génère le pseudo côté serveur et conserve la même identité d'acteur pour les salons et parties. Les projections peuvent donc afficher l'invité sans exposer d'état privé. Les écritures d'historique et de statistiques personnelles des invités sont supprimées par trigger ; la perte de la session navigateur est définitive.

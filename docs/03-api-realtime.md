@@ -101,3 +101,5 @@ Une action simultanée peut produire conflit ; le serveur recharge et réévalue
 ## 8. Recette réseau obligatoire
 
 Deux sessions A/B, tiers C : arrivée salon, ready simultanés, start répété, tour refusé, POST dupliqué, événement perdu, reconnexion, réponse hors ordre, fermeture onglet hôte, expiration sans action navigateur, réponse à deadline exacte, forfait/reconnexion concurrents. Simuler réseau lent et vérifier que les secrets restent absents des réponses GET/POST/Broadcast, pas simplement invisibles dans le DOM.
+
+Un invité anonyme peut utiliser les routes de salon, de partie et de heartbeat comme tout membre actif. Les routes d'historique et de statistiques persistantes répondent `ACCOUNT_REQUIRED`. Le navigateur ne peut jamais fournir `isGuest` pour obtenir ces droits : le serveur lit l'identité Auth et le claim `is_anonymous`.

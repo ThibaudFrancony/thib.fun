@@ -8,6 +8,7 @@ export type MatchPlayerSnapshot = {
   seat: 0 | 1;
   pseudo: string;
   avatar: Record<string, unknown>;
+  isGuest: boolean;
   lastSeenAt?: string;
 };
 

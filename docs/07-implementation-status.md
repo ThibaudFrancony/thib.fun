@@ -1,12 +1,12 @@
 # État de réalisation
 
-Dernière mise à jour : 11 septembre 2026.
+Dernière mise à jour : 12 septembre 2026.
 
 Le suivi opérationnel détaillé et maintenu après chaque changement se trouve dans [progression.md](../progression.md). Ce document conserve le suivi de réalisation par lots et doit rester cohérent avec lui.
 
-**Le cadrage initial et les migrations de schéma sont versionnés ; les contrôles applicatifs et statiques des neuf jeux sont validés localement, sans utiliser Docker. Les 17 migrations versionnées correspondent à l'historique du projet Supabase lié et les packs de contenu sont publiés à distance ; la recette authentifiée complète reste à exécuter.** L'accueil multi-jeux, Géographie, Trou Noir, TTMC, Skyjo, UNO, BombParty, Bataille navale, Compatibilité et Longueur d'onde sont présents dans `main` ; aucun jeu ne reste à développer dans le périmètre des neuf fiches.
+**Le cadrage initial et les migrations de schéma sont versionnés ; les contrôles applicatifs et statiques des neuf jeux sont validés localement, sans utiliser Docker. Les 17 migrations déjà appliquées correspondent à l'historique du projet Supabase lié ; la migration locale d'accès invité reste à appliquer et la recette authentifiée complète reste à exécuter.** L'accueil multi-jeux, Géographie, Trou Noir, TTMC, Skyjo, UNO, BombParty, Bataille navale, Compatibilité et Longueur d'onde sont présents dans `main` ; aucun jeu ne reste à développer dans le périmètre des neuf fiches.
 
-Contrôles effectués : index des neuf jeux dans AGENTS, résolution des liens locaux, blocs de code Markdown équilibrés, absence de marqueurs d'espace réservé, couverture des règles/configurations/états/projections/scores/tests. Relecture croisée des droits SQL, reçus système, délais, contenu et résultats coopératifs. Le lint Supabase local ne signale aucune erreur ; 40 assertions pgTAP du schéma passent. Les contrôles applicatifs sont détaillés dans la ligne de chaque lot.
+Contrôles effectués : index des neuf jeux dans AGENTS, résolution des liens locaux, blocs de code Markdown équilibrés, absence de marqueurs d'espace réservé, couverture des règles/configurations/états/projections/scores/tests. Relecture croisée des droits SQL, reçus système, délais, contenu et résultats coopératifs. Le lint Supabase local et les 40 assertions pgTAP du schéma précédemment validé passent ; la nouvelle migration d'accès invité n'a pas pu être exécutée localement faute de base accessible. Les contrôles applicatifs sont détaillés dans la ligne de chaque lot.
 
 | Lot | État | Dépendances |
 |---|---|---|
@@ -30,3 +30,9 @@ Contrôles effectués : index des neuf jeux dans AGENTS, résolution des liens l
 | Longueur d'onde | Implémenté et activé | Moteur, projection, cible/indice/estimation, cadran SVG, UI responsive, API/worker, pack de 80 axes, migrations initiale et corrective vérifiées à distance, 16 tests dédiés ; E2E à deux sessions reste à finaliser |
 
 Pour chaque lot terminé ajouter date, version/commit si existant, tests effectués et limitations réelles. Ne pas cocher « terminé » sur la base du plan seul.
+
+## Accès invité
+
+Le parcours est présent localement : CTA dans le mode inscription, dialogue d'avertissement, session Auth anonyme, pseudo aléatoire généré côté serveur, accès aux salons/parties et distinction explicite entre invité et compte permanent dans les routes de compte et d'historique. La migration additive `20260912000100_anonymous_guest_access.sql` protège aussi les écritures d'historique et de statistiques personnelles.
+
+La vérification distante de l'activation Auth anonyme et l'application de cette migration restent à effectuer. Le nettoyage automatique des utilisateurs anonymes et la recette authentifiée complète à deux sessions ne sont pas encore configurés ou exécutés.

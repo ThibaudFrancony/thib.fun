@@ -71,3 +71,5 @@ Carte Géographie et cadran longueur-onde ont navigation clavier décrite dans l
 ## 9. Hors périmètre UI
 
 Pas d'écran paiement, publicité, chat, invitations e-mail envoyées par notre app, thème personnalisable, marché d'avatars ou classement mondial. Mode sombre après V1 seulement si demandé. Ne pas remplir l'interface de noms techniques Supabase/LLM/RPC : « Vérification de ta réponse » suffit.
+
+Depuis le mode inscription, « Continuer en tant qu’invité » ouvre un dialogue précisant que le pseudo et la progression ne seront pas sauvegardés. La session anonyme reçoit un pseudo aléatoire serveur et peut jouer dans les salons ; elle ne dispose pas d’historique, de statistiques ni de profil de compte permanent. La perte de la session navigateur est définitive pour cet invité.

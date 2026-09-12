@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { getAuthenticatedMember } from "@/server/auth";
+import { getAuthenticatedAccount } from "@/server/auth";
 import { getSupabaseServerConfig } from "@/server/config";
 import { jsonError, jsonOk, mapServerError } from "@/server/http";
 import { getHistory } from "@/server/matches/repository";
@@ -12,8 +12,9 @@ const querySchema = z.object({
 
 export async function GET(request: Request) {
   if (!getSupabaseServerConfig()) return jsonError("CONFIGURATION_REQUIRED", 503, "Le serveur de données n'est pas configuré.");
-  const member = await getAuthenticatedMember();
-  if (!member) return jsonError("UNAUTHORIZED", 401, "Connecte-toi pour voir ton historique.");
+  const account = await getAuthenticatedAccount();
+  if (!account) return jsonError("UNAUTHORIZED", 401, "Connecte-toi pour voir ton historique.");
+  if (account.isGuest) return jsonError("ACCOUNT_REQUIRED", 403, "Crée un compte pour conserver ton historique.");
   const url = new URL(request.url);
   const parsed = querySchema.safeParse({
     cursor: url.searchParams.get("cursor") ?? undefined,
@@ -22,7 +23,7 @@ export async function GET(request: Request) {
   });
   if (!parsed.success) return jsonError("INVALID_REQUEST", 400, "Le filtre d'historique est invalide.");
   try {
-    return jsonOk(await getHistory(member.id, parsed.data));
+    return jsonOk(await getHistory(account.member.id, parsed.data));
   } catch (error) {
     return mapServerError(error);
   }

@@ -62,3 +62,7 @@ Vérifier les signatures exactes à l'implémentation :
 - [DeepSeek JSON](https://api-docs.deepseek.com/guides/json_mode/), [tarifs](https://api-docs.deepseek.com/quick_start/pricing/).
 
 Ces références justifient les capacités techniques ; les règles adaptées et la structure du projet sont nos décisions de conception.
+
+## Accès invité
+
+Une session Auth anonyme peut jouer dans les salons et parties sans créer de compte, avec un pseudo généré côté serveur. Elle ne conserve ni historique ni statistiques persistants ; le claim `is_anonymous` réserve les fonctions de compte aux utilisateurs permanents.

@@ -1,8 +1,14 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useCallback, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { GuestWarningDialog } from "@/components/guest-warning-dialog";
+import { isAnonymousUser } from "@/lib/auth-identity";
 import { getBrowserSupabase } from "@/lib/supabase-browser";
+
+function safeNext(value: string | null): string {
+  return value && value.startsWith("/") && !value.startsWith("//") ? value : "/";
+}
 
 export function AuthForm() {
   return (
@@ -25,6 +31,7 @@ function AuthFormFields({ initialMode }: { initialMode: "signIn" | "signUp" }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  const [guestWarningOpen, setGuestWarningOpen] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -50,6 +57,10 @@ function AuthFormFields({ initialMode }: { initialMode: "signIn" | "signUp" }) {
       setError("Configure les variables Supabase du navigateur avant de te connecter.");
       setBusy(false);
       return;
+    }
+    if (mode === "signUp") {
+      const session = await supabase.auth.getSession();
+      if (isAnonymousUser(session.data.session?.user)) await supabase.auth.signOut({ scope: "local" });
     }
     const result = mode === "signIn"
       ? await supabase.auth.signInWithPassword({ email, password })
@@ -78,6 +89,38 @@ function AuthFormFields({ initialMode }: { initialMode: "signIn" | "signUp" }) {
     setBusy(false);
   }
 
+  const closeGuestWarning = useCallback(() => {
+    if (!busy) setGuestWarningOpen(false);
+  }, [busy]);
+
+  async function continueAsGuest() {
+    setBusy(true);
+    setError(null);
+    const supabase = getBrowserSupabase();
+    if (!supabase) {
+      setError("Configure les variables Supabase du navigateur avant de jouer en invité.");
+      setGuestWarningOpen(false);
+      setBusy(false);
+      return;
+    }
+    const result = await supabase.auth.signInAnonymously();
+    if (result.error || !result.data.session) {
+      setError(result.error?.message ?? "Le mode invité est momentanément indisponible.");
+      setGuestWarningOpen(false);
+      setBusy(false);
+      return;
+    }
+    if (!(await provisionAccount())) {
+      await supabase.auth.signOut({ scope: "local" });
+      setGuestWarningOpen(false);
+      setBusy(false);
+      return;
+    }
+    router.push(safeNext(searchParams.get("next")));
+    router.refresh();
+    setBusy(false);
+  }
+
   const callbackError = searchParams.get("error") === "confirmation";
 
   return (
@@ -91,6 +134,8 @@ function AuthFormFields({ initialMode }: { initialMode: "signIn" | "signUp" }) {
       {error && <p role="alert" className="mt-4 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
       {notice && <p role="status" className="mt-4 rounded-xl bg-[var(--green)]/10 px-3 py-2 text-sm text-[var(--green-dark)]">{notice}</p>}
       <button disabled={busy} className="mt-6 w-full rounded-full bg-[var(--green)] px-4 py-3 font-bold text-white hover:bg-[var(--green-dark)]">{busy ? "Un instant…" : mode === "signIn" ? "Entrer à la table" : "Créer le compte"}</button>
+      {mode === "signUp" && <div className="mt-6 border-t border-[var(--line)] pt-5 text-center"><p className="text-sm text-[var(--muted)]">Tu veux simplement jouer&nbsp;?</p><button type="button" disabled={busy} onClick={() => setGuestWarningOpen(true)} className="mt-3 min-h-11 rounded-full border border-[var(--green)] px-4 py-3 text-sm font-bold text-[var(--green)] hover:bg-[var(--green)]/10">Continuer en tant qu&apos;invité</button></div>}
+      {guestWarningOpen && <GuestWarningDialog busy={busy} onCancel={closeGuestWarning} onConfirm={() => void continueAsGuest()} />}
     </form>
   );
 }

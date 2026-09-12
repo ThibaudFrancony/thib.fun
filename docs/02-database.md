@@ -25,6 +25,8 @@ Ne pas stocker e-mail dans cette table lisible. Un avatar personnalisé et un pr
 
 Source de vérité de l'admission. Ne jamais utiliser `user_metadata` pour autoriser admin/admission. Fonction helper `public.is_site_member()` sans paramètre utilisateur : renvoie seulement si `auth.uid()` est actif. Exception justifiée `SECURITY DEFINER` avec `search_path=''`, noms qualifiés, propriétaire dédié minimal ; retirer EXECUTE de PUBLIC/anon, accorder authenticated. Elle ne renvoie ni rôle ni liste d'utilisateurs. Utilisée dans les politiques RLS ; tester séparément.
 
+Les sessions invitées utilisent un utilisateur Auth anonyme (`auth.users.is_anonymous=true`) avec un profil minimal et une admission active générés côté serveur. Elles peuvent participer aux salons et parties, mais les écritures d'historique, de statistiques du joueur et d'agrégats de duo persistants sont supprimées par la politique métier et les protections RLS dès qu'un invité est concerné. Le pseudo invité est aléatoire, unique et stable pendant la session navigateur.
+
 ### `private.invitations`
 
 `id uuid PK`, `token_hash text UNIQUE`, `email_key text?`, `created_by uuid FK profiles`, `expires_at`, `max_uses integer DEFAULT 1 CHECK 1..10`, `used_count integer DEFAULT 0`, `revoked_at timestamptz?`, `created_at`. CHECK `used_count<=max_uses`.

@@ -2,6 +2,7 @@ import "server-only";
 
 import { createRequestSupabaseClient } from "@/server/supabase/server";
 import { createAdminClient } from "@/server/supabase/admin";
+import { isAnonymousUser } from "@/lib/auth-identity";
 
 export type AuthenticatedMember = {
   id: string;
@@ -12,6 +13,7 @@ export type AuthenticatedMember = {
 
 export type AuthenticatedAccount = {
   email: string | null;
+  isGuest: boolean;
   member: AuthenticatedMember;
 };
 
@@ -23,7 +25,11 @@ async function getAuthenticatedAccountInternal(): Promise<AuthenticatedAccount |
   const admin = createAdminClient();
   const actor = await admin.rpc("server_get_actor", { p_actor: data.user.id });
   if (actor.error || !actor.data) return null;
-  return { email: data.user.email ?? null, member: actor.data as AuthenticatedMember };
+  return {
+    email: data.user.email ?? null,
+    isGuest: isAnonymousUser(data.user),
+    member: actor.data as AuthenticatedMember,
+  };
 }
 
 export async function getAuthenticatedMember(): Promise<AuthenticatedMember | null> {
@@ -40,4 +46,9 @@ export async function getAuthenticatedUserId(): Promise<string | null> {
   if (!supabase) return null;
   const { data, error } = await supabase.auth.getUser();
   return error || !data.user ? null : data.user.id;
+}
+
+export async function getAuthenticatedPermanentMember(): Promise<AuthenticatedMember | null> {
+  const account = await getAuthenticatedAccountInternal();
+  return account && !account.isGuest ? account.member : null;
 }

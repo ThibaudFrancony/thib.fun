@@ -1,13 +1,15 @@
 import { z } from "zod";
-import { getAuthenticatedMember } from "@/server/auth";
+import { getAuthenticatedAccount } from "@/server/auth";
 import { getSupabaseServerConfig } from "@/server/config";
 import { jsonError, jsonOk, mapServerError } from "@/server/http";
 import { getPairHistory } from "@/server/matches/repository";
 
 export async function GET(request: Request, { params }: { params: Promise<{ playerId: string }> }) {
   if (!getSupabaseServerConfig()) return jsonError("CONFIGURATION_REQUIRED", 503, "Le serveur de données n'est pas configuré.");
-  const member = await getAuthenticatedMember();
-  if (!member) return jsonError("UNAUTHORIZED", 401, "Connecte-toi pour voir ces statistiques.");
+  const account = await getAuthenticatedAccount();
+  if (!account) return jsonError("UNAUTHORIZED", 401, "Connecte-toi pour voir ces statistiques.");
+  if (account.isGuest) return jsonError("ACCOUNT_REQUIRED", 403, "Crée un compte pour voir ces statistiques.");
+  const member = account.member;
   const { playerId } = await params;
   if (!z.string().uuid().safeParse(playerId).success || playerId === member.id) return jsonError("NOT_FOUND", 404, "Joueur introuvable.");
   const game = new URL(request.url).searchParams.get("game") ?? undefined;
