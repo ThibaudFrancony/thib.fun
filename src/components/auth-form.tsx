@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useCallback, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { GuestWarningDialog } from "@/components/guest-warning-dialog";
 import { isAnonymousUser } from "@/lib/auth-identity";
 import { getBrowserSupabase } from "@/lib/supabase-browser";
@@ -25,7 +25,6 @@ function AuthFormFromUrl() {
 }
 
 function AuthFormFields({ initialMode }: { initialMode: "signIn" | "signUp" }) {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [mode, setMode] = useState(initialMode);
   const [email, setEmail] = useState("");
@@ -75,15 +74,13 @@ function AuthFormFields({ initialMode }: { initialMode: "signIn" | "signUp" }) {
       setError(result.error.message);
     } else if (mode === "signUp") {
       if (result.data.session && await provisionAccount()) {
-        router.push("/profil");
-        router.refresh();
+        window.location.href = "/profil";
       } else if (!result.data.session) {
         setNotice("Compte créé. Vérifie ton e-mail pour activer ta session, puis reconnecte-toi.");
       }
     } else {
       if (await provisionAccount()) {
-        router.push("/profil");
-        router.refresh();
+        window.location.href = "/profil";
       }
     }
     setBusy(false);
@@ -116,8 +113,7 @@ function AuthFormFields({ initialMode }: { initialMode: "signIn" | "signUp" }) {
       setBusy(false);
       return;
     }
-    router.push(safeNext(searchParams.get("next")));
-    router.refresh();
+    window.location.href = safeNext(searchParams.get("next"));
     setBusy(false);
   }
 

@@ -352,4 +352,11 @@ Cette rubrique concerne uniquement les demandes explicites de l'utilisateur qui 
 - Difficulté de validation : un premier lancement parallèle du build et du typecheck a provoqué une course sur les fichiers générés `.next/types` ; les commandes ont été relancées séquentiellement et passent. Le scénario complet avec un compte Supabase anonyme réel reste à confirmer après déploiement.
 - Contradiction : aucune avec `AGENTS.md` ; correctif limité au périmètre du bug, hors règles métier.
 
+### 12/09/2026 — Navigation RSC trop tôt après connexion invité / e-mail
+
+- Problème signalé : après une connexion invitée ou e-mail/mot de passe depuis `src/components/auth-form.tsx`, `router.push` déclenchait une navigation RSC trop tôt et le site revenait déconnecté.
+- Résolution : redirections après authentification réussie uniquement remplacées par une navigation complète du navigateur (`window.location.href = "/profil"` en signIn/signUp avec session, `window.location.href = safeNext(...)` en invité) ; `safeNext` conservé pour l'invité, flux métier (provisionnement, avertissement, erreurs) inchangé, `useRouter`/`router.refresh` retirés de ce composant.
+- Vérification : nouveau `src/components/auth-form.test.ts` (2 tests : navigation complète sans `router.push`/`router.refresh`/`useRouter`, garde `safeNext` conservé), `pnpm vitest run src/components/auth-form.test.ts` (1 fichier / 2 tests) réussi, `pnpm typecheck` et `pnpm lint` réussis sans avertissement.
+- Contradiction : aucune avec `AGENTS.md` ; correctif limité au périmètre demandé.
+
 Ces corrections ne constituent pas des contradictions de l'utilisateur avec `AGENTS.md`.
