@@ -344,4 +344,12 @@ Cette rubrique concerne uniquement les demandes explicites de l'utilisateur qui 
 - Le suivi indiquait Géographie sur `codex/geographie` et UNO non commité ; il est maintenant réaligné sur `main` et le commit `2a33854`.
 - `AGENTS.md` indiquait que le dépôt ne contenait aucune migration ; il précise maintenant que les migrations versionnées existent, sans conclure à leur application distante.
 
+### 12/09/2026 — Session invité invisible côté SSR après `signInAnonymously`
+
+- Problème signalé : après une connexion invité depuis `src/components/auth-form.tsx`, la navigation vers `/` arrivait déconnectée côté SSR. Causes confirmées dans le code : aucun proxy de rafraîchissement de session (convention Next.js 16), écriture `setAll` sans effet dans les Server Components, et route `/auth/callback` liant son client Supabase au magasin `cookies()` de la requête au lieu de la réponse de redirection (cookies d'échange perdus).
+- Résolution : `src/proxy.ts` + `src/server/supabase/session-refresh.ts` (motif officiel `getUser()` + recopie `setAll` vers la réponse, sans redirection métier) ; `src/app/auth/callback/route.ts` écrit désormais les cookies de session sur sa réponse de redirection via `NextRequest`. Flux invité `router.push` + `router.refresh()` inchangé : il suit déjà le motif documenté une fois le proxy présent.
+- Vérification : nouveau `src/server/supabase/session-refresh.test.ts` (2 tests : recopie des cookies rafraîchis, passage sans configuration), `pnpm test` (40 fichiers / 313 tests), `pnpm typecheck`, `pnpm lint`, `pnpm exec next build --webpack`, `pnpm docs:check`, `git diff --check` et `pnpm test:e2e tests/e2e/auth-guest.spec.ts` (Chromium + WebKit : 2 tests) réussis. Le build affiche `ƒ Proxy (Middleware)`.
+- Difficulté de validation : un premier lancement parallèle du build et du typecheck a provoqué une course sur les fichiers générés `.next/types` ; les commandes ont été relancées séquentiellement et passent. Le scénario complet avec un compte Supabase anonyme réel reste à confirmer après déploiement.
+- Contradiction : aucune avec `AGENTS.md` ; correctif limité au périmètre du bug, hors règles métier.
+
 Ces corrections ne constituent pas des contradictions de l'utilisateur avec `AGENTS.md`.
