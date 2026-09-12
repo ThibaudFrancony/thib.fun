@@ -18,4 +18,13 @@ describe("migration des invités anonymes", () => {
     expect(sql).toContain("revoke all on function private.guest_pseudo()");
     expect(sql).toContain("grant execute on function public.server_get_actor(uuid) to service_role");
   });
+
+  it("rend la projection serveur capable de lire auth.users", async () => {
+    const sql = await readFile(resolve(process.cwd(), "supabase/migrations/20260912085840_server_get_actor_security_definer.sql"), "utf8");
+    expect(sql).toContain("create or replace function public.server_get_actor");
+    expect(sql).toContain("security definer");
+    expect(sql).toContain("set search_path = ''");
+    expect(sql).toContain("select 1 from auth.users u");
+    expect(sql).toContain("grant execute on function public.server_get_actor(uuid) to service_role");
+  });
 });

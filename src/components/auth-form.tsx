@@ -74,12 +74,16 @@ function AuthFormFields({ initialMode }: { initialMode: "signIn" | "signUp" }) {
       setError(result.error.message);
     } else if (mode === "signUp") {
       if (result.data.session && await provisionAccount()) {
+        // Full navigation lets SSR consume the auth cookies before rendering.
+        // eslint-disable-next-line @next/next/no-location-assign-relative-destination
         window.location.href = "/profil";
       } else if (!result.data.session) {
         setNotice("Compte créé. Vérifie ton e-mail pour activer ta session, puis reconnecte-toi.");
       }
     } else {
       if (await provisionAccount()) {
+        // Full navigation lets SSR consume the auth cookies before rendering.
+        // eslint-disable-next-line @next/next/no-location-assign-relative-destination
         window.location.href = "/profil";
       }
     }

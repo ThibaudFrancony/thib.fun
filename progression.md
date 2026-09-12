@@ -356,7 +356,16 @@ Cette rubrique concerne uniquement les demandes explicites de l'utilisateur qui 
 
 - Problème signalé : après une connexion invitée ou e-mail/mot de passe depuis `src/components/auth-form.tsx`, `router.push` déclenchait une navigation RSC trop tôt et le site revenait déconnecté.
 - Résolution : redirections après authentification réussie uniquement remplacées par une navigation complète du navigateur (`window.location.href = "/profil"` en signIn/signUp avec session, `window.location.href = safeNext(...)` en invité) ; `safeNext` conservé pour l'invité, flux métier (provisionnement, avertissement, erreurs) inchangé, `useRouter`/`router.refresh` retirés de ce composant.
-- Vérification : nouveau `src/components/auth-form.test.ts` (2 tests : navigation complète sans `router.push`/`router.refresh`/`useRouter`, garde `safeNext` conservé), `pnpm vitest run src/components/auth-form.test.ts` (1 fichier / 2 tests) réussi, `pnpm typecheck` et `pnpm lint` réussis sans avertissement.
+- Vérification : nouveau `src/components/auth-form.test.ts` (2 tests : navigation complète sans `router.push`/`router.refresh`/`useRouter`, garde `safeNext` conservé), `pnpm vitest run src/components/auth-form.test.ts` (1 fichier / 2 tests) réussi, `pnpm typecheck` et `pnpm lint` réussis sans avertissement ; la règle Next est désactivée localement sur les deux navigations complètes intentionnelles.
 - Contradiction : aucune avec `AGENTS.md` ; correctif limité au périmètre demandé.
+
+### 12/09/2026 — Projection serveur impossible après provisionnement
+
+- Problème signalé et reproduit en production : l'authentification et `/api/auth/provision` réussissaient, mais les pages et API qui appellent `getAuthenticatedAccount()` retombaient sur l'état déconnecté. Le profil invité créé était bien actif en base.
+- Cause confirmée par `supabase db query --linked` en `service_role` : `public.server_get_actor(uuid)` lisait `auth.users` en `SECURITY INVOKER`, avec l'erreur `permission denied for table users`.
+- Résolution : migration `supabase/migrations/20260912085840_server_get_actor_security_definer.sql` ; la RPC serveur reste interdite aux rôles client et passe en `SECURITY DEFINER` avec `search_path` vide, afin que sa lecture interne de `auth.users` fonctionne.
+- Vérification : migrations locales et distantes synchronisées avant ce correctif ; profil invité actif et RPC `server_get_actor` vérifiés en lecture seule ; `pnpm test` (41 fichiers / 316 tests), `pnpm typecheck`, `pnpm lint`, `pnpm docs:check`, `git diff --check` et `pnpm exec next build --webpack` réussis ; `supabase db push --linked --dry-run` confirme que cette migration est la seule en attente. L'application réelle de la migration et le test production final restent à confirmer après le push.
+- Difficultés de diagnostic : un premier appel `supabase migration list` a été bloqué par l'écriture de télémétrie locale puis a réussi avec l'autorisation adaptée ; le dépôt ne contient pas de `.env.local`, donc la comparaison directe avec la clé serveur n'a pas été possible depuis le poste. Une requête liée exécutée en `service_role` a toutefois reproduit exactement l'erreur SQL. La délégation OpenCode à Muse n'a pas pu démarrer (FSEvents puis connexion API) ; la migration minimale a été reprise par l'orchestrateur.
+- Contradiction : aucune avec `AGENTS.md` ; correctif limité à l'autorisation interne nécessaire à la projection serveur.
 
 Ces corrections ne constituent pas des contradictions de l'utilisateur avec `AGENTS.md`.
