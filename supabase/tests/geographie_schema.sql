@@ -1,6 +1,6 @@
 begin;
 
-select plan(43);
+select plan(44);
 
 select has_schema('private', 'Le schéma privé existe');
 select has_table('public', 'profiles', 'Les profils sont disponibles');
@@ -129,6 +129,16 @@ select ok(exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.prona
 select ok(exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'server_commit_match'), 'La RPC de commit atomique existe');
 select ok(exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'private' and p.proname = 'claim_due_jobs'), 'Le claim des tâches échues existe');
 select ok(exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'private' and p.proname = 'dispatch_due_jobs'), 'Le dispatcher durable existe');
+select ok(
+  exists (
+    select 1
+    from cron.job
+    where jobname = 'tibo-fun-dispatch-due-jobs'
+      and schedule = '1 second'
+      and command like '%private.dispatch_due_jobs%'
+  ),
+  'Le Cron réveille le dispatcher durable chaque seconde'
+);
 select ok(exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'server_get_job_context'), 'Le contexte privé du worker existe');
 select ok(exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'server_finish_job'), 'La clôture idempotente des tâches existe');
 
