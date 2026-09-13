@@ -1,12 +1,12 @@
 # État de réalisation
 
-Dernière mise à jour : 12 septembre 2026.
+Dernière mise à jour : 13 septembre 2026.
 
 Le suivi opérationnel détaillé et maintenu après chaque changement se trouve dans [progression.md](../progression.md). Ce document conserve le suivi de réalisation par lots et doit rester cohérent avec lui.
 
-**Le cadrage initial et les migrations de schéma sont versionnés ; les contrôles applicatifs et statiques des neuf jeux sont validés localement, sans utiliser Docker. Les 17 migrations déjà appliquées correspondent à l'historique du projet Supabase lié ; la migration locale d'accès invité reste à appliquer et la recette authentifiée complète reste à exécuter.** L'accueil multi-jeux, Géographie, Trou Noir, TTMC, Skyjo, UNO, BombParty, Bataille navale, Compatibilité et Longueur d'onde sont présents dans `main` ; aucun jeu ne reste à développer dans le périmètre des neuf fiches.
+**Les neuf jeux ont du code sur `main`, mais leur fonctionnement complet n'est pas validé.** L'[audit du 13 septembre](audit-code-2026-09-13.md) identifie 29 points, dont des blocages de progression, d'abandon/forfait et de finalisation. Les 21 migrations sont appliquées sur le projet Supabase lié ; trois parties TTMC et six jobs échus restent bloqués. Aucun correctif n'a été appliqué pendant cet audit. Le plan en six lots du rapport est la prochaine étape de réalisation.
 
-Contrôles effectués : index des neuf jeux dans AGENTS, résolution des liens locaux, blocs de code Markdown équilibrés, absence de marqueurs d'espace réservé, couverture des règles/configurations/états/projections/scores/tests. Relecture croisée des droits SQL, reçus système, délais, contenu et résultats coopératifs. Le lint Supabase local et les 40 assertions pgTAP du schéma précédemment validé passent ; la nouvelle migration d'accès invité n'a pas pu être exécutée localement faute de base accessible. Les contrôles applicatifs sont détaillés dans la ligne de chaque lot.
+Contrôles du 13 septembre : 318 tests unitaires, types, lint et build webpack réussis ; quatre E2E existants réussis et quatorze ignorés sans identifiants. Huit probes Vitest et six probes navigateur constatent des défauts, sans valider de correction. La suite transactionnelle SQL complète n'a pas été rejouée ; son assertion globale de 380 contenus est obsolète (1 180 items publiés). Les validations historiques de chaque lot ne remplacent pas une recette complète à deux sessions.
 
 | Lot | État | Dépendances |
 |---|---|---|
@@ -15,10 +15,10 @@ Contrôles effectués : index des neuf jeux dans AGENTS, résolution des liens l
 | DA visuelle | Base provisoire documentée | Validation sur écrans réels |
 | Accueil et sélection des jeux | Implémenté le 10 septembre 2026 | Rail responsive des neuf jeux ; Géographie, Trou Noir, TTMC et UNO activables dans le registre ; contrôle browser manuel antérieur ; E2E de jeu à deux sessions dépend des identifiants de recette |
 | Bootstrap Next/Vercel/GitHub | À faire | Accès et versions à vérifier |
-| Supabase CLI/configuration | Authentifiée et liée | CLI 2.104.0, projet `ttogfwnlknmiscnmlhof`, historique des 17 migrations concordant ; aucun Docker utilisé |
+| Supabase CLI/configuration | Projet lié ; inspection distante en lecture seule | Projet `ttogfwnlknmiscnmlhof`, historique des 21 migrations concordant ; Vault vide malgré Cron actif |
 | Supabase schéma/Auth/Storage/RLS | Migrations appliquées et vérifiées à distance | RLS publiques et fonctions serveur contrôlées ; protection des mots de passe compromis à activer dans Auth |
-| Salons/transactions/Realtime/jobs | À faire | Base |
-| Profils/historique/duos | À faire | Base + finalisation |
+| Salons/transactions/Realtime/jobs | Présents, corrections bloquantes nécessaires | Audit D01–D13/D19 ; recette du circuit complet requise |
+| Profils/historique/duos | Partiels | Finalisations, issues, agrégats, pagination et édition à corriger/compléter |
 | Géographie | Implémenté sur `main` | Tests moteur/projection et parcours E2E présents ; migration distante vérifiée, recette à deux à finaliser |
 | Trou Noir | Implémenté sur `main` (11 septembre 2026) | Moteur, projection, correction, UI, worker, pack/RPC et tests présents ; migration distante vérifiée, recette à deux sessions et benchmark IA à finaliser |
 | TTMC | Implémenté sur `main`, commit `b5a49b5` (11 septembre 2026, cycle 2 terminé) | Moteur, projection, correction, UI, worker, pack 22 thèmes/440 questions, typecheck/lint/build webpack/docs:check OK ; migration distante vérifiée, recette à deux sessions et benchmark IA à finaliser |
@@ -35,4 +35,4 @@ Pour chaque lot terminé ajouter date, version/commit si existant, tests effectu
 
 Le parcours est présent localement : CTA dans le mode inscription, dialogue d'avertissement, session Auth anonyme, pseudo aléatoire généré côté serveur, accès aux salons/parties et distinction explicite entre invité et compte permanent dans les routes de compte et d'historique. La migration additive `20260912000100_anonymous_guest_access.sql` protège aussi les écritures d'historique et de statistiques personnelles.
 
-La vérification distante de l'activation Auth anonyme et l'application de cette migration restent à effectuer. Le nettoyage automatique des utilisateurs anonymes et la recette authentifiée complète à deux sessions ne sont pas encore configurés ou exécutés.
+La migration d'accès invité et ses corrections sont appliquées à distance ; le journal opérationnel contient les vérifications antérieures de connexion invitée. L'audit du 13 septembre n'a pas rejoué la recette complète avec deux sessions réelles. Le nettoyage automatique des utilisateurs anonymes reste à vérifier/configurer.
