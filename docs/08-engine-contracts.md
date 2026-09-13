@@ -87,6 +87,55 @@ select * into m from private.matches where id = p_match_id for update;
 
 La transaction SQL valide aussi que les deux viewerIds sont exactement ceux de match_players, pas deux copies d'un même joueur ; next state's schéma/règles correspondent au moteur de la partie ; deadline ne peut pas être arbitrairement étendue par une commande refusée. En V1 on fait confiance au moteur serveur pour calculer règles/score, pas au body entrant. Autoriser les événements système check_absence indépendants du phaseId courant en revalidant leur condition, car ils surveillent toute la partie ; leurs autres contrôles de bail/statut/version restent obligatoires.
 
+## 3 bis. Contrat transactionnel commun arrêté à l'étape 2
+
+Cette section fixe le contrat partagé testé dans `src/server/matches/transaction-contract.ts`. Elle ne prétend pas que la migration SQL actuelle l'applique déjà : son raccordement au RPC, au dispatcher et au worker appartient aux étapes suivantes.
+
+### Identité d'un commit et clé de snapshot
+
+Le commit est évalué contre la clé immuable de lecture `[matchId, phaseId, stateVersion]`. `matchId`, `phaseId` et `stateVersion` doivent correspondre au snapshot verrouillé ; une commande qui vise une autre partie, une autre phase ou une ancienne version est refusée sans mutation.
+
+L'enveloppe de commit porte également :
+
+- la source `player` ou `job` ;
+- pour un joueur, `actorId` et le siège dérivé de l'utilisateur authentifié dans `match_players` ; le navigateur ne choisit pas ce siège ;
+- pour un job, `actorId` et le siège nuls, `jobId` égal à `commandId`, ainsi que le `leaseToken` ;
+- `commandType` et le hash SHA-256 du payload métier ; le hash exclut `expectedVersion` et les champs dérivés ;
+- l'identifiant UUID stable `commandId`, utilisé pour retrouver le reçu.
+
+Le RPC prend le verrou de la partie avant de lire la version et le reçu, puis prend `clock_timestamp()` après l'acquisition du verrou. Deux commandes concurrentes sur une même version ne peuvent donc produire qu'une seule transition. Le même ordre doit être appliqué aux commandes de salon, dans le périmètre de leur verrou de salon.
+
+### Matrice des échéances
+
+| Classe | Source | Règle d'échéance | Résultat en cas d'admissibilité |
+|---|---|---|---|
+| Coup ordinaire | joueur | `dbNow >= blocking deadline` refuse `DEADLINE_EXPIRED` ; `null` signifie sans échéance joueur | transition joueur |
+| `RESIGN` | joueur | reste admissible après l'échéance courante | fin compétitive, adversaire gagnant, sauf avant le premier tour |
+| `CLAIM_FORFEIT` | joueur | reste admissible après l'échéance, mais seulement si l'absence adverse continue depuis au moins 90 s à l'heure DB | fin compétitive, demandeur gagnant |
+| Absence / `check_absence` | job | `run_at` dû, puis condition revalidée : deux joueurs absents depuis 120 s ou un joueur depuis 180 s ; aucun `phaseId` n'est requis | abandon sans gagnant, ou no-op sans version si la condition n'est plus vraie |
+| Jugement | job | `run_at` du job dû, avec phase et bail valides ; pas de deadline de réponse joueur | transition de jugement |
+| Préparation | job | job dû, phase cohérente et deadline bloquante de préparation atteinte | transition d'expiration |
+| Timeout de phase / révélation | job | job dû, phase cohérente et deadline bloquante atteinte | transition d'expiration |
+| Interruption coopérative | joueur | même admissibilité de sortie que `RESIGN`/`CLAIM_FORFEIT`, selon le type envoyé | abandon coopératif sans gagnant ni défaite artificielle |
+
+La comparaison est inclusive à la frontière (`>=`). Une commande refusée ne met à jour ni `last_seen_at`, ni état, ni version, ni job, ni résultat.
+
+### Reçus et rejouabilité
+
+Le lookup du reçu se fait sous verrou avant les contrôles d'échéance et de version. Si le même `commandId` retrouve le même acteur authentifié, le même type et le même hash de payload, le RPC renvoie exactement la réponse déjà committée et sa `committedVersion`, sans rejouer les effets. `expectedVersion` n'entre volontairement pas dans l'identité de rejeu : un retry peut arriver avec un snapshot client plus ancien.
+
+Un `commandId` déjà utilisé avec un acteur, un type ou un hash différent donne `COMMAND_ID_REUSED`. Un conflit de version, de phase, de siège, de bail ou d'échéance ne consomme pas d'identifiant de commande. Les reçus de jobs sont séparés des reçus utilisateur ; un job conserve le même `jobId`/`commandId` pendant ses retries. La règle acteur/type/hash s'applique aussi à une commande de salon, avec la clé de ressource du salon.
+
+### Jobs conservés, remplacés et annulés
+
+Une transition ne vide jamais tous les jobs du match. `jobsToCancel` contient les IDs des jobs devenus invalides et eux seuls peuvent passer de `pending`/`running` à `cancelled`. Un job encore valide dans la même phase est conservé. Une tâche de phase remplacée reçoit une nouvelle clé de déduplication liée au nouveau `phaseId` ; un job terminal (`done`, `cancelled` ou `failed`) n'est jamais réactivé par un upsert avec son ancienne clé. Les jobs périodiques d'absence prennent un nouvel ID et une nouvelle clé à chaque `run_at`.
+
+### Baux, données obsolètes et pannes
+
+Un bail absent, différent ou expiré donne `JOB_LEASE_INVALID` et ne doit pas appliquer la transition. Un job qui ne correspond plus à la phase donne `STALE_JOB` et est annulé ; `check_absence` reste l'exception indépendante de phase, mais sa condition est toujours revalidée. Une donnée obsolète ou un conflit de version est une absence de commit, pas une défaite.
+
+Une panne réessayable (worker, fournisseur IA indisponible) remet le job en `pending` avec les délais `1/2/4/8 s`. Au cinquième échec, le job devient `failed` et la partie est finalisée en `abandoned` avec `reason='technical_error'`, sans `winnerId` ni score partagé inventé. Une panne de base conserve le job et l'alerte tant que cette finalisation ne peut pas être commitée ; elle ne doit pas être annoncée comme réussie. Aucun de ces chemins ne crée une victoire.
+
 ## 4. Détails des jobs et résolution des conflits
 
 Le dispatcher Cron réserve seulement jobs pending dus ou running au bail expiré ; pas jobs done/cancelled/failed. Chaque requête HTTP du batch contient les quatre couples ID/token maximum. Le worker n'accepte pas des instructions métier libres contenues dans cette requête : il recharge payload stocké en base. Les tentatives de job et réservations IA sont distinctes (un retry réseau de transport ne doit pas multiplier des appels IA déjà reçus).

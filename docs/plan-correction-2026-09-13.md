@@ -54,7 +54,7 @@ Les sections suivantes constituent la procédure détaillée à exécuter après
 - Sécurité/observabilité : les ACL du schéma `private` refusent `USAGE` et `SELECT` à `anon`/`authenticated`; l'advisor signale tout de même 18 tables privées sans RLS, `is_site_member()` SECURITY DEFINER exécutable par `authenticated`, `pg_net` dans `public`, politiques anonymes prévues, protection des mots de passe compromis désactivée, 13 clés étrangères sans index et 6 index inutilisés. Ces alertes sont classées dans D30–D35 ; aucune remédiation automatique n'a été lancée.
 - Vercel : le projet `thib.fun` est identifié dans l'équipe `thibaud73000's projects` (`team_UrGuXgGQZHe1NQuwU3IFwoZz`), avec l'identifiant `prj_SIq42aMngLTaKKMWbNGwmlU1RQKf`. Son dernier déploiement de production (`dpl_35YN2mtRFLrgAW7tXWqSs3CcNBc7`) est `READY`, cible `production`, et correspond exactement au commit `58eaca94ec35e58ed28fcedab59a0d8b405c8848` de `main`; les domaines `thibfun.vercel.app`, `thibfun-thibaud73000s-projects.vercel.app` et `thibfun-git-main-thibaud73000s-projects.vercel.app` sont associés. Les logs de build ne signalent qu'un avertissement sur l'évolution automatique de Node et aucun runtime error n'a été remonté. Aucun `.vercel/project.json` ou `vercel.json` local n'est présent. Le connecteur ne permet pas de lister les noms de variables ni le réglage d'origine autorisée.
 
-**Statut de l'étape 0 : terminée avec une limite d'outillage.** L'état local, Supabase, le projet Vercel, le commit déployé, les domaines et les logs disponibles sont relevés en lecture seule. L'inventaire des noms de variables Vercel et le réglage d'origine autorisée restent à vérifier par un moyen qui les expose ; cette limite ne bloque pas la préparation de l'étape 1. Aucune mutation n'a été effectuée.
+**Statut de l'étape 0 : terminée avec une limite d'outillage.** L'état local, Supabase, le projet Vercel, le commit déployé, les domaines et les logs disponibles sont relevés en lecture seule. L'inventaire des noms de variables Vercel et le réglage d'origine autorisée restent à vérifier par un moyen qui les expose ; cette limite ne bloque pas la préparation des étapes suivantes. Aucune mutation n'a été effectuée.
 
 ## Étape 1 — Rendre la suite de tests fiable
 
@@ -86,6 +86,16 @@ Les sections suivantes constituent la procédure détaillée à exécuter après
 5. Définir le comportement d'une panne technique : bail invalide, donnée obsolète, panne réessayable, cinq échecs, IA indisponible et job définitivement abandonné. Aucun de ces cas ne doit inventer une victoire.
 
 **Sortie :** contrat approuvé par les tests de concurrence et de replay, avant de modifier les neuf moteurs. (D04, D05, D09, D10, D11, D13.)
+
+### Réalisation de l'étape 2 — 13 septembre 2026 — `codex/step2-contract`
+
+- Le contrat pur partagé est formalisé dans `src/server/matches/transaction-contract.ts` : matrice des échéances, clé `[matchId, phaseId, stateVersion]`, identité de commit, siège authentifié, hash, reçus, baux, déduplication et issues sans gagnant pour les abandons techniques/coops.
+- Les tests `src/server/matches/transaction-contract.test.ts` couvrent les règles de replay, la concurrence sérialisée, les conflits de version/phase/siège, les jobs conservés/remplacés/annulés et les cinq catégories d'échec. Les sentinelles `src/server/matches/transaction-contract-gaps.test.ts` conservent les écarts observés du SQL actuel comme échecs attendus pour l'étape 3.
+- Le contrat normatif est détaillé dans [`docs/08-engine-contracts.md`](08-engine-contracts.md). Aucun moteur de jeu, dispatcher, worker, RPC, migration de production, donnée existante, configuration Supabase/Vercel ou traitement de partie n'a été modifié.
+- Choix arrêtés : les coups ordinaires refusent à `dbNow >= deadline`, `RESIGN` reste admissible après expiration, `CLAIM_FORFEIT` exige 90 secondes d'absence adverse, `check_absence` est indépendant de phase mais revalide sa condition, le jugement n'a pas de deadline joueur, et les interruptions coopératives abandonnent sans gagnant.
+- Les reçus identiques rejouent la réponse déjà committée avant version/échéance ; acteur, type ou hash divergents donnent `COMMAND_ID_REUSED`. Les jobs valides sont conservés, seuls les IDs de `jobsToCancel` sont annulés, les jobs terminaux ne sont jamais réactivés, et une cinquième panne technique aboutit à `technical_error` sans victoire.
+
+**Statut :** contrat partagé validé par les tests purs de concurrence et de replay ; raccordement SQL et vérification sur PostgreSQL isolé restent à faire à l'étape 3. Les neuf moteurs et les parties existantes sont volontairement hors périmètre.
 
 ## Étape 3 — Corriger les migrations et le commit serveur
 
