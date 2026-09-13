@@ -3,6 +3,7 @@ import "server-only";
 import { z } from "zod";
 import { deterministicJudge, deterministicMatchKind } from "@/games/trou-noir/judge";
 import type { QuizQuestion } from "@/games/trou-noir/types";
+import { resolveJudgeRuntime, type JudgeRuntime } from "@/server/quiz/judge-runtime";
 
 export type QuizJudgeOutcome = {
   verdict: "accept" | "reject" | "ambiguous";
@@ -38,11 +39,12 @@ function reasonForDeterministic(kind: "exact" | "alias" | "numeric"): string {
   return kind === "exact" ? "exact_meaning" : "acceptable_spelling";
 }
 
-async function callDeepSeek(question: QuizQuestion, rawAnswer: string): Promise<QuizJudgeOutcome | null> {
+async function callDeepSeek(question: QuizQuestion, rawAnswer: string, runtimeInput: JudgeRuntime): Promise<QuizJudgeOutcome | null> {
   const apiKey = process.env.DEEPSEEK_API_KEY;
   const model = process.env.DEEPSEEK_MODEL;
   if (!apiKey || !model) return null;
-  const startedAt = Date.now();
+  const runtime = resolveJudgeRuntime(runtimeInput);
+  const startedAt = runtime.now();
   const payload = {
     model,
     response_format: { type: "json_object" },
@@ -66,11 +68,11 @@ async function callDeepSeek(question: QuizQuestion, rawAnswer: string): Promise<
   };
   let lastError: unknown = null;
   for (let attempt = 1; attempt <= 2; attempt += 1) {
-    if (Date.now() - startedAt > 12_000) break;
+    if (runtime.now() - startedAt > 12_000) break;
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 5000);
+    const timer = runtime.setTimeoutImpl(() => controller.abort(), 5000);
     try {
-      const response = await fetch("https://api.deepseek.com/chat/completions", {
+      const response = await runtime.fetchImpl("https://api.deepseek.com/chat/completions", {
         method: "POST",
         headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
         body: JSON.stringify(payload),
@@ -78,7 +80,7 @@ async function callDeepSeek(question: QuizQuestion, rawAnswer: string): Promise<
       });
       if (response.status === 429 || response.status >= 500) {
         lastError = new Error(`DEEPSEEK_${response.status}`);
-        await new Promise((resolve) => setTimeout(resolve, 300));
+        await runtime.sleep(300);
         continue;
       }
       if (!response.ok) return null;
@@ -96,9 +98,9 @@ async function callDeepSeek(question: QuizQuestion, rawAnswer: string): Promise<
       return { verdict: parsed.data.verdict, method: "llm", reasonCode: parsed.data.reasonCode };
     } catch (error) {
       lastError = error;
-      await new Promise((resolve) => setTimeout(resolve, 300));
+      await runtime.sleep(300);
     } finally {
-      clearTimeout(timer);
+      runtime.clearTimeoutImpl(timer);
     }
   }
   void lastError;
@@ -113,6 +115,7 @@ async function callDeepSeek(question: QuizQuestion, rawAnswer: string): Promise<
 export async function judgeTrouNoirAnswer(
   question: QuizQuestion,
   rawAnswer: string,
+  runtime: JudgeRuntime = {},
 ): Promise<QuizJudgeOutcome> {
   const trimmed = rawAnswer.trim();
   if (!trimmed) {
@@ -126,7 +129,7 @@ export async function judgeTrouNoirAnswer(
   if (verdict === "reject") {
     return { verdict: "reject", method: "exact", reasonCode: "wrong_fact" };
   }
-  const llm = await callDeepSeek(question, trimmed);
+  const llm = await callDeepSeek(question, trimmed, runtime);
   if (llm) return llm;
   return { verdict: "ambiguous", method: "llm", reasonCode: "ambiguous" };
 }

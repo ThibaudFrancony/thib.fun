@@ -4,9 +4,9 @@ Dernière mise à jour : 13 septembre 2026.
 
 Le suivi opérationnel détaillé et maintenu après chaque changement se trouve dans [progression.md](../progression.md). Ce document conserve le suivi de réalisation par lots et doit rester cohérent avec lui.
 
-**Les neuf jeux ont du code sur `main`, mais leur fonctionnement complet n'est pas validé.** L'[audit du 13 septembre](audit-code-2026-09-13.md) identifie 29 défauts de code/produit et 6 observations d'infrastructure, dont des blocages de progression, d'abandon/forfait, de sécurité et de finalisation. Les 21 migrations sont appliquées sur le projet Supabase lié ; trois parties TTMC et six jobs échus restent bloqués. Aucun correctif n'a été appliqué pendant cet audit. Le [plan pas à pas](plan-correction-2026-09-13.md) est la prochaine étape de réalisation, sous réserve de relecture utilisateur.
+**Les neuf jeux ont du code sur `main`, mais leur fonctionnement complet n'est pas validé.** L'[audit du 13 septembre](audit-code-2026-09-13.md) identifie 29 défauts de code/produit et 6 observations d'infrastructure, dont des blocages de progression, d'abandon/forfait, de sécurité et de finalisation. Les 21 migrations sont appliquées sur le projet Supabase lié ; trois parties TTMC et six jobs échus restent bloqués. L'étape 1 a renforcé le harnais de tests et la CI sans corriger le comportement métier ni toucher à la production. Le [plan pas à pas](plan-correction-2026-09-13.md) reste la référence pour les étapes 2 à 10.
 
-Contrôles du 13 septembre : 318 tests unitaires, types, lint et build webpack réussis ; quatre E2E existants réussis et quatorze ignorés sans identifiants. Huit probes Vitest et six probes navigateur constatent des défauts, sans valider de correction. La suite transactionnelle SQL complète n'a pas été rejouée ; son assertion globale de 380 contenus est obsolète (1 180 items publiés). Les validations historiques de chaque lot ne remplacent pas une recette complète à deux sessions.
+Contrôles du 13 septembre après l'étape 1 : 43 fichiers Vitest, 330 tests réussis et 2 sentinelles d'échec attendu ; types, lint et build webpack restent réussis. Les E2E exécutés hors CI totalisent 10 résultats acceptés (4 scénarios ordinaires et 6 échecs attendus des 3 régressions UNO sur deux navigateurs) et 16 ignorés : 14 scénarios multijoueurs sans `E2E_PASSWORD` et 2 sessions anonymes réservées à la CI Supabase locale. Les contrôles SQL filtrent maintenant chaque pack publié par `pack_id`/manifest, mais pgTAP n'a pas été rejoué sans Docker. La matrice [`test-coverage-2026-09-13.md`](test-coverage-2026-09-13.md) conserve les causes `blocked`, `fail` et `not-run`.
 
 | Lot | État | Dépendances |
 |---|---|---|
@@ -14,7 +14,7 @@ Contrôles du 13 septembre : 318 tests unitaires, types, lint et build webpack r
 | Neuf plans de jeux | Rédigés | Défauts de règles explicités dans les fiches |
 | DA visuelle | Base provisoire documentée | Validation sur écrans réels |
 | Accueil et sélection des jeux | Implémenté le 10 septembre 2026 | Rail responsive des neuf jeux ; Géographie, Trou Noir, TTMC et UNO activables dans le registre ; contrôle browser manuel antérieur ; E2E de jeu à deux sessions dépend des identifiants de recette |
-| Bootstrap Next/Vercel/GitHub | À faire | Accès et versions à vérifier |
+| Bootstrap Next/Vercel/GitHub | 🟡 Partiel | Versions et scripts vérifiés ; workflow CI statique + Supabase local versionné dans `.github/workflows/ci.yml`. Liaison et variables Vercel restent à vérifier séparément. |
 | Supabase CLI/configuration | Projet lié ; inspection distante en lecture seule | Projet `ttogfwnlknmiscnmlhof`, historique des 21 migrations concordant ; Vault vide malgré Cron actif |
 | Supabase schéma/Auth/Storage/RLS | Migrations appliquées et vérifiées à distance | RLS publiques et fonctions serveur contrôlées ; protection des mots de passe compromis à activer dans Auth |
 | Salons/transactions/Realtime/jobs | Présents, corrections bloquantes nécessaires | Audit D01–D13/D19 ; recette du circuit complet requise |

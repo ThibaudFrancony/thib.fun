@@ -1,6 +1,6 @@
 # Diagnostic fonctionnel et plan de correction — 13 septembre 2026
 
-Référence : `main`, commit `58eaca9`. Audit demandé après signalement des boutons d'abandon et de forfait. **Aucun correctif applicatif, changement de production, commit ou déploiement n'a été effectué.** Les seuls changements conservés dans le dépôt sont documentaires.
+Référence : `main`, commit `58eaca9`. Audit demandé après signalement des boutons d'abandon et de forfait. **Aucun correctif métier ni changement de production n'a été effectué.** L'étape 1 du plan a depuis ajouté uniquement un harnais de tests, des fixtures locales et une CI versionnée ; les défauts décrits ici restent les cibles des étapes de correction.
 
 Le problème dépasse les boutons : plusieurs ruptures entre navigateur, moteurs et transactions empêchent la progression ou la finalisation des parties. Les moteurs disposent de nombreux tests, mais le circuit complet n'est pas validé. Corriger seulement le Cron ou seulement l'interface déplacerait les blocages.
 
@@ -24,12 +24,12 @@ Priorités : **P0** = circuit commun de jeu bloqué ; **P1** = partie perdue, r�
 
 | Vérification exécutée | Résultat et portée |
 |---|---|
-| `pnpm test` | 42 fichiers, 318 tests réussis sur le code existant. |
+| `pnpm test` | 43 fichiers, 330 tests réussis et 2 sentinelles d'échec attendu pour les défauts encore présents. |
 | `pnpm typecheck`, `pnpm lint` | Réussis. |
 | `pnpm exec next build --webpack` | Réussi ; toutes les routes attendues sont construites. |
-| Probes Vitest temporaires | 8 réussies : reproductions de 7 défauts/ruptures et génération d'une projection UNO fictive. Ces assertions constatent les bugs ; elles ne valident pas des corrections. |
-| Playwright existant | 4 scénarios exécutés avec succès : accueil et avertissement invité, chacun sur Chromium et WebKit mobile. 14 scénarios multijoueurs ignorés faute de `E2E_PASSWORD`. |
-| Probes navigateur isolées | 3 défauts UNO reproduits sur les deux navigateurs, soit 6 probes réussies. API simulée avec données fictives ; aucun match distant créé ou abandonné. |
+| Probes Vitest historiques et contrats versionnés | Les 8 probes initiales ont reproduit 7 défauts/ruptures et une projection UNO fictive ; les contrats de l'étape 1 sont maintenant versionnés et conservent les défauts attendus sans les masquer. |
+| Playwright | 10 résultats acceptés (4 scénarios ordinaires et 6 échecs attendus des 3 régressions UNO sur deux navigateurs) ; 16 tests sont ignorés localement : 14 multijoueurs sans `E2E_PASSWORD` et 2 sessions anonymes réservées à la CI Supabase locale. |
+| Probes navigateur isolées | Les trois régressions UNO sont versionnées dans `tests/e2e/uno-regressions.spec.ts` et reproduites avec API simulée ; aucun match distant créé ou abandonné. |
 | Contenus | Les 5 étapes du script `content:validate` ont réussi dans une copie isolée ; les fichiers SQL générés y sont identiques aux originaux. Validation Géographie en chemin avec espaces : échec `ENOENT` reproduit. |
 | Supabase | 21 migrations appliquées, dont les corrections de projections invitées et le Cron. Inspection des jobs, phases, fonctions, permissions et volumes de packs, sans extraire de réponses privées ni de valeurs de secrets. |
 | Supabase advisors | Alerte RLS sur 18 tables privées, fonction `SECURITY DEFINER` accessible à `authenticated`, `pg_net` dans `public`, accès anonymes attendus et protection des mots de passe compromis désactivée ; 13 clés étrangères sans index (informations à classer, aucune remédiation exécutée). |

@@ -13,6 +13,6 @@ Stack retenue : GitHub, Vercel, Next.js/TypeScript, Supabase et DeepSeek pour la
 
 Dépôt : [ThibaudFrancony/thib.fun](https://github.com/ThibaudFrancony/thib.fun). Branche de production : `main`. GitHub sert au dépôt, à la revue et à la CI ; les migrations de production ne sont plus appliquées par la connexion GitHub/Supabase. Utiliser le connecteur Supabase dans Codex ; en cas d'échec, préciser s'il faut exécuter une commande terminal (`bash`) ou coller du SQL dans l'éditeur Supabase (`sql`), sans mélanger les formats.
 
-Commandes de développement : `pnpm dev`, `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm test:db`, `pnpm test:e2e`, `pnpm content:validate`, `pnpm docs:check`.
+Commandes de développement : `pnpm dev`, `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm test:matrix`, `pnpm test:db`, `pnpm test:e2e`, `pnpm local:env`, `pnpm local:fixture`, `pnpm content:validate`, `pnpm docs:check`.
 
 Exemple de demande future : « Implémente Géographie conformément à `docs/games/03-geographie.md`, en construisant les dépendances communes manquantes et en exécutant la recette à deux sessions. »

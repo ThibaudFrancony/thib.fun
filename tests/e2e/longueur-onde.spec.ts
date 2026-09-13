@@ -1,20 +1,8 @@
 import { expect, test, type Page } from "@playwright/test";
+import { aliceEmail, bobEmail, requireE2ECredentials, signIn } from "./support";
 
-const password = process.env.E2E_PASSWORD;
-const aliceEmail = process.env.E2E_ALICE_EMAIL ?? "alice@local.tibo.fun";
-const bobEmail = process.env.E2E_BOB_EMAIL ?? "bob@local.tibo.fun";
-
-test.skip(!password, "E2E_PASSWORD est requis après `node scripts/seed-local-members.mjs`.");
+requireE2ECredentials(test);
 test.setTimeout(180_000);
-
-async function signIn(page: Page, email: string) {
-  await page.goto("/connexion");
-  await page.getByRole("textbox", { name: "E-mail" }).fill(email);
-  await page.getByRole("textbox", { name: "Mot de passe" }).fill(password!);
-  await page.getByRole("button", { name: "Entrer à la table" }).click();
-  await page.waitForURL("**/jeux/geographie");
-  await page.goto("/jeux/longueur-onde");
-}
 
 async function clickWhenPresent(page: Page, name: string) {
   await expect.poll(() => page.getByRole("button", { name }).count(), { timeout: 20_000 }).toBeGreaterThan(0);
@@ -25,7 +13,7 @@ test("alterne indices et estimations sur six manches", async ({ browser, page: a
   const bobContext = await browser.newContext();
   const bob = await bobContext.newPage();
   try {
-    await signIn(alice, aliceEmail);
+    await signIn(alice, aliceEmail, "/jeux/longueur-onde");
     await alice.getByLabel("Manches").selectOption("6");
     await alice.getByLabel("Temps pour l'indice").selectOption("60");
     await alice.getByLabel("Temps pour placer").selectOption("30");
@@ -34,7 +22,7 @@ test("alterne indices et estimations sur six manches", async ({ browser, page: a
     const created = (await (await createResponsePromise).json()) as { roomId: string; code: string };
     await alice.waitForURL(`**/salons/${created.roomId}`);
 
-    await signIn(bob, bobEmail);
+    await signIn(bob, bobEmail, "/jeux/longueur-onde");
     await bob.getByLabel("Code du salon").fill(created.code);
     await bob.getByRole("button", { name: "Rejoindre le salon" }).click();
     await bob.waitForURL(`**/salons/${created.roomId}`);

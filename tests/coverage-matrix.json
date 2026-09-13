@@ -1,0 +1,60 @@
+{
+  "version": 1,
+  "updatedAt": "2026-09-13",
+  "entries": [
+    {
+      "id": "unit-and-contracts",
+      "label": "Unitaires et contrats serveur",
+      "status": "pass",
+      "evidence": "Vitest : 43 fichiers, 330 tests réussis et 2 sentinelles d'échec attendu ; les défauts connus sont exécutés et marqués comme échecs attendus."
+    },
+    {
+      "id": "home-and-guest-browser",
+      "label": "Accueil et session invitée",
+      "status": "pass",
+      "evidence": "Playwright : accueil et dialogue invité passent sur les navigateurs configurés ; la session anonyme complète est exercée dans le job CI avec Supabase local."
+    },
+    {
+      "id": "multiplayer-browser",
+      "label": "E2E multijoueur avec deux comptes",
+      "status": "blocked",
+      "reason": "E2E_PASSWORD n'est pas fourni dans cet environnement ; la CI échoue maintenant explicitement au lieu d'ignorer les scénarios."
+    },
+    {
+      "id": "database-pgtap",
+      "label": "Migrations et tests pgTAP isolés",
+      "status": "blocked",
+      "reason": "Le Docker local requis par Supabase n'est pas démarré ; aucun test de base distante n'est lancé."
+    },
+    {
+      "id": "local-fixture-identities",
+      "label": "Alice, Bob, invité et tiers non membre",
+      "status": "blocked",
+      "reason": "Le fixture local ne peut pas être provisionné sans Supabase local ; le script prépare désormais Alice/Bob actifs et Mallory désactivé dès que Docker est disponible."
+    },
+    {
+      "id": "deepseek-fixture",
+      "label": "Juge DeepSeek simulé",
+      "status": "pass",
+      "evidence": "Transport de test sans réseau : verdict exact, faux, erreur et délai contrôlé par horloge/timers injectés."
+    },
+    {
+      "id": "common-contracts",
+      "label": "Dispatcher, échéance, reçus, présence et triggers",
+      "status": "fail",
+      "evidence": "Les tests versionnés exposent encore le payload dispatcher trop riche et la garde SQL qui bloque RESIGN après échéance ; les seuils de présence, reçus et triggers sont couverts."
+    },
+    {
+      "id": "uno-browser-regressions",
+      "label": "Régressions navigateur UNO",
+      "status": "fail",
+      "evidence": "Trois tests Playwright ciblés reproduisent le dialogue joker fermé au polling, le bouton bloqué après panne réseau et l'absence de heartbeat ; ils sont marqués échecs attendus jusqu'aux étapes 2 et 6."
+    },
+    {
+      "id": "nine-game-complete-run",
+      "label": "Partie complète des neuf jeux à deux sessions",
+      "status": "not-run",
+      "reason": "Cette recette dépend des corrections communes et appartient aux étapes 8–9 du plan."
+    }
+  ]
+}

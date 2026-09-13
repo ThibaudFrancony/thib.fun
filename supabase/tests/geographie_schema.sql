@@ -1,6 +1,6 @@
 begin;
 
-select plan(44);
+select plan(49);
 
 select has_schema('private', 'Le schéma privé existe');
 select has_table('public', 'profiles', 'Les profils sont disponibles');
@@ -33,10 +33,78 @@ select is(
 );
 select is((select count(*) from public.games where slug = 'uno'), 1::bigint, 'Le slug uno est disponible dans le catalogue');
 select is((select availability from public.games where slug = 'uno'), 'ready'::text, 'UNO est disponible après livraison du moteur');
-select is((select count(*) from private.content_items), 380::bigint, 'Le pack contient 380 communes');
-select is((select count(*) from private.content_items where category = 'easy'), 40::bigint, 'Le pool facile contient 40 communes');
-select is((select count(*) from private.content_items where category = 'medium'), 120::bigint, 'Le pool moyen contient 120 communes');
-select is((select count(*) from private.content_items where category = 'hard'), 220::bigint, 'Le pool difficile contient 220 communes');
+select is(
+  (select count(*)
+   from private.content_items ci
+   join private.content_packs cp on cp.id = ci.pack_id
+   where cp.kind = 'geography' and cp.slug = 'france-metropole' and cp.version = 1 and cp.status = 'published'),
+  380::bigint,
+  'Le pack Géographie publié contient 380 communes'
+);
+select is(
+  (select count(*)
+   from private.content_items ci
+   join private.content_packs cp on cp.id = ci.pack_id
+   where cp.kind = 'geography' and cp.slug = 'france-metropole' and cp.version = 1 and cp.status = 'published'),
+  (select ((manifest->'counts'->>'easy')::bigint + (manifest->'counts'->>'medium')::bigint + (manifest->'counts'->>'hard')::bigint)
+   from private.content_packs
+   where kind = 'geography' and slug = 'france-metropole' and version = 1 and status = 'published'),
+  'Le total Géographie correspond au manifeste du pack'
+);
+select is(
+  (select count(*)
+   from private.content_items ci
+   join private.content_packs cp on cp.id = ci.pack_id
+   where cp.kind = 'geography' and cp.slug = 'france-metropole' and cp.version = 1 and cp.status = 'published' and ci.category = 'easy'),
+  (select (manifest->'counts'->>'easy')::bigint
+   from private.content_packs
+   where kind = 'geography' and slug = 'france-metropole' and version = 1 and status = 'published'),
+  'Le pool Géographie facile correspond au manifeste'
+);
+select is(
+  (select count(*)
+   from private.content_items ci
+   join private.content_packs cp on cp.id = ci.pack_id
+   where cp.kind = 'geography' and cp.slug = 'france-metropole' and cp.version = 1 and cp.status = 'published' and ci.category = 'medium'),
+  (select (manifest->'counts'->>'medium')::bigint
+   from private.content_packs
+   where kind = 'geography' and slug = 'france-metropole' and version = 1 and status = 'published'),
+  'Le pool Géographie moyen correspond au manifeste'
+);
+select is(
+  (select count(*)
+   from private.content_items ci
+   join private.content_packs cp on cp.id = ci.pack_id
+   where cp.kind = 'geography' and cp.slug = 'france-metropole' and cp.version = 1 and cp.status = 'published' and ci.category = 'hard'),
+  (select (manifest->'counts'->>'hard')::bigint
+   from private.content_packs
+   where kind = 'geography' and slug = 'france-metropole' and version = 1 and status = 'published'),
+  'Le pool Géographie difficile correspond au manifeste'
+);
+select is(
+  (select count(*) from private.content_items ci join private.content_packs cp on cp.id = ci.pack_id
+   where cp.kind = 'quiz' and cp.slug = 'trou-noir' and cp.version = 1 and cp.status = 'published'),
+  120::bigint,
+  'Le pack Trou Noir publié contient 120 questions'
+);
+select is(
+  (select count(*) from private.content_items ci join private.content_packs cp on cp.id = ci.pack_id
+   where cp.kind = 'quiz' and cp.slug = 'ttmc' and cp.version = 1 and cp.status = 'published'),
+  440::bigint,
+  'Le pack TTMC publié contient 440 questions'
+);
+select is(
+  (select count(*) from private.content_items ci join private.content_packs cp on cp.id = ci.pack_id
+   where cp.kind = 'compatibility' and cp.slug = 'compatibilite' and cp.version = 1 and cp.status = 'published'),
+  160::bigint,
+  'Le pack Compatibilité publié contient 160 questions'
+);
+select is(
+  (select count(*) from private.content_items ci join private.content_packs cp on cp.id = ci.pack_id
+   where cp.kind = 'spectrums' and cp.slug = 'longueur-onde' and cp.version = 1 and cp.status = 'published'),
+  80::bigint,
+  'Le pack Longueur d''onde publié contient 80 axes'
+);
 
 select is(
   (select relrowsecurity from pg_class c

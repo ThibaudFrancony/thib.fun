@@ -1,6 +1,6 @@
 # Plan de correction pas à pas — 13 septembre 2026
 
-Ce document transforme l'[audit complet](audit-code-2026-09-13.md) en feuille de route d'exécution. Il est soumis à relecture avant toute modification de code, création de migration, configuration de secret, traitement de données ou déploiement. **Aucune étape ci-dessous n'a été appliquée dans cette tâche.**
+Ce document transforme l'[audit complet](audit-code-2026-09-13.md) en feuille de route d'exécution. Il est soumis à relecture avant toute modification de code, création de migration, configuration de secret, traitement de données ou déploiement. **L'étape 1 a été exécutée après relecture utilisateur ; les étapes 2 à 10 restent non appliquées.**
 
 Le numéro entre parenthèses renvoie aux constats D01 à D35 de l'audit. Les étapes sont ordonnées par dépendance : une étape n'est déclarée terminée que lorsque ses critères de sortie sont vérifiés et ajoutés à `progression.md`.
 
@@ -8,7 +8,7 @@ Le numéro entre parenthèses renvoie aux constats D01 à D35 de l'audit. Les é
 
 Le site possède le code des neuf jeux, mais la chaîne complète n'est pas fiable. L'étape 0 a confirmé l'état local, Supabase et Vercel en lecture seule : 21 migrations appliquées, Cron actif mais Vault vide, trois parties TTMC et six jobs échus à préserver, et un dernier déploiement de production `READY` correspondant au HEAD. Elle a aussi relevé les avis de sécurité/performance Supabase. Le connecteur Vercel n'expose toutefois pas l'inventaire des noms de variables ni le réglage d'origine autorisée.
 
-Le chantier doit commencer par les tests et les transactions communes, puis réparer les jobs, les jugements quiz, les règles propres aux jeux, la présence et la reprise réseau. Les parcours compte/salons/historique viennent ensuite. La configuration des secrets et le traitement des parties bloquées ne se font qu'après validation isolée et recette à deux sessions. Cette feuille de route n'autorise aucune mutation avant relecture utilisateur.
+Le chantier doit commencer par les tests et les transactions communes, puis réparer les jobs, les jugements quiz, les règles propres aux jeux, la présence et la reprise réseau. Les parcours compte/salons/historique viennent ensuite. La configuration des secrets et le traitement des parties bloquées ne se font qu'après validation isolée et recette à deux sessions. L'étape 1 a uniquement renforcé la preuve locale et la CI ; elle n'a modifié ni le comportement métier ni la production.
 
 ## Instructions d'exécution pour l'agent
 
@@ -66,6 +66,16 @@ Les sections suivantes constituent la procédure détaillée à exécuter après
 6. Ajouter un rapport de couverture des parcours : `pass`, `fail`, `blocked` ou `not-run`, avec cause obligatoire pour `blocked`.
 
 **Sortie :** la suite montre les pannes actuelles pour leur vraie cause ; aucune étape centrale ne passe silencieusement en `skip`. (D02, D04–D09, D12–D17, D28.)
+
+### Réalisation de l'étape 1 — 13 septembre 2026
+
+- Les E2E multijoueurs partagent désormais un helper qui attend `/profil` après connexion. Ils sont ignorés seulement hors CI lorsque `E2E_PASSWORD` manque ; la CI échoue explicitement dans ce cas.
+- Les contrôles de contenu pgTAP filtrent les packs publiés par type, slug et version, puis comparent les quantités au manifeste. Le fixture local prépare Alice, Bob et un tiers désactivé sans écrire de secret dans le dépôt.
+- Les juges Trou Noir et TTMC acceptent une horloge, un transport et des temporisations injectés. Les fixtures DeepSeek exactes, fausses, lentes et en erreur ne contactent aucun service externe.
+- Les probes de contrats et les trois régressions navigateur UNO sont versionnées. Les défauts encore présents restent des échecs attendus jusqu'aux étapes 2, 5 et 6 ; ils ne sont pas masqués par un `skip`.
+- La matrice structurée [`tests/coverage-matrix.json`](../tests/coverage-matrix.json) et son contrôle `pnpm test:matrix` rendent explicites les statuts `pass`, `fail`, `blocked` et `not-run`.
+
+**Statut :** terminée côté harnais de tests. `pnpm test`, le typage, le lint et le contrôle de matrice passent ; la base pgTAP et les E2E multijoueurs restent bloqués localement par Docker et l'absence de `E2E_PASSWORD`. Aucun secret, RPC distant, migration de production ou déploiement n'a été exécuté.
 
 ## Étape 2 — Fixer le contrat transactionnel commun
 
@@ -162,6 +172,6 @@ Cette étape est volontairement la dernière : les automatismes actuels réveill
 
 **Sortie :** le service réel progresse sans onglet hôte, les incidents existants sont repris ou interrompus explicitement, et l'historique reste cohérent. (D01, D10, D11, tous les P0/P1.)
 
-## Feu vert demandé avant exécution
+## Feu vert demandé pour les étapes restantes
 
-La relecture doit porter sur l'ordre, le périmètre des parcours manquants, la politique de reprise des trois parties TTMC et des six jobs, et la stratégie de déploiement. Tant que ce feu vert n'est pas donné, la seule action autorisée reste la correction du plan ou la collecte de preuves en lecture seule.
+La relecture initiale a autorisé l'étape 1, exécutée ci-dessus. Les étapes 2 à 10 restent soumises à une validation distincte portant sur l'ordre, le périmètre des parcours manquants, la politique de reprise des trois parties TTMC et des six jobs, et la stratégie de déploiement. En attendant cette validation, aucune correction métier, migration, configuration de secret, traitement de donnée ou déploiement ne doit être engagé.

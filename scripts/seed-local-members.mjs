@@ -1,8 +1,11 @@
 import { execFileSync } from "node:child_process";
 
+const supabaseEnv = { ...process.env, SUPABASE_TELEMETRY_DISABLED: "1" };
+
 const LOCAL_USERS = [
-  { email: "alice@local.tibo.fun", pseudo: "Alice", avatarPreset: "orbit-1" },
-  { email: "bob@local.tibo.fun", pseudo: "Bob", avatarPreset: "orbit-2" },
+  { email: process.env.E2E_ALICE_EMAIL ?? "alice@local.tibo.fun", pseudo: "Alice", avatarPreset: "orbit-1", status: "active" },
+  { email: process.env.E2E_BOB_EMAIL ?? "bob@local.tibo.fun", pseudo: "Bob", avatarPreset: "orbit-2", status: "active" },
+  { email: process.env.E2E_NON_MEMBER_EMAIL ?? "mallory@local.tibo.fun", pseudo: "Tiers", avatarPreset: "orbit-3", status: "disabled" },
 ];
 const password = process.env.LOCAL_FIXTURE_PASSWORD;
 
@@ -11,7 +14,7 @@ if (!password || password.length < 8) {
 }
 
 function readLocalEnv() {
-  const output = execFileSync("supabase", ["status", "-o", "env"], { encoding: "utf8" });
+  const output = execFileSync("supabase", ["status", "-o", "env"], { encoding: "utf8", env: supabaseEnv });
   return Object.fromEntries(
     output
       .split("\n")
@@ -67,7 +70,7 @@ const sqlLiteral = (value) => `'${String(value).replaceAll("'", "''")}'`;
 const profileValues = users
   .map((user) => `(${sqlLiteral(user.id)}, ${sqlLiteral(user.pseudo)}, ${sqlLiteral(user.pseudo.toLocaleLowerCase("fr-FR"))}, ${sqlLiteral(user.avatarPreset)})`)
   .join(",\n  ");
-const memberValues = users.map((user) => `(${sqlLiteral(user.id)})`).join(",\n  ");
+const memberValues = users.map((user) => `(${sqlLiteral(user.id)}, 'member', ${sqlLiteral(user.status)})`).join(",\n  ");
 const profilesSql = `insert into public.profiles (id, pseudo, pseudo_key, avatar_preset)
 values
   ${profileValues}
@@ -77,9 +80,9 @@ on conflict (id) do update set
   avatar_preset = excluded.avatar_preset`;
 const membersSql = `insert into private.site_members (user_id, role, status)
 values
-  ${memberValues.replaceAll(")", ", 'member', 'active')")}
-on conflict (user_id) do update set status = 'active'`;
+  ${memberValues}
+on conflict (user_id) do update set role = excluded.role, status = excluded.status`;
 
-execFileSync("supabase", ["db", "query", "--local", profilesSql], { stdio: "ignore" });
-execFileSync("supabase", ["db", "query", "--local", membersSql], { stdio: "ignore" });
+execFileSync("supabase", ["db", "query", "--local", profilesSql], { stdio: "ignore", env: supabaseEnv });
+execFileSync("supabase", ["db", "query", "--local", membersSql], { stdio: "ignore", env: supabaseEnv });
 console.log(users.map((user) => `${user.pseudo}: ${user.email} (${user.id})`).join("\n"));

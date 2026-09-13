@@ -26,6 +26,7 @@ Date du cadrage : 9 septembre 2026. Langue du produit : français. Cible : deux 
 | [Contrats du moteur](08-engine-contracts.md) | Types partagés, commits, événements système et exemples |
 | [Diagnostic du 13 septembre](audit-code-2026-09-13.md) | Audit des neuf jeux, preuves locales/distantes, 29 défauts et 6 observations d'infrastructure |
 | [Plan de correction pas à pas](plan-correction-2026-09-13.md) | Étapes ordonnées, tests, critères de sortie et garde de livraison — à relire avant exécution |
+| [Matrice de couverture des tests](test-coverage-2026-09-13.md) | Statuts `pass`, `fail`, `blocked` et `not-run`, preuves et causes des blocages |
 
 ## Jeux
 

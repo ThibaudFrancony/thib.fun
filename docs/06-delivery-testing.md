@@ -46,7 +46,7 @@ Au choix du plan payant, vérifier tarifs/quotas actuels : connexions/messages R
 
 ## 5. Scripts et CI attendus
 
-Scripts de l'application à créer : `pnpm dev`, `pnpm build`, `pnpm lint` (ESLint explicite), `pnpm typecheck`, `pnpm test`, `pnpm test:db`, `pnpm test:e2e`, `pnpm content:validate`, `pnpm docs:check`. Définir réellement chaque script dans package.json ; ne pas déclarer réussi un script absent.
+Scripts de l'application à créer : `pnpm dev`, `pnpm build`, `pnpm lint` (ESLint explicite), `pnpm typecheck`, `pnpm test`, `pnpm test:matrix`, `pnpm test:db`, `pnpm test:e2e`, `pnpm local:env`, `pnpm local:fixture`, `pnpm content:validate`, `pnpm docs:check`. Définir réellement chaque script dans package.json ; ne pas déclarer réussi un script absent. `local:env` écrit des variables éphémères depuis `supabase status`, et `local:fixture` crée uniquement les identités fictives locales avec un mot de passe fourni par l'environnement.
 
 CI : installation frozen-lockfile ; lint/typecheck ; unitaires moteurs ; validation corpus ; DB locale migrations + tests d'autorisation/concurrence ; build ; parcours E2E du périmètre implémenté. Pas d'appel payant DeepSeek en CI standard, provider mock avec timeout/JSON invalide ; benchmark réel manuel daté avant activation et après changement modèle/prompt.
 

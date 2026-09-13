@@ -1,26 +1,14 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
+import { aliceEmail, bobEmail, requireE2ECredentials, signIn } from "./support";
 
-const password = process.env.E2E_PASSWORD;
-const aliceEmail = process.env.E2E_ALICE_EMAIL ?? "alice@local.tibo.fun";
-const bobEmail = process.env.E2E_BOB_EMAIL ?? "bob@local.tibo.fun";
-
-test.skip(!password, "E2E_PASSWORD est requis après `node scripts/seed-local-members.mjs`.");
+requireE2ECredentials(test);
 test.setTimeout(120_000);
-
-async function signIn(page: Page, email: string) {
-  await page.goto("/connexion");
-  await page.getByRole("textbox", { name: "E-mail" }).fill(email);
-  await page.getByRole("textbox", { name: "Mot de passe" }).fill(password!);
-  await page.getByRole("button", { name: "Entrer à la table" }).click();
-  await page.waitForURL("**/jeux/geographie");
-  await page.goto("/jeux/bombparty");
-}
 
 test("mène un tour BombParty à deux sans fuite de dictionnaire", async ({ browser, page: alice }) => {
   const bobContext = await browser.newContext();
   const bob = await bobContext.newPage();
   try {
-    await signIn(alice, aliceEmail);
+    await signIn(alice, aliceEmail, "/jeux/bombparty");
     const createResponsePromise = alice.waitForResponse(
       (response) => response.url().endsWith("/api/rooms") && response.request().method() === "POST",
     );
@@ -30,7 +18,7 @@ test("mène un tour BombParty à deux sans fuite de dictionnaire", async ({ brow
     const created = (await createResponse.json()) as { roomId: string; code: string };
     await alice.waitForURL(`**/salons/${created.roomId}`);
 
-    await signIn(bob, bobEmail);
+    await signIn(bob, bobEmail, "/jeux/bombparty");
     await bob.getByLabel("Code du salon").fill(created.code);
     await bob.getByRole("button", { name: "Rejoindre le salon" }).click();
     await bob.waitForURL(`**/salons/${created.roomId}`);
