@@ -33,6 +33,7 @@ import { assertMutationOrigin, jsonError, jsonOk, mapServerError } from "@/serve
 import { loadGeoContent } from "@/server/geo/content";
 import { loadBombpartyContent, bombpartyContentManifest } from "@/server/bombparty/content";
 import { loadTrouNoirContent } from "@/server/quiz/content";
+import { getQuizAiConfiguration } from "@/server/quiz/config";
 import { loadTtmcContent } from "@/server/ttmc/content";
 import { loadCompatibiliteContent } from "@/server/compatibilite/content";
 import { longueurOndeConfigSchema } from "@/games/longueur-onde/config";
@@ -57,6 +58,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ roo
   try {
     const room = roomViewSchema.parse(await getRoomView(member.id, roomId));
     if (room.members.length !== 2) throw new Error("TWO_PLAYERS_REQUIRED");
+    if (["trou-noir", "ttmc"].includes(room.gameSlug) && !getQuizAiConfiguration()) {
+      throw new Error("AI_CONFIGURATION_REQUIRED");
+    }
     const participants = [room.members[0].id, room.members[1].id] as const;
     const matchId = randomUUID();
     const phaseId = randomUUID();

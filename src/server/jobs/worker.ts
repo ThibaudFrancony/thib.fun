@@ -8,7 +8,18 @@ import { projectGeo } from "@/games/geographie/projection";
 import { getInternalJobSecret } from "@/server/config";
 import { entropyValues, hashCommand } from "@/server/hash";
 import { loadGeoContent } from "@/server/geo/content";
-import { finishJob, failJob, getJobContext, commitMatch, type JobContext, type MatchPlayerSnapshot } from "@/server/matches/repository";
+import {
+  commitMatch,
+  failJob,
+  finishJob,
+  getJobContext,
+  prepareQuizJudgment,
+  releaseAiReservation,
+  reserveAiUsage,
+  settleAiUsage,
+  type JobContext,
+  type MatchPlayerSnapshot,
+} from "@/server/matches/repository";
 import { unoConfigSchema } from "@/games/uno/config";
 import { onUnoAbsence, onUnoDeadline, shouldAbandonForUnoAbsence, UNO_ENGINE_VERSION, UNO_RULES_VERSION } from "@/games/uno/engine";
 import { projectUno } from "@/games/uno/projection";
@@ -34,8 +45,14 @@ import {
 import { projectTrouNoir } from "@/games/trou-noir/projection";
 import { trouNoirStateSchema } from "@/games/trou-noir/types";
 import { loadTrouNoirContent } from "@/server/quiz/content";
+import { deterministicJudge as deterministicTrouNoirJudge } from "@/games/trou-noir/judge";
+import { quizJudgmentCacheKey, QUIZ_JUDGE_POLICY_VERSION, QUIZ_JUDGE_PROMPT_VERSION } from "@/server/quiz/cache-key";
+import { getQuizAiConfiguration } from "@/server/quiz/config";
 import { judgeTrouNoirAnswer } from "@/server/quiz/judge";
-import { ttmcConfigSchema } from "@/games/ttmc/config";import {
+import type { JudgeRuntime } from "@/server/quiz/judge-runtime";
+import { ttmcConfigSchema } from "@/games/ttmc/config";
+import { deterministicTtmcJudge } from "@/games/ttmc/judge";
+import {
   applyTtmcJudgment,
   isTtmcDeadlineJobStale,
   onTtmcAbsence,
@@ -131,6 +148,152 @@ async function cancelIfClaimStillExists(job: WorkerJob, code: string): Promise<v
   } catch {
     // A player transition may have cancelled the job while the worker was running.
   }
+}
+
+type QuizQuestionForJudgment = {
+  itemId: string;
+  packId: string;
+  logicalKey: string;
+  canonical: string;
+  aliases: readonly string[];
+};
+
+type PersistedQuizJudgment = {
+  outcome: {
+    verdict: "accept" | "reject" | "ambiguous";
+    method: string;
+    reasonCode: string;
+  };
+  modelId?: string;
+  promptVersion?: string;
+  latencyMs?: number;
+  source: "deterministic" | "cache" | "llm";
+};
+
+async function judgeQuizAttempt<Question extends QuizQuestionForJudgment>(args: {
+  job: WorkerJob;
+  attemptId: string;
+  question: Question;
+  rawAnswer: string;
+  normalizedAnswer: string;
+  deterministicVerdict: "accept" | "reject" | "undecided";
+  judge: (question: Question, rawAnswer: string, runtime?: JudgeRuntime) => Promise<{
+    verdict: "accept" | "reject" | "ambiguous";
+    method: string;
+    reasonCode: string;
+  }>;
+}): Promise<PersistedQuizJudgment> {
+  if (args.deterministicVerdict !== "undecided") {
+    return {
+      outcome: await args.judge(args.question, args.rawAnswer),
+      source: "deterministic",
+    };
+  }
+
+  const configuration = getQuizAiConfiguration();
+  if (!configuration) throw new Error("AI_CONFIGURATION_REQUIRED");
+  const cacheKey = quizJudgmentCacheKey({
+    questionRevisionId: args.question.itemId,
+    packId: args.question.packId,
+    logicalKey: args.question.logicalKey,
+    normalizedAnswer: args.normalizedAnswer,
+    modelId: configuration.model,
+  });
+  const prepared = await prepareQuizJudgment({
+    jobId: args.job.jobId,
+    leaseToken: args.job.leaseToken,
+    attemptId: args.attemptId,
+    cacheKey,
+    modelId: configuration.model,
+    promptVersion: QUIZ_JUDGE_PROMPT_VERSION,
+    policyVersion: QUIZ_JUDGE_POLICY_VERSION,
+  });
+  if (prepared.status === "cache_hit") {
+    return {
+      outcome: {
+        verdict: prepared.verdict.verdict,
+        method: "llm",
+        reasonCode: prepared.verdict.reasonCode ?? "cached_verdict",
+      },
+      modelId: configuration.model,
+      promptVersion: QUIZ_JUDGE_PROMPT_VERSION,
+      source: "cache",
+    };
+  }
+  if (prepared.status === "attempt_limit") {
+    return {
+      outcome: { verdict: "ambiguous", method: "llm", reasonCode: "ai_attempt_limit" },
+      modelId: configuration.model,
+      promptVersion: QUIZ_JUDGE_PROMPT_VERSION,
+      source: "llm",
+    };
+  }
+
+  const startedAt = Date.now();
+  const runtime: JudgeRuntime = {
+    reserveAttempt: async () => {
+      const reservation = await reserveAiUsage({
+        jobId: args.job.jobId,
+        leaseToken: args.job.leaseToken,
+        attemptId: args.attemptId,
+        provider: "deepseek",
+        modelId: configuration.model,
+        reservedCostUsd: configuration.reservedCallCostUsd,
+        dailyBudgetUsd: configuration.dailyBudgetUsd,
+        dailyCallLimit: configuration.dailyCallLimit,
+      });
+      return reservation.status === "reserved" ? { callNo: reservation.callNo } : null;
+    },
+    settleAttempt: async (settlement) => {
+      await settleAiUsage({
+        jobId: args.job.jobId,
+        leaseToken: args.job.leaseToken,
+        attemptId: args.attemptId,
+        callNo: settlement.callNo,
+        provider: "deepseek",
+        modelId: configuration.model,
+        status: settlement.status,
+        verdict: settlement.verdict,
+        reasonCode: settlement.reasonCode,
+        inputTokens: settlement.inputTokens,
+        outputTokens: settlement.outputTokens,
+        actualCostUsd: settlement.actualCostUsd,
+        cacheKey,
+        promptVersion: QUIZ_JUDGE_PROMPT_VERSION,
+        policyVersion: QUIZ_JUDGE_POLICY_VERSION,
+      });
+    },
+  };
+  const outcome = await args.judge(args.question, args.rawAnswer, runtime);
+  return {
+    outcome,
+    modelId: configuration.model,
+    promptVersion: QUIZ_JUDGE_PROMPT_VERSION,
+    latencyMs: Math.max(0, Date.now() - startedAt),
+    source: "llm",
+  };
+}
+
+function judgePayload(context: JobContext): { attemptId: string; expectedPhaseId: string } | null {
+  const payload = context.jobPayload;
+  const attemptId = typeof payload.attemptId === "string" ? payload.attemptId : null;
+  const phaseId = typeof payload.phaseId === "string" ? payload.phaseId : null;
+  const expectedPhaseId = typeof payload.expectedPhaseId === "string"
+    ? payload.expectedPhaseId
+    : null;
+  const matchId = typeof payload.matchId === "string" ? payload.matchId : null;
+  if (!attemptId || !phaseId || !expectedPhaseId || !matchId) return null;
+  if (
+    matchId !== context.matchId
+    || context.jobPhaseId !== context.phaseId
+    || phaseId !== context.phaseId
+    || expectedPhaseId !== context.phaseId
+  ) return null;
+  return { attemptId, expectedPhaseId };
+}
+
+function isCurrentJudgeAttempt(context: JobContext, attemptId: string, state: { phase?: string; currentAttempt?: { id?: string } | null }): boolean {
+  return state.phase === "judging" && state.currentAttempt?.id === attemptId;
 }
 
 async function processGeographyJob(job: WorkerJob, context: JobContext): Promise<Record<string, unknown>> {
@@ -250,6 +413,24 @@ async function processAbsenceJob(job: WorkerJob, context: JobContext): Promise<R
   return { jobId: job.jobId, matchId: context.matchId, status: "committed", version: response.version };
 }
 
+async function processAiReservationReleaseJob(job: WorkerJob, context: JobContext): Promise<Record<string, unknown>> {
+  const payload = context.jobPayload;
+  const attemptId = typeof payload.attemptId === "string" ? payload.attemptId : null;
+  const callNo = typeof payload.callNo === "number" && Number.isInteger(payload.callNo) ? payload.callNo : null;
+  const matchId = typeof payload.matchId === "string" ? payload.matchId : null;
+  if (!attemptId || !callNo || ![1, 2].includes(callNo) || matchId !== context.matchId) {
+    await cancelIfClaimStillExists(job, "INVALID_JOB_DATA");
+    return { jobId: job.jobId, status: "cancelled", reason: "INVALID_JOB_DATA" };
+  }
+  const response = await releaseAiReservation({
+    jobId: job.jobId,
+    leaseToken: job.leaseToken,
+    attemptId,
+    callNo,
+  });
+  return { jobId: job.jobId, matchId: context.matchId, status: "released", release: response };
+}
+
 async function processUnoJob(job: WorkerJob, context: JobContext): Promise<Record<string, unknown>> {
   if (context.jobKind === "check_absence") return processUnoAbsenceJob(job, context);
   if (context.jobKind !== "turn_timeout") {
@@ -367,20 +548,17 @@ async function processTrouNoirJob(job: WorkerJob, context: JobContext): Promise<
 }
 
 async function processTrouNoirJudgeJob(job: WorkerJob, context: JobContext): Promise<Record<string, unknown>> {
-  const config = trouNoirConfigSchema.parse(context.config);
-  const content = await loadTrouNoirContent();
-  const players = orderedPlayers(context.players);
-  const participants = [players[0].id, players[1].id] as const;
-  const identities = players.map((player) => ({ id: player.id, pseudo: player.pseudo })) as [{ id: string; pseudo: string }, { id: string; pseudo: string }];
   const state = trouNoirStateSchema.parse(context.state);
-  const payload = context.jobPayload as { attemptId?: unknown };
-  const attemptId = typeof payload.attemptId === "string" ? payload.attemptId : null;
+  const payload = judgePayload(context);
+  const attemptId = payload?.attemptId ?? null;
   const attempt = state.currentAttempt;
   // Un verdict arrivé après remplacement, annulation ou résolution est ignoré.
-  if (state.phase !== "judging" || !attempt || !attemptId || attempt.id !== attemptId) {
+  if (!payload || !attemptId || !isCurrentJudgeAttempt(context, attemptId, state) || !attempt) {
     await cancelIfClaimStillExists(job, "STALE_DEADLINE");
     return { jobId: job.jobId, status: "cancelled", reason: "STALE_DEADLINE" };
   }
+  const config = trouNoirConfigSchema.parse(context.config);
+  const content = await loadTrouNoirContent();
   const question = content.questions.find((item) => item.itemId === attempt.questionItemId);
   if (!question) {
     await cancelIfClaimStillExists(job, "QUESTION_NOT_IN_PACK");
@@ -388,40 +566,79 @@ async function processTrouNoirJudgeJob(job: WorkerJob, context: JobContext): Pro
   }
   // La tentative a été figée avant l'échéance : le jugement reste éligible
   // même si l'IA est lente, et ses secondes ne réduisent pas le temps adverse.
-  const outcome = await judgeTrouNoirAnswer(question, attempt.rawAnswer);
+  const judged = await judgeQuizAttempt({
+    job,
+    attemptId,
+    question,
+    rawAnswer: attempt.rawAnswer,
+    normalizedAnswer: attempt.normalizedAnswer,
+    deterministicVerdict: deterministicTrouNoirJudge(question, attempt.rawAnswer),
+    judge: judgeTrouNoirAnswer,
+  });
+  // Une autre transition peut avoir gagné pendant l'appel hors transaction.
+  // Le snapshot frais fournit aussi l'horloge DB la plus proche du commit.
+  const latestContext = await getJobContext(job.jobId, job.leaseToken);
+  const latestState = trouNoirStateSchema.parse(latestContext.state);
+  if (!judgePayload(latestContext) || !isCurrentJudgeAttempt(latestContext, attemptId, latestState)) {
+    await cancelIfClaimStillExists(job, "STALE_DEADLINE");
+    return { jobId: job.jobId, status: "cancelled", reason: "STALE_DEADLINE" };
+  }
+  const latestAttempt = latestState.currentAttempt;
+  if (
+    !latestAttempt
+    || latestAttempt.id !== attempt.id
+    || latestAttempt.questionItemId !== attempt.questionItemId
+    || latestAttempt.rawAnswer !== attempt.rawAnswer
+    || latestAttempt.normalizedAnswer !== attempt.normalizedAnswer
+  ) {
+    await cancelIfClaimStillExists(job, "STALE_DEADLINE");
+    return { jobId: job.jobId, status: "cancelled", reason: "STALE_DEADLINE" };
+  }
+  const latestPlayers = orderedPlayers(latestContext.players);
+  const latestParticipants = [latestPlayers[0].id, latestPlayers[1].id] as const;
+  const latestIdentities = latestPlayers.map((player) => ({ id: player.id, pseudo: player.pseudo })) as [{ id: string; pseudo: string }, { id: string; pseudo: string }];
   const transition = applyTrouNoirJudgment(
-    state,
-    { attemptId, verdict: outcome.verdict, method: outcome.method },
+    latestState,
+    {
+      attemptId,
+      verdict: judged.outcome.verdict,
+      method: judged.outcome.method,
+      reasonCode: judged.outcome.reasonCode,
+      modelId: judged.modelId,
+      promptVersion: judged.promptVersion,
+      latencyMs: judged.latencyMs,
+      source: judged.source,
+    },
     config,
     {
-      nowMs: Date.parse(context.serverNow),
+      nowMs: Date.parse(latestContext.serverNow),
       actorId: null,
-      matchId: context.matchId,
-      participants,
+      matchId: latestContext.matchId,
+      participants: latestParticipants,
       content,
       entropy: [],
-      phaseId: context.phaseId,
+      phaseId: latestContext.phaseId,
       nextPhaseId: randomUUID(),
-      currentDeadlineAt: context.deadlineAt,
-      currentDeadlineKind: context.deadlineKind,
+      currentDeadlineAt: latestContext.deadlineAt,
+      currentDeadlineKind: latestContext.deadlineKind,
     },
   );
   const parsedState = trouNoirStateSchema.parse(transition.state);
-  const views = participants.map((viewerId) => ({
+  const views = latestParticipants.map((viewerId) => ({
     viewerId,
-    payload: projectTrouNoir(parsedState, config, content, viewerId, participants, identities, config, parsedState),
+    payload: projectTrouNoir(parsedState, config, content, viewerId, latestParticipants, latestIdentities, config, parsedState),
   }));
   const response = await commitMatch({
-    matchId: context.matchId,
-    expectedVersion: context.version,
+    matchId: latestContext.matchId,
+    expectedVersion: latestContext.version,
     actorId: null,
     commandId: job.jobId,
-    commandHash: hashCommand(context.matchId, job.jobId, context.jobKind, { attemptId }),
+    commandHash: hashCommand(latestContext.matchId, job.jobId, latestContext.jobKind, { attemptId }),
     source: "job",
     jobId: job.jobId,
     leaseToken: job.leaseToken,
-    jobKind: context.jobKind,
-    previousPhaseId: context.phaseId,
+    jobKind: latestContext.jobKind,
+    previousPhaseId: latestContext.phaseId,
     next: {
       state: transition.state,
       phaseId: transition.phaseId,
@@ -548,58 +765,92 @@ async function processTtmcJob(job: WorkerJob, context: JobContext): Promise<Reco
 }
 
 async function processTtmcJudgeJob(job: WorkerJob, context: JobContext): Promise<Record<string, unknown>> {
-  const config = ttmcConfigSchema.parse(context.config);
-  const content = await loadTtmcContent();
-  const players = orderedPlayers(context.players);
-  const participants = [players[0].id, players[1].id] as const;
-  const identities = players.map((player) => ({ id: player.id, pseudo: player.pseudo })) as [{ id: string; pseudo: string }, { id: string; pseudo: string }];
   const state = ttmcStateSchema.parse(context.state);
-  const payload = context.jobPayload as { attemptId?: unknown };
-  const attemptId = typeof payload.attemptId === "string" ? payload.attemptId : null;
+  const payload = judgePayload(context);
+  const attemptId = payload?.attemptId ?? null;
   const attempt = state.currentAttempt;
-  if (state.phase !== "judging" || !attempt || !attemptId || attempt.id !== attemptId) {
+  if (!payload || !attemptId || !isCurrentJudgeAttempt(context, attemptId, state) || !attempt) {
     await cancelIfClaimStillExists(job, "STALE_DEADLINE");
     return { jobId: job.jobId, status: "cancelled", reason: "STALE_DEADLINE" };
   }
+  const config = ttmcConfigSchema.parse(context.config);
+  const content = await loadTtmcContent();
   const question = content.questions.find((item) => item.itemId === attempt.questionItemId);
   if (!question) {
     await cancelIfClaimStillExists(job, "QUESTION_NOT_IN_PACK");
     return { jobId: job.jobId, status: "cancelled", reason: "QUESTION_NOT_IN_PACK" };
   }
-  const outcome = await judgeTtmcAnswer(question, attempt.rawAnswer);
+  const judged = await judgeQuizAttempt({
+    job,
+    attemptId,
+    question,
+    rawAnswer: attempt.rawAnswer,
+    normalizedAnswer: attempt.normalizedAnswer,
+    deterministicVerdict: deterministicTtmcJudge(question, attempt.rawAnswer),
+    judge: judgeTtmcAnswer,
+  });
+  const latestContext = await getJobContext(job.jobId, job.leaseToken);
+  const latestState = ttmcStateSchema.parse(latestContext.state);
+  if (!judgePayload(latestContext) || !isCurrentJudgeAttempt(latestContext, attemptId, latestState)) {
+    await cancelIfClaimStillExists(job, "STALE_DEADLINE");
+    return { jobId: job.jobId, status: "cancelled", reason: "STALE_DEADLINE" };
+  }
+  const latestAttempt = latestState.currentAttempt;
+  if (
+    !latestAttempt
+    || latestAttempt.id !== attempt.id
+    || latestAttempt.questionItemId !== attempt.questionItemId
+    || latestAttempt.rawAnswer !== attempt.rawAnswer
+    || latestAttempt.normalizedAnswer !== attempt.normalizedAnswer
+  ) {
+    await cancelIfClaimStillExists(job, "STALE_DEADLINE");
+    return { jobId: job.jobId, status: "cancelled", reason: "STALE_DEADLINE" };
+  }
+  const latestPlayers = orderedPlayers(latestContext.players);
+  const latestParticipants = [latestPlayers[0].id, latestPlayers[1].id] as const;
+  const latestIdentities = latestPlayers.map((player) => ({ id: player.id, pseudo: player.pseudo })) as [{ id: string; pseudo: string }, { id: string; pseudo: string }];
   const transition = applyTtmcJudgment(
-    state,
-    { attemptId, verdict: outcome.verdict, method: outcome.method },
+    latestState,
+    {
+      attemptId,
+      verdict: judged.outcome.verdict,
+      method: judged.outcome.method,
+      reasonCode: judged.outcome.reasonCode,
+      modelId: judged.modelId,
+      promptVersion: judged.promptVersion,
+      latencyMs: judged.latencyMs,
+      source: judged.source,
+    },
     config,
     {
-      nowMs: Date.parse(context.serverNow),
+      nowMs: Date.parse(latestContext.serverNow),
       actorId: null,
-      matchId: context.matchId,
-      participants,
+      matchId: latestContext.matchId,
+      participants: latestParticipants,
       content,
       entropy: [],
-      phaseId: context.phaseId,
+      phaseId: latestContext.phaseId,
       nextPhaseId: randomUUID(),
-      currentDeadlineAt: context.deadlineAt,
-      currentDeadlineKind: context.deadlineKind,
+      currentDeadlineAt: latestContext.deadlineAt,
+      currentDeadlineKind: latestContext.deadlineKind,
     },
   );
   const parsedState = ttmcStateSchema.parse(transition.state);
-  const views = participants.map((viewerId) => ({
+  const views = latestParticipants.map((viewerId) => ({
     viewerId,
-    payload: projectTtmc(parsedState, config, content, viewerId, participants, identities, config, parsedState),
+    payload: projectTtmc(parsedState, config, content, viewerId, latestParticipants, latestIdentities, config, parsedState),
   }));
   const response = await commitMatch({
-    matchId: context.matchId,
-    expectedVersion: context.version,
+    matchId: latestContext.matchId,
+    expectedVersion: latestContext.version,
     actorId: null,
     commandId: job.jobId,
-    commandHash: hashCommand(context.matchId, job.jobId, context.jobKind, { attemptId }),
+    commandHash: hashCommand(latestContext.matchId, job.jobId, latestContext.jobKind, { attemptId }),
     source: "job",
     jobId: job.jobId,
     leaseToken: job.leaseToken,
-    jobKind: context.jobKind,
-    previousPhaseId: context.phaseId,
+    jobKind: latestContext.jobKind,
+    previousPhaseId: latestContext.phaseId,
     next: {
       state: transition.state,
       phaseId: transition.phaseId,
@@ -615,7 +866,7 @@ async function processTtmcJudgeJob(job: WorkerJob, context: JobContext): Promise
     rulesVersion: TTMC_RULES_VERSION,
     engineVersion: TTMC_ENGINE_VERSION,
   });
-  return { jobId: job.jobId, matchId: context.matchId, status: "committed", version: response.version };
+  return { jobId: job.jobId, matchId: latestContext.matchId, status: "committed", version: response.version };
 }
 
 async function processTtmcAbsenceJob(job: WorkerJob, context: JobContext): Promise<Record<string, unknown>> {
@@ -962,6 +1213,7 @@ async function processCompatibiliteAbsenceJob(job: WorkerJob, context: JobContex
 export async function processWorkerJob(job: WorkerJob): Promise<Record<string, unknown>> {
   try {
     const context = await getJobContext(job.jobId, job.leaseToken);
+    if (context.jobKind === "release_ai_reservation") return await processAiReservationReleaseJob(job, context);
     if (context.gameSlug === "uno") return await processUnoJob(job, context);
     if (context.gameSlug === "skyjo") return await processSkyjoJob(job, context);
     if (context.gameSlug === "trou-noir") return await processTrouNoirJob(job, context);

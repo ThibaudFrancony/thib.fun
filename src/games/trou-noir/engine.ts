@@ -106,12 +106,18 @@ function deadlineJob(
 }
 
 function judgeJob(ctx: TrouNoirEngineContext, attemptId: string, nowMs: number): JobSpec {
+  const expectedPhaseId = attemptId;
   return {
     kind: "judge_answer",
-    phaseId: ctx.phaseId,
+    phaseId: expectedPhaseId,
     runAt: iso(nowMs),
     dedupeKey: `${ctx.matchId}:${attemptId}:judge:v1`,
-    payload: { matchId: ctx.matchId, attemptId },
+    payload: {
+      matchId: ctx.matchId,
+      attemptId,
+      phaseId: expectedPhaseId,
+      expectedPhaseId,
+    },
   };
 }
 
@@ -147,6 +153,7 @@ function answeringTransition(
   config: TrouNoirConfig,
   eventType: string,
   phaseId?: string,
+  eventPayload?: Record<string, unknown>,
 ): TrouNoirTransition {
   const deadlineAt = iso(ctx.nowMs + config.answerSeconds * 1000);
   const pid = phaseId ?? ctx.nextPhaseId;
@@ -156,6 +163,7 @@ function answeringTransition(
     deadlineKind: "turn_timeout",
     jobs: [deadlineJob(ctx, "turn_timeout", pid, deadlineAt, true)],
     eventType,
+    eventPayload,
   });
 }
 
@@ -164,6 +172,7 @@ function revealTransition(
   state: TrouNoirState,
   eventType: string,
   phaseId?: string,
+  eventPayload?: Record<string, unknown>,
 ): TrouNoirTransition {
   const deadlineAt = iso(ctx.nowMs + TROU_NOIR_REVEAL_SECONDS * 1000);
   const pid = phaseId ?? ctx.nextPhaseId;
@@ -173,6 +182,7 @@ function revealTransition(
     deadlineKind: "advance_reveal",
     jobs: [deadlineJob(ctx, "advance_reveal", pid, deadlineAt, true)],
     eventType,
+    eventPayload,
   });
 }
 
@@ -492,7 +502,7 @@ export function reduceTrouNoir(
         deadlineKind: null,
         jobs: [judgeJob(ctx, attempt.id, ctx.nowMs)],
         eventType: "ANSWER_SUBMITTED",
-        eventPayload: { attemptId: attempt.id, seat: actorSeat },
+        eventPayload: { attemptId: attempt.id, seat: actorSeat, phaseId: ctx.nextPhaseId },
       });
     }
     case "CONTEST": {
@@ -609,7 +619,16 @@ function resignTransition(
 /** Verdict du worker après correction (déterministe ou DeepSeek). */
 export function applyTrouNoirJudgment(
   stateInput: unknown,
-  input: { attemptId: string; verdict: "accept" | "reject" | "ambiguous"; method: string },
+  input: {
+    attemptId: string;
+    verdict: "accept" | "reject" | "ambiguous";
+    method: string;
+    reasonCode?: string;
+    modelId?: string;
+    promptVersion?: string;
+    latencyMs?: number;
+    source?: "deterministic" | "cache" | "llm";
+  },
   configInput: unknown,
   ctx: TrouNoirEngineContext,
 ): TrouNoirTransition {
@@ -629,6 +648,15 @@ export function applyTrouNoirJudgment(
         deadlineKind: null,
         result,
         eventType: "JUDGING_UNAVAILABLE",
+        eventPayload: {
+          attemptId: input.attemptId,
+          phaseId: ctx.phaseId,
+          reasonCode: input.reasonCode ?? "judging_unavailable",
+          modelId: input.modelId ?? null,
+          promptVersion: input.promptVersion ?? null,
+          latencyMs: input.latencyMs ?? null,
+          source: input.source ?? null,
+        },
       });
     }
     // Question void : remplacement de même catégorie/niveau, sans pénalité.
@@ -652,7 +680,15 @@ export function applyTrouNoirJudgment(
       replacementCount: state.replacementCount + 1,
       consecutiveVoids: consecutive,
     };
-    return answeringTransition(ctx, next, config, "QUESTION_REPLACED");
+    return answeringTransition(ctx, next, config, "QUESTION_REPLACED", undefined, {
+      attemptId: input.attemptId,
+      phaseId: ctx.phaseId,
+      reasonCode: input.reasonCode ?? "ambiguous",
+      modelId: input.modelId ?? null,
+      promptVersion: input.promptVersion ?? null,
+      latencyMs: input.latencyMs ?? null,
+      source: input.source ?? null,
+    });
   }
 
   const next: TrouNoirState = {
@@ -662,7 +698,17 @@ export function applyTrouNoirJudgment(
     pendingMethod: input.method,
     acknowledgedBy: [],
   };
-  return revealTransition(ctx, next, "JUDGMENT_RECEIVED", ctx.nextPhaseId);
+  return revealTransition(ctx, next, "JUDGMENT_RECEIVED", ctx.nextPhaseId, {
+    attemptId: input.attemptId,
+    phaseId: ctx.phaseId,
+    verdict: input.verdict,
+    method: input.method,
+    reasonCode: input.reasonCode ?? null,
+    modelId: input.modelId ?? null,
+    promptVersion: input.promptVersion ?? null,
+    latencyMs: input.latencyMs ?? null,
+    source: input.source ?? null,
+  });
 }
 
 export function onTrouNoirDeadline(
@@ -696,7 +742,10 @@ export function onTrouNoirDeadline(
       contest: null,
       acknowledgedBy: [],
     };
-    return revealTransition(ctx, next, "ANSWER_TIMED_OUT", ctx.nextPhaseId);
+    return revealTransition(ctx, next, "ANSWER_TIMED_OUT", ctx.nextPhaseId, {
+      attemptId: attempt.id,
+      phaseId: attempt.id,
+    });
   }
   if (kind === "advance_reveal" && state.phase === "reveal") {
     if (state.contest?.status === "pending") throw new TrouNoirRuleError("STALE_DEADLINE");

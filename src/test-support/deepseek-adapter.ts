@@ -1,4 +1,4 @@
-export type DeepSeekFixtureMode = "exact" | "false" | "slow" | "error";
+export type DeepSeekFixtureMode = "exact" | "false" | "semantic" | "slow" | "error";
 
 type DeepSeekFixture = {
   fetchImpl: typeof fetch;
@@ -27,7 +27,9 @@ export function createDeepSeekFixture(modes: readonly DeepSeekFixtureMode[]): De
     }
     const verdict = mode === "exact"
       ? { verdict: "accept", reasonCode: "exact_meaning" }
-      : { verdict: "reject", reasonCode: "wrong_fact" };
+      : mode === "semantic"
+        ? { verdict: "accept", reasonCode: "equivalent_identity" }
+        : { verdict: "reject", reasonCode: "wrong_fact" };
     return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify(verdict) } }] }), {
       status: 200,
       headers: { "content-type": "application/json" },

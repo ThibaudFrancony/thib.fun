@@ -4,6 +4,22 @@ export type JudgeRuntime = {
   sleep?: (milliseconds: number) => Promise<void>;
   setTimeoutImpl?: (handler: () => void, timeout?: number) => ReturnType<typeof setTimeout>;
   clearTimeoutImpl?: (handle: ReturnType<typeof setTimeout>) => void;
+  reserveAttempt?: () => Promise<AiAttemptReservation | null>;
+  settleAttempt?: (settlement: AiAttemptSettlement) => Promise<void>;
+};
+
+export type AiAttemptReservation = {
+  callNo: number;
+};
+
+export type AiAttemptSettlement = {
+  callNo: number;
+  status: "completed" | "failed" | "unknown";
+  verdict?: "accept" | "reject" | "ambiguous";
+  reasonCode?: string;
+  inputTokens?: number;
+  outputTokens?: number;
+  actualCostUsd?: number;
 };
 
 export type ResolvedJudgeRuntime = {
@@ -12,6 +28,8 @@ export type ResolvedJudgeRuntime = {
   sleep: (milliseconds: number) => Promise<void>;
   setTimeoutImpl: (handler: () => void, timeout?: number) => ReturnType<typeof setTimeout>;
   clearTimeoutImpl: (handle: ReturnType<typeof setTimeout>) => void;
+  reserveAttempt?: () => Promise<AiAttemptReservation | null>;
+  settleAttempt?: (settlement: AiAttemptSettlement) => Promise<void>;
 };
 
 export function resolveJudgeRuntime(runtime: JudgeRuntime = {}): ResolvedJudgeRuntime {
@@ -21,5 +39,7 @@ export function resolveJudgeRuntime(runtime: JudgeRuntime = {}): ResolvedJudgeRu
     sleep: runtime.sleep ?? ((milliseconds) => new Promise<void>((resolve) => setTimeout(resolve, milliseconds))),
     setTimeoutImpl: runtime.setTimeoutImpl ?? ((handler, timeout) => setTimeout(handler, timeout)),
     clearTimeoutImpl: runtime.clearTimeoutImpl ?? ((handle) => clearTimeout(handle)),
+    reserveAttempt: runtime.reserveAttempt,
+    settleAttempt: runtime.settleAttempt,
   };
 }

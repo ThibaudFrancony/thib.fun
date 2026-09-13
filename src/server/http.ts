@@ -42,6 +42,7 @@ export function mapServerError(error: unknown): NextResponse {
     JOB_NOT_DUE: { status: 409, message: "Cette tâche n'est pas encore échue." },
     STALE_JOB: { status: 409, message: "Cette tâche n'est plus d'actualité." },
     DATABASE_UNAVAILABLE: { status: 503, message: "Le service de données est temporairement indisponible." },
+    AI_CONFIGURATION_REQUIRED: { status: 503, message: "La correction des réponses quiz n'est pas configurée." },
     INVALID_COMMIT_SOURCE: { status: 400, message: "La source de commit est invalide." },
     INVALID_COMMAND_TYPE: { status: 400, message: "Le type de commande est invalide." },
     INVALID_JOB_COMMAND: { status: 400, message: "La commande système est invalide." },

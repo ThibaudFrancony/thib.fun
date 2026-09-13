@@ -73,6 +73,18 @@ describe("juge serveur TTMC", () => {
     expect(fixture.callCount).toBe(1);
   });
 
+  it("accepte une réponse sémantique simulée sans appel fournisseur réel", async () => {
+    vi.stubEnv("DEEPSEEK_API_KEY", "fixture-key");
+    vi.stubEnv("DEEPSEEK_MODEL", "fixture-model");
+    const fixture = createDeepSeekFixture(["semantic"]);
+    const outcome = await judgeTtmcAnswer(question, ambiguousAnswer, {
+      fetchImpl: fixture.fetchImpl,
+      sleep: async () => undefined,
+    });
+    expect(outcome).toEqual({ verdict: "accept", method: "llm", reasonCode: "equivalent_identity" });
+    expect(fixture.callCount).toBe(1);
+  });
+
   it("gère un modèle lent sans dépasser le test ni contacter le réseau", async () => {
     vi.stubEnv("DEEPSEEK_API_KEY", "fixture-key");
     vi.stubEnv("DEEPSEEK_MODEL", "fixture-model");

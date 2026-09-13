@@ -333,6 +333,16 @@ describe("moteur Trou Noir", () => {
     );
     expect(submitted.state.phase).toBe("judging");
     expect(submitted.jobs.some((job) => job.kind === "judge_answer")).toBe(true);
+    const judgeJob = submitted.jobs.find((job) => job.kind === "judge_answer");
+    expect(judgeJob).toMatchObject({
+      phaseId: "att-1",
+      payload: {
+        matchId: "match-trou-noir-test",
+        attemptId: "att-1",
+        phaseId: "att-1",
+        expectedPhaseId: "att-1",
+      },
+    });
     expect(submitted.deadlineAt).toBeNull();
     // Aucune nouvelle réponse pendant le jugement, même par l'autre joueur.
     expect(() =>

@@ -5,6 +5,8 @@ import { createAdminClient } from "@/server/supabase/admin";
 
 const stableRpcErrorCodes = new Set([
   "COMMAND_ID_REUSED",
+  "AI_CALL_NOT_FOUND",
+  "ATTEMPT_NOT_FOUND",
   "DATABASE_UNAVAILABLE",
   "DEADLINE_EXPIRED",
   "FORFEIT_NOT_AVAILABLE",
@@ -100,6 +102,20 @@ export type JobContext = {
   serverNow: string;
 };
 
+export type QuizJudgmentPreparation =
+  | { status: "cache_hit"; verdict: { verdict: "accept" | "reject"; reasonCode?: string } }
+  | { status: "ready"; attemptsReserved: number; maxAttempts: number }
+  | { status: "attempt_limit" };
+
+export type AiUsageReservation =
+  | { status: "reserved"; callNo: number }
+  | { status: "attempt_limit" | "daily_limit" };
+
+export type AiReservationRelease = {
+  status: string;
+  callNo: number;
+};
+
 export type HistoryEntry = {
   matchId: string;
   opponentId: string;
@@ -137,6 +153,144 @@ export async function getJobContext(jobId: string, leaseToken: string): Promise<
   if (response.error) throw new Error(rpcErrorCode(response.error.message, "DATABASE_UNAVAILABLE"));
   if (!response.data) throw new Error("JOB_LEASE_INVALID");
   return response.data as JobContext;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function parseQuizJudgmentPreparation(value: unknown): QuizJudgmentPreparation {
+  if (!isRecord(value) || typeof value.status !== "string") throw new Error("DATABASE_UNAVAILABLE");
+  if (value.status === "cache_hit") {
+    const verdict = value.verdict;
+    if (!isRecord(verdict) || (verdict.verdict !== "accept" && verdict.verdict !== "reject")) {
+      throw new Error("DATABASE_UNAVAILABLE");
+    }
+    return {
+      status: "cache_hit",
+      verdict: {
+        verdict: verdict.verdict,
+        reasonCode: typeof verdict.reasonCode === "string" ? verdict.reasonCode : undefined,
+      },
+    };
+  }
+  if (value.status === "attempt_limit") return { status: "attempt_limit" };
+  if (value.status === "ready" && typeof value.attemptsReserved === "number" && typeof value.maxAttempts === "number") {
+    return { status: "ready", attemptsReserved: value.attemptsReserved, maxAttempts: value.maxAttempts };
+  }
+  throw new Error("DATABASE_UNAVAILABLE");
+}
+
+export async function prepareQuizJudgment(args: {
+  jobId: string;
+  leaseToken: string;
+  attemptId: string;
+  cacheKey: string;
+  modelId: string;
+  promptVersion: string;
+  policyVersion: string;
+}): Promise<QuizJudgmentPreparation> {
+  const response = await createAdminClient().rpc("server_prepare_quiz_judgment", {
+    p_job_id: args.jobId,
+    p_lease_token: args.leaseToken,
+    p_attempt_id: args.attemptId,
+    p_cache_key: args.cacheKey,
+    p_model_id: args.modelId,
+    p_prompt_version: args.promptVersion,
+    p_policy_version: args.policyVersion,
+  });
+  if (response.error) throw new Error(rpcErrorCode(response.error.message, "DATABASE_UNAVAILABLE"));
+  return parseQuizJudgmentPreparation(response.data);
+}
+
+export async function reserveAiUsage(args: {
+  jobId: string;
+  leaseToken: string;
+  attemptId: string;
+  provider: string;
+  modelId: string;
+  reservedCostUsd: number;
+  dailyBudgetUsd: number;
+  dailyCallLimit: number;
+}): Promise<AiUsageReservation> {
+  const response = await createAdminClient().rpc("server_reserve_ai_usage", {
+    p_job_id: args.jobId,
+    p_lease_token: args.leaseToken,
+    p_attempt_id: args.attemptId,
+    p_provider: args.provider,
+    p_model_id: args.modelId,
+    p_reserved_cost_usd: args.reservedCostUsd,
+    p_daily_budget_usd: args.dailyBudgetUsd,
+    p_daily_call_limit: args.dailyCallLimit,
+  });
+  if (response.error) throw new Error(rpcErrorCode(response.error.message, "DATABASE_UNAVAILABLE"));
+  if (!isRecord(response.data) || typeof response.data.status !== "string") throw new Error("DATABASE_UNAVAILABLE");
+  if (response.data.status === "attempt_limit" || response.data.status === "daily_limit") {
+    return { status: response.data.status };
+  }
+  if (response.data.status !== "reserved" || typeof response.data.callNo !== "number") throw new Error("DATABASE_UNAVAILABLE");
+  return { status: "reserved", callNo: response.data.callNo };
+}
+
+export async function settleAiUsage(args: {
+  jobId: string;
+  leaseToken: string;
+  attemptId: string;
+  callNo: number;
+  provider: string;
+  modelId: string;
+  status: "completed" | "failed" | "unknown";
+  verdict?: "accept" | "reject" | "ambiguous";
+  reasonCode?: string;
+  inputTokens?: number;
+  outputTokens?: number;
+  actualCostUsd?: number;
+  cacheKey: string;
+  promptVersion: string;
+  policyVersion: string;
+}): Promise<Record<string, unknown>> {
+  const response = await createAdminClient().rpc("server_settle_ai_usage", {
+    p_job_id: args.jobId,
+    p_lease_token: args.leaseToken,
+    p_attempt_id: args.attemptId,
+    p_call_no: args.callNo,
+    p_provider: args.provider,
+    p_model_id: args.modelId,
+    p_status: args.status,
+    p_verdict: args.verdict ? { verdict: args.verdict, reasonCode: args.reasonCode ?? "ambiguous" } : null,
+    p_input_tokens: args.inputTokens ?? null,
+    p_output_tokens: args.outputTokens ?? null,
+    p_actual_cost_usd: args.actualCostUsd ?? null,
+    p_cache_key: args.cacheKey,
+    p_prompt_version: args.promptVersion,
+    p_policy_version: args.policyVersion,
+  });
+  if (response.error) throw new Error(rpcErrorCode(response.error.message, "DATABASE_UNAVAILABLE"));
+  if (!isRecord(response.data)) throw new Error("DATABASE_UNAVAILABLE");
+  return response.data;
+}
+
+export async function releaseAiReservation(args: {
+  jobId: string;
+  leaseToken: string;
+  attemptId: string;
+  callNo: number;
+}): Promise<AiReservationRelease> {
+  const response = await createAdminClient().rpc("server_release_ai_reservation", {
+    p_job_id: args.jobId,
+    p_lease_token: args.leaseToken,
+    p_attempt_id: args.attemptId,
+    p_call_no: args.callNo,
+  });
+  if (response.error) throw new Error(rpcErrorCode(response.error.message, "DATABASE_UNAVAILABLE"));
+  if (
+    !isRecord(response.data)
+    || typeof response.data.status !== "string"
+    || typeof response.data.callNo !== "number"
+  ) {
+    throw new Error("DATABASE_UNAVAILABLE");
+  }
+  return { status: response.data.status, callNo: response.data.callNo };
 }
 
 export async function matchHeartbeat(actorId: string, matchId: string): Promise<Record<string, unknown>> {

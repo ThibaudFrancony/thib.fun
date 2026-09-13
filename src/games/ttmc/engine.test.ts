@@ -427,6 +427,16 @@ describe("moteur TTMC", () => {
     const submitted = reduceTtmc(chosen.state, { type: "SUBMIT_ANSWER", answer: "première" }, config30,
       context(actor, { phaseId: "p1", nextPhaseId: "att-dup" }));
     expect(submitted.state.phase).toBe("judging");
+    const judgeJob = submitted.jobs.find((job) => job.kind === "judge_answer");
+    expect(judgeJob).toMatchObject({
+      phaseId: "att-dup",
+      payload: {
+        matchId: "match-ttmc-test",
+        attemptId: "att-dup",
+        phaseId: "att-dup",
+        expectedPhaseId: "att-dup",
+      },
+    });
     expect(() =>
       reduceTtmc(submitted.state, { type: "SUBMIT_ANSWER", answer: "seconde" }, config30,
         context(actor, { phaseId: "p1", nextPhaseId: "att-dup2" })),

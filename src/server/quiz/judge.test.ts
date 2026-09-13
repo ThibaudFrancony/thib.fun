@@ -38,6 +38,11 @@ describe("juge serveur Trou Noir", () => {
     expect(outcome).toEqual({ verdict: "accept", method: "exact", reasonCode: "exact_meaning" });
   });
 
+  it("accepte un alias normalisé sans appeler le modèle", async () => {
+    const outcome = await judgeTrouNoirAnswer({ ...question, aliases: ["V. Hugo"] }, "  v.  HUGO ");
+    expect(outcome).toEqual({ verdict: "accept", method: "alias", reasonCode: "acceptable_spelling" });
+  });
+
   it("rejette une réponse vide", async () => {
     const outcome = await judgeTrouNoirAnswer(question, "   ");
     expect(outcome.verdict).toBe("reject");
@@ -66,16 +71,45 @@ describe("juge serveur Trou Noir", () => {
     expect(fixture.requests[0]).toContain("fixture-model");
   });
 
+  it("accepte une équivalence sémantique simulée et persiste le numéro d'appel", async () => {
+    vi.stubEnv("DEEPSEEK_API_KEY", "fixture-key");
+    vi.stubEnv("DEEPSEEK_MODEL", "fixture-model");
+    const fixture = createDeepSeekFixture(["semantic"]);
+    const reservations: number[] = [];
+    const settlements: Array<{ callNo: number; status: string; verdict?: string; reasonCode?: string }> = [];
+    const outcome = await judgeTrouNoirAnswer(question, ambiguousAnswer, {
+      fetchImpl: fixture.fetchImpl,
+      reserveAttempt: async () => {
+        const callNo = reservations.length + 1;
+        reservations.push(callNo);
+        return { callNo };
+      },
+      settleAttempt: async ({ callNo, status, verdict, reasonCode }) => {
+        settlements.push({ callNo, status, verdict, reasonCode });
+      },
+      sleep: async () => undefined,
+    });
+    expect(outcome).toEqual({ verdict: "accept", method: "llm", reasonCode: "equivalent_identity" });
+    expect(reservations).toEqual([1]);
+    expect(settlements).toEqual([{ callNo: 1, status: "completed", verdict: "accept", reasonCode: "equivalent_identity" }]);
+  });
+
   it("retombe après deux erreurs du transport sans appeler l'API réelle", async () => {
     vi.stubEnv("DEEPSEEK_API_KEY", "fixture-key");
     vi.stubEnv("DEEPSEEK_MODEL", "fixture-model");
     const fixture = createDeepSeekFixture(["error", "error"]);
+    const settlements: Array<{ callNo: number; status: string }> = [];
     const outcome = await judgeTrouNoirAnswer(question, ambiguousAnswer, {
       fetchImpl: fixture.fetchImpl,
+      reserveAttempt: async () => ({ callNo: settlements.length + 1 }),
+      settleAttempt: async ({ callNo, status }) => {
+        settlements.push({ callNo, status });
+      },
       sleep: async () => undefined,
     });
     expect(outcome).toEqual({ verdict: "ambiguous", method: "llm", reasonCode: "ambiguous" });
     expect(fixture.callCount).toBe(2);
+    expect(settlements).toEqual([{ callNo: 1, status: "unknown" }, { callNo: 2, status: "unknown" }]);
   });
 
   it("interrompt un transport lent avec l'horloge et les timers contrôlés", async () => {
