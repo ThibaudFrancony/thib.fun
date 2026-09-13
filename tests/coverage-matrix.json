@@ -6,7 +6,7 @@
       "id": "unit-and-contracts",
       "label": "Unitaires et contrats serveur",
       "status": "pass",
-      "evidence": "Vitest : 43 fichiers, 330 tests réussis et 2 sentinelles d'échec attendu ; les défauts connus sont exécutés et marqués comme échecs attendus."
+      "evidence": "Vitest direct avec le binaire versionné : 45 fichiers, 357 tests réussis et 2 sentinelles d'échec attendu ; les défauts connus sont exécutés et marqués comme échecs attendus."
     },
     {
       "id": "home-and-guest-browser",
@@ -24,7 +24,7 @@
       "id": "database-pgtap",
       "label": "Migrations et tests pgTAP isolés",
       "status": "blocked",
-      "reason": "Le Docker local requis par Supabase n'est pas démarré ; aucun test de base distante n'est lancé."
+      "reason": "La CLI Supabase ne peut pas joindre PostgreSQL local sur 127.0.0.1:54322 (operation not permitted) et le socket Docker Desktop est absent ; aucun test pgTAP/runtime n'a été exécuté et aucune base distante n'a été modifiée."
     },
     {
       "id": "local-fixture-identities",
@@ -41,8 +41,9 @@
     {
       "id": "common-contracts",
       "label": "Dispatcher, échéance, reçus, présence et triggers",
-      "status": "fail",
-      "evidence": "Les tests versionnés exposent encore le payload dispatcher trop riche et la garde SQL qui bloque RESIGN après échéance ; les seuils de présence, reçus et triggers sont couverts."
+      "status": "blocked",
+      "evidence": "Les assertions structurelles de la migration corrective et les tests SQL runtime sont versionnés ; les tests applicatifs passent. La validation pgTAP/runtime et la concurrence PostgreSQL à deux sessions restent bloquées par l'absence de PostgreSQL/Docker local, et la migration corrective n'est pas appliquée à distance.",
+      "reason": "La preuve SQL comportementale ne peut pas être exécutée dans cet environnement ; ne pas confondre les assertions statiques passées avec une validation PostgreSQL ou distante."
     },
     {
       "id": "uno-browser-regressions",

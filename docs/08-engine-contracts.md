@@ -89,7 +89,7 @@ La transaction SQL valide aussi que les deux viewerIds sont exactement ceux de m
 
 ## 3 bis. Contrat transactionnel commun arrêté à l'étape 2
 
-Cette section fixe le contrat partagé testé dans `src/server/matches/transaction-contract.ts`. Elle ne prétend pas que la migration SQL actuelle l'applique déjà : son raccordement au RPC, au dispatcher et au worker appartient aux étapes suivantes.
+Cette section fixe le contrat partagé testé dans `src/server/matches/transaction-contract.ts`. La migration corrective additive de l'étape 3, le repository et la route de commandes raccordent désormais ce contrat localement au RPC, au dispatcher et au worker existants. Cette présence dans l'arbre ne vaut ni exécution PostgreSQL isolée ni application distante ; ces preuves restent à obtenir avant livraison.
 
 ### Identité d'un commit et clé de snapshot
 

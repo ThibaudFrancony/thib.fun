@@ -3,6 +3,48 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/server/supabase/admin";
 
+const stableRpcErrorCodes = new Set([
+  "COMMAND_ID_REUSED",
+  "DATABASE_UNAVAILABLE",
+  "DEADLINE_EXPIRED",
+  "FORFEIT_NOT_AVAILABLE",
+  "INVALID_COMMIT_SOURCE",
+  "INVALID_COMMAND_TYPE",
+  "INVALID_ENVELOPE",
+  "INVALID_JOB_COMMAND",
+  "INVALID_JOB_DATA",
+  "INVALID_JOB_STATUS",
+  "INVALID_JOB_TYPE",
+  "INVALID_MATCH_DATA",
+  "INVALID_MATCH_PLAYERS",
+  "INVALID_NEXT",
+  "INVALID_RESULT",
+  "INVALID_ROUND",
+  "INVALID_VIEW",
+  "INVALID_VIEWER",
+  "INVALID_VIEWS",
+  "JOB_LEASE_INVALID",
+  "JOB_NOT_DUE",
+  "JOB_NOT_FOUND",
+  "MATCH_NOT_ACTIVE",
+  "MATCH_NOT_FOUND",
+  "MISSING_ACTOR_VIEW",
+  "NOT_A_PARTICIPANT",
+  "NOT_A_ROOM_MEMBER",
+  "PHASE_CONFLICT",
+  "RESULT_ALREADY_FINALIZED",
+  "ROOM_NOT_FOUND",
+  "ROOM_NOT_WAITING",
+  "STALE_JOB",
+  "UNSUPPORTED_COMMAND",
+  "VERSION_CONFLICT",
+]);
+
+function rpcErrorCode(message: string | undefined, fallback: string): string {
+  const candidate = message?.trim();
+  return candidate && stableRpcErrorCodes.has(candidate) ? candidate : fallback;
+}
+
 export type MatchPlayerSnapshot = {
   id: string;
   seat: 0 | 1;
@@ -82,7 +124,8 @@ function adminClient(client?: SupabaseClient): SupabaseClient {
 
 export async function getMatchSnapshot(actorId: string, matchId: string, client?: SupabaseClient): Promise<MatchSnapshot> {
   const response = await adminClient(client).rpc("server_get_match", { p_actor: actorId, p_match_id: matchId });
-  if (response.error || !response.data) throw new Error("MATCH_NOT_FOUND");
+  if (response.error) throw new Error(rpcErrorCode(response.error.message, "DATABASE_UNAVAILABLE"));
+  if (!response.data) throw new Error("MATCH_NOT_FOUND");
   return response.data as MatchSnapshot;
 }
 
@@ -91,7 +134,8 @@ export async function getJobContext(jobId: string, leaseToken: string): Promise<
     p_job_id: jobId,
     p_lease_token: leaseToken,
   });
-  if (response.error || !response.data) throw new Error("JOB_LEASE_INVALID");
+  if (response.error) throw new Error(rpcErrorCode(response.error.message, "DATABASE_UNAVAILABLE"));
+  if (!response.data) throw new Error("JOB_LEASE_INVALID");
   return response.data as JobContext;
 }
 
@@ -120,7 +164,8 @@ export async function finishJob(jobId: string, leaseToken: string, status: "done
     p_status: status,
     p_error_code: errorCode ?? null,
   });
-  if (response.error) throw new Error(response.error.message);
+  if (response.error) throw new Error(rpcErrorCode(response.error.message, "DATABASE_UNAVAILABLE"));
+  if (!response.data) throw new Error("DATABASE_UNAVAILABLE");
   return response.data as Record<string, unknown>;
 }
 
@@ -130,7 +175,8 @@ export async function failJob(jobId: string, leaseToken: string, errorCode: stri
     p_lease_token: leaseToken,
     p_error_code: errorCode,
   });
-  if (response.error) throw new Error(response.error.message);
+  if (response.error) throw new Error(rpcErrorCode(response.error.message, "DATABASE_UNAVAILABLE"));
+  if (!response.data) throw new Error("DATABASE_UNAVAILABLE");
   return response.data as Record<string, unknown>;
 }
 
@@ -255,7 +301,8 @@ export async function setRoomReady(actorId: string, commandId: string, roomId: s
     p_expected_version: expectedVersion,
     p_ready: ready,
   });
-  if (response.error) throw new Error(response.error.message);
+  if (response.error) throw new Error(rpcErrorCode(response.error.message, "DATABASE_UNAVAILABLE"));
+  if (!response.data) throw new Error("DATABASE_UNAVAILABLE");
   return response.data as Record<string, unknown>;
 }
 
@@ -302,7 +349,12 @@ export async function startMatch(args: {
 }
 
 export async function commitMatch(envelope: Record<string, unknown>): Promise<Record<string, unknown>> {
-  const response = await createAdminClient().rpc("server_commit_match", { p_envelope: envelope });
-  if (response.error) throw new Error(response.error.message);
+  const normalizedEnvelope =
+    envelope.source === "job" && typeof envelope.commandType !== "string"
+      ? { ...envelope, commandType: envelope.jobKind }
+      : envelope;
+  const response = await createAdminClient().rpc("server_commit_match", { p_envelope: normalizedEnvelope });
+  if (response.error) throw new Error(rpcErrorCode(response.error.message, "DATABASE_UNAVAILABLE"));
+  if (!response.data) throw new Error("DATABASE_UNAVAILABLE");
   return response.data as Record<string, unknown>;
 }
