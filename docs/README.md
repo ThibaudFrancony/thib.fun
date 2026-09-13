@@ -24,7 +24,8 @@ Date du cadrage : 9 septembre 2026. Langue du produit : français. Cible : deux 
 | [Livraison et tests](06-delivery-testing.md) | Bootstrap, déploiement, tests et critères de sortie |
 | [Suivi](07-implementation-status.md) | Réalité de l'implémentation, à tenir à jour |
 | [Contrats du moteur](08-engine-contracts.md) | Types partagés, commits, événements système et exemples |
-| [Diagnostic du 13 septembre](audit-code-2026-09-13.md) | Audit des neuf jeux, preuves locales/distantes, 29 points et plan de correction en six lots |
+| [Diagnostic du 13 septembre](audit-code-2026-09-13.md) | Audit des neuf jeux, preuves locales/distantes, 29 défauts et 6 observations d'infrastructure |
+| [Plan de correction pas à pas](plan-correction-2026-09-13.md) | Étapes ordonnées, tests, critères de sortie et garde de livraison — à relire avant exécution |
 
 ## Jeux
 

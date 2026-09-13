@@ -1,8 +1,18 @@
 # Diagnostic fonctionnel et plan de correction — 13 septembre 2026
 
-Référence : `main`, commit `4317025`. Audit demandé après signalement des boutons d'abandon et de forfait. **Aucun correctif applicatif, changement de production, commit ou déploiement n'a été effectué.** Les seuls changements conservés dans le dépôt sont documentaires.
+Référence : `main`, commit `58eaca9`. Audit demandé après signalement des boutons d'abandon et de forfait. **Aucun correctif applicatif, changement de production, commit ou déploiement n'a été effectué.** Les seuls changements conservés dans le dépôt sont documentaires.
 
 Le problème dépasse les boutons : plusieurs ruptures entre navigateur, moteurs et transactions empêchent la progression ou la finalisation des parties. Les moteurs disposent de nombreux tests, mais le circuit complet n'est pas validé. Corriger seulement le Cron ou seulement l'interface déplacerait les blocages.
+
+## Synthèse pour l'humain
+
+L'audit établit 29 défauts de code/produit et 6 observations d'infrastructure. Les blocages les plus urgents sont le worker jamais appelé faute de secrets Vault, le JSON dispatcher incompatible avec le worker, les jugements quiz obsolètes, la garde SQL qui refuse l'abandon après expiration, le mauvais gagnant du forfait Géographie, les timers annulés par des actions partielles et l'absence de heartbeat dans six jeux. La production contient trois parties TTMC actives et six jobs échus à préserver.
+
+L'étape 0 exécutée ensuite a confirmé l'état Supabase en lecture seule et a relevé les advisors sécurité/performance. L'accès Vercel est maintenant exploitable : le projet `thib.fun` de l'équipe `thibaud73000's projects` a été identifié, et son dernier déploiement de production est `READY` sur le même commit que `main`. Le connecteur n'expose toutefois pas l'inventaire des noms de variables ni le réglage d'origine autorisée. Aucun correctif, secret, traitement de donnée ou déploiement ne doit être déduit de ce document.
+
+## Instructions d'exécution pour l'agent
+
+Commencer par [le plan pas à pas](plan-correction-2026-09-13.md), en suivant les étapes 0 à 10 et leurs critères de sortie. Les points d'entrée principaux sont `supabase/migrations/20260909185440_geography_pack_and_rpc.sql` (`server_commit_match`, `claim_due_jobs`, `dispatch_due_jobs`), `src/server/jobs/worker.ts` (`workerJobSchema`), `src/app/api/matches/[matchId]/commands/route.ts`, `src/games/ttmc/engine.ts`, `src/games/trou-noir/engine.ts`, `src/games/geographie/engine.ts`, `src/games/uno/components/uno-match.tsx` et les scripts de contenu indiqués dans D29. Toute migration est additive et créée avec la CLI ; toute action distante passe par le connecteur Supabase ; les changements de production attendent une validation isolée et deux sessions réelles.
 
 ## Périmètre, preuves et limites
 
@@ -22,10 +32,11 @@ Priorités : **P0** = circuit commun de jeu bloqué ; **P1** = partie perdue, r�
 | Probes navigateur isolées | 3 défauts UNO reproduits sur les deux navigateurs, soit 6 probes réussies. API simulée avec données fictives ; aucun match distant créé ou abandonné. |
 | Contenus | Les 5 étapes du script `content:validate` ont réussi dans une copie isolée ; les fichiers SQL générés y sont identiques aux originaux. Validation Géographie en chemin avec espaces : échec `ENOENT` reproduit. |
 | Supabase | 21 migrations appliquées, dont les corrections de projections invitées et le Cron. Inspection des jobs, phases, fonctions, permissions et volumes de packs, sans extraire de réponses privées ni de valeurs de secrets. |
+| Supabase advisors | Alerte RLS sur 18 tables privées, fonction `SECURITY DEFINER` accessible à `authenticated`, `pg_net` dans `public`, accès anonymes attendus et protection des mots de passe compromis désactivée ; 13 clés étrangères sans index (informations à classer, aucune remédiation exécutée). |
 | SQL coopératif | Erreur `42702: column reference "game_slug" is ambiguous` reproduite avec `EXPLAIN`, sans `ANALYZE`, dans une transaction explicitement en lecture seule. |
 | Navigateur local | Accueil chargé, rendu visible, aucun avertissement/erreur de console à cette étape. Les erreurs réseau injectées plus tard sont bien apparues comme rejets non gérés. |
 
-Le résultat du build final est consigné dans [progression.md](../progression.md). La suite transactionnelle PostgreSQL n'a pas été exécutée sur une base locale isolée. Les deux sessions réelles de production citées dans l'ancien journal n'ont pas été rejouées ici. L'application déployée et ses variables Vercel n'ont pas été inspectées : le connecteur disponible ne liste pas le projet `thib.fun`. La présence de tous les bugs du code local dans le bundle de production n'est donc pas affirmée.
+Le résultat du build final est consigné dans [progression.md](../progression.md). La suite transactionnelle PostgreSQL n'a pas été exécutée sur une base locale isolée. Les deux sessions réelles de production citées dans l'ancien journal n'ont pas été rejouées ici. Le projet Vercel `thib.fun` et son dernier déploiement de production ont été inspectés en lecture seule : le déploiement `dpl_35YN2mtRFLrgAW7tXWqSs3CcNBc7` est `READY`, cible `production`, et correspond exactement au commit `58eaca94ec35e58ed28fcedab59a0d8b405c8848` de `main`. Le build ne signale qu'un avertissement sur la future évolution automatique de la version Node ; aucun runtime error n'a été remonté par le connecteur. Les noms de variables Vercel et le réglage d'origine autorisée restent non consultables via ce connecteur. La présence de tous les bugs du code local dans le bundle de production n'est donc pas affirmée.
 
 Cet audit couvre les surfaces présentes et identifie des défauts concrets ; il ne garantit pas l'absence de tout autre bug, notamment sous concurrence réelle, lors de l'expiration Auth ou pendant une partie complète de chacun des neuf jeux.
 
@@ -183,7 +194,7 @@ Valider l'origine après résolution et limiter les destinations aux routes inte
 
 ### D25 — P1 avant activation fiable des quiz — Préconditions IA et limites absentes
 
-**Code ; configuration Vercel inconnue.** Les adaptateurs ont un timeout et deux tentatives par exécution, mais pas de réservation persistante du budget, de plafond journalier effectif, de cache durable ni de comptage des appels entre reprises du worker. Sans clé/modèle, une réponse non exacte produit un remplacement puis éventuellement une interruption ; la création n'en vérifie pas la disponibilité.
+**Code ; noms de variables Vercel non consultables via le connecteur.** Les adaptateurs ont un timeout et deux tentatives par exécution, mais pas de réservation persistante du budget, de plafond journalier effectif, de cache durable ni de comptage des appels entre reprises du worker. Sans clé/modèle, une réponse non exacte produit un remplacement puis éventuellement une interruption ; la création n'en vérifie pas la disponibilité.
 
 Les quotas API et la limite de corps de 8 Ko restent aussi documentaires : les routes analysent le corps entier avant Zod. Définir un précontrôle serveur des quiz, quotas atomiques, budget/tentatives persistantes et lecture bornée. Documenter les vraies variables utilisées : `.env.example` ne liste pas DeepSeek et les documents utilisent des noms de clés Supabase différents de ceux attendus par le code.
 
@@ -210,6 +221,55 @@ Le test SQL attend `count(*) from private.content_items = 380`, sans filtrer le 
 **Reproduit + code.** Trois scripts Géographie emploient `URL.pathname`, ce qui conserve `%20` dans un chemin avec espaces ; la validation échoue alors avec `ENOENT`. Employer `fileURLToPath`.
 
 `content:validate` appelle aussi les générateurs Compatibilité/Longueur d'onde, qui écrivent à des chemins de migrations déjà appliquées. Dans la copie de cet audit, les contenus étaient identiques et aucun diff SQL n'a été produit ; néanmoins le script réécrit ces fichiers et mélanger validation/génération permettrait de modifier une migration immuable après changement de source. Séparer vérification et génération vers une nouvelle sortie, refuser l'écrasement d'une migration appliquée.
+
+## Observations d'infrastructure relevées pendant l'étape 0
+
+### D30 — P1 de défense en profondeur — Advisor RLS sur 18 tables privées
+
+**Production + advisor, portée effective vérifiée.** `supabase_list_tables` signale `rls_enabled=false` sur 18 tables du schéma `private` et propose de les activer. Une vérification SQL en lecture seule montre que `anon` et `authenticated` n'ont actuellement pas `USAGE` sur `private` et n'ont pas de droit `SELECT` direct sur ces tables ; les migrations révoquent explicitement ces droits et accordent l'accès aux fonctions serveur. L'exposition directe via le Data API n'est donc pas démontrée dans l'état actuel, mais l'absence de RLS resterait une faille de défense en profondeur si un privilège, une vue ou une fonction changeait.
+
+L'advisor propose le SQL suivant, **à ne pas exécuter seul** : sans politiques compatibles, l'activation peut bloquer les accès prévus et ne corrige pas le modèle d'autorisation. Il faut d'abord décider ACL contre RLS, écrire les politiques minimales, tester les rôles et relancer l'advisor.
+
+```sql
+ALTER TABLE "private"."site_members" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "private"."invitations" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "private"."content_packs" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "private"."content_items" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "private"."rooms" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "private"."room_members" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "private"."matches" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "private"."match_players" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "private"."command_receipts" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "private"."room_command_receipts" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "private"."request_receipts" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "private"."match_events" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "private"."jobs" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "private"."job_receipts" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "private"."round_results" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "private"."match_results" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "private"."player_results" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "private"."pair_game_stats" ENABLE ROW LEVEL SECURITY;
+```
+
+### D31 — P2 — Fonction `is_site_member()` signalée comme SECURITY DEFINER
+
+**Advisor + code.** `public.is_site_member()` est `SECURITY DEFINER` et exécutable par `authenticated`, choix utilisé par les politiques RLS publiques pour consulter `private.site_members`. Elle ne renvoie qu'un booléen et son `search_path` est vide ; le risque à trancher est l'appel RPC direct et le sondage d'admission, pas une fuite de la table privée. Vérifier qu'elle n'est pas exposée au-delà des politiques, puis révoquer l'exécution ou la déplacer si le contrat le permet.
+
+### D32 — P2 — Extension `pg_net` installée dans `public`
+
+**Advisor + état distant.** `pg_net` est requise par la fonction de dispatch Cron actuelle mais l'advisor recommande un schéma non public. Évaluer une migration vers un schéma dédié avec les privilèges minimaux, en vérifiant les fonctions `net.http_post` et le job Cron avant toute modification ; ne pas déplacer l'extension pendant le dépannage des jobs.
+
+### D33 — P2 — Politiques anonymes et protection des mots de passe
+
+**Advisor + décision produit.** Les politiques anonymes sur les vues publiques, `games` et Realtime correspondent à l'accès invité prévu. La protection Auth des mots de passe compromis reste désactivée. Décider si l'expérience d'inscription libre doit l'activer, puis tester un mot de passe compromis et un compte invité sans réduire les contrôles d'admission.
+
+### D34 — P2 — Treize clés étrangères sans index couvrant
+
+**Advisor performance.** Treize clés étrangères, notamment dans `matches`, `rooms`, `match_events`, `pair_game_stats` et l'historique public, n'ont pas d'index couvrant. Aucun ralentissement utilisateur n'est mesuré dans cette étape. Ajouter des index de façon additive après lecture des plans et des volumes, puis vérifier les verrous et le coût d'écriture.
+
+### D35 — P2 — Indices actuellement signalés comme inutilisés
+
+**Advisor performance.** Six index n'ont pas encore été utilisés, dont `matches_due_active_idx` et `jobs_running_lease_idx`. Cette observation ne justifie pas leur suppression : les échéances et les jobs sont justement bloqués et n'ont pas encore eu de trafic normal. Rejouer les parcours après correction, mesurer l'usage, puis décider séparément de chaque index.
 
 ## Limites produit distinctes des bugs
 
@@ -257,7 +317,7 @@ Partager les fonctions de présence/envoi/rafraîchissement entre les neuf écra
 
 ### Lot 4 — Rétablir le service en production de façon contrôlée
 
-Identifier le bon projet Vercel et vérifier le commit déployé, l'origine, les noms de variables et l'accès au worker. Livrer les migrations compatibles via l'intégration GitHub Supabase prévue et vérifier leur application ; livrer le code compatible. **Configurer Vault et activer le traitement réel seulement après validation des lots 2–3**, car cela réveillera les tâches anciennes et la détection d'absence.
+Identifier le bon projet Vercel et vérifier le commit déployé, l'origine, les noms de variables et l'accès au worker. Si la tâche active l'autorise explicitement, appliquer les migrations compatibles via le connecteur Supabase Codex et vérifier leur application ; en cas d'échec du connecteur, fournir à l'utilisateur soit la commande terminal exacte dans un bloc `bash`, soit le SQL exact dans un bloc `sql` pour l'éditeur Supabase, en précisant la destination et en conservant l'erreur exacte, sans passer par GitHub. Livrer ensuite le code compatible. **Configurer Vault et activer le traitement réel seulement après validation des lots 2–3**, car cela réveillera les tâches anciennes et la détection d'absence.
 
 Prévoir un traitement explicite, limité et idempotent des trois parties TTMC bloquées et des engagements multiples, en conservant leurs données et la raison de sortie. Ne pas effacer des parties pour faire disparaître le symptôme. Ajouter un contrôle de santé mesurant une tâche réellement terminée, pas seulement Cron `succeeded`, et des alertes sur les jobs en retard/épuisés.
 
@@ -267,7 +327,7 @@ Prévoir un traitement explicite, limité et idempotent des trois parties TTMC b
 
 Résoudre la redirection externe, distinguer erreurs métier/techniques, activer les quotas et budgets persistants, versionner réellement moteurs/contenus, corriger l'agrégation des métriques et le tirage aléatoire. Aligner documentation/variables, contrôler la disponibilité IA et la couverture des corpus. Rendre les scripts portables, séparer génération et validation, vérifier les politiques d'admission Realtime.
 
-**Sortie attendue :** reprise après publication, limites respectées sous concurrence, erreur publique sans fuite, agrégats recalculables. Références D18, D21, D23–D27, D29.
+**Sortie attendue :** reprise après publication, limites respectées sous concurrence, erreur publique sans fuite, agrégats recalculables. Références D18, D21, D23–D27, D29–D35.
 
 ### Lot 6 — Terminer les parcours annoncés puis valider les neuf jeux
 

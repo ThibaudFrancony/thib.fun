@@ -2,7 +2,7 @@
 
 Projet de plateforme privée de jeux à deux, en français, avec profils, salons en temps réel et historique partagé.
 
-**État au 11 septembre 2026 : premier socle applicatif en place.** L'accueil multi-jeux, Géographie et UNO sont présents dans `main`. Le reste du produit est encore partiel ou spécifié uniquement.
+**État au 13 septembre 2026 : premier socle applicatif en place.** Du code existe pour plusieurs jeux ; l'état réel de disponibilité, de validation et de déploiement est celui de [progression.md](progression.md).
 
 - Agents : commencer par [AGENTS.md](AGENTS.md).
 - Progression opérationnelle : [progression.md](progression.md).
@@ -11,7 +11,7 @@ Projet de plateforme privée de jeux à deux, en français, avec profils, salons
 
 Stack retenue : GitHub, Vercel, Next.js/TypeScript, Supabase et DeepSeek pour la correction des quiz.
 
-Dépôt : [ThibaudFrancony/thib.fun](https://github.com/ThibaudFrancony/thib.fun). Branche de production : `main`. Le propriétaire a activé le déploiement Supabase depuis GitHub ; les fichiers `supabase/migrations/` sont appliqués par cette intégration. Les migrations sont validées localement dans Docker, mais aucune migration distante ni banque de contenu de production n'est encore déclarée comme vérifiée.
+Dépôt : [ThibaudFrancony/thib.fun](https://github.com/ThibaudFrancony/thib.fun). Branche de production : `main`. GitHub sert au dépôt, à la revue et à la CI ; les migrations de production ne sont plus appliquées par la connexion GitHub/Supabase. Utiliser le connecteur Supabase dans Codex ; en cas d'échec, préciser s'il faut exécuter une commande terminal (`bash`) ou coller du SQL dans l'éditeur Supabase (`sql`), sans mélanger les formats.
 
 Commandes de développement : `pnpm dev`, `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm test:db`, `pnpm test:e2e`, `pnpm content:validate`, `pnpm docs:check`.
 
