@@ -516,3 +516,10 @@ Ces corrections ne constituent pas des contradictions de l'utilisateur avec `AGE
 - Cause : confirmée pour le blocage local — PostgreSQL/Docker isolé indisponible. La correction SQL de l'étape 3 n'est pas déclarée incorrecte ; son comportement transactionnel en base reste une hypothèse non validée faute d'exécution. La date et l'auteur de l'application distante signalée par le connecteur ne sont pas établis dans cette session.
 - Décision de périmètre : l'étape 4 n'est pas commencée. Aucun fichier du worker, des moteurs TTMC/Trou Noir ou des routes jobs, aucune migration, aucun secret, aucune donnée de reprise et aucune configuration distante n'ont été modifiés dans cette session. Ne pas poursuivre avant une validation isolée de la sortie de l'étape 3 ; ne pas exécuter les suites runtime mutantes sur la production.
 - Contradiction : aucune avec `AGENTS.md` ; ce blocage applique explicitement la dépendance du plan.
+
+### 13/09/2026 — Vérification du push du blocage de l'étape 4
+
+- Livraison documentaire : `git push origin main` a réussi avec `6130c99..02bcb66 main -> main` pour le commit `docs: record step4 precondition block`. Le statut local final reste propre et `main...origin/main` ne signale aucun écart ; `git rev-parse HEAD` retourne `02bcb66bb34366c18b11668f5269d117b24947e1`.
+- Limite de vérification : la relecture indépendante `git ls-remote origin refs/heads/main` a échoué exactement avec `fatal: unable to access 'https://github.com/ThibaudFrancony/thib.fun.git/': Could not resolve host: github.com`. La sortie réussie de `git push` et le remote-tracking local mis à jour constituent la preuve disponible ; le hash distant n'a pas pu être relu après coup.
+- Cause confirmée : résolution DNS GitHub indisponible pour la commande de relecture, sans indication d'un échec du push précédent. Aucun nouveau changement applicatif, migration, secret ou donnée n'a été introduit.
+- Contradiction : aucune avec `AGENTS.md` ; limitation d'outillage uniquement.
