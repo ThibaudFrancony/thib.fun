@@ -6,7 +6,7 @@
       "id": "unit-and-contracts",
       "label": "Unitaires et contrats serveur",
       "status": "pass",
-      "evidence": "Vitest direct avec le binaire versionné : 52 fichiers, 401 tests réussis et 2 sentinelles d'échec attendu ; les contrats, projections et garde-fous de reprise sont exécutés."
+      "evidence": "Vitest direct avec le binaire versionné : 59 fichiers, 424 tests réussis et 2 sentinelles d'échec attendu ; les contrats, projections et garde-fous de reprise sont exécutés."
     },
     {
       "id": "home-and-guest-browser",
@@ -60,8 +60,12 @@
     {
       "id": "nine-game-complete-run",
       "label": "Partie complète des neuf jeux à deux sessions",
-      "status": "not-run",
-      "reason": "Cette recette dépend des corrections communes et appartient aux étapes 8–9 du plan."
+      "status": "blocked",
+      "reason": "La précondition de l'étape 9 n'est pas démontrée : l'étape 8 indique explicitement qu'elle n'est pas validée avec deux comptes permanents ; E2E_PASSWORD manque pour les deux comptes indépendants, et les parcours avancés de salon restent désactivés faute de RPC server_change_room et de projection serveur hostId/expiresAt. Aucun scénario des neuf jeux n'a été lancé.",
+      "checkedAt": "2026-09-14",
+      "commit": "898fa9144b9ede988e6b2e21be65121a4f65654a",
+      "environment": "Dépôt local main ; recette isolée Supabase/navigateurs non démarrée",
+      "sessionIds": []
     }
   ]
 }

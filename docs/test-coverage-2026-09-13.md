@@ -1,22 +1,25 @@
-# Matrice de couverture — 13 septembre 2026
+# Matrice de couverture — mise à jour du 14 septembre 2026
 
 ## Synthèse pour l'humain
 
-Cette matrice sépare ce qui passe, ce qui reproduit encore un défaut, ce qui est bloqué par un prérequis externe et ce qui n'a pas encore été lancé. Un parcours `blocked` porte obligatoirement sa cause. Les échecs connus sont conservés comme tests de régression attendus afin qu'une correction future les fasse disparaître explicitement. Après l'étape 1, Vitest compte 43 fichiers, 330 tests réussis et 2 sentinelles d'échec attendu.
+Cette matrice sépare ce qui passe, ce qui reproduit encore un défaut, ce qui est bloqué par un prérequis externe et ce qui n'a pas encore été lancé. Un parcours `blocked` porte obligatoirement sa cause. Les échecs connus sont conservés comme tests de régression attendus afin qu'une correction future les fasse disparaître explicitement. Au commit `898fa9144b9ede988e6b2e21be65121a4f65654a`, Vitest compte 59 fichiers, 424 tests réussis et 2 sentinelles d'échec attendu.
+
+La recette de l'étape 9 n'a pas commencé : son entrée est `blocked`, pas `pass`. Aucun identifiant de session n'est donc produit ou inventé.
 
 La source structurée est [`tests/coverage-matrix.json`](../tests/coverage-matrix.json). Le contrôle reproductible est `pnpm test:matrix`.
 
 | Parcours | Statut | Preuve ou cause |
 |---|---|---|
-| Unitaires et contrats serveur | `pass` | Vitest et nouveaux contrats exécutés ; les défauts connus sont des échecs attendus. |
+| Unitaires et contrats serveur | `pass` | Vitest direct : 59 fichiers, 424 tests réussis et 2 sentinelles d'échec attendu. |
 | Accueil et session invitée | `pass` | Playwright accueil + dialogue invité ; la session anonyme complète est exercée dans le job CI avec Supabase local. |
 | E2E multijoueur avec deux comptes | `blocked` | `E2E_PASSWORD` absent ; la CI échoue explicitement. |
 | Migrations et pgTAP isolés | `blocked` | Docker local indisponible. |
 | Alice, Bob, invité et tiers non membre | `blocked` | Fixture local en attente de Supabase local. |
 | Juge DeepSeek simulé | `pass` | Exact, faux, erreur et délai sans réseau. |
-| Dispatcher, échéance, reçus, présence et triggers | `fail` | Payload dispatcher et garde d'échéance encore défectueux. |
-| Régressions navigateur UNO | `fail` | Joker, panne réseau et heartbeat reproduits par trois tests ciblés. |
-| Partie complète des neuf jeux à deux sessions | `not-run` | Prévue aux étapes 8–9. |
+| Dispatcher, échéance, reçus, présence et triggers | `blocked` | Les assertions applicatives passent, mais la validation pgTAP/runtime et la concurrence PostgreSQL restent bloquées par l'absence de PostgreSQL/Docker local ; la migration corrective n'est pas appliquée à distance. |
+| Régressions navigateur UNO | `pass` | Sept tests Playwright ciblés passent sur Chromium et mobile : joker, panne, double clic, heartbeat, réponse perdue, Realtime manqué et deux onglets. |
+| Reprises réseau des actions et responsive | `pass` | Cinq tests Playwright ciblés passent sur Chromium et mobile : RESIGN, réponse Trou Noir, FIRE, placement Géographie et RANDOMIZE_FLEET. |
+| Partie complète des neuf jeux à deux sessions | `blocked` | Précondition non démontrée : l'étape 8 n'est pas validée avec deux comptes permanents ; `E2E_PASSWORD` manque, `server_change_room` n'est pas disponible et `RoomView` ne projette pas `hostId`/`expiresAt`. Aucun des neuf parcours n'a été lancé au commit `898fa9144b9ede988e6b2e21be65121a4f65654a`; identifiants de session : aucun. |
 
 ## Instructions d'exécution pour l'agent
 
