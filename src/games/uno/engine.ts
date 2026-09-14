@@ -42,8 +42,8 @@ function iso(ms: number): string {
 }
 
 function randomUnit(entropy: readonly number[], index: number): number {
-  const value = entropy[index] ?? 0;
-  if (!Number.isFinite(value) || value < 0 || value >= 1) throw new UnoRuleError("INVALID_ENTROPY");
+  const value = entropy[index];
+  if (value === undefined || !Number.isFinite(value) || value < 0 || value >= 1) throw new UnoRuleError("INVALID_ENTROPY");
   return value;
 }
 
@@ -397,8 +397,9 @@ function drawForTurn(ctx: UnoEngineContext, state: UnoState, config: UnoConfig, 
 }
 
 function abandonTransition(ctx: UnoEngineContext, state: UnoState, actorSeat: Seat, reason: "resign" | "claimed_forfeit" | "absence"): UnoTransition {
-  const outcome: ResultSpec["outcome"] = reason === "absence" ? "abandoned" : "win";
-  const winnerSeat = reason === "absence" ? null : reason === "claimed_forfeit" ? actorSeat : (1 - actorSeat) as Seat;
+  const beforeFirstTurn = state.turns === 0;
+  const outcome: ResultSpec["outcome"] = reason === "absence" || beforeFirstTurn ? "abandoned" : "win";
+  const winnerSeat = outcome === "win" ? reason === "claimed_forfeit" ? actorSeat : (1 - actorSeat) as Seat : null;
   const result = resultFor(state, ctx, outcome, reason, winnerSeat, false);
   return transition(ctx, finishedState(state, result), {
     phaseId: ctx.nextPhaseId,

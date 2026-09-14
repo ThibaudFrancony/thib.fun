@@ -67,8 +67,8 @@ function activeSeat(state: GeoState): Seat {
 }
 
 function randomUnit(entropy: readonly number[], index: number): number {
-  const value = entropy[index] ?? 0;
-  if (!Number.isFinite(value) || value < 0 || value >= 1) {
+  const value = entropy[index];
+  if (value === undefined || !Number.isFinite(value) || value < 0 || value >= 1) {
     throw new GeoRuleError("INVALID_ENTROPY");
   }
   return value;
@@ -503,8 +503,12 @@ export function reduceGeo(stateInput: unknown, action: GeoAction, configInput: u
 }
 
 function resignTransition(ctx: GeoEngineContext, state: GeoState, actorSeat: Seat, reason: "resign" | "claimed_forfeit"): GeoTransition {
-  const winner = (1 - actorSeat) as Seat;
-  const beforeFirstTurn = state.phase === "select_cities";
+  const winner = reason === "claimed_forfeit" ? actorSeat : (1 - actorSeat) as Seat;
+  const beforeFirstTurn = state.phase === "select_cities" || (
+    state.round === 1
+    && state.turnInRound === 0
+    && state.submitted.every((submitted) => !submitted)
+  );
   const result = resultFor(
     state,
     ctx,

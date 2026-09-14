@@ -1,16 +1,34 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { UnoAction, UnoCard, UnoColor, UnoView } from "@/games/uno/types";
 import { cardLabel } from "@/games/uno/deck";
 import { useUserRealtime } from "@/lib/realtime";
 
 type MatchResponse = { matchId: string; roomId: string; gameSlug: string; status: string; version: number; phaseId: string; deadlineAt: string | null; deadlineKind: string | null; serverNow: string; view: UnoView };
-type PendingPlay = { type: "PLAY_CARD"; cardId: string } | { type: "PLAY_DRAWN" };
+export type PendingPlay = { type: "PLAY_CARD"; cardId: string } | { type: "PLAY_DRAWN" };
 
 const colorNames: Record<UnoColor, string> = { red: "Rouge", yellow: "Jaune", green: "Vert", blue: "Bleu" };
 const cardColors: Record<UnoColor, string> = { red: "#c93651", yellow: "#d49c19", green: "#218267", blue: "#2f6ec4" };
+
+export function isPendingPlayValid(pending: PendingPlay, view: UnoView): boolean {
+  if (view.phase === "finished" || view.activeSeat !== view.mySeat) return false;
+  if (pending.type === "PLAY_CARD") {
+    const card = view.hand.find((candidate) => candidate.id === pending.cardId);
+    return view.phase === "playing"
+      && view.actions.canPlay
+      && card?.color === null
+      && view.playableCardIds.includes(pending.cardId);
+  }
+  const drawnCard = view.drawnCard;
+  return view.phase === "after_draw"
+    && view.actions.canPlayDrawn
+    && drawnCard !== null
+    && drawnCard.color === null
+    && view.hand.some((card) => card.id === drawnCard.id)
+    && view.playableCardIds.includes(drawnCard.id);
+}
 
 export function UnoMatch({ matchId }: { matchId: string }) {
   const router = useRouter();
@@ -22,6 +40,21 @@ export function UnoMatch({ matchId }: { matchId: string }) {
   const [pendingPlay, setPendingPlay] = useState<PendingPlay | null>(null);
   const [serverOffset, setServerOffset] = useState(0);
   const [now, setNow] = useState(0);
+  const focusReturnRef = useRef<HTMLElement | null>(null);
+
+  const restoreDialogFocus = useCallback(() => {
+    const target = focusReturnRef.current;
+    focusReturnRef.current = null;
+    if (!target) return;
+    window.requestAnimationFrame(() => {
+      if (target.isConnected) target.focus();
+    });
+  }, []);
+
+  const closeColorDialog = useCallback(() => {
+    setPendingPlay(null);
+    restoreDialogFocus();
+  }, [restoreDialogFocus]);
 
   const refresh = useCallback(async (): Promise<MatchResponse | null> => {
     const response = await fetch(`/api/matches/${matchId}`, { cache: "no-store" });
@@ -34,9 +67,9 @@ export function UnoMatch({ matchId }: { matchId: string }) {
     setMatch(next);
     setServerOffset(Date.parse(next.serverNow) - Date.now());
     setSelectedCardId((current) => next.view.hand.some((card) => card.id === current) ? current : null);
-    if (next.view.phase !== "after_draw") setPendingPlay(null);
+    if (pendingPlay && !isPendingPlayValid(pendingPlay, next.view)) closeColorDialog();
     return next;
-  }, [matchId]);
+  }, [closeColorDialog, matchId, pendingPlay]);
 
   useEffect(() => {
     const initial = window.setTimeout(() => void refresh(), 0);
@@ -75,15 +108,21 @@ export function UnoMatch({ matchId }: { matchId: string }) {
   function requestSelectedPlay() {
     const card = selectedCard();
     if (!card || !match?.view.actions.canPlay || !match.view.playableCardIds.includes(card.id)) return;
-    if (card.color === null) setPendingPlay({ type: "PLAY_CARD", cardId: card.id });
+    if (card.color === null) openColorDialog({ type: "PLAY_CARD", cardId: card.id });
     else void send({ type: "PLAY_CARD", cardId: card.id, announceLastCard: announceNext });
   }
 
   function requestDrawnPlay() {
     const card = match?.view.drawnCard;
     if (!card || !match?.view.actions.canPlayDrawn) return;
-    if (card.color === null) setPendingPlay({ type: "PLAY_DRAWN" });
+    if (card.color === null) openColorDialog({ type: "PLAY_DRAWN" });
     else void send({ type: "PLAY_DRAWN", announceLastCard: announceNext });
+  }
+
+  function openColorDialog(next: PendingPlay) {
+    const activeElement = document.activeElement;
+    focusReturnRef.current = activeElement instanceof HTMLElement ? activeElement : null;
+    setPendingPlay(next);
   }
 
   const remaining = match?.deadlineAt ? Math.max(0, Math.ceil((Date.parse(match.deadlineAt) - (now + serverOffset)) / 1000)) : null;
@@ -133,7 +172,7 @@ export function UnoMatch({ matchId }: { matchId: string }) {
         {view.phase !== "finished" && <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-dashed border-[var(--line)] bg-white/50 p-4 text-sm"><span className="text-[var(--muted)]">Besoin d&apos;arrêter la partie ?</span><div className="flex gap-2"><button type="button" disabled={busy} onClick={() => { if (window.confirm("Abandonner cette partie ?")) void send({ type: "RESIGN" }); }} className="rounded-full px-3 py-2 font-bold text-[var(--muted)] hover:bg-red-50 hover:text-red-700">Abandonner</button><button type="button" disabled={busy} onClick={() => void send({ type: "CLAIM_FORFEIT" })} className="rounded-full border border-[var(--line)] px-3 py-2 font-bold">Réclamer un forfait</button></div></div>}
         {error && <p role="alert" className="mt-4 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
       </div>
-      {pendingPlay && <ColorDialog onCancel={() => setPendingPlay(null)} onChoose={(color) => { const action = pendingPlay.type === "PLAY_CARD" ? { type: "PLAY_CARD" as const, cardId: pendingPlay.cardId, chosenColor: color, announceLastCard: announceNext } : { type: "PLAY_DRAWN" as const, chosenColor: color, announceLastCard: announceNext }; setPendingPlay(null); void send(action); }} />}
+      {pendingPlay && <ColorDialog onCancel={closeColorDialog} onChoose={(color) => { const action = pendingPlay.type === "PLAY_CARD" ? { type: "PLAY_CARD" as const, cardId: pendingPlay.cardId, chosenColor: color, announceLastCard: announceNext } : { type: "PLAY_DRAWN" as const, chosenColor: color, announceLastCard: announceNext }; closeColorDialog(); void send(action); }} />}
     </main>
   );
 }
@@ -162,8 +201,35 @@ function CardBack() {
   return <div className="grid h-36 w-24 place-items-center rounded-2xl border-4 border-white bg-[#292638] shadow-[0_8px_16px_rgba(20,33,29,0.2)] sm:h-40 sm:w-28"><div className="grid size-16 rotate-[-12deg] place-items-center rounded-[45%] border-2 border-[#f3b7c4] text-xs font-black text-[#f3b7c4]">UNO</div></div>;
 }
 
-function ColorDialog({ onCancel, onChoose }: { onCancel: () => void; onChoose: (color: UnoColor) => void }) {
-  return <div className="fixed inset-0 z-20 grid place-items-center bg-[var(--ink)]/50 p-5" role="dialog" aria-modal="true" aria-labelledby="uno-color-title"><div className="w-full max-w-md rounded-3xl bg-[var(--card)] p-6 shadow-2xl"><p className="text-xs font-black uppercase tracking-[0.16em] text-[#b23853]">Joker</p><h2 id="uno-color-title" className="mt-2 text-2xl font-black">Choisis la couleur</h2><div className="mt-5 grid grid-cols-2 gap-3">{(Object.keys(colorNames) as UnoColor[]).map((color) => <button type="button" key={color} onClick={() => onChoose(color)} className="rounded-2xl px-4 py-5 text-lg font-black text-white" style={{ backgroundColor: cardColors[color] }}>{colorNames[color]}</button>)}</div><button type="button" onClick={onCancel} className="mt-4 w-full rounded-full border border-[var(--line)] bg-white px-4 py-3 font-bold">Annuler</button></div></div>;
+export function ColorDialog({ onCancel, onChoose }: { onCancel: () => void; onChoose: (color: UnoColor) => void }) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const firstColorRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    firstColorRef.current?.focus();
+  }, []);
+
+  function onKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      onCancel();
+      return;
+    }
+    if (event.key !== "Tab") return;
+    const buttons = Array.from(dialogRef.current?.querySelectorAll<HTMLButtonElement>("button:not([disabled])") ?? []);
+    if (buttons.length === 0) return;
+    const first = buttons[0];
+    const last = buttons[buttons.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last?.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first?.focus();
+    }
+  }
+
+  return <div className="fixed inset-0 z-20 grid place-items-center bg-[var(--ink)]/50 p-5" role="dialog" aria-modal="true" aria-labelledby="uno-color-title" onKeyDown={onKeyDown}><div ref={dialogRef} className="w-full max-w-md rounded-3xl bg-[var(--card)] p-6 shadow-2xl"><p className="text-xs font-black uppercase tracking-[0.16em] text-[#b23853]">Joker</p><h2 id="uno-color-title" className="mt-2 text-2xl font-black">Choisis la couleur</h2><div className="mt-5 grid grid-cols-2 gap-3">{(Object.keys(colorNames) as UnoColor[]).map((color, index) => <button ref={index === 0 ? firstColorRef : undefined} type="button" key={color} onClick={() => onChoose(color)} className="rounded-2xl px-4 py-5 text-lg font-black text-white" style={{ backgroundColor: cardColors[color] }}>{colorNames[color]}</button>)}</div><button type="button" onClick={onCancel} className="mt-4 w-full rounded-full border border-[var(--line)] bg-white px-4 py-3 font-bold">Annuler</button></div></div>;
 }
 
 function FinishedPanel({ view, back }: { view: UnoView; back: () => void }) {

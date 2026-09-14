@@ -129,6 +129,21 @@ describe("moteur Compatibilité", () => {
     expect(result.result?.sharedScore).toBeNull();
   });
 
+  it("garde RESIGN et CLAIM_FORFEIT comme interruptions coopératives pour chaque siège", () => {
+    for (const actorId of [A, B]) {
+      for (const action of [{ type: "RESIGN" as const }, { type: "CLAIM_FORFEIT" as const }]) {
+        const result = reduceCompatibilite(started(), action, config, ctx(actorId)).result;
+        expect(result).toMatchObject({
+          kind: "cooperative",
+          outcome: "abandoned",
+          winnerId: null,
+          sharedScore: null,
+          reason: action.type === "RESIGN" ? "resign" : "claimed_forfeit",
+        });
+      }
+    }
+  });
+
   it("refuse les états et actions enrichis", () => {
     expect(() => compatibiliteStateSchema.parse({ ...started(), unexpected: true })).toThrow();
     expect(() => reduceCompatibilite(started(), { type: "SKIP_QUESTION", unexpected: true }, config, ctx(A))).toThrow();

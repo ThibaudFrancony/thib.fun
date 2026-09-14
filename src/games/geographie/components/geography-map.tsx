@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { GeoJSON } from "geojson";
-import { invertGeoPoint, pathForGeojson, projectGeoPoint, type FranceGeometry, type MapViewport } from "@/games/geographie/map-projection";
+import { invertGeoPoint, pathForGeojson, projectGeoPoint, type FranceGeometry, type MapSize, type MapViewport } from "@/games/geographie/map-projection";
 import type { GeoPoint } from "@/games/geographie/scoring";
 import type { GeoView } from "@/games/geographie/types";
 
@@ -15,6 +15,17 @@ type GeographyMapProps = {
 
 const INITIAL_VIEWPORT: MapViewport = { scale: 1, offsetX: 0, offsetY: 0 };
 
+export function clampMapPoint(point: [number, number], size: MapSize): [number, number] {
+  return [
+    Math.min(size.width, Math.max(0, point[0])),
+    Math.min(size.height, Math.max(0, point[1])),
+  ];
+}
+
+export function GeographyMapLoadError({ onRetry }: { onRetry: () => void }) {
+  return <div role="alert" className="geo-map-error"><p>La carte n&apos;a pas pu être chargée.</p><button type="button" onClick={onRetry} className="geo-secondary-button">Réessayer</button></div>;
+}
+
 export function GeographyMap({ view, interactive, pendingPoint, onPendingPointChange }: GeographyMapProps) {
   const shellRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -22,16 +33,29 @@ export function GeographyMap({ view, interactive, pendingPoint, onPendingPointCh
   const [size, setSize] = useState({ width: 720, height: 500 });
   const [viewport, setViewport] = useState<MapViewport>(INITIAL_VIEWPORT);
   const [cursor, setCursor] = useState<[number, number] | null>(null);
+  const [mapRequestKey, setMapRequestKey] = useState(0);
+  const [mapLoading, setMapLoading] = useState(true);
+  const [mapError, setMapError] = useState(false);
   const dragRef = useRef<{ x: number; y: number; offsetX: number; offsetY: number; moved: boolean } | null>(null);
 
   useEffect(() => {
-    let active = true;
-    void fetch("/maps/france-departments.geojson")
-      .then((response) => response.json() as Promise<GeoJSON>)
-      .then((value) => { if (active) setMap(value as FranceGeometry); })
-      .catch(() => { if (active) setMap(null); });
-    return () => { active = false; };
-  }, []);
+    const controller = new AbortController();
+    void fetch("/maps/france-departments.geojson", { signal: controller.signal })
+      .then((response) => {
+        if (!response.ok) throw new Error(`MAP_${response.status}`);
+        return response.json() as Promise<GeoJSON>;
+      })
+      .then((value) => setMap(value as FranceGeometry))
+      .catch((reason: unknown) => {
+        if (controller.signal.aborted || (reason instanceof DOMException && reason.name === "AbortError")) return;
+        setMap(null);
+        setMapError(true);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setMapLoading(false);
+      });
+    return () => controller.abort();
+  }, [mapRequestKey]);
 
   useEffect(() => {
     if (!shellRef.current) return;
@@ -47,20 +71,26 @@ export function GeographyMap({ view, interactive, pendingPoint, onPendingPointCh
   const pendingScreen = useMemo(() => map && pendingPoint ? projectGeoPoint(map, size, pendingPoint, viewport) : null, [map, pendingPoint, size, viewport]);
   const targetScreen = useMemo(() => map && view.targetPoint ? projectGeoPoint(map, size, view.targetPoint, viewport) : null, [map, size, view.targetPoint, viewport]);
   const placementScreens = useMemo(() => map ? view.players.map((player) => player.placement ? projectGeoPoint(map, size, { longitude: player.placement.longitude, latitude: player.placement.latitude }, viewport) : null) : [null, null], [map, size, view.players, viewport]);
+  const keyboardCursor: [number, number] | null = interactive ? cursor ?? [size.width / 2, size.height / 2] : null;
 
   function pointFromEvent(event: { clientX: number; clientY: number }): [number, number] | null {
     const svg = svgRef.current;
     if (!svg || !map) return null;
     const rect = svg.getBoundingClientRect();
-    return [((event.clientX - rect.left) / rect.width) * size.width, ((event.clientY - rect.top) / rect.height) * size.height];
+    if (rect.width <= 0 || rect.height <= 0) return null;
+    return clampMapPoint([
+      ((event.clientX - rect.left) / rect.width) * size.width,
+      ((event.clientY - rect.top) / rect.height) * size.height,
+    ], size);
   }
 
   function chooseScreenPoint(screenPoint: [number, number]) {
     if (!map || !interactive) return;
-    const inverted = invertGeoPoint(map, size, screenPoint, viewport);
+    const clamped = clampMapPoint(screenPoint, size);
+    const inverted = invertGeoPoint(map, size, clamped, viewport);
     if (!inverted) return;
     onPendingPointChange({ latitude: inverted.latitude, longitude: inverted.longitude });
-    setCursor(screenPoint);
+    setCursor(clamped);
   }
 
   function onPointerDown(event: React.PointerEvent<SVGSVGElement>) {
@@ -108,24 +138,27 @@ export function GeographyMap({ view, interactive, pendingPoint, onPendingPointCh
     if (event.key === "ArrowDown") dy = step;
     if (dx || dy) {
       event.preventDefault();
-      const next: [number, number] = cursor ? [cursor[0] + dx, cursor[1] + dy] : [size.width / 2 + dx, size.height / 2 + dy];
-      setCursor(next);
+      const next: [number, number] = keyboardCursor ? [keyboardCursor[0] + dx, keyboardCursor[1] + dy] : [size.width / 2 + dx, size.height / 2 + dy];
+      setCursor(clampMapPoint(next, size));
     } else if (event.key === "Enter") {
       event.preventDefault();
-      chooseScreenPoint(cursor ?? [size.width / 2, size.height / 2]);
+      chooseScreenPoint(keyboardCursor ?? [size.width / 2, size.height / 2]);
     }
   }
 
   const transform = `translate(${size.width / 2 + viewport.offsetX} ${size.height / 2 + viewport.offsetY}) scale(${viewport.scale}) translate(${-size.width / 2} ${-size.height / 2})`;
   return <div ref={shellRef} className="map-shell geo-map-shell">
     <div className="geo-map-toolbar"><span>Carte muette · métropole + Corse</span><span aria-live="polite">{pendingPoint ? "Point prêt à confirmer" : "Clique ou appuie sur Entrée"}</span></div>
+    {mapLoading && !map && <p className="geo-map-loading" role="status">Chargement de la carte…</p>}
+    {mapError && <GeographyMapLoadError onRetry={() => { setMapLoading(true); setMapError(false); setMapRequestKey((current) => current + 1); }} />}
     <svg ref={svgRef} role="application" aria-label="Carte muette de la France métropolitaine. Les flèches déplacent le curseur de cinq pixels, Maj de vingt pixels, et Entrée pose le point." tabIndex={0} viewBox={`0 0 ${size.width} ${size.height}`} className="geo-map-svg" onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={() => { dragRef.current = null; }} onWheel={onWheel} onKeyDown={onKeyDown}>
       <g transform={transform}>
         {path && <path d={path} fill="#684c8d" stroke="#d2b3f1" strokeWidth={1.1 / viewport.scale} vectorEffect="non-scaling-stroke" />}
-        {view.players.map((player, index) => { const point = placementScreens[index]; const color = index === 0 ? "#f3b2d3" : "#b9f9df"; return point && (view.phase === "reveal" || view.phase === "finished") ? <g key={player.id} transform={`translate(${point[0]} ${point[1]})`}>{index === 0 ? <><circle r="10" fill={color} opacity="0.22" /><circle r="5" fill={color} stroke="#25133d" strokeWidth="2" /></> : <><rect x="-10" y="-10" width="20" height="20" rx="5" fill={color} opacity="0.22" /><rect x="-5" y="-5" width="10" height="10" rx="2" fill={color} stroke="#25133d" strokeWidth="2" /></>}<title>{player.pseudo}</title></g> : null; })}
-        {targetScreen && <g transform={`translate(${targetScreen[0]} ${targetScreen[1]})`}><path d="M0 -12 L10 7 L0 3 L-10 7 Z" fill="#ffe49a" stroke="#25133d" strokeWidth="2" /><title>Ville cible</title></g>}
-        {pendingScreen && interactive && <g transform={`translate(${pendingScreen[0]} ${pendingScreen[1]})`}><circle r="11" fill="#fff" stroke="#25133d" strokeWidth="2" strokeDasharray="3 3" /><circle r="3" fill="#25133d" /></g>}
       </g>
+      {keyboardCursor && <g transform={`translate(${keyboardCursor[0]} ${keyboardCursor[1]})`} pointerEvents="none" aria-hidden="true"><circle r="14" fill="none" stroke="#fff" strokeWidth="3" opacity="0.9" /><circle r="14" fill="none" stroke="#25133d" strokeWidth="1.5" strokeDasharray="3 3" /><path d="M0 -20 V20 M-20 0 H20" stroke="#25133d" strokeWidth="1.5" /></g>}
+      {view.players.map((player, index) => { const point = placementScreens[index]; const color = index === 0 ? "#f3b2d3" : "#b9f9df"; return point && (view.phase === "reveal" || view.phase === "finished") ? <g key={player.id} transform={`translate(${point[0]} ${point[1]})`}>{index === 0 ? <><circle r="10" fill={color} opacity="0.22" /><circle r="5" fill={color} stroke="#25133d" strokeWidth="2" /></> : <><rect x="-10" y="-10" width="20" height="20" rx="5" fill={color} opacity="0.22" /><rect x="-5" y="-5" width="10" height="10" rx="2" fill={color} stroke="#25133d" strokeWidth="2" /></>}<title>{player.pseudo}</title></g> : null; })}
+      {targetScreen && <g transform={`translate(${targetScreen[0]} ${targetScreen[1]})`}><path d="M0 -12 L10 7 L0 3 L-10 7 Z" fill="#ffe49a" stroke="#25133d" strokeWidth="2" /><title>Ville cible</title></g>}
+      {pendingScreen && interactive && <g transform={`translate(${pendingScreen[0]} ${pendingScreen[1]})`}><circle r="11" fill="#fff" stroke="#25133d" strokeWidth="2" strokeDasharray="3 3" /><circle r="3" fill="#25133d" /></g>}
     </svg>
     <div className="geo-map-controls"><button type="button" aria-label="Zoomer" onClick={() => setViewport((current) => ({ ...current, scale: Math.min(3, current.scale + 0.25) }))} className="geo-map-button geo-map-zoom-button">+</button><button type="button" aria-label="Dézoomer" onClick={() => setViewport((current) => ({ ...current, scale: Math.max(1, current.scale - 0.25) }))} className="geo-map-button geo-map-zoom-button">−</button><button type="button" onClick={() => { setViewport(INITIAL_VIEWPORT); setCursor(null); }} className="geo-map-button">Recentrer</button></div>
   </div>;

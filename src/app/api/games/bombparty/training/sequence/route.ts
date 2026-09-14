@@ -37,7 +37,8 @@ export async function GET(request: Request) {
     const inDifficulty = sequences.filter((sequence) => categoryOf(content.bySequence[sequence]?.length ?? 0) === query.data.difficulty);
     const pool = inDifficulty.length > 0 ? inDifficulty : sequences.filter((sequence) => (content.bySequence[sequence]?.length ?? 0) >= 1);
     if (pool.length === 0) return jsonError("TRAINING_UNAVAILABLE", 503, "Aucune séquence disponible pour l'entraînement.");
-    const entropy = entropyValues(1)[0] ?? 0.5;
+    const entropy = entropyValues(1)[0];
+    if (entropy === undefined) throw new Error("ENTROPY_UNAVAILABLE");
     const sequence = pool[Math.min(Math.floor(entropy * pool.length), pool.length - 1)];
     const normalized = normalizeBombpartySequence(sequence) ?? sequence;
     return jsonOk({ sequence: normalized, count: trainingCandidatesFor(content, normalized).length });

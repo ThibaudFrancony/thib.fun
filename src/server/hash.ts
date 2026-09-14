@@ -6,7 +6,10 @@ export function newCommandId(): string {
   return randomUUID();
 }
 
-export function entropyValues(length = 128): number[] {
+export const DEFAULT_ENTROPY_LENGTH = 4096;
+
+export function entropyValues(length = DEFAULT_ENTROPY_LENGTH): number[] {
+  if (!Number.isInteger(length) || length <= 0) throw new RangeError("Entropy length must be a positive integer");
   const bytes = randomBytes(length);
   return [...bytes].map((value) => value / 256);
 }

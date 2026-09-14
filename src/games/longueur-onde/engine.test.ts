@@ -170,6 +170,21 @@ describe("moteur À l'unisson", () => {
     expect(isLongueurOndeDeadlineJobStale(undefined, "new-phase")).toBe(false);
   });
 
+  it("garde RESIGN et CLAIM_FORFEIT comme interruptions coopératives pour chaque siège", () => {
+    for (const actorId of [A, B]) {
+      for (const action of [{ type: "RESIGN" as const }, { type: "CLAIM_FORFEIT" as const }]) {
+        const result = reduceLongueurOnde(started(), action, config, ctx(actorId)).result;
+        expect(result).toMatchObject({
+          kind: "cooperative",
+          outcome: "abandoned",
+          winnerId: null,
+          sharedScore: null,
+          reason: action.type === "RESIGN" ? "resign" : "claimed_forfeit",
+        });
+      }
+    }
+  });
+
   it("refuse un état enrichi inattendu", () => {
     expect(() => initializeLongueurOnde(config, ctx(A))).not.toThrow();
     expect(() => reduceLongueurOnde({ ...started(), unexpected: true }, { type: "RESIGN" }, config, ctx(A))).toThrow();

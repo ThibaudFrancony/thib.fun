@@ -315,7 +315,7 @@ async function processGeographyJob(job: WorkerJob, context: JobContext): Promise
     matchId: context.matchId,
     participants,
     content,
-    entropy: [],
+    entropy: entropyValues(),
     phaseId: context.phaseId,
     nextPhaseId: randomUUID(),
     currentDeadlineAt: context.deadlineAt,

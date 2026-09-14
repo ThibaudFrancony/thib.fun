@@ -145,14 +145,51 @@ describe("Géographie engine", () => {
     expect(resigned.result?.outcome).toBe("win");
     expect(resigned.result?.winnerId).toBe("user-b");
     expect(resigned.result?.reason).toBe("resign");
-    const opponentView = projectGeo(resigned.state, config, content, "user-b", participants, [
-      { id: "user-a", pseudo: "Alice" },
-      { id: "user-b", pseudo: "Bob" },
-    ]);
-    expect(opponentView.result).toMatchObject({ outcome: "win", winnerId: "user-b", reason: "resign" });
-    expect(opponentView.players[0].placement).toBeNull();
-    expect(opponentView.targetPoint).toBeNull();
-    expect(opponentView.lastRound).toBeNull();
+    for (const viewerId of participants) {
+      const viewer = projectGeo(resigned.state, config, content, viewerId, participants, [
+        { id: "user-a", pseudo: "Alice" },
+        { id: "user-b", pseudo: "Bob" },
+      ]);
+      expect(viewer.result).toMatchObject({ outcome: "win", winnerId: "user-b", reason: "resign" });
+      expect(viewer.players[0].placement).toEqual(viewerId === "user-a" ? { latitude: 48.8566, longitude: 2.3522 } : null);
+      expect(viewer.players[1].placement).toBeNull();
+      expect(viewer.targetPoint).toBeNull();
+      expect(viewer.lastRound).toBeNull();
+    }
+  });
+
+  it("attribue le forfait au siège qui le réclame après le premier tour", () => {
+    const config = { ...DEFAULT_GEO_CONFIG, rounds: 5 as const };
+    const start = stateForRandom();
+    const placed = reduceGeo(start, { type: "PLACE_CITY", latitude: 48.8566, longitude: 2.3522 }, config, context());
+    const claimedByAlice = reduceGeo(
+      placed.state,
+      { type: "CLAIM_FORFEIT" },
+      config,
+      context({ actorId: "user-a", phaseId: placed.phaseId, nextPhaseId: "00000000-0000-4000-8000-000000000010" }),
+    );
+    expect(claimedByAlice.result).toMatchObject({ outcome: "win", winnerId: "user-a", reason: "claimed_forfeit" });
+
+    const claimedByBob = reduceGeo(
+      placed.state,
+      { type: "CLAIM_FORFEIT" },
+      config,
+      context({ actorId: "user-b", phaseId: placed.phaseId, nextPhaseId: "00000000-0000-4000-8000-000000000011" }),
+    );
+    expect(claimedByBob.result).toMatchObject({ outcome: "win", winnerId: "user-b", reason: "claimed_forfeit" });
+  });
+
+  it("interrompt aussi une sortie avant le premier placement en mode aléatoire", () => {
+    const config = { ...DEFAULT_GEO_CONFIG, rounds: 5 as const };
+    const start = stateForRandom();
+    const resigned = reduceGeo(start, { type: "RESIGN" }, config, context());
+    expect(resigned.result).toMatchObject({ outcome: "abandoned", winnerId: null, reason: "resign" });
+  });
+
+  it("refuse une préparation automatique sans entropie serveur", () => {
+    const config = { ...DEFAULT_GEO_CONFIG, rounds: 5 as const, selection: "challenge" as const };
+    const start = initializeGeo({ ...config, firstSeat: 0 }, context({ entropy: [] })).state;
+    expect(() => onGeoDeadline(start, "preparation_timeout", config, context({ entropy: [] }))).toThrowError(new GeoRuleError("INVALID_ENTROPY"));
   });
 
   it("abandonne la préparation sans attribuer de victoire", () => {

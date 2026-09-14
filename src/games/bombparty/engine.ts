@@ -183,6 +183,8 @@ function metricsFor(state: BombpartyState, seat: Seat): Record<string, unknown> 
   return {
     validWords: state.correctCounts[seat],
     timeouts: state.timeoutCounts[seat],
+    responseTotalMs: state.sumResponseMs[seat],
+    responseCount: state.responseCount[seat],
     livesRemaining: state.lives[seat],
     longestWordLength: state.longestWordLength[seat],
     meanAcceptedResponseMs: state.responseCount[seat] > 0 ? Math.round(state.sumResponseMs[seat] / state.responseCount[seat]) : null,

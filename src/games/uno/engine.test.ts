@@ -74,14 +74,32 @@ describe("UNO engine", () => {
     expect(unoConfigSchema.safeParse({ ...DEFAULT_UNO_CONFIG, firstSeat: 1 }).success).toBe(false);
   });
 
-  it("attribue le forfait au joueur présent qui le réclame et conserve les compteurs finaux", () => {
+  it("interrompt la partie avant le premier tour sans fabriquer une victoire", () => {
     const claimed = reduceUno(state(), { type: "CLAIM_FORFEIT" }, DEFAULT_UNO_CONFIG, context());
-    expect(claimed.result?.winnerId).toBe("alice");
+    expect(claimed.result?.outcome).toBe("abandoned");
+    expect(claimed.result?.winnerId).toBeNull();
     expect(claimed.result?.players[0].score).toBe(0);
+
+    const resigned = reduceUno(state(), { type: "RESIGN" }, DEFAULT_UNO_CONFIG, context("bob"));
+    expect(resigned.result?.outcome).toBe("abandoned");
+    expect(resigned.result?.winnerId).toBeNull();
+  });
+
+  it("attribue le forfait au siège demandeur après le premier tour", () => {
+    const claimed = reduceUno(state({ turns: 1 }), { type: "CLAIM_FORFEIT" }, DEFAULT_UNO_CONFIG, context("bob"));
+    expect(claimed.result?.outcome).toBe("win");
+    expect(claimed.result?.winnerId).toBe("bob");
+
+    const resigned = reduceUno(state({ turns: 1 }), { type: "RESIGN" }, DEFAULT_UNO_CONFIG, context("bob"));
+    expect(resigned.result?.winnerId).toBe("alice");
 
     const final = reduceUno(state(), { type: "PLAY_CARD", cardId: "a-1", announceLastCard: false }, DEFAULT_UNO_CONFIG, context());
     expect(final.result?.players[0].metrics.turns).toBe(1);
     expect(final.roundRecords).toHaveLength(1);
+  });
+
+  it("refuse de démarrer avec une entropie absente", () => {
+    expect(() => initializeUno(DEFAULT_UNO_CONFIG, context("alice", { entropy: [] }))).toThrowError("INVALID_ENTROPY");
   });
 
   it("refuse un +4 quand une carte de la couleur active est en main", () => {

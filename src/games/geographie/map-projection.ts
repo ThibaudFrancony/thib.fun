@@ -11,6 +11,25 @@ export type MapViewport = { scale: number; offsetX: number; offsetY: number };
 
 const DEFAULT_VIEWPORT: MapViewport = { scale: 1, offsetX: 0, offsetY: 0 };
 
+function applyViewport(point: [number, number], size: MapSize, viewport: MapViewport): [number, number] {
+  const centerX = size.width / 2;
+  const centerY = size.height / 2;
+  return [
+    centerX + (point[0] - centerX) * viewport.scale + viewport.offsetX,
+    centerY + (point[1] - centerY) * viewport.scale + viewport.offsetY,
+  ];
+}
+
+function removeViewport(point: [number, number], size: MapSize, viewport: MapViewport): [number, number] {
+  if (!Number.isFinite(viewport.scale) || viewport.scale <= 0) return point;
+  const centerX = size.width / 2;
+  const centerY = size.height / 2;
+  return [
+    centerX + (point[0] - centerX - viewport.offsetX) / viewport.scale,
+    centerY + (point[1] - centerY - viewport.offsetY) / viewport.scale,
+  ];
+}
+
 function baseProjection(geojson: FranceGeometry, size: MapSize): GeoProjection {
   const projection = geoConicConformal()
     .parallels([44, 49])
@@ -28,6 +47,9 @@ function baseProjection(geojson: FranceGeometry, size: MapSize): GeoProjection {
 }
 
 export function createGeoProjection(geojson: FranceGeometry, size: MapSize, viewport: MapViewport = DEFAULT_VIEWPORT): GeoProjection {
+  // The d3 projection always remains in the base SVG coordinate space. The
+  // viewport is applied exactly once by projectGeoPoint/invertGeoPoint or by
+  // the SVG map group; callers must not apply both to the same overlay.
   void viewport;
   return baseProjection(geojson, size);
 }
@@ -44,13 +66,7 @@ export function projectGeoPoint(
 ): [number, number] | null {
   const projected = createGeoProjection(geojson, size)([point.longitude, point.latitude]);
   if (!projected) return null;
-  const activeViewport = viewport ?? DEFAULT_VIEWPORT;
-  const centerX = size.width / 2;
-  const centerY = size.height / 2;
-  return [
-    centerX + (projected[0] - centerX) * activeViewport.scale + activeViewport.offsetX,
-    centerY + (projected[1] - centerY) * activeViewport.scale + activeViewport.offsetY,
-  ];
+  return applyViewport(projected, size, viewport ?? DEFAULT_VIEWPORT);
 }
 
 export function invertGeoPoint(
@@ -59,13 +75,7 @@ export function invertGeoPoint(
   point: [number, number],
   viewport?: MapViewport,
 ): { longitude: number; latitude: number } | null {
-  const activeViewport = viewport ?? DEFAULT_VIEWPORT;
-  const centerX = size.width / 2;
-  const centerY = size.height / 2;
-  const untransformed: [number, number] = [
-    centerX + (point[0] - centerX - activeViewport.offsetX) / activeViewport.scale,
-    centerY + (point[1] - centerY - activeViewport.offsetY) / activeViewport.scale,
-  ];
+  const untransformed = removeViewport(point, size, viewport ?? DEFAULT_VIEWPORT);
   const inverted = createGeoProjection(geojson, size).invert?.(untransformed);
   return inverted ? { longitude: inverted[0], latitude: inverted[1] } : null;
 }

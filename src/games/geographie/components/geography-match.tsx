@@ -112,8 +112,8 @@ function RevealPanel({ view, busy, next }: { view: GeoView; busy: boolean; next:
 
 function FinishedPanel({ view, back }: { view: GeoView; back: () => void }) {
   const result = view.result;
-  const label = result?.outcome === "draw" ? "Égalité" : result?.winnerId === view.players[view.mySeat].id ? "Victoire" : "Défaite";
-  return <section className="geo-panel geo-finish-panel"><p className="geo-kicker geo-kicker-accent">Résultats</p><h1 className="geo-finish-title">{label}</h1><div className="geo-final-scores">{view.players.map((player) => <div key={player.id} className="geo-final-score"><p>{player.pseudo}</p><strong>{player.score}</strong><span>points</span></div>)}</div><button onClick={back} className="geo-primary-button geo-finish-button">Retour au salon</button></section>;
+  const label = result?.outcome === "draw" ? "Égalité" : result?.outcome === "abandoned" ? "Partie interrompue" : result?.winnerId === view.players[view.mySeat].id ? "Victoire" : "Défaite";
+  return <section className="geo-panel geo-finish-panel"><p className="geo-kicker geo-kicker-accent">Résultats</p><h1 className="geo-finish-title">{label}</h1>{result?.outcome === "abandoned" && <p className="geo-panel-note">Aucun joueur n&apos;est déclaré vainqueur. La partie a été interrompue ({result.reason}).</p>}<div className="geo-final-scores">{view.players.map((player) => <div key={player.id} className="geo-final-score"><p>{player.pseudo}</p><strong>{player.score}</strong><span>points</span></div>)}</div><button onClick={back} className="geo-primary-button geo-finish-button">Retour au salon</button></section>;
 }
 
 function ForfeitControl({ available, busy, claim }: { available: boolean; busy: boolean; claim: () => void }) {

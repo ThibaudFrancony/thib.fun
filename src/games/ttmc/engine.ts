@@ -69,8 +69,8 @@ export function ttmcActiveSeat(
 }
 
 function randomUnit(entropy: readonly number[], index: number): number {
-  const value = entropy[index] ?? 0;
-  if (!Number.isFinite(value) || value < 0 || value >= 1) throw new TtmcRuleError("INVALID_ENTROPY");
+  const value = entropy[index];
+  if (value === undefined || !Number.isFinite(value) || value < 0 || value >= 1) throw new TtmcRuleError("INVALID_ENTROPY");
   return value;
 }
 
