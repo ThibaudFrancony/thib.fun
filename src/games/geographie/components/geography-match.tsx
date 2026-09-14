@@ -7,18 +7,13 @@ import { GeographyMap } from "@/games/geographie/components/geography-map";
 import type { GeoAction } from "@/games/geographie/types";
 import type { GeoPoint } from "@/games/geographie/scoring";
 import type { GeoView } from "@/games/geographie/types";
-import { useUserRealtime } from "@/lib/realtime";
+import { parseMatchSnapshot, useResourceNetwork } from "@/lib/network-sync";
 
 type MatchResponse = { matchId: string; roomId: string; status: string; mode: string; version: number; phaseId: string; deadlineAt: string | null; deadlineKind: string | null; serverNow: string; view: GeoView };
 
 export function GeographyMatch({ matchId }: { matchId: string }) {
   const router = useRouter();
-  const [match, setMatch] = useState<MatchResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
   const [pendingPoint, setPendingPoint] = useState<GeoPoint | null>(null);
-  const [serverOffset, setServerOffset] = useState(0);
-  const [opponentLastSeenAt, setOpponentLastSeenAt] = useState<number | null>(null);
   const [now, setNow] = useState(0);
   const [query, setQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Array<{ id: string; name: string; departmentName: string }>>([]);
@@ -26,13 +21,7 @@ export function GeographyMatch({ matchId }: { matchId: string }) {
   const [cityLabels, setCityLabels] = useState<Record<string, { id: string; name: string; departmentName: string }>>({});
   const selectionDirtyRef = useRef(false);
 
-  const refresh = useCallback(async (): Promise<MatchResponse | null> => {
-    const response = await fetch(`/api/matches/${matchId}`, { cache: "no-store" });
-    const data = await response.json().catch(() => null) as MatchResponse | { error?: { message?: string } } | null;
-    if (!response.ok) { setError((data as { error?: { message?: string } } | null)?.error?.message ?? "Partie introuvable."); return null; }
-    const next = data as MatchResponse;
-    setMatch(next);
-    setServerOffset(Date.parse(next.serverNow) - Date.now());
+  const onSnapshotApplied = useCallback((next: MatchResponse) => {
     if (next.view.phase !== "placing") setPendingPoint(null);
     if (next.view.phase !== "select_cities") selectionDirtyRef.current = false;
     if (next.view.challenge) {
@@ -42,20 +31,36 @@ export function GeographyMatch({ matchId }: { matchId: string }) {
       }));
       if (!selectionDirtyRef.current) setSelectedIds(next.view.challenge.mySelection.map((city) => city.id));
     }
-    return next;
-  }, [matchId]);
+  }, []);
 
-  const heartbeat = useCallback(async () => {
-    const response = await fetch(`/api/matches/${matchId}/heartbeat`, { method: "POST", headers: { "content-type": "application/json" } });
-    const data = await response.json().catch(() => null) as { opponentLastSeenAt?: string | null; serverNow?: string } | null;
-    if (!response.ok) return;
-    if (data?.serverNow) setServerOffset(Date.parse(data.serverNow) - Date.now());
-    setOpponentLastSeenAt(data?.opponentLastSeenAt ? Date.parse(data.opponentLastSeenAt) : null);
-  }, [matchId]);
+  const {
+    snapshot: match,
+    error,
+    busy,
+    serverOffset,
+    opponentLastSeenAt,
+    refresh,
+    send: networkSend,
+  } = useResourceNetwork<MatchResponse, GeoAction>({
+    resourceId: matchId,
+    snapshotUrl: `/api/matches/${matchId}`,
+    heartbeatUrl: `/api/matches/${matchId}/heartbeat`,
+    realtimeEvent: "match.updated",
+    parseSnapshot: parseMatchSnapshot<MatchResponse>,
+    getResourceId: (snapshot) => snapshot.matchId,
+    getPhaseId: (snapshot) => snapshot.phaseId,
+    isFinished: (snapshot) => snapshot.view.phase === "finished",
+    buildCommand: ({ commandId, expectedVersion, action }) => ({
+      url: `/api/matches/${matchId}/commands`,
+      body: { commandId, expectedVersion, action },
+    }),
+    onSnapshotApplied,
+  });
 
-  useEffect(() => { const initial = window.setTimeout(() => void refresh(), 0); const refreshTimer = window.setInterval(() => void refresh(), 2500); const clockTimer = window.setInterval(() => setNow(Date.now()), 1000); return () => { window.clearTimeout(initial); window.clearInterval(refreshTimer); window.clearInterval(clockTimer); }; }, [refresh]);
-  useEffect(() => { const initial = window.setTimeout(() => void heartbeat(), 0); const timer = window.setInterval(() => void heartbeat(), 15000); return () => { window.clearTimeout(initial); window.clearInterval(timer); }; }, [heartbeat]);
-  useUserRealtime([{ event: "match.updated", id: matchId, onInvalidate: () => void refresh() }]);
+  useEffect(() => {
+    const clockTimer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(clockTimer);
+  }, []);
 
   useEffect(() => {
     if (!match || match.view.phase !== "select_cities" || query.trim().length < 2) return;
@@ -65,14 +70,8 @@ export function GeographyMatch({ matchId }: { matchId: string }) {
   }, [match, query]);
 
   async function send(action: GeoAction, snapshot: MatchResponse | null = match): Promise<MatchResponse | null> {
-    if (!snapshot || busy) return null;
-    setBusy(true); setError(null);
-    const response = await fetch(`/api/matches/${matchId}/commands`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ commandId: crypto.randomUUID(), expectedVersion: snapshot.version, action }) });
-    const data = await response.json().catch(() => null) as { error?: { message?: string } } | null;
-    if (!response.ok) { setError(data?.error?.message ?? "La commande n'a pas été acceptée."); setBusy(false); return null; }
-    if (action.type === "SET_CITY_SELECTION") selectionDirtyRef.current = false;
-    const next = await refresh();
-    setBusy(false);
+    const next = await networkSend(action, snapshot);
+    if (next && action.type === "SET_CITY_SELECTION") selectionDirtyRef.current = false;
     return next;
   }
 

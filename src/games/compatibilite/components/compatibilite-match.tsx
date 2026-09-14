@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { CompatibiliteAction, CompatibiliteView, CompatibilityRound } from "@/games/compatibilite/types";
-import { useUserRealtime } from "@/lib/realtime";
+import { parseMatchSnapshot, useResourceNetwork } from "@/lib/network-sync";
 
 type MatchResponse = {
   matchId: string;
@@ -26,53 +26,44 @@ const CATEGORY_LABELS: Record<CompatibiliteView["category"], string> = {
 
 export function CompatibiliteMatch({ matchId }: { matchId: string }) {
   const router = useRouter();
-  const [match, setMatch] = useState<MatchResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
   const [selected, setSelected] = useState<{ questionId: string; optionId: string } | null>(null);
-  const [serverOffset, setServerOffset] = useState(0);
   const [now, setNow] = useState(() => Date.now());
 
-  const refresh = useCallback(async (): Promise<MatchResponse | null> => {
-    const response = await fetch(`/api/matches/${matchId}`, { cache: "no-store" });
-    const data = await response.json().catch(() => null) as MatchResponse | { error?: { message?: string } } | null;
-    if (!response.ok || !data || !("view" in data)) {
-      setError((data as { error?: { message?: string } } | null)?.error?.message ?? "Partie introuvable.");
-      return null;
-    }
-    const next = data as MatchResponse;
-    setMatch(next);
-    setServerOffset(Date.parse(next.serverNow) - Date.now());
+  const onSnapshotApplied = useCallback((next: MatchResponse) => {
     setSelected((current) => next.view.question && next.view.question.itemId === current?.questionId && !next.view.mySubmitted ? current : null);
-    return next;
-  }, [matchId]);
+  }, []);
+
+  const {
+    snapshot: match,
+    error,
+    busy,
+    serverOffset,
+    refresh,
+    send: networkSend,
+  } = useResourceNetwork<MatchResponse, CompatibiliteAction>({
+    resourceId: matchId,
+    snapshotUrl: `/api/matches/${matchId}`,
+    heartbeatUrl: `/api/matches/${matchId}/heartbeat`,
+    realtimeEvent: "match.updated",
+    parseSnapshot: parseMatchSnapshot<MatchResponse>,
+    getResourceId: (snapshot) => snapshot.matchId,
+    getPhaseId: (snapshot) => snapshot.phaseId,
+    isFinished: (snapshot) => snapshot.view.phase === "finished",
+    buildCommand: ({ commandId, expectedVersion, action }) => ({
+      url: `/api/matches/${matchId}/commands`,
+      body: { commandId, expectedVersion, action },
+    }),
+    onSnapshotApplied,
+  });
 
   useEffect(() => {
-    const initial = window.setTimeout(() => void refresh(), 0);
-    const poll = window.setInterval(() => void refresh(), 2500);
     const clock = window.setInterval(() => setNow(Date.now()), 1000);
-    return () => {
-      window.clearTimeout(initial);
-      window.clearInterval(poll);
-      window.clearInterval(clock);
-    };
-  }, [refresh]);
-  useUserRealtime([{ event: "match.updated", id: matchId, onInvalidate: () => void refresh() }]);
+    return () => window.clearInterval(clock);
+  }, []);
 
   async function send(action: CompatibiliteAction) {
-    if (!match || busy) return;
-    setBusy(true);
-    setError(null);
-    const response = await fetch(`/api/matches/${matchId}/commands`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ commandId: crypto.randomUUID(), expectedVersion: match.version, action }),
-    });
-    const data = await response.json().catch(() => null) as { error?: { message?: string } } | null;
-    if (!response.ok) setError(data?.error?.message ?? "La commande n'a pas été acceptée.");
-    else setSelected(null);
-    await refresh();
-    setBusy(false);
+    const next = await networkSend(action);
+    if (next) setSelected(null);
   }
 
   if (error && !match) return <main className="min-h-screen px-5 py-12"><div role="alert" className="mx-auto max-w-xl rounded-2xl bg-red-50 p-5 text-red-700">{error}</div></main>;

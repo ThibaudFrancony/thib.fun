@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { UnoAction, UnoCard, UnoColor, UnoView } from "@/games/uno/types";
 import { cardLabel } from "@/games/uno/deck";
-import { useUserRealtime } from "@/lib/realtime";
+import { parseMatchSnapshot, useResourceNetwork } from "@/lib/network-sync";
 
 type MatchResponse = { matchId: string; roomId: string; gameSlug: string; status: string; version: number; phaseId: string; deadlineAt: string | null; deadlineKind: string | null; serverNow: string; view: UnoView };
 export type PendingPlay = { type: "PLAY_CARD"; cardId: string } | { type: "PLAY_DRAWN" };
@@ -32,13 +32,9 @@ export function isPendingPlayValid(pending: PendingPlay, view: UnoView): boolean
 
 export function UnoMatch({ matchId }: { matchId: string }) {
   const router = useRouter();
-  const [match, setMatch] = useState<MatchResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
   const [announceNext, setAnnounceNext] = useState(false);
   const [pendingPlay, setPendingPlay] = useState<PendingPlay | null>(null);
-  const [serverOffset, setServerOffset] = useState(0);
   const [now, setNow] = useState(0);
   const focusReturnRef = useRef<HTMLElement | null>(null);
 
@@ -56,48 +52,45 @@ export function UnoMatch({ matchId }: { matchId: string }) {
     restoreDialogFocus();
   }, [restoreDialogFocus]);
 
-  const refresh = useCallback(async (): Promise<MatchResponse | null> => {
-    const response = await fetch(`/api/matches/${matchId}`, { cache: "no-store" });
-    const data = await response.json().catch(() => null) as MatchResponse | { error?: { message?: string } } | null;
-    if (!response.ok || !data || !("view" in data)) {
-      setError((data as { error?: { message?: string } } | null)?.error?.message ?? "Partie introuvable.");
-      return null;
-    }
-    const next = data as MatchResponse;
-    setMatch(next);
-    setServerOffset(Date.parse(next.serverNow) - Date.now());
+  const onSnapshotApplied = useCallback((next: MatchResponse) => {
     setSelectedCardId((current) => next.view.hand.some((card) => card.id === current) ? current : null);
     if (pendingPlay && !isPendingPlayValid(pendingPlay, next.view)) closeColorDialog();
-    return next;
-  }, [closeColorDialog, matchId, pendingPlay]);
+  }, [closeColorDialog, pendingPlay]);
+
+  const {
+    snapshot: match,
+    error,
+    busy,
+    serverOffset,
+    refresh,
+    send: networkSend,
+  } = useResourceNetwork<MatchResponse, UnoAction>({
+    resourceId: matchId,
+    snapshotUrl: `/api/matches/${matchId}`,
+    heartbeatUrl: `/api/matches/${matchId}/heartbeat`,
+    realtimeEvent: "match.updated",
+    parseSnapshot: parseMatchSnapshot<MatchResponse>,
+    getResourceId: (snapshot) => snapshot.matchId,
+    getPhaseId: (snapshot) => snapshot.phaseId,
+    isFinished: (snapshot) => snapshot.view.phase === "finished",
+    buildCommand: ({ commandId, expectedVersion, action }) => ({
+      url: `/api/matches/${matchId}/commands`,
+      body: { commandId, expectedVersion, action },
+    }),
+    onSnapshotApplied,
+  });
 
   useEffect(() => {
-    const initial = window.setTimeout(() => void refresh(), 0);
-    const refreshTimer = window.setInterval(() => void refresh(), 2500);
     const clockTimer = window.setInterval(() => setNow(Date.now()), 1000);
-    return () => { window.clearTimeout(initial); window.clearInterval(refreshTimer); window.clearInterval(clockTimer); };
-  }, [refresh]);
-  useUserRealtime([{ event: "match.updated", id: matchId, onInvalidate: () => void refresh() }]);
+    return () => window.clearInterval(clockTimer);
+  }, []);
 
   async function send(action: UnoAction): Promise<MatchResponse | null> {
-    if (!match || busy) return null;
-    setBusy(true);
-    setError(null);
-    setSelectedCardId(null);
-    setAnnounceNext(false);
-    const response = await fetch(`/api/matches/${matchId}/commands`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ commandId: crypto.randomUUID(), expectedVersion: match.version, action }),
-    });
-    const data = await response.json().catch(() => null) as { error?: { message?: string } } | null;
-    if (!response.ok) {
-      setError(data?.error?.message ?? "La commande n'a pas été acceptée.");
-      setBusy(false);
-      return null;
+    const next = await networkSend(action);
+    if (next) {
+      setSelectedCardId(null);
+      setAnnounceNext(false);
     }
-    const next = await refresh();
-    setBusy(false);
     return next;
   }
 
@@ -123,6 +116,15 @@ export function UnoMatch({ matchId }: { matchId: string }) {
     const activeElement = document.activeElement;
     focusReturnRef.current = activeElement instanceof HTMLElement ? activeElement : null;
     setPendingPlay(next);
+  }
+
+  async function chooseColor(color: UnoColor) {
+    if (!pendingPlay) return;
+    const action = pendingPlay.type === "PLAY_CARD"
+      ? { type: "PLAY_CARD" as const, cardId: pendingPlay.cardId, chosenColor: color, announceLastCard: announceNext }
+      : { type: "PLAY_DRAWN" as const, chosenColor: color, announceLastCard: announceNext };
+    const next = await send(action);
+    if (next) closeColorDialog();
   }
 
   const remaining = match?.deadlineAt ? Math.max(0, Math.ceil((Date.parse(match.deadlineAt) - (now + serverOffset)) / 1000)) : null;
@@ -172,7 +174,7 @@ export function UnoMatch({ matchId }: { matchId: string }) {
         {view.phase !== "finished" && <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-dashed border-[var(--line)] bg-white/50 p-4 text-sm"><span className="text-[var(--muted)]">Besoin d&apos;arrêter la partie ?</span><div className="flex gap-2"><button type="button" disabled={busy} onClick={() => { if (window.confirm("Abandonner cette partie ?")) void send({ type: "RESIGN" }); }} className="rounded-full px-3 py-2 font-bold text-[var(--muted)] hover:bg-red-50 hover:text-red-700">Abandonner</button><button type="button" disabled={busy} onClick={() => void send({ type: "CLAIM_FORFEIT" })} className="rounded-full border border-[var(--line)] px-3 py-2 font-bold">Réclamer un forfait</button></div></div>}
         {error && <p role="alert" className="mt-4 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
       </div>
-      {pendingPlay && <ColorDialog onCancel={closeColorDialog} onChoose={(color) => { const action = pendingPlay.type === "PLAY_CARD" ? { type: "PLAY_CARD" as const, cardId: pendingPlay.cardId, chosenColor: color, announceLastCard: announceNext } : { type: "PLAY_DRAWN" as const, chosenColor: color, announceLastCard: announceNext }; closeColorDialog(); void send(action); }} />}
+      {pendingPlay && <ColorDialog onCancel={closeColorDialog} onChoose={(color) => { void chooseColor(color); }} />}
     </main>
   );
 }

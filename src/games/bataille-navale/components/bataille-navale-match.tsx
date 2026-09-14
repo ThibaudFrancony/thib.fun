@@ -1,10 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { NAVAL_SHIP_CATALOG } from "@/games/bataille-navale/config";
 import type { NavalAction, NavalShipView, NavalShotView, NavalView } from "@/games/bataille-navale/types";
-import { useUserRealtime } from "@/lib/realtime";
+import { parseMatchSnapshot, useResourceNetwork } from "@/lib/network-sync";
 
 type MatchResponse = {
   matchId: string;
@@ -63,54 +63,36 @@ function draftValid(ships: DraftShip[]): boolean {
 
 export function BatailleNavaleMatch({ matchId }: { matchId: string }) {
   const router = useRouter();
-  const [match, setMatch] = useState<MatchResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
   const [tab, setTab] = useState<"shots" | "fleet">("shots");
   const [zoom, setZoom] = useState(false);
-  const [serverOffset, setServerOffset] = useState(0);
   const [now, setNow] = useState(() => Date.now());
 
-  const refresh = useCallback(async (): Promise<MatchResponse | null> => {
-    const response = await fetch(`/api/matches/${matchId}`, { cache: "no-store" });
-    const data = (await response.json().catch(() => null)) as MatchResponse | { error?: { message?: string } } | null;
-    if (!response.ok || !data || !("view" in data)) {
-      setError((data as { error?: { message?: string } } | null)?.error?.message ?? "Partie introuvable.");
-      return null;
-    }
-    const next = data as MatchResponse;
-    setMatch(next);
-    setServerOffset(Date.parse(next.serverNow) - Date.now());
-    return next;
-  }, [matchId]);
+  const {
+    snapshot: match,
+    error,
+    busy,
+    serverOffset,
+    refresh,
+    send,
+  } = useResourceNetwork<MatchResponse, NavalAction>({
+    resourceId: matchId,
+    snapshotUrl: `/api/matches/${matchId}`,
+    heartbeatUrl: `/api/matches/${matchId}/heartbeat`,
+    realtimeEvent: "match.updated",
+    parseSnapshot: parseMatchSnapshot<MatchResponse>,
+    getResourceId: (snapshot) => snapshot.matchId,
+    getPhaseId: (snapshot) => snapshot.phaseId,
+    isFinished: (snapshot) => snapshot.view.phase === "finished",
+    buildCommand: ({ commandId, expectedVersion, action }) => ({
+      url: `/api/matches/${matchId}/commands`,
+      body: { commandId, expectedVersion, action },
+    }),
+  });
 
   useEffect(() => {
-    const initial = window.setTimeout(() => void refresh(), 0);
-    const refreshTimer = window.setInterval(() => void refresh(), 2500);
     const clockTimer = window.setInterval(() => setNow(Date.now()), 1000);
-    return () => {
-      window.clearTimeout(initial);
-      window.clearInterval(refreshTimer);
-      window.clearInterval(clockTimer);
-    };
-  }, [refresh]);
-  useUserRealtime([{ event: "match.updated", id: matchId, onInvalidate: () => void refresh() }]);
-
-  async function send(action: NavalAction): Promise<MatchResponse | null> {
-    if (!match || busy) return null;
-    setBusy(true);
-    setError(null);
-    const response = await fetch(`/api/matches/${matchId}/commands`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ commandId: crypto.randomUUID(), expectedVersion: match.version, action }),
-    });
-    const data = (await response.json().catch(() => null)) as { error?: { message?: string } } | null;
-    if (!response.ok) setError(data?.error?.message ?? "La commande n'a pas été acceptée.");
-    const next = await refresh();
-    setBusy(false);
-    return next;
-  }
+    return () => window.clearInterval(clockTimer);
+  }, []);
 
   const view = match?.view ?? null;
   const remaining = match?.deadlineAt ? Math.max(0, Math.ceil((Date.parse(match.deadlineAt) - (now + serverOffset)) / 1000)) : null;

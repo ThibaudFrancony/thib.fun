@@ -1,12 +1,12 @@
 {
   "version": 1,
-  "updatedAt": "2026-09-13",
+  "updatedAt": "2026-09-14",
   "entries": [
     {
       "id": "unit-and-contracts",
       "label": "Unitaires et contrats serveur",
       "status": "pass",
-      "evidence": "Vitest direct avec le binaire versionné : 45 fichiers, 357 tests réussis et 2 sentinelles d'échec attendu ; les défauts connus sont exécutés et marqués comme échecs attendus."
+      "evidence": "Vitest direct avec le binaire versionné : 52 fichiers, 401 tests réussis et 2 sentinelles d'échec attendu ; les contrats, projections et garde-fous de reprise sont exécutés."
     },
     {
       "id": "home-and-guest-browser",
@@ -48,8 +48,14 @@
     {
       "id": "uno-browser-regressions",
       "label": "Régressions navigateur UNO",
-      "status": "fail",
-      "evidence": "Trois tests Playwright ciblés reproduisent le dialogue joker fermé au polling, le bouton bloqué après panne réseau et l'absence de heartbeat ; ils sont marqués échecs attendus jusqu'aux étapes 2 et 6."
+      "status": "pass",
+      "evidence": "Sept tests Playwright ciblés passent sur Chromium et mobile : joker conservé au polling, UI libérée après coupure, double clic dédoublonné, heartbeat, réponse perdue avec même commandId, relecture après mise à jour Realtime manquée et deux onglets indépendants."
+    },
+    {
+      "id": "network-browser-regressions",
+      "label": "Reprises réseau des actions et responsive",
+      "status": "pass",
+      "evidence": "Cinq tests Playwright ciblés passent sur Chromium et mobile : coupure pendant RESIGN, réponse Trou Noir, tir FIRE, placement Géographie et RANDOMIZE_FLEET ; l'intention reste en sessionStorage et les commandes redeviennent disponibles."
     },
     {
       "id": "nine-game-complete-run",

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { TtmcAction, TtmcView } from "@/games/ttmc/types";
-import { useUserRealtime } from "@/lib/realtime";
+import { parseMatchSnapshot, useResourceNetwork } from "@/lib/network-sync";
 
 type MatchResponse = {
   matchId: string;
@@ -20,79 +20,42 @@ type MatchResponse = {
 
 export function TtmcMatch({ matchId }: { matchId: string }) {
   const router = useRouter();
-  const [match, setMatch] = useState<MatchResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
   const [draft, setDraft] = useState("");
   const [levelDraft, setLevelDraft] = useState(5);
-  const [serverOffset, setServerOffset] = useState(0);
-  const [opponentLastSeenAt, setOpponentLastSeenAt] = useState<number | null>(null);
   const [now, setNow] = useState(0);
 
-  const refresh = useCallback(async (): Promise<MatchResponse | null> => {
-    const response = await fetch(`/api/matches/${matchId}`, { cache: "no-store" });
-    const data = (await response.json().catch(() => null)) as MatchResponse | { error?: { message?: string } } | null;
-    if (!response.ok || !data || !("view" in data)) {
-      setError((data as { error?: { message?: string } } | null)?.error?.message ?? "Partie introuvable.");
-      return null;
-    }
-    const next = data as MatchResponse;
-    setMatch(next);
-    setServerOffset(Date.parse(next.serverNow) - Date.now());
+  const onSnapshotApplied = useCallback((next: MatchResponse) => {
     if (next.view.phase !== "answering") setDraft("");
-    return next;
-  }, [matchId]);
+  }, []);
 
-  const heartbeat = useCallback(async () => {
-    const response = await fetch(`/api/matches/${matchId}/heartbeat`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-    });
-    const data = (await response.json().catch(() => null)) as { opponentLastSeenAt?: string | null; serverNow?: string } | null;
-    if (!response.ok) return;
-    if (data?.serverNow) setServerOffset(Date.parse(data.serverNow) - Date.now());
-    setOpponentLastSeenAt(data?.opponentLastSeenAt ? Date.parse(data.opponentLastSeenAt) : null);
-  }, [matchId]);
+  const {
+    snapshot: match,
+    error,
+    busy,
+    serverOffset,
+    opponentLastSeenAt,
+    refresh,
+    send,
+  } = useResourceNetwork<MatchResponse, TtmcAction>({
+    resourceId: matchId,
+    snapshotUrl: `/api/matches/${matchId}`,
+    heartbeatUrl: `/api/matches/${matchId}/heartbeat`,
+    realtimeEvent: "match.updated",
+    parseSnapshot: parseMatchSnapshot<MatchResponse>,
+    getResourceId: (snapshot) => snapshot.matchId,
+    getPhaseId: (snapshot) => snapshot.phaseId,
+    isFinished: (snapshot) => snapshot.view.phase === "finished",
+    buildCommand: ({ commandId, expectedVersion, action }) => ({
+      url: `/api/matches/${matchId}/commands`,
+      body: { commandId, expectedVersion, action },
+    }),
+    onSnapshotApplied,
+  });
 
   useEffect(() => {
-    const initial = window.setTimeout(() => void refresh(), 0);
-    const refreshTimer = window.setInterval(() => void refresh(), 2500);
     const clockTimer = window.setInterval(() => setNow(Date.now()), 1000);
-    return () => {
-      window.clearTimeout(initial);
-      window.clearInterval(refreshTimer);
-      window.clearInterval(clockTimer);
-    };
-  }, [refresh]);
-  useEffect(() => {
-    const initial = window.setTimeout(() => void heartbeat(), 0);
-    const timer = window.setInterval(() => void heartbeat(), 15000);
-    return () => {
-      window.clearTimeout(initial);
-      window.clearInterval(timer);
-    };
-  }, [heartbeat]);
-  useUserRealtime([{ event: "match.updated", id: matchId, onInvalidate: () => void refresh() }]);
-
-  async function send(action: TtmcAction): Promise<MatchResponse | null> {
-    if (!match || busy) return null;
-    setBusy(true);
-    setError(null);
-    const response = await fetch(`/api/matches/${matchId}/commands`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ commandId: crypto.randomUUID(), expectedVersion: match.version, action }),
-    });
-    const data = (await response.json().catch(() => null)) as { error?: { message?: string } } | null;
-    if (!response.ok) {
-      setError(data?.error?.message ?? "La commande n'a pas été acceptée.");
-      setBusy(false);
-      return null;
-    }
-    const next = await refresh();
-    setBusy(false);
-    return next;
-  }
+    return () => window.clearInterval(clockTimer);
+  }, []);
 
   const remaining = match?.deadlineAt
     ? Math.max(0, Math.ceil((Date.parse(match.deadlineAt) - (now + serverOffset)) / 1000))

@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { BombpartyAction, BombpartyView } from "@/games/bombparty/types";
-import { useUserRealtime } from "@/lib/realtime";
+import { parseMatchSnapshot, useResourceNetwork } from "@/lib/network-sync";
 import { splitAroundSequence } from "@/games/bombparty/highlight";
 
 type MatchResponse = {
@@ -23,59 +23,43 @@ const ACCENT = "#6d28d9";
 
 export function BombpartyMatch({ matchId }: { matchId: string }) {
   const router = useRouter();
-  const [match, setMatch] = useState<MatchResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
   const [word, setWord] = useState("");
-  const [serverOffset, setServerOffset] = useState(0);
   const [now, setNow] = useState(() => Date.now());
   const inputRef = useRef<HTMLInputElement | null>(null);
   const lastTurnKey = useRef<string | null>(null);
 
-  const refresh = useCallback(async (): Promise<MatchResponse | null> => {
-    const response = await fetch(`/api/matches/${matchId}`, { cache: "no-store" });
-    const data = (await response.json().catch(() => null)) as MatchResponse | { error?: { message?: string } } | null;
-    if (!response.ok || !data || !("view" in data)) {
-      setError((data as { error?: { message?: string } } | null)?.error?.message ?? "Partie introuvable.");
-      return null;
-    }
-    const next = data as MatchResponse;
-    setMatch(next);
-    setServerOffset(Date.parse(next.serverNow) - Date.now());
-    return next;
-  }, [matchId]);
+  const {
+    snapshot: match,
+    error,
+    busy,
+    serverOffset,
+    refresh,
+    send: networkSend,
+  } = useResourceNetwork<MatchResponse, BombpartyAction>({
+    resourceId: matchId,
+    snapshotUrl: `/api/matches/${matchId}`,
+    heartbeatUrl: `/api/matches/${matchId}/heartbeat`,
+    realtimeEvent: "match.updated",
+    parseSnapshot: parseMatchSnapshot<MatchResponse>,
+    getResourceId: (snapshot) => snapshot.matchId,
+    getPhaseId: (snapshot) => snapshot.phaseId,
+    isFinished: (snapshot) => snapshot.view.phase === "finished",
+    buildCommand: ({ commandId, expectedVersion, action }) => ({
+      url: `/api/matches/${matchId}/commands`,
+      body: { commandId, expectedVersion, action },
+    }),
+  });
 
   useEffect(() => {
-    const initial = window.setTimeout(() => void refresh(), 0);
-    const refreshTimer = window.setInterval(() => void refresh(), 2500);
     const clockTimer = window.setInterval(() => setNow(Date.now()), 500);
-    return () => {
-      window.clearTimeout(initial);
-      window.clearInterval(refreshTimer);
-      window.clearInterval(clockTimer);
-    };
-  }, [refresh]);
-  useUserRealtime([{ event: "match.updated", id: matchId, onInvalidate: () => void refresh() }]);
+    return () => window.clearInterval(clockTimer);
+  }, []);
 
   async function send(action: BombpartyAction, submittedWord?: string): Promise<void> {
-    if (!match || busy) return;
-    setBusy(true);
-    setError(null);
-    const response = await fetch(`/api/matches/${matchId}/commands`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ commandId: crypto.randomUUID(), expectedVersion: match.version, action }),
-    });
-    const data = (await response.json().catch(() => null)) as { error?: { message?: string } } | null;
-    if (!response.ok) {
-      // Refus : on garde la saisie pour correction, sans changer le chrono.
-      setError(data?.error?.message ?? "La commande n'a pas été acceptée.");
-    } else if (submittedWord !== undefined) {
-      // Succès : on efface le champ.
+    const next = await networkSend(action);
+    if (next && submittedWord !== undefined) {
       setWord("");
     }
-    await refresh();
-    setBusy(false);
   }
 
   const view = match?.view ?? null;
