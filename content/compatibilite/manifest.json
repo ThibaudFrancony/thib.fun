@@ -2,10 +2,12 @@
   "kind": "compatibility",
   "slug": "compatibilite",
   "version": 1,
+  "packId": "4f5d8a31-6b2e-4c70-9d14-8e3f2a1b6c57",
   "status": "published",
   "source": "Rédaction originale pour tibo.fun",
   "license": "Contenu original tibo.fun, usage privé",
   "author": "tibo.fun",
+  "checksum": "853d9b46565b4d382b43d3dce420acc05c47f277a44ed4e297dd7afa78c5dcb7",
   "questionCount": 160,
   "coverage": {
     "quotidien": 40,
@@ -14,5 +16,6 @@
     "couple": 40
   },
   "reviewedBy": "relecture structurelle et éditoriale interne",
-  "reviewedAt": "2026-09-11"
+  "reviewedAt": "2026-09-11",
+  "launchReady": true
 }

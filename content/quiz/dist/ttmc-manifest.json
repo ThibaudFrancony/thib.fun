@@ -2,6 +2,30 @@
   "kind": "quiz",
   "slug": "ttmc",
   "version": 1,
+  "packId": "3a4b7c2d-5e6f-4789-8a0b-1c2d3e4f5a6b",
+  "status": "published",
+  "source": "Rédaction originale pour tibo.fun",
+  "license": "Contenu original tibo.fun, usage privé",
+  "author": "tibo.fun",
+  "checksum": "d182a043f266f69901cdbe0616cd36c8d4196930207c9094084b400a041ce414",
   "questionCount": 440,
-  "themeCount": 22
+  "themeCount": 22,
+  "coverage": {
+    "themeCount": 22,
+    "levelCount": 10,
+    "minPerThemeLevel": 2
+  },
+  "reviewedBy": "relecture structurelle interne",
+  "reviewedAt": "2026-09-11",
+  "launchThreshold": {
+    "themeCount": 30,
+    "levelsPerTheme": 10,
+    "minPerThemeLevel": 2
+  },
+  "configurationAvailability": {
+    "20/15": true,
+    "30/20": true,
+    "50/30": false
+  },
+  "launchReady": false
 }

@@ -6,8 +6,45 @@ import { GuestWarningDialog } from "@/components/guest-warning-dialog";
 import { isAnonymousUser } from "@/lib/auth-identity";
 import { getBrowserSupabase } from "@/lib/supabase-browser";
 
-function safeNext(value: string | null): string {
-  return value && value.startsWith("/") && !value.startsWith("//") ? value : "/";
+const CONTROL_CHARACTERS = /[\u0000-\u001f\u007f-\u009f\u2028\u2029]/u;
+const SAFE_ROUTE_PREFIXES = ["/profil", "/salons", "/parties", "/jeux", "/historique", "/entrainement"];
+
+function decodeNext(value: string): string | null {
+  let decoded = value;
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    if (CONTROL_CHARACTERS.test(decoded) || decoded.includes("\\")) return null;
+    let next: string;
+    try {
+      next = decodeURIComponent(decoded);
+    } catch {
+      return null;
+    }
+    if (next === decoded) return decoded;
+    decoded = next;
+  }
+  return null;
+}
+
+function isSafeRoute(pathname: string): boolean {
+  return pathname === "/" || SAFE_ROUTE_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+}
+
+export function safeNextForOrigin(value: string | null, origin: string, fallback = "/"): string {
+  if (!value || value.length > 2048 || CONTROL_CHARACTERS.test(value) || value.includes("\\")) return fallback;
+  const decoded = decodeNext(value);
+  if (!decoded || !decoded.startsWith("/") || decoded.startsWith("//") || CONTROL_CHARACTERS.test(decoded) || decoded.includes("\\")) return fallback;
+
+  try {
+    const resolved = new URL(decoded, origin);
+    if (resolved.origin !== new URL(origin).origin || resolved.username || resolved.password || !isSafeRoute(resolved.pathname)) return fallback;
+    return `${resolved.pathname}${resolved.search}${resolved.hash}`;
+  } catch {
+    return fallback;
+  }
+}
+
+export function safeNext(value: string | null): string {
+  return safeNextForOrigin(value, window.location.origin);
 }
 
 export function AuthForm() {
@@ -39,6 +76,7 @@ function AuthFormFields({ initialMode }: { initialMode: "signIn" | "signUp" }) {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({}),
+      cache: "no-store",
     });
     if (response.ok) return true;
     const payload = await response.json().catch(() => null) as { error?: { message?: string } } | null;
@@ -48,46 +86,50 @@ function AuthFormFields({ initialMode }: { initialMode: "signIn" | "signUp" }) {
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (busy) return;
     setBusy(true);
     setError(null);
     setNotice(null);
-    const supabase = getBrowserSupabase();
-    if (!supabase) {
-      setError("Configure les variables Supabase du navigateur avant de te connecter.");
+    try {
+      const supabase = getBrowserSupabase();
+      if (!supabase) {
+        setError("Configure les variables Supabase du navigateur avant de te connecter.");
+        return;
+      }
+
+      if (mode === "signUp") {
+        const session = await supabase.auth.getSession();
+        if (isAnonymousUser(session.data.session?.user)) await supabase.auth.signOut({ scope: "local" });
+      }
+      const result = mode === "signIn"
+        ? await supabase.auth.signInWithPassword({ email, password })
+        : await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+              emailRedirectTo: `${window.location.origin}/auth/callback?next=/profil`,
+            },
+          });
+      if (result.error) {
+        setError(result.error.message);
+      } else if (mode === "signUp") {
+        if (result.data.session && await provisionAccount()) {
+          // Full navigation lets SSR consume the auth cookies before rendering.
+          // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+          window.location.href = "/profil";
+        } else if (!result.data.session) {
+          setNotice("Compte créé. Vérifie ton e-mail pour activer ta session, puis reconnecte-toi.");
+        }
+      } else if (await provisionAccount()) {
+        // Full navigation lets SSR consume the auth cookies before rendering.
+        // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+        window.location.href = "/profil";
+      }
+    } catch {
+      setError("Connexion impossible pour le moment. Vérifie ta connexion puis réessaie.");
+    } finally {
       setBusy(false);
-      return;
     }
-    if (mode === "signUp") {
-      const session = await supabase.auth.getSession();
-      if (isAnonymousUser(session.data.session?.user)) await supabase.auth.signOut({ scope: "local" });
-    }
-    const result = mode === "signIn"
-      ? await supabase.auth.signInWithPassword({ email, password })
-      : await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/auth/callback?next=/profil`,
-          },
-        });
-    if (result.error) {
-      setError(result.error.message);
-    } else if (mode === "signUp") {
-      if (result.data.session && await provisionAccount()) {
-        // Full navigation lets SSR consume the auth cookies before rendering.
-        // eslint-disable-next-line @next/next/no-location-assign-relative-destination
-        window.location.href = "/profil";
-      } else if (!result.data.session) {
-        setNotice("Compte créé. Vérifie ton e-mail pour activer ta session, puis reconnecte-toi.");
-      }
-    } else {
-      if (await provisionAccount()) {
-        // Full navigation lets SSR consume the auth cookies before rendering.
-        // eslint-disable-next-line @next/next/no-location-assign-relative-destination
-        window.location.href = "/profil";
-      }
-    }
-    setBusy(false);
   }
 
   const closeGuestWarning = useCallback(() => {
@@ -95,30 +137,36 @@ function AuthFormFields({ initialMode }: { initialMode: "signIn" | "signUp" }) {
   }, [busy]);
 
   async function continueAsGuest() {
+    if (busy) return;
     setBusy(true);
     setError(null);
-    const supabase = getBrowserSupabase();
-    if (!supabase) {
-      setError("Configure les variables Supabase du navigateur avant de jouer en invité.");
+    let supabase: ReturnType<typeof getBrowserSupabase> = null;
+    let guestSessionCreated = false;
+    try {
+      supabase = getBrowserSupabase();
+      if (!supabase) {
+        setError("Configure les variables Supabase du navigateur avant de jouer en invité.");
+        return;
+      }
+      const result = await supabase.auth.signInAnonymously();
+      if (result.error || !result.data.session) {
+        setError(result.error?.message ?? "Le mode invité est momentanément indisponible.");
+        return;
+      }
+      guestSessionCreated = true;
+      if (!(await provisionAccount())) {
+        await supabase.auth.signOut({ scope: "local" });
+        guestSessionCreated = false;
+        return;
+      }
+      window.location.href = safeNext(searchParams.get("next"));
+    } catch {
+      if (guestSessionCreated) await supabase?.auth.signOut({ scope: "local" }).catch(() => undefined);
+      setError("Le mode invité est momentanément indisponible. Réessaie dans un instant.");
+    } finally {
       setGuestWarningOpen(false);
       setBusy(false);
-      return;
     }
-    const result = await supabase.auth.signInAnonymously();
-    if (result.error || !result.data.session) {
-      setError(result.error?.message ?? "Le mode invité est momentanément indisponible.");
-      setGuestWarningOpen(false);
-      setBusy(false);
-      return;
-    }
-    if (!(await provisionAccount())) {
-      await supabase.auth.signOut({ scope: "local" });
-      setGuestWarningOpen(false);
-      setBusy(false);
-      return;
-    }
-    window.location.href = safeNext(searchParams.get("next"));
-    setBusy(false);
   }
 
   const callbackError = searchParams.get("error") === "confirmation";

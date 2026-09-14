@@ -75,4 +75,11 @@ describe("loader quiz Trou Noir", () => {
     await expect(loadTrouNoirContent()).rejects.toThrow("QUIZ_CONTENT_UNAVAILABLE");
     expect(fromMock).not.toHaveBeenCalled();
   });
+
+  it("conserve le loader fichier pour une partie versionnée et vérifie son manifeste", async () => {
+    process.env.QUIZ_CONTENT_SOURCE = "file";
+    const content = await loadTrouNoirContent({ packId: "trou-noir-v1", packVersion: 1 });
+    expect(content.questions).toHaveLength(120);
+    await expect(loadTrouNoirContent({ packId: "trou-noir-v0", packVersion: 0 })).rejects.toThrow("CONTENT_VERSION_MISMATCH");
+  });
 });

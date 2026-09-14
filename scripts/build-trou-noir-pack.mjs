@@ -1,5 +1,6 @@
+import { createHash } from "node:crypto";
 import { readFile, writeFile, mkdir } from "node:fs/promises";
-import { resolve, dirname } from "node:path";
+import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
@@ -96,23 +97,34 @@ const questions = rawAnswers.map((item, index) => ({
   explanation: item.explanation,
   sources: item.sources,
 }));
+const pack = { packId, packVersion: 1, questions };
+const checksum = createHash("sha256").update(JSON.stringify(pack)).digest("hex");
 
 const manifest = {
   kind: "quiz",
   slug: "trou-noir",
   version: 1,
+  packId,
   status: "published",
   source: "Rédaction originale pour tibo.fun",
   license: "Contenu original tibo.fun, usage privé",
   author: "tibo.fun",
+  checksum,
   questionCount: questions.length,
   reviewedBy: "relecture ciblée du 11/09/2026 (corpus de production 300 questions restant à publier)",
   reviewedAt: "2026-09-11",
-  coverage: "6 questions par (catégorie, difficulté 3-6) ; configuration complète à 5 catégories garantie, sous-ensembles restreints ou formats longs pouvant refuser le démarrage (CONTENT_UNAVAILABLE)",
+  coverage: {
+    categoryCount: CATEGORIES.length,
+    difficultyCount: DIFFICULTIES.length,
+    minPerCategoryDifficulty: 6,
+    byCategory: Object.fromEntries(CATEGORIES.map((category) => [category, questions.filter((question) => question.category === category).length])),
+    byDifficulty: Object.fromEntries(DIFFICULTIES.map((difficulty) => [String(difficulty), questions.filter((question) => question.difficulty === difficulty).length])),
+  },
+  launchThreshold: { questionCount: 300, minPerCategory: 60, categoryCount: 5 },
+  launchReady: questions.length >= 300 && CATEGORIES.every((category) => questions.filter((question) => question.category === category).length >= 60),
 };
 
 await mkdir(resolve(quizDir, "dist"), { recursive: true });
-await writeFile(resolve(quizDir, "dist/trou-noir.json"), `${JSON.stringify({ packId, packVersion: 1, questions }, null, 2)}\n`);
+await writeFile(resolve(quizDir, "dist/trou-noir.json"), `${JSON.stringify(pack, null, 2)}\n`);
 await writeFile(resolve(quizDir, "dist/manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
 console.log(`Pack Trou Noir assemblé : ${questions.length} questions, pack ${packId}.`);
-void dirname;

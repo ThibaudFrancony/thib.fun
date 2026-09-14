@@ -6,38 +6,71 @@ import { z } from "zod";
 import { geoCitySchema, type GeoContent } from "@/games/geographie/types";
 import { createAdminClient } from "@/server/supabase/admin";
 import { getSupabaseServerConfig } from "@/server/config";
+import {
+  assertManifestChecksum,
+  assertManifestCount,
+  assertManifestIdentity,
+  assertOptionalManifest,
+  assertPackReference,
+  checksumJson,
+  readContentManifest,
+  type ContentPackReference,
+} from "@/server/content/manifest";
+
+const LOCAL_PACK_ID = "local-geography-v1";
 
 const contentResponseSchema = z.object({
   packId: z.string(),
   packVersion: z.number().int().positive(),
   cities: z.array(geoCitySchema),
-});
+  manifest: z.unknown().optional(),
+}).strict();
 
-const fileManifestSchema = z.object({ version: z.number().int().positive() });
-
-async function loadFileContent(): Promise<GeoContent> {
+export async function loadGeoFileContent(expected?: ContentPackReference): Promise<GeoContent> {
   const root = resolve(process.cwd(), "content/geography");
-  const [citiesText, manifestText] = await Promise.all([
+  const [citiesText, mapText] = await Promise.all([
     readFile(resolve(root, "cities.json"), "utf8"),
-    readFile(resolve(root, "manifest.json"), "utf8"),
+    readFile(resolve(root, "france-departments.geojson"), "utf8"),
   ]);
   const cities = z.array(geoCitySchema).parse(JSON.parse(citiesText));
-  const manifest = fileManifestSchema.parse(JSON.parse(manifestText));
-  return { packId: "local-geography-v1", packVersion: manifest.version, cities };
+  const map = JSON.parse(mapText) as { type?: unknown; features?: unknown };
+  if (map.type !== "FeatureCollection" || !Array.isArray(map.features)) throw new Error("CONTENT_MANIFEST_MISMATCH");
+  const content = { packId: LOCAL_PACK_ID, packVersion: 1, cities };
+  const manifest = await readContentManifest(resolve(root, "manifest.json"));
+  assertManifestIdentity(manifest, { kind: "geography", slug: "france-metropole", packId: content.packId, packVersion: content.packVersion });
+  assertManifestChecksum(manifest, checksumJson(content.cities));
+  assertManifestCount(manifest, "cityCount", content.cities.length);
+  assertManifestCount(manifest, "mapFeatureCount", map.features.length);
+  if (manifest.mapChecksum !== checksumJson(map)) throw new Error("CONTENT_MANIFEST_MISMATCH");
+  assertPackReference(content, expected);
+  return content;
 }
 
-export async function loadGeoContent(): Promise<GeoContent> {
+async function loadDatabaseContent(expected?: ContentPackReference): Promise<GeoContent> {
+  const admin = createAdminClient();
+  const response = await admin.rpc("server_get_geography_content", { p_difficulty: null });
+  if (response.error || !response.data) throw new Error("GEOGRAPHY_CONTENT_UNAVAILABLE");
+  const parsed = contentResponseSchema.parse(response.data);
+  const { manifest, ...content } = parsed;
+  assertOptionalManifest(manifest, { kind: "geography", slug: "france-metropole", packId: content.packId, packVersion: content.packVersion }, checksumJson(content.cities));
+  assertPackReference(content, expected);
+  return content;
+}
+
+export async function loadGeoContent(expected?: ContentPackReference): Promise<GeoContent> {
   const source = process.env.GEO_CONTENT_SOURCE ?? "database";
   if (source === "file" || !getSupabaseServerConfig()) {
     if (process.env.NODE_ENV === "production" && source !== "file") {
       throw new Error("SUPABASE_SERVER_CONFIGURATION_MISSING");
     }
-    return loadFileContent();
+    return loadGeoFileContent(expected);
   }
-  const admin = createAdminClient();
-  const response = await admin.rpc("server_get_geography_content", { p_difficulty: null });
-  if (response.error || !response.data) throw new Error("GEOGRAPHY_CONTENT_UNAVAILABLE");
-  return contentResponseSchema.parse(response.data);
+  try {
+    return await loadDatabaseContent(expected);
+  } catch (error) {
+    if (error instanceof Error && (error.message === "CONTENT_VERSION_MISMATCH" || error.message === "CONTENT_MANIFEST_MISMATCH")) throw error;
+    throw new Error("GEOGRAPHY_CONTENT_UNAVAILABLE");
+  }
 }
 
 export async function searchGeoCities(query: string, difficulty: string | null): Promise<Array<{ id: string; name: string; departmentName: string }>> {

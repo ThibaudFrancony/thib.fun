@@ -2,12 +2,37 @@
   "kind": "quiz",
   "slug": "trou-noir",
   "version": 1,
+  "packId": "trou-noir-v1",
   "status": "published",
   "source": "Rédaction originale pour tibo.fun",
   "license": "Contenu original tibo.fun, usage privé",
   "author": "tibo.fun",
+  "checksum": "65b7a9e4658974b9879d145b451ce79b3554631f2eca534f08f78072b36665df",
   "questionCount": 120,
   "reviewedBy": "relecture ciblée du 11/09/2026 (corpus de production 300 questions restant à publier)",
   "reviewedAt": "2026-09-11",
-  "coverage": "6 questions par (catégorie, difficulté 3-6) ; configuration complète à 5 catégories garantie, sous-ensembles restreints ou formats longs pouvant refuser le démarrage (CONTENT_UNAVAILABLE)"
+  "coverage": {
+    "categoryCount": 5,
+    "difficultyCount": 4,
+    "minPerCategoryDifficulty": 6,
+    "byCategory": {
+      "culture": 24,
+      "histoire-geo": 24,
+      "cuisine": 24,
+      "sport": 24,
+      "sciences": 24
+    },
+    "byDifficulty": {
+      "3": 30,
+      "4": 30,
+      "5": 30,
+      "6": 30
+    }
+  },
+  "launchThreshold": {
+    "questionCount": 300,
+    "minPerCategory": 60,
+    "categoryCount": 5
+  },
+  "launchReady": false
 }

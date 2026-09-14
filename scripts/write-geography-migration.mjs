@@ -1,8 +1,10 @@
 import { createHash } from "node:crypto";
-import { readFile, writeFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import { writeNewMigration } from "./content/write-new-migration.mjs";
 
-const root = resolve(new URL("..", import.meta.url).pathname);
+const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
 const cities = JSON.parse(await readFile(resolve(root, "content/geography/cities.json"), "utf8"));
 const migrationPath = process.argv[2]
   ? resolve(root, process.argv[2])
@@ -27,13 +29,24 @@ function stableUuid(value) {
 
 const counts = Object.groupBy(cities, (city) => city.difficulty);
 const manifest = {
+  kind: "geography",
+  slug: "france-metropole",
+  version: 1,
+  packId,
+  status: "published",
   source: "https://geo.api.gouv.fr/",
+  license: "Licence Ouverte / Etalab",
+  author: "geo.api.gouv.fr / Etalab",
   mapSource: "https://raw.githubusercontent.com/gregoiredavid/france-geojson/master/departements-version-simplifiee.geojson",
   mapLicense: "Licence Ouverte / Etalab",
   populationYear: 2023,
   counts: Object.fromEntries(Object.entries(counts).map(([key, values]) => [key, values.length])),
+  cityCount: cities.length,
+  reviewedBy: "contrôle structurel et couverture géographique interne",
+  reviewedAt: "2026-09-14",
   checksum: createHash("sha256").update(JSON.stringify(cities)).digest("hex"),
 };
+const databaseManifest = { ...manifest, packId };
 
 const itemValues = cities.map((city) => {
   const itemId = stableUuid(`tibo.fun:geography:v1:${city.inseeCode}`);
@@ -1127,7 +1140,7 @@ grant select, insert, update, delete on public.room_views, public.match_views, p
 const sql = `-- tibo.fun — versioned Géographie content pack and trusted server RPCs
 
 insert into private.content_packs (id, kind, slug, version, status, manifest, published_at)
-values (${sqlString(packId)}, 'geography', 'france-metropole', 1, 'published', ${sqlJson(manifest)}, now())
+values (${sqlString(packId)}, 'geography', 'france-metropole', 1, 'published', ${sqlJson(databaseManifest)}, now())
 on conflict (kind, slug, version) do nothing;
 
 insert into private.content_items (id, pack_id, logical_key, category, difficulty, payload)
@@ -1141,5 +1154,5 @@ where slug = 'geographie';
 ${rpcSql}
 `;
 
-await writeFile(migrationPath, sql, "utf8");
+await writeNewMigration(migrationPath, sql);
 console.log(`Migration Géographie écrite : ${migrationPath} (${cities.length} items)`);

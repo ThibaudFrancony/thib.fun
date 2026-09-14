@@ -2,9 +2,10 @@
 // content/quiz/dist/trou-noir.json. Les UUID sont dérivés (SHA-256) des clés
 // logiques pour rester stables entre générations.
 import { createHash } from "node:crypto";
-import { readFile, writeFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { writeNewMigration } from "./content/write-new-migration.mjs";
 
 const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
 const dist = await readFile(resolve(root, "content/quiz/dist/trou-noir.json"), "utf8");
@@ -18,6 +19,7 @@ function uuidFromKey(key) {
 }
 
 const packId = uuidFromKey("content-pack:quiz:trou-noir:1");
+const databaseManifest = { ...manifest, packId };
 const escape = (value) => value.replace(/'/g, "''");
 
 const lines = [];
@@ -25,7 +27,7 @@ lines.push("-- tibo.fun — pack quiz Trou Noir v1 (120 questions originales, ve
 lines.push("-- Migration additive et idempotente : rejouable sans doublon, sans DROP.");
 lines.push("");
 lines.push("insert into private.content_packs (id, kind, slug, version, status, manifest, published_at)");
-lines.push(`values ('${packId}', 'quiz', 'trou-noir', 1, 'published', '${escape(JSON.stringify(manifest))}'::jsonb, now())`);
+lines.push(`values ('${packId}', 'quiz', 'trou-noir', 1, 'published', '${escape(JSON.stringify(databaseManifest))}'::jsonb, now())`);
 lines.push("on conflict (kind, slug, version) do update set status = excluded.status, manifest = excluded.manifest, published_at = coalesce(private.content_packs.published_at, now());");
 lines.push("");
 
@@ -65,7 +67,7 @@ lines.push("-- Activation du jeu après déploiement du code (même motif que la
 lines.push("update public.games set availability = 'ready', rules_version = 'trou-noir-1' where slug = 'trou-noir';");
 lines.push("");
 
-await writeFile(
+await writeNewMigration(
   resolve(root, "supabase/migrations/20260911120000_trou_noir_ready.sql"),
   `${lines.join("\n")}`,
 );

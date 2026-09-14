@@ -59,4 +59,11 @@ describe("loader TTMC", () => {
     await expect(loadTtmcContent()).rejects.toThrow("QUIZ_CONTENT_UNAVAILABLE");
     expect(fromMock).not.toHaveBeenCalled();
   });
+
+  it("conserve le loader fichier pour une partie versionnée et vérifie son manifeste", async () => {
+    process.env.QUIZ_CONTENT_SOURCE = "file";
+    const content = await loadTtmcContent({ packId: "3a4b7c2d-5e6f-4789-8a0b-1c2d3e4f5a6b", packVersion: 1 });
+    expect(content.questions).toHaveLength(440);
+    await expect(loadTtmcContent({ packId: "old-ttmc-v0", packVersion: 0 })).rejects.toThrow("CONTENT_VERSION_MISMATCH");
+  });
 });

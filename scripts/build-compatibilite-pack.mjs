@@ -1,8 +1,9 @@
 import { createHash } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const root = resolve(process.cwd());
+const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
 const packId = "4f5d8a31-6b2e-4c70-9d14-8e3f2a1b6c57";
 const packVersion = 1;
 
@@ -211,116 +212,21 @@ const manifest = {
   kind: "compatibility",
   slug: "compatibilite",
   version: packVersion,
+  packId,
   status: "published",
   source: "Rédaction originale pour tibo.fun",
   license: "Contenu original tibo.fun, usage privé",
   author: "tibo.fun",
+  checksum: createHash("sha256").update(JSON.stringify({ packId, packVersion, questions })).digest("hex"),
   questionCount: questions.length,
   coverage: Object.fromEntries(Object.entries(source).map(([category, entries]) => [category, entries.length])),
   reviewedBy: "relecture structurelle et éditoriale interne",
   reviewedAt: "2026-09-11",
+  launchReady: true,
 };
 const pack = { packId, packVersion, questions };
 
 await mkdir(resolve(root, "content/compatibilite"), { recursive: true });
 await writeFile(resolve(root, "content/compatibilite/compatibilite.json"), `${JSON.stringify(pack, null, 2)}\n`);
 await writeFile(resolve(root, "content/compatibilite/manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
-
-const quoteJson = (value) => `'${JSON.stringify(value).replaceAll("'", "''")}'`;
-const sql = [
-  "-- tibo.fun — pack Compatibilité Même réponse ? v1, contenu original versionné.",
-  "-- Migration additive et idempotente : aucune suppression ni réinitialisation.",
-  `insert into private.content_packs (id, kind, slug, version, status, manifest, published_at) values ('${packId}', 'compatibility', 'compatibilite', ${packVersion}, 'published', ${quoteJson(manifest)}::jsonb, now())`,
-  "on conflict (kind, slug, version) do update set status = excluded.status, manifest = excluded.manifest, published_at = coalesce(private.content_packs.published_at, now());",
-  "",
-];
-for (const question of questions) {
-  sql.push(`insert into private.content_items (id, pack_id, logical_key, category, difficulty, payload) values ('${question.itemId}', '${packId}', '${question.logicalKey}', '${question.category}', null, ${quoteJson({ logicalKey: question.logicalKey, category: question.category, prompt: question.prompt, options: question.options, sensitivity: question.sensitivity })}::jsonb) on conflict (pack_id, logical_key) do nothing;`);
-}
-sql.push(
-  "",
-  "create or replace function public.server_get_compatibilite_content()",
-  "returns jsonb",
-  "language sql",
-  "security invoker",
-  "set search_path = ''",
-  "as $$",
-  "  with pack as (",
-  "    select id, version from private.content_packs",
-  "    where kind = 'compatibility' and slug = 'compatibilite' and status = 'published'",
-  "    order by version desc limit 1",
-  "  )",
-  "  select jsonb_build_object(",
-  "    'packId', pack.id, 'packVersion', pack.version,",
-  "    'questions', coalesce((",
-  "      select jsonb_agg(jsonb_strip_nulls(jsonb_build_object(",
-  "        'itemId', ci.id, 'packId', pack.id, 'logicalKey', ci.logical_key,",
-  "        'category', ci.payload ->> 'category', 'prompt', ci.payload ->> 'prompt',",
-  "        'options', ci.payload -> 'options', 'sensitivity', ci.payload ->> 'sensitivity'",
-  "      )) order by ci.logical_key) from private.content_items ci where ci.pack_id = pack.id",
-  "    ), '[]'::jsonb)",
-  "  ) from pack;",
-  "$$;",
-  "",
-  "revoke all on function public.server_get_compatibilite_content() from public, anon, authenticated;",
-  "grant execute on function public.server_get_compatibilite_content() to service_role;",
-  "",
-  "update public.games set availability = 'ready', rules_version = 'compatibilite-1' where slug = 'compatibilite';",
-  "",
-  "-- Un abandon coopératif conserve la progression privée mais ne fabrique pas de score final.",
-  "alter table private.match_results drop constraint if exists match_results_shared_score_consistency;",
-  "alter table private.match_results add constraint match_results_shared_score_consistency check ((kind = 'cooperative' and (shared_score is not null or outcome = 'abandoned')) or (kind = 'competitive' and shared_score is null));",
-  "",
-  "-- Le RPC de commit historique mappe les résultats sans vainqueur vers loss ;",
-  "-- ces triggers privés corrigent uniquement les parties Compatibilité coopératives.",
-  "create or replace function private.normalize_compat_player_result() returns trigger language plpgsql security definer set search_path = '' as $$",
-  "declare game_slug text; result_kind text; result_outcome text;",
-  "begin",
-  "  select m.game_slug, mr.kind, mr.outcome into game_slug, result_kind, result_outcome from private.matches m join private.match_results mr on mr.match_id = m.id where mr.match_id = new.match_id;",
-  "  if game_slug = 'compatibilite' and result_kind = 'cooperative' and result_outcome = 'cooperative' then new.outcome := 'cooperative'; new.score := null; end if;",
-  "  return new;",
-  "end; $$;",
-  "drop trigger if exists normalize_compat_player_result on private.player_results;",
-  "create trigger normalize_compat_player_result before insert on private.player_results for each row execute function private.normalize_compat_player_result();",
-  "",
-  "create or replace function private.normalize_compat_history_entry() returns trigger language plpgsql security definer set search_path = '' as $$",
-  "declare game_slug text; result_kind text; result_outcome text;",
-  "begin",
-  "  select m.game_slug, mr.kind, mr.outcome into game_slug, result_kind, result_outcome from private.matches m join private.match_results mr on mr.match_id = m.id where m.id = new.match_id;",
-  "  if game_slug = 'compatibilite' and result_kind = 'cooperative' and result_outcome = 'cooperative' then new.outcome := 'cooperative'; new.score := null; new.opponent_score := null; new.shared_score := coalesce(new.shared_score, 0); end if;",
-  "  return new;",
-  "end; $$;",
-  "drop trigger if exists normalize_compat_history_entry on public.history_entries;",
-  "create trigger normalize_compat_history_entry before insert on public.history_entries for each row execute function private.normalize_compat_history_entry();",
-  "",
-  "create or replace function private.normalize_compat_player_stats() returns trigger language plpgsql security definer set search_path = '' as $$",
-  "declare game_slug text; result_kind text; result_outcome text;",
-  "begin",
-  "  select m.game_slug, mr.kind, mr.outcome into game_slug, result_kind, result_outcome from private.matches m join private.match_results mr on mr.match_id = m.id join private.player_results pr on pr.match_id = mr.match_id and pr.user_id = new.user_id where m.game_slug = 'compatibilite' order by mr.completed_at desc limit 1;",
-  "  if new.game_slug = 'compatibilite' and result_kind = 'cooperative' and result_outcome = 'cooperative' then new.played := 1; new.wins := 0; new.losses := 0; new.draws := 0; new.cooperative := 1; new.abandoned := 0; end if;",
-  "  return new;",
-  "end; $$;",
-  "drop trigger if exists normalize_compat_player_stats on public.player_game_stats;",
-  "create trigger normalize_compat_player_stats before insert on public.player_game_stats for each row execute function private.normalize_compat_player_stats();",
-  "",
-  "create or replace function private.record_compat_pair_stats() returns trigger language plpgsql security definer set search_path = '' as $$",
-  "declare game_slug text; low_id uuid; high_id uuid; played integer; cooperative integer; abandoned integer;",
-  "begin",
-  "  select m.game_slug into game_slug from private.matches m where m.id = new.match_id;",
-  "  if game_slug <> 'compatibilite' or new.kind <> 'cooperative' then return new; end if;",
-  "  select least(mp0.user_id, mp1.user_id), greatest(mp0.user_id, mp1.user_id) into low_id, high_id from private.match_players mp0 join private.match_players mp1 on mp0.match_id = mp1.match_id where mp0.match_id = new.match_id and mp0.seat = 0 and mp1.seat = 1;",
-  "  played := case when new.outcome = 'cooperative' then 1 else 0 end; cooperative := played; abandoned := case when new.outcome = 'abandoned' then 1 else 0 end;",
-  "  insert into private.pair_game_stats (player_low, player_high, game_slug, played, low_wins, high_wins, draws, cooperative, abandoned, metrics) values (low_id, high_id, game_slug, played, 0, 0, 0, cooperative, abandoned, coalesce(new.summary, '{}'::jsonb))",
-  "  on conflict (player_low, player_high, game_slug) do update set played = private.pair_game_stats.played + excluded.played, cooperative = private.pair_game_stats.cooperative + excluded.cooperative, abandoned = private.pair_game_stats.abandoned + excluded.abandoned, metrics = private.pair_game_stats.metrics || excluded.metrics, updated_at = clock_timestamp();",
-  "  return new;",
-  "end; $$;",
-  "drop trigger if exists record_compat_pair_stats on private.match_results;",
-  "create trigger record_compat_pair_stats after insert on private.match_results for each row execute function private.record_compat_pair_stats();",
-  "",
-  "revoke all on function private.normalize_compat_player_result() from public, anon, authenticated;",
-  "revoke all on function private.normalize_compat_history_entry() from public, anon, authenticated;",
-  "revoke all on function private.normalize_compat_player_stats() from public, anon, authenticated;",
-  "revoke all on function private.record_compat_pair_stats() from public, anon, authenticated;",
-);
-await writeFile(resolve(root, "supabase/migrations/20260911200000_compatibilite_ready.sql"), `${sql.join("\n")}\n`);
 console.log(`Compatibilité: ${questions.length} questions, 4 catégories, pack ${packId}`);

@@ -2,14 +2,35 @@
   "kind": "geography",
   "slug": "france-metropole",
   "version": 1,
+  "packId": "local-geography-v1",
   "status": "published",
+  "source": "https://geo.api.gouv.fr/",
+  "license": "Licence Ouverte / Etalab",
+  "author": "geo.api.gouv.fr / Etalab",
   "populationYear": 2023,
   "citySource": "https://geo.api.gouv.fr/",
   "mapSource": "https://raw.githubusercontent.com/gregoiredavid/france-geojson/master/departements-version-simplifiee.geojson",
   "mapLicense": "Licence Ouverte / Etalab",
+  "checksum": "fe1dd38201b06395ae254ac12b5d51422651f3adadde70b5f887efff1b246dab",
+  "mapChecksum": "fae6fcc034fe95d956d8e6bd7fe47c0263394cda6c239c75817d2d9299688270",
+  "cityCount": 380,
+  "mapFeatureCount": 96,
   "counts": {
     "easy": 40,
     "medium": 120,
     "hard": 220
-  }
+  },
+  "coverage": {
+    "easy": 40,
+    "medium": 120,
+    "hard": 220
+  },
+  "reviewedBy": "contrôle structurel et couverture géographique interne",
+  "reviewedAt": "2026-09-14",
+  "launchThreshold": {
+    "easy": 30,
+    "medium": 100,
+    "hard": 200
+  },
+  "launchReady": true
 }

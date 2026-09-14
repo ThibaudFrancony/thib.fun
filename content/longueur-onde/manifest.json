@@ -2,10 +2,12 @@
   "kind": "spectrums",
   "slug": "longueur-onde",
   "version": 1,
+  "packId": "8c7f4d21-3a6e-4b92-9f15-0d28e6a4c753",
   "status": "published",
   "source": "Axes originaux rédigés pour tibo.fun",
   "license": "Contenu original tibo.fun, usage privé",
   "author": "tibo.fun",
+  "checksum": "78534e9a5da393cd49b2796017d2ab4b4bf1e4777520d37830d0647e4a32992e",
   "axisCount": 80,
   "coverage": {
     "quotidien": 30,
@@ -13,5 +15,6 @@
     "absurde": 25
   },
   "reviewedBy": "relecture structurelle et éditoriale interne",
-  "reviewedAt": "2026-09-11"
+  "reviewedAt": "2026-09-11",
+  "launchReady": true
 }
