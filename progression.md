@@ -4,6 +4,7 @@ Dernière mise à jour : 14 septembre 2026
 Branche de référence : `main`
 Référence du cycle de l'étape 3 : `6130c99` — `fix: wire transactional match commits`
 Référence du cycle de l'étape 4 : `9968878` — `fix: restore worker dispatcher and quiz judgments`, poussé sur `origin/main` et vérifié
+Référence du cycle de l'étape 5 : `4d19233` — `fix: correct game rules projections and metrics`, poussé sur `origin/main` et vérifié
 
 Ce fichier décrit la réalité du dépôt et non les seules capacités prévues dans les spécifications. Il complète [AGENTS.md](AGENTS.md), [docs/README.md](docs/README.md) et [docs/07-implementation-status.md](docs/07-implementation-status.md). Les statuts utilisés sont :
 
