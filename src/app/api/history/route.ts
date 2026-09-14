@@ -2,7 +2,7 @@ import { z } from "zod";
 import { getAuthenticatedAccount } from "@/server/auth";
 import { getSupabaseServerConfig } from "@/server/config";
 import { jsonError, jsonOk, mapServerError } from "@/server/http";
-import { getHistory } from "@/server/matches/repository";
+import { getHistoryPage, isValidHistoryCursor } from "@/app/historique/_data";
 
 const querySchema = z.object({
   cursor: z.string().max(512).optional(),
@@ -22,8 +22,9 @@ export async function GET(request: Request) {
     outcome: url.searchParams.get("outcome") ?? undefined,
   });
   if (!parsed.success) return jsonError("INVALID_REQUEST", 400, "Le filtre d'historique est invalide.");
+  if (!isValidHistoryCursor(parsed.data.cursor)) return jsonError("INVALID_REQUEST", 400, "Le curseur d'historique est invalide.");
   try {
-    return jsonOk(await getHistory(account.member.id, parsed.data));
+    return jsonOk(await getHistoryPage(account.member.id, parsed.data));
   } catch (error) {
     return mapServerError(error);
   }

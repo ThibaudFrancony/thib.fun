@@ -2,6 +2,36 @@ import { normalizeBombpartyWord } from "@/games/bombparty/normalize";
 import type { BombpartyContent } from "@/games/bombparty/types";
 
 export const TRAINING_SUGGESTION_LIMIT = 20;
+export const TRAINING_USED_WORD_LIMIT = 200;
+
+/** Ignore une réponse réseau issue d'une requête ou séquence devenue obsolète. */
+export function isCurrentTrainingResponse(
+  requestToken: number,
+  currentToken: number,
+  requestSequence: string | null,
+  currentSequence: string | null,
+): boolean {
+  return requestToken === currentToken && requestSequence === currentSequence;
+}
+
+/**
+ * Le navigateur peut conserver une session d'entraînement, mais jamais une
+ * liste non bornée. La normalisation est répétée ici afin que la limite porte
+ * sur les mots effectivement comparés par le serveur.
+ */
+export function boundTrainingUsedWords(values: readonly unknown[]): string[] {
+  const result: string[] = [];
+  const seen = new Set<string>();
+  for (const value of values) {
+    if (typeof value !== "string") continue;
+    const normalized = normalizeBombpartyWord(value);
+    if (normalized === null || seen.has(normalized)) continue;
+    seen.add(normalized);
+    result.push(normalized);
+    if (result.length >= TRAINING_USED_WORD_LIMIT) break;
+  }
+  return result;
+}
 
 export type TrainingCandidate = {
   display: string;

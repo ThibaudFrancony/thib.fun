@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
   checkTrainingWord,
+  boundTrainingUsedWords,
   hintForTrainingSequence,
+  isCurrentTrainingResponse,
   paginateTrainingCandidates,
   trainingCandidatesFor,
   TRAINING_SUGGESTION_LIMIT,
+  TRAINING_USED_WORD_LIMIT,
 } from "@/games/bombparty/training";
 import type { BombpartyContent } from "@/games/bombparty/types";
 
@@ -70,6 +73,23 @@ describe("pagination des suggestions", () => {
 });
 
 describe("vérification d'entraînement", () => {
+  it("ignore une réponse tardive d'une ancienne requête ou séquence", () => {
+    expect(isCurrentTrainingResponse(4, 4, "ch", "ch")).toBe(true);
+    expect(isCurrentTrainingResponse(3, 4, "ch", "ch")).toBe(false);
+    expect(isCurrentTrainingResponse(4, 4, "ch", "te")).toBe(false);
+  });
+
+  it("borne les mots utilisés après normalisation et déduplication", () => {
+    const letters = "abcdefghijklmnopqrstuvwxyz";
+    const values = Array.from({ length: 250 }, (_, index) => `mot${String(index).split("").map((digit) => letters[Number(digit)]).join("")}`);
+    values.push("MOTA", "motb");
+    const bounded = boundTrainingUsedWords(values);
+    expect(TRAINING_USED_WORD_LIMIT).toBe(200);
+    expect(bounded).toHaveLength(200);
+    expect(new Set(bounded).size).toBe(200);
+    expect(bounded.slice(0, 2)).toEqual(["mota", "motb"]);
+  });
+
   it("accepte un mot valide et signale les doublons de session", () => {
     expect(checkTrainingWord(CONTENT, "ch", "chat", new Set())).toEqual({ valid: true, normalized: "chat" });
     expect(checkTrainingWord(CONTENT, "ch", "CHÂTEAU", new Set())).toEqual({ valid: true, normalized: "chateau" });

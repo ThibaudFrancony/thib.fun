@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
 import { getAuthenticatedAccount } from "@/server/auth";
+import { ProfileEditor } from "./profile-editor";
 
 export const dynamic = "force-dynamic";
 
 export default async function ProfilePage() {
   const account = await getAuthenticatedAccount();
   if (!account) {
-    return <main className="min-h-screen"><SiteHeader /><div className="mx-auto max-w-xl px-5 py-16 text-center"><h1 className="text-4xl font-black">Ton compte</h1><p className="mt-4 text-[var(--muted)]">Connecte-toi pour retrouver ton espace personnel.</p><Link href="/connexion" className="mt-7 inline-flex rounded-full bg-[var(--green)] px-5 py-3 font-bold text-white">Se connecter</Link></div></main>;
+    return <main className="min-h-screen"><SiteHeader /><div className="mx-auto max-w-xl px-5 py-16 text-center"><h1 className="text-4xl font-black">Ton compte</h1><p className="mt-4 text-[var(--muted)]">Connecte-toi pour retrouver ton espace personnel.</p><div className="mt-7 flex flex-wrap justify-center gap-3"><Link href="/connexion" className="inline-flex rounded-full bg-[var(--green)] px-5 py-3 font-bold text-white">Se connecter</Link><Link href="/profil/mot-de-passe" className="inline-flex rounded-full border border-[var(--line)] bg-white px-5 py-3 font-bold">Mot de passe oublié ?</Link></div></div></main>;
   }
 
   if (account.isGuest) {
@@ -27,6 +28,11 @@ export default async function ProfilePage() {
             <div className="rounded-2xl bg-[var(--paper-deep)] p-4"><dt className="text-xs font-black uppercase tracking-[0.12em] text-[var(--muted)]">Pseudo</dt><dd className="mt-2 font-bold">{account.member.pseudo}</dd></div>
           </dl>
           <p className="mt-6 text-[var(--muted)]">Ton compte est actif. Tu peux créer ou rejoindre une table depuis la page Jeux.</p>
+          <ProfileEditor pseudo={account.member.pseudo} avatarPreset={account.member.avatarPreset} avatarPath={account.member.avatarPath} />
+          <div className="mt-7 flex flex-wrap gap-3 border-t border-[var(--line)] pt-6">
+            <Link href="/profil/mot-de-passe" className="inline-flex min-h-11 items-center rounded-full border border-[var(--line)] bg-white px-5 py-3 font-bold">Sécurité et mot de passe</Link>
+            <Link href="/historique" className="inline-flex min-h-11 items-center rounded-full border border-[var(--line)] bg-white px-5 py-3 font-bold">Voir mon historique</Link>
+          </div>
         </section>
       </div>
     </main>

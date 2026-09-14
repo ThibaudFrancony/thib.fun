@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { normalizeBombpartySequence, normalizeBombpartyWord } from "@/games/bombparty/normalize";
-import { checkTrainingWord } from "@/games/bombparty/training";
+import { normalizeBombpartySequence } from "@/games/bombparty/normalize";
+import { boundTrainingUsedWords, checkTrainingWord } from "@/games/bombparty/training";
 import { getAuthenticatedMember } from "@/server/auth";
 import { loadBombpartyContent, hasActiveBombpartyMatch } from "@/server/bombparty/content";
 import { getSupabaseServerConfig } from "@/server/config";
@@ -29,11 +29,7 @@ export async function POST(request: Request) {
   try {
     if (await hasActiveBombpartyMatch(member.id)) return jsonError("TRAINING_BLOCKED_DURING_MATCH", 409, "Termine ta partie Syllabe Express en cours avant de t'entraîner.");
     const content = await loadBombpartyContent();
-    const used = new Set<string>();
-    for (const raw of body.data.usedWords ?? []) {
-      const normalized = normalizeBombpartyWord(raw);
-      if (normalized !== null) used.add(normalized);
-    }
+    const used = new Set(boundTrainingUsedWords(body.data.usedWords ?? []));
     const checked = checkTrainingWord(content, sequence, body.data.word, used);
     if (!checked.valid) return jsonOk({ valid: false, reason: checked.reason });
     return jsonOk({ valid: true, normalized: checked.normalized });
