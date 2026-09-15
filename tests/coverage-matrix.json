@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-09-14",
+  "updatedAt": "2026-09-15",
   "entries": [
     {
       "id": "unit-and-contracts",
@@ -12,25 +12,25 @@
       "id": "home-and-guest-browser",
       "label": "Accueil et session invitée",
       "status": "pass",
-      "evidence": "Playwright : accueil et dialogue invité passent sur les navigateurs configurés ; la session anonyme complète est exercée dans le job CI avec Supabase local."
+      "evidence": "Playwright local : l'accueil et l'avertissement invité passent sur Chromium et mobile ; la session anonyme complète reste réservée au job CI et a été sautée hors CI."
     },
     {
       "id": "multiplayer-browser",
       "label": "E2E multijoueur avec deux comptes",
-      "status": "blocked",
-      "reason": "E2E_PASSWORD n'est pas fourni dans cet environnement ; la CI échoue maintenant explicitement au lieu d'ignorer les scénarios."
+      "status": "fail",
+      "evidence": "Recette locale avec deux comptes permanents éphémères : 30 tests passent, 12 échouent et 2 sont sautés sur 44 exécutions Chromium/mobile. Les régressions réseau et les scénarios UNO simulés passent ; plusieurs parcours métier restent en échec au démarrage ou pendant la propagation de phase."
     },
     {
       "id": "database-pgtap",
       "label": "Migrations et tests pgTAP isolés",
-      "status": "blocked",
-      "reason": "La CLI Supabase ne peut pas joindre PostgreSQL local sur 127.0.0.1:54322 (operation not permitted) et le socket Docker Desktop est absent ; aucun test pgTAP/runtime n'a été exécuté et aucune base distante n'a été modifiée."
+      "status": "pass",
+      "evidence": "Docker local sain ; migrations locales à jour après application de la seule migration Step6 en attente ; les 5 fichiers pgTAP passent avec 168 assertions. Le fichier Step5 versionné a dû être fourni via une copie temporaire identique à cause d'un I/O local psql ; aucune base distante n'a été modifiée."
     },
     {
       "id": "local-fixture-identities",
       "label": "Alice, Bob, invité et tiers non membre",
-      "status": "blocked",
-      "reason": "Le fixture local ne peut pas être provisionné sans Supabase local ; le script prépare désormais Alice/Bob actifs et Mallory désactivé dès que Docker est disponible."
+      "status": "pass",
+      "evidence": "Fixture local préparé dans Docker : 3 profils, 2 membres actifs (Alice/Bob) et 1 tiers désactivé (Mallory). Le mot de passe était éphémère et n'a pas été conservé ni affiché ; la session invitée complète n'a pas été lancée hors CI."
     },
     {
       "id": "deepseek-fixture",
@@ -41,9 +41,8 @@
     {
       "id": "common-contracts",
       "label": "Dispatcher, échéance, reçus, présence et triggers",
-      "status": "blocked",
-      "evidence": "Les assertions structurelles de la migration corrective et les tests SQL runtime sont versionnés ; les tests applicatifs passent. La validation pgTAP/runtime et la concurrence PostgreSQL à deux sessions restent bloquées par l'absence de PostgreSQL/Docker local, et la migration corrective n'est pas appliquée à distance.",
-      "reason": "La preuve SQL comportementale ne peut pas être exécutée dans cet environnement ; ne pas confondre les assertions statiques passées avec une validation PostgreSQL ou distante."
+      "status": "pass",
+      "evidence": "Tests SQL locaux : 5 fichiers, 168 assertions ; `supabase db lint --local` termine sans erreur de schéma, avec seulement des avertissements PL/pgSQL non bloquants. La migration Step6 a été appliquée uniquement au PostgreSQL Docker local ; aucune validation distante n'est revendiquée."
     },
     {
       "id": "uno-browser-regressions",
@@ -61,10 +60,10 @@
       "id": "nine-game-complete-run",
       "label": "Partie complète des neuf jeux à deux sessions",
       "status": "blocked",
-      "reason": "La précondition de l'étape 9 n'est pas démontrée : l'étape 8 indique explicitement qu'elle n'est pas validée avec deux comptes permanents ; E2E_PASSWORD manque pour les deux comptes indépendants, et les parcours avancés de salon restent désactivés faute de RPC server_change_room et de projection serveur hostId/expiresAt. Aucun scénario des neuf jeux n'a été lancé.",
-      "checkedAt": "2026-09-14",
-      "commit": "898fa9144b9ede988e6b2e21be65121a4f65654a",
-      "environment": "Dépôt local main ; recette isolée Supabase/navigateurs non démarrée",
+      "reason": "La gate de l'étape 8 reste bloquée : `server_change_room` n'est pas disponible dans les migrations locales et la projection salon ne fournit pas encore `hostId`/`expiresAt`. Une exécution Playwright locale préliminaire a bien utilisé deux comptes, mais elle a produit 30 pass, 12 fail et 2 skip ; elle ne couvre pas les neuf parcours jusqu'à l'historique et ne vaut donc pas validation de l'étape 9. Identifiants de session de recette non enregistrés.",
+      "checkedAt": "2026-09-15",
+      "commit": "70a962e623bcdf7c18e57fab934b56fa735b55b5",
+      "environment": "Docker Desktop local, Supabase/PostgreSQL isolé, Next sur 127.0.0.1:3000, deux projets Playwright Chromium/mobile ; aucune mutation distante",
       "sessionIds": []
     }
   ]
