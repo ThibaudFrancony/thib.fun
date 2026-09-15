@@ -202,8 +202,16 @@ select ok(
   (
     select position('from private.room_command_receipts' in lower(source))
       > position('for update' in lower(source))
-      and lower(source) like '%v_receipt_actor is distinct from p_actor%'
-      and lower(source) like '%v_receipt_hash is distinct from v_expected_hash%'
+      and (
+        (
+          lower(source) like '%v_receipt_actor is distinct from p_actor%'
+          and lower(source) like '%v_receipt_hash is distinct from v_expected_hash%'
+        )
+        or (
+          lower(source) like '%v_receipt.actor_id is distinct from p_actor%'
+          and lower(source) like '%v_receipt.payload_hash is distinct from v_hash%'
+        )
+      )
     from step3_function_sources where name = 'room_ready'
   ),
   'Concurrence READY : le replay du salon est vérifié sous verrou'

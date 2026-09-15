@@ -19,6 +19,10 @@ function sqlJson(value) {
   return `${sqlString(JSON.stringify(value))}::jsonb`;
 }
 
+function checksumCities(value) {
+  return createHash("sha256").update(JSON.stringify([...value].sort((left, right) => left.inseeCode < right.inseeCode ? -1 : left.inseeCode > right.inseeCode ? 1 : 0))).digest("hex");
+}
+
 function stableUuid(value) {
   const bytes = createHash("sha256").update(value).digest().subarray(0, 16);
   bytes[6] = (bytes[6] & 0x0f) | 0x50;
@@ -44,7 +48,7 @@ const manifest = {
   cityCount: cities.length,
   reviewedBy: "contrôle structurel et couverture géographique interne",
   reviewedAt: "2026-09-14",
-  checksum: createHash("sha256").update(JSON.stringify(cities)).digest("hex"),
+  checksum: checksumCities(cities),
 };
 const databaseManifest = { ...manifest, packId };
 

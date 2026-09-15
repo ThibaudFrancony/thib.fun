@@ -11,6 +11,10 @@ const [cities, manifest, map] = await Promise.all([
   readFile(resolve(contentRoot, "france-departments.geojson"), "utf8").then(JSON.parse),
 ]);
 
+function checksumCities(value) {
+  return checksumJson([...value].sort((left, right) => left.inseeCode < right.inseeCode ? -1 : left.inseeCode > right.inseeCode ? 1 : 0));
+}
+
 if (!Array.isArray(cities) || cities.length === 0) throw new Error("cities.json est vide ou invalide");
 const requiredCounts = { easy: 30, medium: 100, hard: 200 };
 const counts = Object.fromEntries(Object.keys(requiredCounts).map((difficulty) => [
@@ -48,7 +52,7 @@ for (const difficulty of Object.keys(requiredCounts)) {
     throw new Error(`Manifest incohérent pour ${difficulty}`);
   }
 }
-if (manifest.cityCount !== cities.length || manifest.checksum !== checksumJson(cities)) throw new Error("Checksum ou quantité des villes incohérent");
+if (manifest.cityCount !== cities.length || manifest.checksum !== checksumCities(cities)) throw new Error("Checksum ou quantité des villes incohérent");
 if (map.type !== "FeatureCollection" || !Array.isArray(map.features) || map.features.length < 96) {
   throw new Error("La carte doit contenir la métropole et la Corse");
 }

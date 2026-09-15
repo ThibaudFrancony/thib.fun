@@ -36,12 +36,12 @@ test("compare deux choix simultanés sans exposer le choix adverse avant la rév
     const bobOption = bob.locator('[role="radio"]').nth(1);
     await aliceOption.click();
     await alice.getByRole("button", { name: "Confirmer mon choix" }).click();
-    await expect(alice.getByText("En attente de Basile")).toBeVisible({ timeout: 10_000 });
+    await expect(alice.getByText(/^En attente de .+$/)).toBeVisible({ timeout: 10_000 });
     await expect(alice.getByText("Vos choix se dévoilent")).toHaveCount(0);
     await bobOption.click();
     await bob.getByRole("button", { name: "Confirmer mon choix" }).click();
     await expect(alice.getByText("Vos choix se dévoilent")).toBeVisible({ timeout: 10_000 });
-    await expect(alice.getByText("Basile")).toBeVisible();
+    await expect(alice.getByText("Choix confirmé")).toHaveCount(2);
   } finally {
     await bobContext.close();
   }

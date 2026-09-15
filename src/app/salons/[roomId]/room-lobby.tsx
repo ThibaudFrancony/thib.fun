@@ -64,6 +64,7 @@ export function RoomLobby({ roomId, roomManagementEnabled }: { roomId: string; r
     getResourceId: (snapshot) => snapshot.roomId,
     getPhaseId: (snapshot) => snapshot.currentMatchId ?? snapshot.status,
     isFinished: (snapshot) => snapshot.status === "closed" || snapshot.currentMatchId !== null,
+    versionConflictRetries: 3,
     buildCommand: ({ commandId, expectedVersion, action }) => {
       if (action.type === "SET_READY") {
         return {
@@ -78,6 +79,9 @@ export function RoomLobby({ roomId, roomManagementEnabled }: { roomId: string; r
         url: `/salons/${roomId}/actions`,
         body: { commandId, expectedVersion, action },
       };
+    },
+    onCommandAccepted: (data, action) => {
+      if (action.type === "LEAVE" && typeof data.gameSlug === "string") router.push(`/jeux/${data.gameSlug}`);
     },
     onSnapshotApplied,
   });

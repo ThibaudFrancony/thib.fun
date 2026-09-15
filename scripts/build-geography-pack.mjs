@@ -120,6 +120,7 @@ const cities = [
 ];
 const map = filterMap(await fetchJson(MAP_URL));
 const checksumJson = (value) => createHash("sha256").update(JSON.stringify(value)).digest("hex");
+const checksumCities = (value) => checksumJson([...value].sort((left, right) => left.inseeCode < right.inseeCode ? -1 : left.inseeCode > right.inseeCode ? 1 : 0));
 const packId = "local-geography-v1";
 const outputDirectory = resolve(ROOT, "content/geography");
 await mkdir(outputDirectory, { recursive: true });
@@ -140,7 +141,7 @@ await writeFile(
     citySource: SOURCE_URL,
     mapSource: MAP_URL,
     mapLicense: MAP_LICENSE,
-    checksum: checksumJson(cities),
+    checksum: checksumCities(cities),
     mapChecksum: checksumJson(map),
     cityCount: cities.length,
     mapFeatureCount: map.features.length,

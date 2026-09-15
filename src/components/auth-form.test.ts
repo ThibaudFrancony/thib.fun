@@ -38,4 +38,11 @@ describe("auth-form navigation post-authentification", () => {
       expect(safeNextForOrigin(value, origin)).toBe("/");
     }
   });
+
+  it("attend l'hydratation avant d'autoriser les actions d'authentification", () => {
+    const source = readAuthForm();
+    expect(source).toContain("useSyncExternalStore");
+    expect(source).toContain("data-auth-hydrated={hydrated}");
+    expect(source).toContain("disabled={busy || !hydrated}");
+  });
 });

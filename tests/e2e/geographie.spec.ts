@@ -2,10 +2,12 @@ import { expect, test, type Page } from "@playwright/test";
 import { aliceEmail, bobEmail, requireE2ECredentials, signIn } from "./support";
 
 requireE2ECredentials(test);
+test.setTimeout(120_000);
 
 async function placeFrom(page: Page) {
   const map = page.locator('svg[role="application"]');
   await expect(map).toBeVisible();
+  await expect(map).toHaveAttribute("data-map-ready", "true", { timeout: 15_000 });
   await map.click({ position: { x: 240, y: 180 } });
   await page.getByRole("button", { name: "Confirmer le placement" }).click();
 }

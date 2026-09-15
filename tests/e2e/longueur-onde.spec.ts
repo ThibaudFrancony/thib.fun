@@ -41,12 +41,14 @@ test("alterne indices et estimations sur six manches", async ({ browser, page: a
       await cluePage.getByLabel("Ton indice").fill("Un café tout juste servi");
       await cluePage.getByRole("button", { name: "Envoyer l'indice" }).click();
       const guessPage = cluePage === alice ? bob : alice;
-      await expect(guessPage.getByLabel("Position sur l'axe")).toBeVisible({ timeout: 15_000 });
-      await guessPage.getByLabel("Position sur l'axe").fill("50");
+      await expect(guessPage.getByLabel("Place ton aiguille")).toBeVisible({ timeout: 15_000 });
+      await guessPage.getByLabel("Place ton aiguille").fill("50");
       await guessPage.getByRole("button", { name: "Valider ma position" }).click();
       await expect(alice.getByText("La cible se révèle")).toBeVisible({ timeout: 15_000 });
-      await clickWhenPresent(alice, "Continuer");
-      await clickWhenPresent(bob, "Continuer");
+      await Promise.all([
+        clickWhenPresent(alice, "Continuer"),
+        clickWhenPresent(bob, "Continuer"),
+      ]);
     }
     await expect(alice.getByText("Résultat commun")).toBeVisible({ timeout: 15_000 });
     await expect(bob.getByText("Résultat commun")).toBeVisible({ timeout: 15_000 });

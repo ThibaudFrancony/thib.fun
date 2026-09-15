@@ -39,12 +39,13 @@ const roomActionRequestSchema = z.object({
   action: roomActionSchema,
 }).strict();
 
-const roomErrorResponses: Readonly<Record<string, { code: "UNAUTHORIZED" | "ROOM_CLOSED" | "ROOM_NOT_WAITING" | "HOST_REQUIRED" | "ROOM_FULL" | "VERSION_CONFLICT"; status: number; message: string }>> = {
+const roomErrorResponses: Readonly<Record<string, { code: "UNAUTHORIZED" | "ROOM_CLOSED" | "ROOM_NOT_WAITING" | "HOST_REQUIRED" | "ROOM_FULL" | "VERSION_CONFLICT" | "ROOM_TARGET_NOT_MEMBER"; status: number; message: string }>> = {
   NOT_A_ROOM_MEMBER: { code: "UNAUTHORIZED", status: 403, message: "Tu ne participes plus à ce salon." },
   ROOM_EXPIRED: { code: "ROOM_CLOSED", status: 409, message: "Ce salon est fermé ou expiré." },
   ROOM_NOT_WAITING: { code: "ROOM_NOT_WAITING", status: 409, message: "Ce salon n'attend plus de joueurs." },
   HOST_REQUIRED: { code: "HOST_REQUIRED", status: 403, message: "Seul l'hôte peut effectuer cette action." },
   ROOM_FULL: { code: "ROOM_FULL", status: 409, message: "Ce salon est déjà complet." },
+  ROOM_TARGET_NOT_MEMBER: { code: "ROOM_TARGET_NOT_MEMBER", status: 422, message: "Choisis un autre participant du salon." },
   VERSION_CONFLICT: { code: "VERSION_CONFLICT", status: 409, message: "Le salon a changé. Recharge la page avant de réessayer." },
 };
 
@@ -67,9 +68,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ roo
   if (!body.success) return jsonError("INVALID_REQUEST", 400, "La commande du salon est invalide.");
 
   try {
-    // Cette route cible la RPC atomique du contrat commun. Tant que cette RPC
-    // n'existe pas dans l'environnement, l'appel échoue fermé via mapServerError;
-    // aucun changement local ne simule une sortie ou un transfert d'hôte.
+    // La RPC verrouille le salon, vérifie la version et conserve le reçu de
+    // commande ; le navigateur ne simule aucune sortie ni transfert d'hôte.
     const response = await createAdminClient().rpc("server_change_room", {
       p_actor: member.id,
       p_command_id: body.data.commandId,

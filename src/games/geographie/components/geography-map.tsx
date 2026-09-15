@@ -151,7 +151,7 @@ export function GeographyMap({ view, interactive, pendingPoint, onPendingPointCh
     <div className="geo-map-toolbar"><span>Carte muette · métropole + Corse</span><span aria-live="polite">{pendingPoint ? "Point prêt à confirmer" : "Clique ou appuie sur Entrée"}</span></div>
     {mapLoading && !map && <p className="geo-map-loading" role="status">Chargement de la carte…</p>}
     {mapError && <GeographyMapLoadError onRetry={() => { setMapLoading(true); setMapError(false); setMapRequestKey((current) => current + 1); }} />}
-    <svg ref={svgRef} role="application" aria-label="Carte muette de la France métropolitaine. Les flèches déplacent le curseur de cinq pixels, Maj de vingt pixels, et Entrée pose le point." tabIndex={0} viewBox={`0 0 ${size.width} ${size.height}`} className="geo-map-svg" onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={() => { dragRef.current = null; }} onWheel={onWheel} onKeyDown={onKeyDown}>
+    <svg ref={svgRef} role="application" aria-label="Carte muette de la France métropolitaine. Les flèches déplacent le curseur de cinq pixels, Maj de vingt pixels, et Entrée pose le point." aria-busy={mapLoading} data-map-ready={map ? "true" : "false"} tabIndex={0} viewBox={`0 0 ${size.width} ${size.height}`} className="geo-map-svg" onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={() => { dragRef.current = null; }} onWheel={onWheel} onKeyDown={onKeyDown}>
       <g transform={transform}>
         {path && <path d={path} fill="#684c8d" stroke="#d2b3f1" strokeWidth={1.1 / viewport.scale} vectorEffect="non-scaling-stroke" />}
       </g>

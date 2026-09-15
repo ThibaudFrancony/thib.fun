@@ -1,4 +1,4 @@
-import type { Page } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
 
 type PlaywrightTest = typeof import("@playwright/test").test;
 
@@ -25,6 +25,7 @@ export function requireE2ECredentials(test: PlaywrightTest): void {
 export async function signIn(page: Page, email: string, nextPath?: string): Promise<void> {
   if (!e2ePassword) throw new Error("E2E_PASSWORD est requis pour ouvrir une session multijoueur.");
   await page.goto("/connexion");
+  await expect(page.locator("form")).toHaveAttribute("data-auth-hydrated", "true");
   await page.getByRole("textbox", { name: "E-mail" }).fill(email);
   await page.getByRole("textbox", { name: "Mot de passe" }).fill(e2ePassword);
   await page.getByRole("button", { name: "Entrer à la table" }).click();

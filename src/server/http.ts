@@ -42,6 +42,8 @@ const PUBLIC_ERROR_DEFINITIONS: Readonly<Record<string, PublicErrorDefinition>> 
   ROOM_NOT_FOUND: { status: 404, message: "Salon introuvable." },
   ROOM_CLOSED: { status: 409, message: "Ce salon est fermé ou expiré." },
   ROOM_FULL: { status: 409, message: "Ce salon est déjà complet." },
+  ROOM_TARGET_NOT_MEMBER: { status: 422, message: "Choisis un autre participant du salon." },
+  INVALID_ROOM_ACTION: { status: 400, message: "L'action du salon est invalide." },
   MATCH_NOT_FOUND: { status: 404, message: "Partie introuvable." },
   MATCH_NOT_ACTIVE: { status: 409, message: "Cette partie est terminée." },
   NOT_A_PARTICIPANT: { status: 403, message: "Tu ne participes pas à cette partie." },

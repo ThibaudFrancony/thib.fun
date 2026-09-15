@@ -55,6 +55,9 @@ export type ResourceNetworkOptions<TSnapshot extends VersionedSnapshot, TAction>
     snapshot: TSnapshot;
   }) => NetworkCommandRequest;
   retryOnVersionConflict?: boolean;
+  /** Number of safe same-phase retries after a stale snapshot (default: 1). */
+  versionConflictRetries?: number;
+  onCommandAccepted?: (data: Record<string, unknown>, action: TAction) => void;
   onSnapshotApplied?: (next: TSnapshot, previous: TSnapshot | null) => void;
 };
 
@@ -288,9 +291,20 @@ export function useResourceNetwork<TSnapshot extends VersionedSnapshot, TAction>
     const options = optionsRef.current;
     const generation = generationRef.current;
     const resourceId = resourceIdRef.current;
-    const inFlight = refreshInFlightRef.current;
-    if (inFlight && !refreshOptions.force) return inFlight.promise;
-    if (inFlight && refreshOptions.force) inFlight.controller.abort();
+    let rereadAfterStaleInFlight = false;
+    while (refreshInFlightRef.current) {
+      const inFlight = refreshInFlightRef.current;
+      const loaded = await inFlight.promise;
+      if (generation !== generationRef.current || resourceId !== resourceIdRef.current) return currentResource();
+      const minimumVersionReached = refreshOptions.minimumVersion === undefined
+        || (loaded !== null && loaded.version >= refreshOptions.minimumVersion);
+      if (!refreshOptions.force || minimumVersionReached || rereadAfterStaleInFlight) return loaded;
+      // A forced reread used for a version-conflict retry must not inherit a
+      // pre-commit GET. Wait for it, then perform one fresh GET. Other forced
+      // refreshes simply share the in-flight request instead of aborting it.
+      rereadAfterStaleInFlight = true;
+    }
+    if (generation !== generationRef.current || resourceId !== resourceIdRef.current) return currentResource();
 
     const controller = new AbortController();
     const operation = {
@@ -410,12 +424,17 @@ export function useResourceNetwork<TSnapshot extends VersionedSnapshot, TAction>
 
     try {
       let expectedVersion = pending.expectedVersion;
-      for (let attempt = 0; attempt < 2; attempt += 1) {
+      let requestSnapshot = base;
+      const versionConflictRetries = Math.min(
+        4,
+        Math.max(0, Number.isSafeInteger(options.versionConflictRetries) ? options.versionConflictRetries ?? 1 : 1),
+      );
+      for (let attempt = 0; attempt <= versionConflictRetries; attempt += 1) {
         const request = options.buildCommand({
           commandId: pending.commandId,
           expectedVersion,
           action,
-          snapshot: base,
+          snapshot: requestSnapshot,
         });
         let response: Response;
         let data: unknown;
@@ -442,6 +461,7 @@ export function useResourceNetwork<TSnapshot extends VersionedSnapshot, TAction>
             void refresh({ force: true });
             return null;
           }
+          options.onCommandAccepted?.(data, action);
           const committedVersion = responseVersion(data);
           setPending(null);
           const next = await refresh({ force: true, minimumVersion: committedVersion ?? undefined });
@@ -454,14 +474,15 @@ export function useResourceNetwork<TSnapshot extends VersionedSnapshot, TAction>
         const code = isRecord(data) && isRecord(data.error) && typeof data.error.code === "string" ? data.error.code : null;
         if (
           code === "VERSION_CONFLICT"
-          && attempt === 0
+          && attempt < versionConflictRetries
           && options.retryOnVersionConflict !== false
         ) {
-          const latest = await refresh({ force: true });
+          const latest = await refresh({ force: true, minimumVersion: expectedVersion + 1 });
           if (generation !== generationRef.current || resourceId !== resourceIdRef.current) return null;
           const latestPhaseId = latest ? options.getPhaseId?.(latest) ?? null : null;
           if (latest && latestPhaseId === phaseId && !options.isFinished(latest)) {
             expectedVersion = latest.version;
+            requestSnapshot = latest;
             setPending({ ...pending, expectedVersion });
             continue;
           }

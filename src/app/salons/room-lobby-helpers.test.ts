@@ -8,10 +8,12 @@ function room(overrides: Partial<RoomViewWithMetadata> = {}): RoomViewWithMetada
   return {
     roomId: "00000000-0000-4000-8000-000000000010",
     code: "ABC234",
+    hostId: firstId,
     gameSlug: "geographie",
     config: {},
     status: "waiting",
     version: 2,
+    expiresAt: "2026-09-14T13:00:00.000Z",
     currentMatchId: null,
     members: [
       { id: firstId, pseudo: "A", isGuest: false, seat: 0, ready: false },

@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useCallback, useState } from "react";
+import { Suspense, useCallback, useState, useSyncExternalStore } from "react";
 import { useSearchParams } from "next/navigation";
 import { GuestWarningDialog } from "@/components/guest-warning-dialog";
 import { isAnonymousUser } from "@/lib/auth-identity";
@@ -8,6 +8,9 @@ import { getBrowserSupabase } from "@/lib/supabase-browser";
 
 const CONTROL_CHARACTERS = /[\u0000-\u001f\u007f-\u009f\u2028\u2029]/u;
 const SAFE_ROUTE_PREFIXES = ["/profil", "/salons", "/parties", "/jeux", "/historique", "/entrainement"];
+const subscribeToHydration = () => () => undefined;
+const getClientHydrationSnapshot = () => true;
+const getServerHydrationSnapshot = () => false;
 
 function decodeNext(value: string): string | null {
   let decoded = value;
@@ -67,6 +70,7 @@ function AuthFormFields({ initialMode }: { initialMode: "signIn" | "signUp" }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  const hydrated = useSyncExternalStore(subscribeToHydration, getClientHydrationSnapshot, getServerHydrationSnapshot);
   const [guestWarningOpen, setGuestWarningOpen] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -172,7 +176,7 @@ function AuthFormFields({ initialMode }: { initialMode: "signIn" | "signUp" }) {
   const callbackError = searchParams.get("error") === "confirmation";
 
   return (
-    <form onSubmit={submit} className="rounded-[1.5rem] border border-[var(--line)] bg-[var(--card)] p-6 shadow-[0_12px_30px_rgba(20,33,29,0.06)]">
+    <form data-auth-hydrated={hydrated} onSubmit={submit} className="rounded-[1.5rem] border border-[var(--line)] bg-[var(--card)] p-6 shadow-[0_12px_30px_rgba(20,33,29,0.06)]">
       <div className="mb-6 flex rounded-full bg-[var(--paper-deep)] p-1 text-sm font-bold"><button type="button" aria-pressed={mode === "signIn"} onClick={() => setMode("signIn")} className={`min-h-11 flex-1 rounded-full px-3 py-2 ${mode === "signIn" ? "bg-white shadow-sm" : "text-[var(--muted)]"}`}>Se connecter</button><button type="button" aria-pressed={mode === "signUp"} onClick={() => setMode("signUp")} className={`min-h-11 flex-1 rounded-full px-3 py-2 ${mode === "signUp" ? "bg-white shadow-sm" : "text-[var(--muted)]"}`}>Créer un compte</button></div>
       <label className="block text-sm font-bold" htmlFor="email">E-mail</label>
       <input id="email" required type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} className="mt-2 w-full rounded-xl border border-[var(--line)] bg-white px-4 py-3 outline-none focus:border-[var(--green)]" />
@@ -181,8 +185,8 @@ function AuthFormFields({ initialMode }: { initialMode: "signIn" | "signUp" }) {
       {callbackError && <p role="alert" className="mt-4 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">Le lien de confirmation est invalide ou expiré. Demande un nouvel e-mail puis réessaie.</p>}
       {error && <p role="alert" className="mt-4 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
       {notice && <p role="status" className="mt-4 rounded-xl bg-[var(--green)]/10 px-3 py-2 text-sm text-[var(--green-dark)]">{notice}</p>}
-      <button disabled={busy} className="mt-6 w-full rounded-full bg-[var(--green)] px-4 py-3 font-bold text-white hover:bg-[var(--green-dark)]">{busy ? "Un instant…" : mode === "signIn" ? "Entrer à la table" : "Créer le compte"}</button>
-      {mode === "signUp" && <div className="mt-6 border-t border-[var(--line)] pt-5 text-center"><p className="text-sm text-[var(--muted)]">Tu veux simplement jouer&nbsp;?</p><button type="button" disabled={busy} onClick={() => setGuestWarningOpen(true)} className="mt-3 min-h-11 rounded-full border border-[var(--green)] px-4 py-3 text-sm font-bold text-[var(--green)] hover:bg-[var(--green)]/10">Continuer en tant qu&apos;invité</button></div>}
+      <button disabled={busy || !hydrated} className="mt-6 w-full rounded-full bg-[var(--green)] px-4 py-3 font-bold text-white hover:bg-[var(--green-dark)]">{busy ? "Un instant…" : mode === "signIn" ? "Entrer à la table" : "Créer le compte"}</button>
+      {mode === "signUp" && <div className="mt-6 border-t border-[var(--line)] pt-5 text-center"><p className="text-sm text-[var(--muted)]">Tu veux simplement jouer&nbsp;?</p><button type="button" disabled={busy || !hydrated} onClick={() => setGuestWarningOpen(true)} className="mt-3 min-h-11 rounded-full border border-[var(--green)] px-4 py-3 text-sm font-bold text-[var(--green)] hover:bg-[var(--green)]/10">Continuer en tant qu&apos;invité</button></div>}
       {guestWarningOpen && <GuestWarningDialog busy={busy} onCancel={closeGuestWarning} onConfirm={() => void continueAsGuest()} />}
     </form>
   );

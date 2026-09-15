@@ -1,30 +1,30 @@
 {
   "version": 1,
-  "updatedAt": "2026-09-15",
+  "updatedAt": "2026-09-16",
   "entries": [
     {
       "id": "unit-and-contracts",
       "label": "Unitaires et contrats serveur",
       "status": "pass",
-      "evidence": "Vitest direct avec le binaire versionné : 59 fichiers, 424 tests réussis et 2 sentinelles d'échec attendu ; les contrats, projections et garde-fous de reprise sont exécutés."
+      "evidence": "Vitest direct avec le binaire versionné : 59 fichiers, 425 tests réussis et 2 sentinelles d'échec attendu ; les contrats, projections, garde-fous de reprise et l'hydratation du formulaire sont exécutés."
     },
     {
       "id": "home-and-guest-browser",
       "label": "Accueil et session invitée",
       "status": "pass",
-      "evidence": "Playwright local : l'accueil et l'avertissement invité passent sur Chromium et mobile ; la session anonyme complète reste réservée au job CI et a été sautée hors CI."
+      "evidence": "Playwright local : l'accueil et l'avertissement invité passent sur Chromium et mobile ; la session anonyme complète reste réservée au job CI et a été sautée hors CI dans les deux profils."
     },
     {
       "id": "multiplayer-browser",
       "label": "E2E multijoueur avec deux comptes",
-      "status": "fail",
-      "evidence": "Recette locale avec deux comptes permanents éphémères : 30 tests passent, 12 échouent et 2 sont sautés sur 44 exécutions Chromium/mobile. Les régressions réseau et les scénarios UNO simulés passent ; plusieurs parcours métier restent en échec au démarrage ou pendant la propagation de phase."
+      "status": "pass",
+      "evidence": "Recette locale avec deux comptes permanents éphémères : desktop 21 tests réussis et 1 scénario sauté ; mobile 21 tests réussis et 1 scénario sauté. Les deux scénarios sautés sont la session anonyme complète, explicitement réservée à la CI ; les parcours multijoueurs et régressions ciblées passent."
     },
     {
       "id": "database-pgtap",
       "label": "Migrations et tests pgTAP isolés",
       "status": "pass",
-      "evidence": "Docker local sain ; migrations locales à jour après application de la seule migration Step6 en attente ; les 5 fichiers pgTAP passent avec 168 assertions. Le fichier Step5 versionné a dû être fourni via une copie temporaire identique à cause d'un I/O local psql ; aucune base distante n'a été modifiée."
+      "evidence": "Docker local sain ; les 6 fichiers pgTAP locaux passent avec 190 assertions. Le test historique qui rencontrait un I/O psql a été exécuté via une copie temporaire strictement identique ; aucune base distante n'a été modifiée."
     },
     {
       "id": "local-fixture-identities",
@@ -42,7 +42,7 @@
       "id": "common-contracts",
       "label": "Dispatcher, échéance, reçus, présence et triggers",
       "status": "pass",
-      "evidence": "Tests SQL locaux : 5 fichiers, 168 assertions ; `supabase db lint --local` termine sans erreur de schéma, avec seulement des avertissements PL/pgSQL non bloquants. La migration Step6 a été appliquée uniquement au PostgreSQL Docker local ; aucune validation distante n'est revendiquée."
+      "evidence": "Tests SQL locaux : 6 fichiers, 190 assertions ; `supabase db lint --local` termine sans erreur de schéma, avec seulement des avertissements PL/pgSQL non bloquants. Les migrations Step8 ont été appliquées uniquement au PostgreSQL Docker local ; aucune validation distante n'est revendiquée."
     },
     {
       "id": "uno-browser-regressions",
@@ -60,8 +60,8 @@
       "id": "nine-game-complete-run",
       "label": "Partie complète des neuf jeux à deux sessions",
       "status": "blocked",
-      "reason": "La gate de l'étape 8 reste bloquée : `server_change_room` n'est pas disponible dans les migrations locales et la projection salon ne fournit pas encore `hostId`/`expiresAt`. Une exécution Playwright locale préliminaire a bien utilisé deux comptes, mais elle a produit 30 pass, 12 fail et 2 skip ; elle ne couvre pas les neuf parcours jusqu'à l'historique et ne vaut donc pas validation de l'étape 9. Identifiants de session de recette non enregistrés.",
-      "checkedAt": "2026-09-15",
+      "reason": "Les défauts locaux observés pendant la préparation de l'étape 9 sont corrigés et la suite desktop/mobile ciblée passe, mais la validation complète reste bloquée : aucun run manuel des neuf jeux jusqu'à l'historique n'a été exécuté avec le tiers non membre, l'invité et les scénarios de reconnexion demandés. La session anonyme complète est explicitement sautée hors CI et aucun identifiant de session anonymisé n'a été enregistré.",
+      "checkedAt": "2026-09-16",
       "commit": "70a962e623bcdf7c18e57fab934b56fa735b55b5",
       "environment": "Docker Desktop local, Supabase/PostgreSQL isolé, Next sur 127.0.0.1:3000, deux projets Playwright Chromium/mobile ; aucune mutation distante",
       "sessionIds": []

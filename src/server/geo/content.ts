@@ -19,6 +19,13 @@ import {
 
 const LOCAL_PACK_ID = "local-geography-v1";
 
+function checksumCities(cities: readonly z.infer<typeof geoCitySchema>[]): string {
+  const ordered = [...cities].sort((left, right) =>
+    left.inseeCode < right.inseeCode ? -1 : left.inseeCode > right.inseeCode ? 1 : 0,
+  );
+  return checksumJson(ordered);
+}
+
 const contentResponseSchema = z.object({
   packId: z.string(),
   packVersion: z.number().int().positive(),
@@ -38,7 +45,7 @@ export async function loadGeoFileContent(expected?: ContentPackReference): Promi
   const content = { packId: LOCAL_PACK_ID, packVersion: 1, cities };
   const manifest = await readContentManifest(resolve(root, "manifest.json"));
   assertManifestIdentity(manifest, { kind: "geography", slug: "france-metropole", packId: content.packId, packVersion: content.packVersion });
-  assertManifestChecksum(manifest, checksumJson(content.cities));
+  assertManifestChecksum(manifest, checksumCities(content.cities));
   assertManifestCount(manifest, "cityCount", content.cities.length);
   assertManifestCount(manifest, "mapFeatureCount", map.features.length);
   if (manifest.mapChecksum !== checksumJson(map)) throw new Error("CONTENT_MANIFEST_MISMATCH");
@@ -52,7 +59,7 @@ async function loadDatabaseContent(expected?: ContentPackReference): Promise<Geo
   if (response.error || !response.data) throw new Error("GEOGRAPHY_CONTENT_UNAVAILABLE");
   const parsed = contentResponseSchema.parse(response.data);
   const { manifest, ...content } = parsed;
-  assertOptionalManifest(manifest, { kind: "geography", slug: "france-metropole", packId: content.packId, packVersion: content.packVersion }, checksumJson(content.cities));
+  assertOptionalManifest(manifest, { kind: "geography", slug: "france-metropole", packId: content.packId, packVersion: content.packVersion }, checksumCities(content.cities));
   assertPackReference(content, expected);
   return content;
 }

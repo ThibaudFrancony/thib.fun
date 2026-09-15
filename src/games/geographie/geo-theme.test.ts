@@ -32,7 +32,7 @@ describe("direction artistique ExaPoint", () => {
     for (const token of ["/api/matches/", "PLACE_CITY", "SET_CITY_SELECTION", "CONFIRM_CITY_SELECTION", "RESIGN", "NEXT", "CLAIM_FORFEIT", "aria-live", "role=\"alert\""]) {
       expect(match).toContain(token);
     }
-    for (const token of ["role=\"application\"", "tabIndex={0}", "onKeyDown", "onPointerDown", "onWheel", "ResizeObserver", "Zoomer", "Recentrer"]) {
+    for (const token of ["role=\"application\"", "tabIndex={0}", "data-map-ready", "aria-busy", "onKeyDown", "onPointerDown", "onWheel", "ResizeObserver", "Zoomer", "Recentrer"]) {
       expect(map).toContain(token);
     }
   });
