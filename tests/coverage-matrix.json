@@ -62,7 +62,7 @@
       "status": "blocked",
       "reason": "Les défauts locaux observés pendant la préparation de l'étape 9 sont corrigés et la suite desktop/mobile ciblée passe, mais la validation complète reste bloquée : aucun run manuel des neuf jeux jusqu'à l'historique n'a été exécuté avec le tiers non membre, l'invité et les scénarios de reconnexion demandés. La session anonyme complète est explicitement sautée hors CI et aucun identifiant de session anonymisé n'a été enregistré.",
       "checkedAt": "2026-09-16",
-      "commit": "70a962e623bcdf7c18e57fab934b56fa735b55b5",
+      "commit": "d007849",
       "environment": "Docker Desktop local, Supabase/PostgreSQL isolé, Next sur 127.0.0.1:3000, deux projets Playwright Chromium/mobile ; aucune mutation distante",
       "sessionIds": []
     }
