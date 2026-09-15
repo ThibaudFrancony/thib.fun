@@ -1,6 +1,6 @@
 # Progression du projet
 
-Dernière mise à jour : 14 septembre 2026
+Dernière mise à jour : 15 septembre 2026
 Branche de référence : `main`
 Référence du cycle de l'étape 3 : `6130c99` — `fix: wire transactional match commits`
 Référence du cycle de l'étape 4 : `9968878` — `fix: restore worker dispatcher and quiz judgments`, poussé sur `origin/main` et vérifié
@@ -630,3 +630,10 @@ Ces corrections ne constituent pas des contradictions de l'utilisateur avec `AGE
 - Prochaine action vérifiable : fournir un `E2E_PASSWORD` éphémère via l'environnement, préparer le Supabase local isolé et ses quatre identités selon `tests/e2e/support.ts`/le fixture, puis rendre disponible et vérifier la RPC/projection salon additive avant de relancer la gate Étape 8. Seulement après cette preuve, ouvrir les deux contextes et exécuter la matrice des neuf jeux jeu par jeu.
 - Livraison documentaire et vérification : `git push origin main` a réussi avec `898fa91..e58c710 main -> main`; `git status --short --branch` est propre et `git rev-parse HEAD`/`git rev-parse origin/main` retournent `e58c71065e33809f9955ed9b6ac19bc8d1ae91b7`. La relecture indépendante `git ls-remote origin refs/heads/main` a échoué exactement avec `Could not resolve host: github.com`; le push et le remote-tracking local constituent la preuve disponible, sans indication d'échec du push.
 - Contradiction : aucune avec `AGENTS.md` ; ce relevé applique la dépendance explicite de l'étape 9 et ne remplace pas une validation absente.
+
+### 15/09/2026 — Accès Docker local vérifié pour la préparation de l'étape 9
+
+- Problème d'outillage observé : `docker info` et `SUPABASE_TELEMETRY_DISABLED=1 supabase status` ont d'abord échoué dans le sandbox avec `permission denied while trying to connect to the Docker API at unix:///Users/thibaudfrancony/.docker/run/docker.sock` et `connect: operation not permitted`. Aucun conteneur, schéma ou donnée n'a été modifié par ces lectures.
+- Résolution et vérification : après autorisation d'accès lecture seule au daemon, `docker info` réussit avec Docker Engine `29.7.2`; `docker ps --filter name=supabase` confirme `supabase_db_tibo.fun` `healthy` ainsi que les conteneurs Auth, Realtime, Storage, REST et Inbucket démarrés. Cela débloque l'usage technique de Docker pour une base locale isolée, mais ne constitue ni la préparation des identités de recette ni la validation de l'étape 8/9.
+- Décision de périmètre : aucune migration locale, fixture, identité, session navigateur, donnée de match, mutation Supabase distante ou configuration de production n'a été exécutée dans cette vérification. La prochaine action peut utiliser Docker local avec `E2E_PASSWORD`/`LOCAL_FIXTURE_PASSWORD` éphémères, puis les contrôles de l'étape 8.
+- Contradiction : aucune avec `AGENTS.md`; le refus initial était une restriction du sandbox, pas un défaut confirmé de Docker Desktop.
