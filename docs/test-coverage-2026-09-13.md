@@ -2,7 +2,7 @@
 
 ## Synthèse pour l'humain
 
-Cette matrice sépare ce qui passe, ce qui reproduit encore un défaut, ce qui est bloqué par un prérequis externe et ce qui n'a pas encore été lancé. Un parcours `blocked` porte obligatoirement sa cause. La correction Étape 8 du 16 septembre, sur un arbre basé sur `4f3eeeb`, a exécuté la suite navigateur complète puis une gate ciblée sur Chromium desktop et mobile. La suite complète a terminé avec 44 succès directs et 2 succès après retry ; les deux attentes instables ont été corrigées et leurs relances ciblées passent 6/6 sans retry. La gate finale passe 10/10 sans retry.
+Cette matrice sépare ce qui passe, ce qui reproduit encore un défaut, ce qui est bloqué par un prérequis externe et ce qui n'a pas encore été lancé. Un parcours `blocked` porte obligatoirement sa cause. La correction Étape 8 du 16 septembre, livrée par le commit `173008d`, a exécuté la suite navigateur complète puis une gate ciblée sur Chromium desktop et mobile. La suite complète a terminé avec 44 succès directs et 2 succès après retry ; les deux attentes instables ont été corrigées et leurs relances ciblées passent 6/6 sans retry. La gate finale passe 10/10 sans retry.
 
 La gate de l'étape 8 passe désormais dans l'environnement local isolé : Auth anonyme est effectivement redémarré avec sa configuration, `local:env` active la gestion du salon, et un transport de jugement déterministe strictement local permet les parcours Trou Noir/TTMC sans secret factice ni réseau externe. L'étape 9 reste `not-run`, pas `pass` : aucun parcours manuel des neuf jeux jusqu'à l'historique avec toutes les identités et conditions demandées n'est revendiqué. Aucun identifiant de session n'est inventé.
 

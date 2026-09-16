@@ -68,7 +68,7 @@
       "status": "not-run",
       "evidence": "La gate Étape 8 est désormais démontrée localement. L'Étape 9 n'a pas été exécutée dans cette correction : aucun run manuel des neuf jeux jusqu'à l'historique et aucun identifiant de session Étape 9 ne sont revendiqués.",
       "checkedAt": "2026-09-16",
-      "commit": "4f3eeeb+working-tree",
+      "commit": "173008d",
       "environment": "Docker Desktop local, Supabase/PostgreSQL isolé, Next dev sur 127.0.0.1:3000, deux projets Playwright Chromium desktop et iPhone 13 mobile, fixture Alice/Bob active et Mallory tiers désactivé, Auth anonyme locale ; aucune mutation distante",
       "preflightRunId": "step8-correction-20260916-01",
       "sessionIds": []
