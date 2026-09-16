@@ -11,14 +11,14 @@
     {
       "id": "home-and-guest-browser",
       "label": "Accueil et session invitée",
-      "status": "pass",
-      "evidence": "Playwright local : l'accueil et l'avertissement invité passent sur Chromium et mobile ; la session anonyme complète reste réservée au job CI et a été sautée hors CI dans les deux profils."
+      "status": "fail",
+      "evidence": "Dernier préflight Playwright local en mode CI : l'accueil et l'avertissement passent sur Chromium et mobile, mais la session anonyme complète échoue dans les deux profils avec le message Supabase `Anonymous sign-ins are disabled`; aucun profil invité n'est atteint."
     },
     {
       "id": "multiplayer-browser",
       "label": "E2E multijoueur avec deux comptes",
-      "status": "pass",
-      "evidence": "Recette locale avec deux comptes permanents éphémères : desktop 21 tests réussis et 1 scénario sauté ; mobile 21 tests réussis et 1 scénario sauté. Les deux scénarios sautés sont la session anonyme complète, explicitement réservée à la CI ; les parcours multijoueurs et régressions ciblées passent."
+      "status": "fail",
+      "evidence": "Préflight local du 16/09 sur deux contextes indépendants : 44 cas finaux, 38 pass et 6 fail (session invitée, Trou Noir et TTMC sur Chromium et mobile). Les échecs Trou Noir/TTMC restent dans le salon après START ; aucun de ces cas n'est transformé en skip."
     },
     {
       "id": "database-pgtap",
@@ -28,9 +28,9 @@
     },
     {
       "id": "local-fixture-identities",
-      "label": "Alice, Bob, invité et tiers non membre",
+      "label": "Alice, Bob et tiers non membre — fixture local",
       "status": "pass",
-      "evidence": "Fixture local préparé dans Docker : 3 profils, 2 membres actifs (Alice/Bob) et 1 tiers désactivé (Mallory). Le mot de passe était éphémère et n'a pas été conservé ni affiché ; la session invitée complète n'a pas été lancée hors CI."
+      "evidence": "Fixture local préparé dans Docker : 3 profils, 2 membres actifs (Alice/Bob) et 1 tiers désactivé (Mallory), vérifiés par agrégats anonymisés. Le mot de passe était éphémère et n'a pas été conservé ni affiché ; la session invitée est couverte séparément et échoue au niveau Auth."
     },
     {
       "id": "deepseek-fixture",
@@ -57,13 +57,20 @@
       "evidence": "Cinq tests Playwright ciblés passent sur Chromium et mobile : coupure pendant RESIGN, réponse Trou Noir, tir FIRE, placement Géographie et RANDOMIZE_FLEET ; l'intention reste en sessionStorage et les commandes redeviennent disponibles."
     },
     {
+      "id": "step8-gate",
+      "label": "Gate de sortie de l'Étape 8",
+      "status": "fail",
+      "evidence": "La preuve SQL locale de la gestion de salon passe (22 assertions), mais la gate applicative n'est pas démontrée : `ROOM_CHANGE_RPC_ENABLED` est absent de `.env.local` et l'UI affiche le fallback de gestion avancée ; le parcours invité échoue sur la configuration Auth locale ; Trou Noir et TTMC refusent START sans configuration IA."
+    },
+    {
       "id": "nine-game-complete-run",
       "label": "Partie complète des neuf jeux à deux sessions",
       "status": "blocked",
-      "reason": "Les défauts locaux observés pendant la préparation de l'étape 9 sont corrigés et la suite desktop/mobile ciblée passe, mais la validation complète reste bloquée : aucun run manuel des neuf jeux jusqu'à l'historique n'a été exécuté avec le tiers non membre, l'invité et les scénarios de reconnexion demandés. La session anonyme complète est explicitement sautée hors CI et aucun identifiant de session anonymisé n'a été enregistré.",
+      "reason": "La gate de l'Étape 8 n'est pas démontrée par le préflight du 16/09 : session invitée refusée par l'Auth locale, gestion avancée du salon non activée dans l'environnement et START Trou Noir/TTMC refusé par configuration IA absente. Conformément à la dépendance du plan, l'Étape 9 n'a pas commencé : aucun run manuel des neuf jeux jusqu'à l'historique, aucune session invité/tier non membre complète et aucun scénario métier de reconnexion n'est présenté comme validé.",
       "checkedAt": "2026-09-16",
-      "commit": "d007849",
-      "environment": "Docker Desktop local, Supabase/PostgreSQL isolé, Next sur 127.0.0.1:3000, deux projets Playwright Chromium/mobile ; aucune mutation distante",
+      "commit": "58a35f8",
+      "environment": "Docker Desktop local, Supabase/PostgreSQL isolé, migrations locales à jour, Next dev sur 127.0.0.1:3000, deux projets Playwright Chromium/mobile ; aucune mutation distante",
+      "preflightRunId": "step8-gate-preflight-20260916-01",
       "sessionIds": []
     }
   ]
