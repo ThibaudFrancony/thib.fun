@@ -23,7 +23,9 @@ test("compare deux choix simultanés sans exposer le choix adverse avant la rév
     await bob.getByRole("button", { name: "Rejoindre le salon" }).click();
     await bob.waitForURL(`**/salons/${created.roomId}`);
     await alice.getByRole("button", { name: "Je suis prêt" }).click();
+    await expect(alice.locator(".geo-member-card").filter({ hasText: "Alice" }).locator(".geo-ready-badge[data-ready='true']")).toHaveCount(1);
     await bob.getByRole("button", { name: "Je suis prêt" }).click();
+    await expect(alice.locator(".geo-ready-badge[data-ready='true']")).toHaveCount(2);
     await expect(alice.getByRole("button", { name: "Lancer" })).toBeEnabled({ timeout: 10_000 });
     await alice.getByRole("button", { name: "Lancer" }).click();
     await Promise.all([

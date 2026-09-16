@@ -18,8 +18,12 @@ test("ouvre une session invitée complète dans la base isolée de CI", async ({
   await page.goto("/connexion?mode=signUp&next=/profil");
   await page.getByRole("button", { name: "Continuer en tant qu'invité" }).click();
   const dialog = page.getByRole("dialog", { name: "Jouer sans créer de compte ?" });
+  const anonymousSignInPromise = page.waitForResponse(
+    (response) => response.url().includes("/auth/v1/signup") && response.request().method() === "POST",
+  );
   await dialog.getByRole("button", { name: "Continuer comme invité" }).click();
+  expect((await anonymousSignInPromise).ok()).toBeTruthy();
   await page.waitForURL("**/profil");
-  await expect(page.getByRole("heading", { name: /Tu joues sous le pseudo/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Tu joues sous le pseudo/ })).toBeVisible({ timeout: 20_000 });
   await expect(page.getByText("Cette session te permet de rejoindre des salons et de jouer")).toBeVisible();
 });

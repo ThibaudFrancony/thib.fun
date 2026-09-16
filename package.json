@@ -17,6 +17,7 @@
     "test:watch": "vitest",
     "test:db": "SUPABASE_TELEMETRY_DISABLED=1 supabase test db --local",
     "test:e2e": "playwright test",
+    "test:step8": "node scripts/run-step8-gate.mjs",
     "test:matrix": "node scripts/check-test-matrix.mjs",
     "local:env": "node scripts/write-local-env.mjs",
     "geo:pack": "node scripts/build-geography-pack.mjs",

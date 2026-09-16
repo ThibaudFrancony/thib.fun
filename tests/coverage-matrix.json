@@ -6,19 +6,19 @@
       "id": "unit-and-contracts",
       "label": "Unitaires et contrats serveur",
       "status": "pass",
-      "evidence": "Vitest direct avec le binaire versionné : 59 fichiers, 425 tests réussis et 2 sentinelles d'échec attendu ; les contrats, projections, garde-fous de reprise et l'hydratation du formulaire sont exécutés."
+      "evidence": "Vitest direct avec le binaire versionné : 60 fichiers, 432 tests réussis et 2 sentinelles d'échec attendu ; les contrats, projections, garde-fous de reprise, la configuration IA locale et l'hydratation du formulaire sont exécutés."
     },
     {
       "id": "home-and-guest-browser",
       "label": "Accueil et session invitée",
-      "status": "fail",
-      "evidence": "Préflight Étape 10 du 16/09 sur le commit `9f4aba3` : l'accueil et l'avertissement passent sur Chromium et mobile, mais la session anonyme complète échoue dans les deux profils avec le message Supabase `Anonymous sign-ins are disabled`; aucun profil invité n'est atteint."
+      "status": "pass",
+      "evidence": "Correction Étape 8 du 16/09, arbre basé sur `4f3eeeb` : après redémarrage de l'Auth locale avec `enable_anonymous_sign_ins`, l'avertissement et la session anonyme complète atteignent `/profil` sur Chromium desktop et iPhone 13 mobile. Relance ciblée : 4/4 sans retry."
     },
     {
       "id": "multiplayer-browser",
       "label": "E2E multijoueur avec deux comptes",
-      "status": "fail",
-      "evidence": "Préflight Étape 10 du 16/09 sur le commit `9f4aba3`, deux contextes indépendants et deux projets desktop/mobile : 44 cas finaux, 38 pass et 6 fail (session invitée, Trou Noir et TTMC sur Chromium et mobile). Les échecs Trou Noir/TTMC restent dans le salon après START ; aucun de ces cas n'est transformé en skip."
+      "status": "pass",
+      "evidence": "Correction Étape 8 du 16/09, deux comptes permanents et deux contextes indépendants sur desktop/mobile : la suite complète termine avec 44 succès directs et 2 succès après retry ; les deux attentes instables ont été corrigées puis rejouées 6/6 sans retry. La gate ciblée finale passe 10/10 sans retry, dont gestion réelle du salon, Trou Noir et TTMC."
     },
     {
       "id": "database-pgtap",
@@ -30,13 +30,13 @@
       "id": "local-fixture-identities",
       "label": "Alice, Bob et tiers non membre — fixture local",
       "status": "pass",
-      "evidence": "Fixture local préparé dans Docker : 3 profils, 2 membres actifs (Alice/Bob) et 1 tiers désactivé (Mallory), vérifiés par agrégats anonymisés. Le mot de passe était éphémère et n'a pas été conservé ni affiché ; la session invitée est couverte séparément et échoue au niveau Auth."
+      "evidence": "Fixture local préparé dans Docker : 3 profils, 2 membres actifs (Alice/Bob) et 1 tiers désactivé (Mallory), vérifiés par agrégats anonymisés. Le mot de passe était éphémère et n'a pas été conservé ni affiché ; la session invitée réelle passe séparément sur desktop et mobile."
     },
     {
       "id": "deepseek-fixture",
-      "label": "Juge DeepSeek simulé",
+      "label": "Juge quiz local déterministe",
       "status": "pass",
-      "evidence": "Transport de test sans réseau : verdict exact, faux, erreur et délai contrôlé par horloge/timers injectés."
+      "evidence": "Transport local sans réseau, réservé à NODE_ENV hors production et à des origines app/Supabase loopback : verdict accept/reject/ambiguous testé, sans clé factice ni appel DeepSeek. Le transport DeepSeek réel reste inchangé pour les environnements configurés."
     },
     {
       "id": "common-contracts",
@@ -59,18 +59,18 @@
     {
       "id": "step8-gate",
       "label": "Gate de sortie de l'Étape 8",
-      "status": "fail",
-      "evidence": "La preuve SQL locale de la gestion de salon passe (22 assertions), mais la gate applicative n'est pas démontrée sur le commit `9f4aba3` : `ROOM_CHANGE_RPC_ENABLED` est absent de `.env.local` et l'UI affiche le fallback de gestion avancée ; le parcours invité échoue sur la configuration Auth locale ; Trou Noir et TTMC refusent START sans configuration IA. Le préflight CI compte 38 pass et 6 fail, sans skip."
+      "status": "pass",
+      "evidence": "Run anonymisé `step8-correction-20260916-01`, arbre basé sur `4f3eeeb`, Docker/Supabase local uniquement : 22 assertions SQL de salon, 432 tests unitaires, puis `node scripts/run-step8-gate.mjs` à 10/10 sans retry sur Chromium desktop et iPhone 13 mobile. La session invitée, la configuration/transfert/départ/reprise de salon et START Trou Noir/TTMC sont effectifs."
     },
     {
       "id": "nine-game-complete-run",
       "label": "Partie complète des neuf jeux à deux sessions",
-      "status": "blocked",
-      "reason": "La gate de l'Étape 8 n'est pas démontrée par le préflight Étape 10 du 16/09 : session invitée refusée par l'Auth locale, gestion avancée du salon non activée dans l'environnement et START Trou Noir/TTMC refusé par configuration IA absente. Le préflight du commit `9f4aba3` compte 44 cas finaux, 38 pass et 6 fail, sans skip. Conformément à la dépendance du plan, l'Étape 9 n'a pas commencé : aucun run manuel des neuf jeux jusqu'à l'historique, aucune session invité/tier non membre complète et aucun scénario métier de reconnexion n'est présenté comme validé.",
+      "status": "not-run",
+      "evidence": "La gate Étape 8 est désormais démontrée localement. L'Étape 9 n'a pas été exécutée dans cette correction : aucun run manuel des neuf jeux jusqu'à l'historique et aucun identifiant de session Étape 9 ne sont revendiqués.",
       "checkedAt": "2026-09-16",
-      "commit": "9f4aba3",
-      "environment": "Docker Desktop local, Supabase/PostgreSQL isolé, 33 migrations locales alignées, Next dev sur 127.0.0.1:3000, deux projets Playwright Chromium desktop et iPhone 13 mobile, fixture Alice/Bob actif et Mallory tiers désactivé ; aucune mutation distante",
-      "preflightRunId": "step10-preflight-20260916-01",
+      "commit": "4f3eeeb+working-tree",
+      "environment": "Docker Desktop local, Supabase/PostgreSQL isolé, Next dev sur 127.0.0.1:3000, deux projets Playwright Chromium desktop et iPhone 13 mobile, fixture Alice/Bob active et Mallory tiers désactivé, Auth anonyme locale ; aucune mutation distante",
+      "preflightRunId": "step8-correction-20260916-01",
       "sessionIds": []
     }
   ]

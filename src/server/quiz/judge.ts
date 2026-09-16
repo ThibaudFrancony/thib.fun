@@ -4,7 +4,9 @@ import { z } from "zod";
 import { deterministicJudge, deterministicMatchKind } from "@/games/trou-noir/judge";
 import type { QuizQuestion } from "@/games/trou-noir/types";
 import { QUIZ_JUDGE_PROMPT_VERSION } from "@/server/quiz/cache-key";
+import { getQuizJudgeTransportConfiguration } from "@/server/quiz/config";
 import { resolveJudgeRuntime, type AiAttemptSettlement, type JudgeRuntime } from "@/server/quiz/judge-runtime";
+import { createLocalQuizFixtureFetch } from "@/server/quiz/local-fixture";
 
 export type QuizJudgeOutcome = {
   verdict: "accept" | "reject" | "ambiguous";
@@ -41,13 +43,18 @@ function reasonForDeterministic(kind: "exact" | "alias" | "numeric"): string {
 }
 
 async function callDeepSeek(question: QuizQuestion, rawAnswer: string, runtimeInput: JudgeRuntime): Promise<QuizJudgeOutcome | null> {
-  const apiKey = process.env.DEEPSEEK_API_KEY;
-  const model = process.env.DEEPSEEK_MODEL;
-  if (!apiKey || !model) return null;
-  const runtime = resolveJudgeRuntime(runtimeInput);
+  const configuration = getQuizJudgeTransportConfiguration();
+  if (!configuration) return null;
+  const runtime = resolveJudgeRuntime({
+    ...runtimeInput,
+    fetchImpl: runtimeInput.fetchImpl
+      ?? (configuration.provider === "local-fixture"
+        ? createLocalQuizFixtureFetch(configuration.fixtureVerdict)
+        : undefined),
+  });
   const startedAt = runtime.now();
   const payload = {
-    model,
+    model: configuration.model,
     response_format: { type: "json_object" },
     temperature: 0,
     messages: [
@@ -81,9 +88,11 @@ async function callDeepSeek(question: QuizQuestion, rawAnswer: string, runtimeIn
       await runtime.settleAttempt({ ...settlement, callNo: reservation.callNo });
     };
     try {
+      const headers: Record<string, string> = { "content-type": "application/json" };
+      if (configuration.apiKey) headers.authorization = `Bearer ${configuration.apiKey}`;
       const response = await runtime.fetchImpl("https://api.deepseek.com/chat/completions", {
         method: "POST",
-        headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
+        headers,
         body: JSON.stringify(payload),
         signal: controller.signal,
       });

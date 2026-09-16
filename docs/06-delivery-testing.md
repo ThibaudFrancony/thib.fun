@@ -26,6 +26,8 @@ Ces plans ne créent ni compte fournisseur ni abonnement. Lorsqu'une implémenta
 | `DEEPSEEK_API_KEY` | serveur | API IA |
 | `DEEPSEEK_MODEL` | serveur | ID effectivement testé |
 | `AI_DAILY_BUDGET_USD` | serveur | plafond configuré, pas un prix hardcodé |
+| `ROOM_CHANGE_RPC_ENABLED` | serveur | active explicitement les mutations avancées de salon après application/vérification du schéma compatible |
+| `QUIZ_AI_LOCAL_FIXTURE` | serveur local uniquement | verdict déterministe `accept`, `reject` ou `ambiguous`; refusé en production et si `APP_ORIGIN` ou Supabase n'est pas loopback |
 | `CONTENT_ENV` | serveur | `fixtures` local ou `production` ; prod interdit fixtures |
 
 Vault contient `worker_origin` et `internal_job_secret` correspondants. Configurer Cron seconde et nettoyage quotidien via migration/config selon environnement ; en local, worker joignable depuis PostgreSQL via adresse réseau adaptée, pas `localhost` supposé identique. Tester l'URL de bout en bout. Les secrets ne sont jamais écrits en migration. Prévoir rotation secret en acceptant ancien/nouveau pendant une courte fenêtre de déploiement puis révocation de l'ancien.
@@ -46,7 +48,7 @@ Au choix du plan payant, vérifier tarifs/quotas actuels : connexions/messages R
 
 ## 5. Scripts et CI attendus
 
-Scripts de l'application à créer : `pnpm dev`, `pnpm build`, `pnpm lint` (ESLint explicite), `pnpm typecheck`, `pnpm test`, `pnpm test:matrix`, `pnpm test:db`, `pnpm test:e2e`, `pnpm local:env`, `pnpm local:fixture`, `pnpm content:validate`, `pnpm docs:check`. Définir réellement chaque script dans package.json ; ne pas déclarer réussi un script absent. `local:env` écrit des variables éphémères depuis `supabase status`, et `local:fixture` crée uniquement les identités fictives locales avec un mot de passe fourni par l'environnement.
+Scripts de l'application à créer : `pnpm dev`, `pnpm build`, `pnpm lint` (ESLint explicite), `pnpm typecheck`, `pnpm test`, `pnpm test:matrix`, `pnpm test:db`, `pnpm test:e2e`, `pnpm test:step8`, `pnpm local:env`, `pnpm local:fixture`, `pnpm content:validate`, `pnpm docs:check`. Définir réellement chaque script dans package.json ; ne pas déclarer réussi un script absent. `local:env` écrit des variables éphémères depuis `supabase status`, active les dépendances strictement locales de la gate Étape 8, et `local:fixture` crée uniquement les identités fictives locales avec un mot de passe fourni par l'environnement. `test:step8` génère lui-même ce mot de passe sans l'afficher puis exécute les deux profils Playwright avec un seul worker.
 
 CI : installation frozen-lockfile ; lint/typecheck ; unitaires moteurs ; validation corpus ; DB locale migrations + tests d'autorisation/concurrence ; build ; parcours E2E du périmètre implémenté. Pas d'appel payant DeepSeek en CI standard, provider mock avec timeout/JSON invalide ; benchmark réel manuel daté avant activation et après changement modèle/prompt.
 
