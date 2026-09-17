@@ -587,3 +587,323 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
   .geo-panel, .geo-score-card, .geo-member-card, .geo-map-shell, .geo-map-button, .geo-city-option, .geo-radio-card { border-color: CanvasText; }
   .geo-page :focus-visible { outline-color: Highlight; }
 }
+
+/* ==========================================================================
+   HexaPoint (Géographie) — refonte visuelle alignée sur la homepage.
+   Tous les styles sont scopés à .geo-hexapoint : les autres pages de jeu
+   (qui partagent le header geo et RoomJoin) restent inchangées.
+   ========================================================================== */
+
+.geo-hexapoint {
+  position: relative;
+  min-height: 100svh;
+  min-height: 100dvh;
+  overflow-x: clip;
+  color: #fff;
+  color-scheme: dark;
+  background: #0a0620;
+}
+
+.geo-hx-bg { position: absolute; inset: 0; z-index: 0; overflow: hidden; }
+.geo-hx-bg-image { object-fit: cover; object-position: center; }
+
+.geo-hexapoint .geo-header {
+  position: relative;
+  z-index: 2;
+  width: min(100% - 2rem, 1320px);
+  margin: 0 auto;
+  padding: clamp(0.75rem, 2vw, 1.3rem) 0;
+  border-bottom: 0;
+  background: transparent;
+  backdrop-filter: none;
+}
+
+.geo-hexapoint .geo-brand { color: #fff; }
+
+.geo-hexapoint .geo-nav { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+.geo-hexapoint .geo-nav-link {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  padding: 0.55rem 1.05rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  color: #fff;
+  background: rgba(20, 8, 55, 0.25);
+  backdrop-filter: blur(8px);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background-color 180ms ease, border-color 180ms ease;
+}
+
+.geo-hexapoint .geo-nav-link:hover { background: rgba(60, 30, 120, 0.5); border-color: rgba(200, 160, 255, 0.65); }
+
+.geo-hx-content {
+  position: relative;
+  z-index: 1;
+  width: min(100% - 2rem, 1320px);
+  margin: 0 auto;
+  padding: clamp(0.5rem, 1.5vw, 1rem) 0 clamp(2rem, 5vw, 4rem);
+}
+
+.geo-hx-back {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  color: #cdbdf0;
+  font-size: 0.9rem;
+  font-weight: 750;
+  text-decoration: none;
+  transition: color 180ms ease;
+}
+
+.geo-hx-back:hover { color: #fff; }
+
+.geo-hx-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 470px);
+  gap: clamp(2rem, 5vw, 5rem);
+  align-items: start;
+  margin-top: clamp(0.5rem, 2vh, 1.25rem);
+}
+
+.geo-hx-copy { position: relative; min-width: 0; }
+
+.geo-hx-kicker {
+  margin: clamp(0.5rem, 1.5vh, 1rem) 0 0;
+  color: #c8a9f4;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+}
+
+.geo-hx-title {
+  margin: 0.6rem 0 0;
+  font-family: var(--font-display), "Trebuchet MS", system-ui, sans-serif;
+  font-size: clamp(2.1rem, 4.4vw, 4rem);
+  font-weight: 700;
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+  color: #fff;
+  text-wrap: balance;
+  text-shadow: 0 8px 40px rgba(10, 4, 24, 0.6);
+}
+
+.geo-hx-accent {
+  background: linear-gradient(90deg, #ff40c8, #ff7566);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.geo-hx-lede {
+  max-width: 40rem;
+  margin: 1.05rem 0 0;
+  color: #d9cdf0;
+  font-size: clamp(0.92rem, 1.05vw, 1rem);
+  line-height: 1.7;
+}
+
+.geo-hx-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.7rem;
+  max-width: 34rem;
+  margin-top: clamp(1rem, 2.5vh, 1.6rem);
+}
+
+.geo-hexapoint .geo-fact {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 16px;
+  background: rgba(20, 8, 55, 0.42);
+  backdrop-filter: blur(10px);
+}
+
+.geo-hexapoint .geo-fact p {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  color: #fff;
+  font-size: 0.98rem;
+  font-weight: 800;
+}
+
+.geo-hexapoint .geo-fact p::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff40c8, #8b5cf6);
+  box-shadow: 0 0 10px rgba(255, 64, 200, 0.5);
+}
+
+.geo-hexapoint .geo-fact span { color: #c7b8e6; font-size: 0.72rem; font-weight: 600; }
+
+.geo-hx-france {
+  position: relative;
+  width: clamp(290px, 30vw, 500px);
+  max-width: 100%;
+  margin-top: clamp(0.75rem, 2.5vh, 1.75rem);
+  pointer-events: none;
+}
+
+.geo-hx-france-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  animation: geoFranceFloat 7s ease-in-out infinite;
+  will-change: transform;
+  filter: drop-shadow(0 15px 30px rgba(60, 100, 255, 0.15));
+}
+
+@keyframes geoFranceFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .geo-hx-france-image { animation: none; }
+}
+
+.geo-hx-actions { display: flex; flex-direction: column; gap: 1rem; min-width: 0; }
+
+/* --- Cartes glass : créer / rejoindre --- */
+.geo-hexapoint .geo-setup-panel,
+.geo-hexapoint .geo-join-panel {
+  padding: clamp(1rem, 1.6vw, 1.4rem);
+  border: 1px solid rgba(190, 110, 255, 0.45);
+  border-radius: 24px;
+  background: linear-gradient(145deg, rgba(50, 20, 105, 0.58), rgba(20, 8, 60, 0.72));
+  backdrop-filter: blur(16px);
+  box-shadow: 0 0 40px rgba(140, 60, 255, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.geo-hexapoint .geo-panel-heading { margin-bottom: 0.7rem; }
+.geo-hexapoint .geo-panel-title { color: #fff; }
+.geo-hexapoint .geo-subtitle { margin: 0.1rem 0 0.7rem; color: #fff; font-size: 1.15rem; font-weight: 800; }
+
+.geo-hexapoint .geo-kicker { color: #c8a9f4; }
+
+.geo-hexapoint .geo-form-stack { display: grid; gap: 0.45rem; }
+
+.geo-hexapoint .geo-label { color: #e6dcff; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; }
+
+.geo-hexapoint .geo-select,
+.geo-hexapoint .geo-input {
+  width: 100%;
+  min-height: 46px;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 11px;
+  background: rgba(10, 5, 35, 0.55);
+  color: #fff;
+  font-weight: 650;
+  transition: border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+}
+
+.geo-hexapoint .geo-select:hover,
+.geo-hexapoint .geo-input:hover { border-color: rgba(255, 255, 255, 0.24); }
+
+.geo-hexapoint .geo-select:focus-visible,
+.geo-hexapoint .geo-input:focus-visible {
+  outline: none;
+  border-color: rgba(120, 200, 255, 0.7);
+  box-shadow: 0 0 0 3px rgba(90, 160, 255, 0.2);
+}
+
+.geo-hexapoint .geo-code-input { letter-spacing: 0.35em; text-transform: uppercase; font-weight: 800; }
+
+.geo-hexapoint .geo-radio-fieldset { margin-top: 0.7rem; padding: 0; border: 0; }
+.geo-hexapoint .geo-radio-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.55rem; margin-top: 0.45rem; }
+
+.geo-hexapoint .geo-radio-card {
+  padding: 0.6rem 0.7rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  background: rgba(10, 5, 35, 0.42);
+  transition: border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease, transform 180ms ease;
+}
+
+.geo-hexapoint .geo-radio-card:hover { border-color: rgba(255, 255, 255, 0.28); }
+
+.geo-hexapoint .geo-radio-card[data-selected="true"] {
+  border-color: rgba(120, 200, 255, 0.85);
+  background: linear-gradient(145deg, rgba(40, 90, 180, 0.4), rgba(70, 40, 140, 0.4));
+  box-shadow: 0 0 22px rgba(90, 160, 255, 0.25);
+}
+
+.geo-hexapoint .geo-panel-note { margin: 0.7rem 0 0; color: #c7b8e6; font-size: 0.74rem; line-height: 1.6; }
+
+.geo-hexapoint .geo-error {
+  margin: 0.75rem 0 0;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid rgba(255, 120, 170, 0.4);
+  border-radius: 10px;
+  background: rgba(120, 20, 60, 0.35);
+  color: #ffd7e6;
+  font-size: 0.8rem;
+  font-weight: 650;
+}
+
+.geo-hexapoint .geo-setup-panel .geo-primary-button {
+  width: 100%;
+  min-height: 50px;
+  margin-top: 0.8rem;
+  border: 0;
+  border-radius: 13px;
+  background: linear-gradient(90deg, #baffdd, #89f4dd);
+  color: #06251d;
+  font-size: 1rem;
+  font-weight: 800;
+  transition: transform 180ms ease, filter 180ms ease, opacity 180ms ease;
+}
+
+.geo-hexapoint .geo-setup-panel .geo-primary-button:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.05); }
+.geo-hexapoint .geo-setup-panel .geo-primary-button:active:not(:disabled) { transform: translateY(0); }
+
+.geo-hexapoint .geo-join-panel .geo-secondary-button {
+  width: 100%;
+  min-height: 50px;
+  margin-top: 0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 750;
+  transition: background-color 180ms ease, border-color 180ms ease, transform 180ms ease;
+}
+
+.geo-hexapoint .geo-join-panel .geo-secondary-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.42);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.geo-hexapoint .geo-join-panel .geo-secondary-button:active:not(:disabled) { transform: translateY(0); }
+
+/* --- Responsive --- */
+@media (max-width: 1023px) {
+  .geo-hx-layout { grid-template-columns: 1fr; gap: clamp(1.5rem, 4vw, 2.5rem); }
+  .geo-hx-france { width: min(90vw, 460px); }
+  .geo-hx-actions { width: 100%; }
+}
+
+@media (max-width: 639px) {
+  .geo-hexapoint .geo-header,
+  .geo-hx-content { width: min(100% - 2rem, 1320px); }
+  .geo-hx-title { font-size: clamp(1.9rem, 9vw, 2.6rem); }
+  .geo-hx-facts { grid-template-columns: 1fr; max-width: none; }
+  .geo-hexapoint .geo-radio-grid { grid-template-columns: 1fr; }
+  .geo-hx-bg-image { object-position: 50% 42%; }
+}
+

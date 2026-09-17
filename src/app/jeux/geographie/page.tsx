@@ -1,25 +1,41 @@
+import Image from "next/image";
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
 import { GeographySetup, RoomJoin } from "@/games/geographie/components/geography-setup";
 
 export default function GeographySetupPage() {
   return (
-    <main className="geo-page geo-setup-page">
+    <main className="geo-page geo-hexapoint">
+      <div className="geo-hx-bg" aria-hidden="true">
+        <Image src="/geographie/background.png" alt="" fill priority sizes="100vw" className="geo-hx-bg-image" />
+      </div>
       <SiteHeader variant="geo" />
-      <div className="geo-content geo-setup-content">
-        <Link href="/" className="geo-back-link">← Tous les jeux</Link>
-        <div className="geo-setup-layout">
-          <section className="geo-hero-copy">
-            <p className="geo-kicker">HexaPoint · Géographie</p>
-            <h1 className="geo-hero-title">La ville est là. À toi de viser juste.</h1>
-            <p className="geo-hero-lede">Deux placements par manche, une carte sans étiquette et un score qui récompense la précision. Les coordonnées ne partent qu’après ta confirmation.</p>
-            <div className="geo-facts">
+      <div className="geo-hx-content">
+        <Link href="/" className="geo-hx-back">← Tous les jeux</Link>
+        <div className="geo-hx-layout">
+          <section className="geo-hx-copy">
+            <p className="geo-hx-kicker">HexaPoint · Géographie</p>
+            <h1 className="geo-hx-title">
+              La ville est là.<br />
+              À toi de <span className="geo-hx-accent">viser juste.</span>
+            </h1>
+            <p className="geo-hx-lede">
+              Deux placements par manche, une carte sans étiquette et un score qui récompense la précision. Les
+              coordonnées ne partent qu&apos;après ta confirmation.
+            </p>
+            <div className="geo-hx-facts">
               <Fact title="2 joueurs" text="Un lien de salon privé" />
               <Fact title="5 à 15" text="Manches au choix" />
               <Fact title="France" text="Métropole + Corse" />
             </div>
+            <div className="geo-hx-france" aria-hidden="true">
+              <Image src="/geographie/france.png" alt="" width={1254} height={1254} priority className="geo-hx-france-image" />
+            </div>
           </section>
-          <div className="geo-setup-actions"><GeographySetup /><RoomJoin /></div>
+          <div className="geo-hx-actions">
+            <GeographySetup />
+            <RoomJoin />
+          </div>
         </div>
       </div>
     </main>
