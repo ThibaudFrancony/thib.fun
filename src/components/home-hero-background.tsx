@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useState } from "react";
 
-const HERO_EXTENSIONS = ["webp", "png"] as const;
+const HERO_EXTENSIONS = ["png", "webp"] as const;
 
 export function HomeHeroBackground() {
   const [attempt, setAttempt] = useState(0);

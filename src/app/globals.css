@@ -270,8 +270,8 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
 
 .home-card-play {
   position: absolute;
-  right: 9%;
-  bottom: 10%;
+  right: 8%;
+  top: 8%;
   display: grid;
   place-items: center;
   width: clamp(46px, 4.4vw, 64px);

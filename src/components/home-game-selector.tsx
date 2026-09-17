@@ -17,7 +17,7 @@ const PLAYABLE_ROUTES: Readonly<Partial<Record<string, string>>> = {
   "longueur-onde": "/jeux/longueur-onde",
 };
 
-const CARD_EXTENSIONS = ["webp", "png"] as const;
+const CARD_EXTENSIONS = ["png", "webp"] as const;
 
 function playableRoute(game: PublicGame): string | undefined {
   return game.availability === "coming_soon" ? undefined : PLAYABLE_ROUTES[game.slug];
