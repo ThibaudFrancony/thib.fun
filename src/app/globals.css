@@ -217,41 +217,48 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
 
 .home-carousel-viewport {
   position: relative;
-  height: clamp(260px, 46vh, 520px);
+  height: clamp(300px, 52vh, 640px);
   overflow: hidden;
   touch-action: pan-y;
+  perspective: 1600px;
+  perspective-origin: 50% 44%;
 }
 
-.home-carousel-track { position: absolute; inset: 0; margin: 0; padding: 0; list-style: none; }
-.home-carousel-item { position: static; }
+.home-carousel-track {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  transform-style: preserve-3d;
+  pointer-events: none;
+}
+
+.home-carousel-item { position: static; pointer-events: none; }
 
 .home-game-card {
-  --card-gap: clamp(130px, 19vw, 300px);
-  --card-scale: 1;
   --card-lift: 0px;
   position: absolute;
   top: 50%;
   left: 50%;
-  width: clamp(138px, 16vw, 250px);
   aspect-ratio: 3 / 4;
   display: block;
   padding: 0;
   border: 0;
   border-radius: 1.35rem;
   background: transparent;
-  cursor: pointer;
-  transform: translate(-50%, -50%) translateX(calc(var(--offset, 0) * var(--card-gap))) translateY(var(--card-lift)) scale(var(--card-scale));
-  transition: transform 460ms cubic-bezier(0.22, 0.61, 0.36, 1), opacity 300ms ease, filter 300ms ease;
-  will-change: transform;
+  cursor: grab;
+  transform-style: preserve-3d;
+  transform-origin: center center;
+  backface-visibility: hidden;
+  transition: transform 560ms cubic-bezier(0.22, 0.68, 0.24, 1), opacity 460ms ease, filter 460ms ease;
+  will-change: transform, opacity, filter;
 }
 
-.home-game-card[data-offset="0"] { --card-scale: 1.16; z-index: 5; opacity: 1; filter: drop-shadow(0 26px 60px #ff5fa23d); }
-.home-game-card[data-offset="1"], .home-game-card[data-offset="-1"] { --card-scale: 0.97; z-index: 4; opacity: 0.9; filter: saturate(0.9) brightness(0.82); }
-.home-game-card[data-offset="2"], .home-game-card[data-offset="-2"] { --card-scale: 0.78; z-index: 3; opacity: 0.45; filter: saturate(0.8) brightness(0.7); }
-.home-game-card[data-hidden="true"] { opacity: 0; z-index: 1; pointer-events: none; }
-.home-game-card[data-ready="false"] { cursor: default; }
+.home-carousel[data-dragging="true"] .home-game-card { transition: none; cursor: grabbing; }
+.home-game-card:focus-visible { outline-offset: 6px; }
 
-.home-card-image { object-fit: contain; border-radius: inherit; pointer-events: none; }
+.home-card-image { object-fit: contain; border-radius: inherit; pointer-events: none; user-select: none; }
 
 .home-card-fallback {
   display: grid;
@@ -270,22 +277,23 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
 
 .home-card-play {
   position: absolute;
-  right: 8%;
-  top: 8%;
+  top: 50%;
+  left: 50%;
   display: grid;
   place-items: center;
-  width: clamp(46px, 4.4vw, 64px);
-  height: clamp(46px, 4.4vw, 64px);
+  width: clamp(54px, 5vw, 70px);
+  height: clamp(54px, 5vw, 70px);
   border-radius: 50%;
   color: #fff;
   background: linear-gradient(135deg, #ff5fa2, #ff3d7f);
-  box-shadow: 0 12px 30px #ff3d7f5c, inset 0 1px 0 #ffffff59;
+  box-shadow: 0 14px 34px #ff3d7f66, inset 0 1px 0 #ffffff59, 0 0 0 6px #ffffff1f;
   opacity: 0;
-  transform: scale(0.85);
-  transition: opacity 260ms ease, transform 260ms ease;
+  transform: translate(-50%, -50%) scale(0.8);
+  transition: opacity 300ms ease, transform 300ms cubic-bezier(0.22, 0.68, 0.24, 1);
+  pointer-events: none;
 }
 
-.home-game-card[data-offset="0"] .home-card-play { opacity: 1; transform: scale(1); }
+.home-game-card[data-active="true"] .home-card-play { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 
 .home-carousel-controls {
   display: flex;
@@ -344,12 +352,12 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
 .home-carousel-soon { padding: 0.15rem 0.6rem; border-radius: 999px; background: #ffffff1a; font-size: 0.7rem; font-weight: 700; }
 
 @media (hover: hover) {
-  .home-game-card[data-ready="true"]:hover { --card-lift: -16px; }
-  .home-game-card[data-offset="0"][data-ready="true"]:hover { --card-scale: 1.22; }
+  .home-carousel:not([data-dragging="true"]) .home-game-card:hover { --card-lift: -12px; }
+  .home-carousel:not([data-dragging="true"]) .home-game-card[data-active="true"]:hover { --card-lift: -18px; }
 }
 
 @media (min-width: 640px) {
-  .home-carousel-viewport { height: clamp(320px, 50vh, 560px); }
+  .home-carousel-viewport { height: clamp(340px, 54vh, 660px); }
 }
 
 @media (prefers-reduced-motion: reduce) {
