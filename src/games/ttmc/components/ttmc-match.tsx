@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { TtmcAction, TtmcView } from "@/games/ttmc/types";
-import { canClaimForfeit, parseMatchSnapshot, useResourceNetwork } from "@/lib/network-sync";
+import { parseMatchSnapshot, useResourceNetwork } from "@/lib/network-sync";
 
 type MatchResponse = {
   matchId: string;
@@ -33,7 +33,6 @@ export function TtmcMatch({ matchId }: { matchId: string }) {
     error,
     busy,
     serverOffset,
-    opponentLastSeenAt,
     refresh,
     send,
   } = useResourceNetwork<MatchResponse, TtmcAction>({
@@ -80,7 +79,6 @@ export function TtmcMatch({ matchId }: { matchId: string }) {
   const me = view.players[view.mySeat];
   const opponent = view.players[(1 - view.mySeat) as 0 | 1];
   const isMyTurn = view.activePlayerId === me.id && (view.phase === "choose_level" || view.phase === "answering");
-  const opponentAbsent = canClaimForfeit(opponentLastSeenAt, now, serverOffset);
 
   return (
     <main className="geo-page geo-match-page">
@@ -301,15 +299,7 @@ export function TtmcMatch({ matchId }: { matchId: string }) {
             <div className="geo-forfeit-panel">
               <p>Partenaire absent ?</p>
               <span>Le forfait devient disponible après 90 secondes sans signal.</span>
-              <button
-                type="button"
-                disabled={!opponentAbsent || busy}
-                onClick={() => void send({ type: "CLAIM_FORFEIT" })}
-                className="geo-secondary-button"
-              >
-                {opponentAbsent ? "Réclamer le forfait" : "Forfait indisponible"}
-              </button>
-            </div>
+              </div>
           </div>
         )}
       </div>

@@ -748,8 +748,6 @@ export function reduceSkyjo(
     }
     case "RESIGN":
       return abandonTransition(ctx, state, actorSeat, "resign");
-    case "CLAIM_FORFEIT":
-      return abandonTransition(ctx, state, actorSeat, "claimed_forfeit");
   }
 }
 
@@ -843,14 +841,16 @@ export function onSkyjoDeadline(
 
 export function shouldAbandonForSkyjoAbsence(lastSeenAt: readonly [string, string], nowMs: number): boolean {
   const ages = lastSeenAt.map((value) => nowMs - Date.parse(value));
-  return ages.every((age) => age >= 120_000) || ages.some((age) => age >= 180_000);
+  return ages.some((age) => age >= 30_000);
 }
 
 export function onSkyjoAbsence(stateInput: unknown, configInput: unknown, ctx: SkyjoEngineContext): SkyjoTransition {
   const state = skyjoStateSchema.parse(stateInput);
   skyjoConfigSchema.parse(configInput);
   if (state.phase === "finished") throw new SkyjoRuleError("MATCH_FINISHED");
-  const result = resultFor(state, ctx, "absence", "abandoned", null);
+  const leaverSeat = ctx.actorId ? seatForActor(ctx) : null;
+  const winnerSeat = leaverSeat === null ? null : ((1 - leaverSeat) as Seat);
+  const result = resultFor(state, ctx, "absence", winnerSeat === null ? "abandoned" : "win", winnerSeat);
   return transition(ctx, finishedState(state, result), {
     phaseId: ctx.nextPhaseId,
     deadlineAt: null,

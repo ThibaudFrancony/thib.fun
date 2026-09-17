@@ -161,7 +161,7 @@ describe("moteur À l'unisson", () => {
   });
 
   it("gère l'absence, le forfait coopératif et les jobs obsolètes", () => {
-    expect(shouldAbandonForLongueurOndeAbsence(["2026-09-11T19:57:59.000Z", "2026-09-11T19:59:00.000Z"], Date.parse("2026-09-11T20:00:00.000Z"))).toBe(false);
+    expect(shouldAbandonForLongueurOndeAbsence(["2026-09-11T19:59:45.000Z", "2026-09-11T19:59:40.000Z"], Date.parse("2026-09-11T20:00:00.000Z"))).toBe(false);
     expect(shouldAbandonForLongueurOndeAbsence(["2026-09-11T19:57:59.000Z", "2026-09-11T19:57:59.000Z"], Date.parse("2026-09-11T20:00:00.000Z"))).toBe(true);
     const abandoned = onLongueurOndeAbsence(started(), config, ctx(null));
     expect(abandoned.result?.outcome).toBe("abandoned");
@@ -170,18 +170,16 @@ describe("moteur À l'unisson", () => {
     expect(isLongueurOndeDeadlineJobStale(undefined, "new-phase")).toBe(false);
   });
 
-  it("garde RESIGN et CLAIM_FORFEIT comme interruptions coopératives pour chaque siège", () => {
+  it("garde RESIGN comme interruption coopérative pour chaque siège", () => {
     for (const actorId of [A, B]) {
-      for (const action of [{ type: "RESIGN" as const }, { type: "CLAIM_FORFEIT" as const }]) {
-        const result = reduceLongueurOnde(started(), action, config, ctx(actorId)).result;
-        expect(result).toMatchObject({
-          kind: "cooperative",
-          outcome: "abandoned",
-          winnerId: null,
-          sharedScore: null,
-          reason: action.type === "RESIGN" ? "resign" : "claimed_forfeit",
-        });
-      }
+      const result = reduceLongueurOnde(started(), { type: "RESIGN" }, config, ctx(actorId)).result;
+      expect(result).toMatchObject({
+        kind: "cooperative",
+        outcome: "abandoned",
+        winnerId: null,
+        sharedScore: null,
+        reason: "resign",
+      });
     }
   });
 

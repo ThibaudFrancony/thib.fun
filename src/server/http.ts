@@ -54,7 +54,6 @@ const PUBLIC_ERROR_DEFINITIONS: Readonly<Record<string, PublicErrorDefinition>> 
   CONTENT_MANIFEST_MISMATCH: { status: 503, message: "Le manifeste du contenu est invalide." },
   PHASE_CONFLICT: { status: 409, message: "La phase a changé. Recharge la partie." },
   DEADLINE_EXPIRED: { status: 409, message: "Temps écoulé, validation en cours." },
-  FORFEIT_NOT_AVAILABLE: { status: 409, message: "Le forfait n'est disponible qu'après 90 secondes d'absence." },
   COMMAND_ID_REUSED: { status: 409, message: "Cet identifiant de commande a déjà été utilisé pour une autre action." },
   JOB_LEASE_INVALID: { status: 409, message: "Le bail de la tâche est invalide ou expiré." },
   JOB_NOT_DUE: { status: 409, message: "Cette tâche n'est pas encore échue." },

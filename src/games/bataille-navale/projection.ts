@@ -75,7 +75,7 @@ export function projectNaval(
     }
   }
   if (active) allowedActions.push("FIRE");
-  if (!finished) allowedActions.push("RESIGN", "CLAIM_FORFEIT");
+  if (!finished) allowedActions.push("RESIGN");
 
   const hitsByMe = state.shots[viewerSeat].filter((shot) => shot.result === "hit" || shot.result === "sunk").length;
   const missesByMe = state.shots[viewerSeat].filter((shot) => shot.result === "miss").length;

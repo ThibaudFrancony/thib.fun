@@ -97,7 +97,6 @@ export function projectUno(
       canPlayDrawn: active && state.phase === "after_draw" && playableCardIds.length === 1,
       canKeepDrawn: active && state.phase === "after_draw" && state.drawnCardId !== null,
       canResign: state.phase !== "finished",
-      canClaimForfeit: state.phase !== "finished",
     },
     result,
   };

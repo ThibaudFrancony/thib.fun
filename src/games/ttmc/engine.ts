@@ -700,8 +700,6 @@ export function reduceTtmc(
     }
     case "RESIGN":
       return resignTransition(ctx, state, config, actorSeat, "resign");
-    case "CLAIM_FORFEIT":
-      return resignTransition(ctx, state, config, actorSeat, "claimed_forfeit");
   }
 }
 
@@ -916,7 +914,7 @@ export function shouldAbandonForTtmcAbsence(
   nowMs: number,
 ): boolean {
   const ages = lastSeenAt.map((value) => nowMs - Date.parse(value));
-  return ages.every((age) => age >= 120_000) || ages.some((age) => age >= 180_000);
+  return ages.some((age) => age >= 30_000);
 }
 
 /**
@@ -944,7 +942,9 @@ export function onTtmcAbsence(
   const state = ttmcStateSchema.parse(stateInput);
   const config = ttmcConfigSchema.parse(configInput);
   if (state.phase === "finished") throw new TtmcRuleError("MATCH_FINISHED");
-  const result = resultFor(state, ctx, config, "absence", "abandoned", null);
+  const leaverSeat = ctx.actorId ? seatForActor(ctx) : null;
+  const winnerSeat = leaverSeat === null ? null : ((1 - leaverSeat) as Seat);
+  const result = resultFor(state, ctx, config, "absence", winnerSeat === null ? "abandoned" : "win", winnerSeat);
   return transition(ctx, finishedState(state, result), {
     phaseId: ctx.nextPhaseId,
     deadlineAt: null,

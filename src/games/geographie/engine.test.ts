@@ -158,27 +158,6 @@ describe("Géographie engine", () => {
     }
   });
 
-  it("attribue le forfait au siège qui le réclame après le premier tour", () => {
-    const config = { ...DEFAULT_GEO_CONFIG, rounds: 5 as const };
-    const start = stateForRandom();
-    const placed = reduceGeo(start, { type: "PLACE_CITY", latitude: 48.8566, longitude: 2.3522 }, config, context());
-    const claimedByAlice = reduceGeo(
-      placed.state,
-      { type: "CLAIM_FORFEIT" },
-      config,
-      context({ actorId: "user-a", phaseId: placed.phaseId, nextPhaseId: "00000000-0000-4000-8000-000000000010" }),
-    );
-    expect(claimedByAlice.result).toMatchObject({ outcome: "win", winnerId: "user-a", reason: "claimed_forfeit" });
-
-    const claimedByBob = reduceGeo(
-      placed.state,
-      { type: "CLAIM_FORFEIT" },
-      config,
-      context({ actorId: "user-b", phaseId: placed.phaseId, nextPhaseId: "00000000-0000-4000-8000-000000000011" }),
-    );
-    expect(claimedByBob.result).toMatchObject({ outcome: "win", winnerId: "user-b", reason: "claimed_forfeit" });
-  });
-
   it("interrompt aussi une sortie avant le premier placement en mode aléatoire", () => {
     const config = { ...DEFAULT_GEO_CONFIG, rounds: 5 as const };
     const start = stateForRandom();
@@ -201,16 +180,18 @@ describe("Géographie engine", () => {
     expect(resigned.state.finishedOutcome).toBe("abandoned");
   });
 
-  it("abandonne techniquement après les seuils de présence", () => {
+  it("abandonne techniquement après la grâce de 30 secondes", () => {
     const now = Date.parse("2026-01-01T12:00:00.000Z");
-    const recent = new Date(now - 119_999).toISOString();
+    const recent = new Date(now - 29_999).toISOString();
     const old = new Date(now - 180_000).toISOString();
     expect(shouldAbandonForAbsence([recent, recent], now)).toBe(false);
     expect(shouldAbandonForAbsence([old, recent], now)).toBe(true);
-    expect(shouldAbandonForAbsence([new Date(now - 120_000).toISOString(), new Date(now - 120_000).toISOString()], now)).toBe(true);
+    expect(shouldAbandonForAbsence([new Date(now - 30_000).toISOString(), new Date(now - 120_000).toISOString()], now)).toBe(true);
     const config = { ...DEFAULT_GEO_CONFIG, rounds: 5 as const };
-    const transition = onGeoAbsence(stateForRandom(), config, context({ nextPhaseId: "00000000-0000-4000-8000-000000000009" }));
-    expect(transition.result?.outcome).toBe("abandoned");
-    expect(transition.result?.reason).toBe("absence");
+    const both = onGeoAbsence(stateForRandom(), config, context({ actorId: null, nextPhaseId: "00000000-0000-4000-8000-000000000009" }));
+    expect(both.result?.outcome).toBe("abandoned");
+    expect(both.result?.winnerId).toBeNull();
+    const leaver = onGeoAbsence(stateForRandom(), config, context({ actorId: "user-a", nextPhaseId: "00000000-0000-4000-8000-00000000000a" }));
+    expect(leaver.result).toMatchObject({ outcome: "win", winnerId: "user-b", reason: "absence" });
   });
 });

@@ -491,8 +491,6 @@ export function reduceUno(stateInput: unknown, actionInput: UnoAction, configInp
     }
     case "RESIGN":
       return abandonTransition(ctx, state, actorSeat, "resign");
-    case "CLAIM_FORFEIT":
-      return abandonTransition(ctx, state, actorSeat, "claimed_forfeit");
   }
 }
 
@@ -517,12 +515,24 @@ export function onUnoAbsence(stateInput: unknown, configInput: unknown, ctx: Uno
   const state = unoStateSchema.parse(stateInput);
   unoRuntimeConfigSchema.parse(configInput);
   if (state.phase === "finished") throw new UnoRuleError("MATCH_FINISHED");
-  return abandonTransition(ctx, state, 0, "absence");
+  const leaverSeat = ctx.actorId ? seatForActor(ctx) : null;
+  const winnerSeat = leaverSeat === null ? null : ((1 - leaverSeat) as Seat);
+  const outcome: ResultSpec["outcome"] = winnerSeat === null ? "abandoned" : "win";
+  const result = resultFor(state, ctx, outcome, "absence", winnerSeat, false);
+  return transition(ctx, finishedState(state, result), {
+    phaseId: ctx.nextPhaseId,
+    deadlineAt: null,
+    deadlineKind: null,
+    result,
+    roundRecords: [finalRoundRecord(state, ctx, "absence")],
+    eventType: "MATCH_ABANDONED",
+    eventPayload: { actorId: ctx.actorId, reason: "absence" },
+  });
 }
 
 export function shouldAbandonForUnoAbsence(lastSeenAt: readonly [string, string], nowMs: number): boolean {
   const ages = lastSeenAt.map((value) => nowMs - Date.parse(value));
-  return ages.every((age) => age >= 120_000) || ages.some((age) => age >= 180_000);
+  return ages.some((age) => age >= 30_000);
 }
 
 export function unoDeckCardCount(stateInput: unknown): number {

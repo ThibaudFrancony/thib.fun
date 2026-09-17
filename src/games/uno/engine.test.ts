@@ -3,6 +3,7 @@ import { DEFAULT_UNO_CONFIG, unoConfigSchema } from "@/games/uno/config";
 import { buildUnoDeck } from "@/games/uno/deck";
 import {
   initializeUno,
+  onUnoAbsence,
   onUnoDeadline,
   reduceUno,
   unoDeckCardCount,
@@ -75,23 +76,24 @@ describe("UNO engine", () => {
   });
 
   it("interrompt la partie avant le premier tour sans fabriquer une victoire", () => {
-    const claimed = reduceUno(state(), { type: "CLAIM_FORFEIT" }, DEFAULT_UNO_CONFIG, context());
-    expect(claimed.result?.outcome).toBe("abandoned");
-    expect(claimed.result?.winnerId).toBeNull();
-    expect(claimed.result?.players[0].score).toBe(0);
-
     const resigned = reduceUno(state(), { type: "RESIGN" }, DEFAULT_UNO_CONFIG, context("bob"));
     expect(resigned.result?.outcome).toBe("abandoned");
     expect(resigned.result?.winnerId).toBeNull();
   });
 
-  it("attribue le forfait au siège demandeur après le premier tour", () => {
-    const claimed = reduceUno(state({ turns: 1 }), { type: "CLAIM_FORFEIT" }, DEFAULT_UNO_CONFIG, context("bob"));
-    expect(claimed.result?.outcome).toBe("win");
-    expect(claimed.result?.winnerId).toBe("bob");
-
+  it("attribue le départ volontaire à l'adversaire et l'absence au joueur resté", () => {
     const resigned = reduceUno(state({ turns: 1 }), { type: "RESIGN" }, DEFAULT_UNO_CONFIG, context("bob"));
+    expect(resigned.result?.outcome).toBe("win");
     expect(resigned.result?.winnerId).toBe("alice");
+
+    const absent = onUnoAbsence(state({ turns: 1 }), DEFAULT_UNO_CONFIG, context("bob"));
+    expect(absent.result?.outcome).toBe("win");
+    expect(absent.result?.winnerId).toBe("alice");
+    expect(absent.result?.reason).toBe("absence");
+
+    const bothAbsent = onUnoAbsence(state({ turns: 1 }), DEFAULT_UNO_CONFIG, context(null));
+    expect(bothAbsent.result?.outcome).toBe("abandoned");
+    expect(bothAbsent.result?.winnerId).toBeNull();
 
     const final = reduceUno(state(), { type: "PLAY_CARD", cardId: "a-1", announceLastCard: false }, DEFAULT_UNO_CONFIG, context());
     expect(final.result?.players[0].metrics.turns).toBe(1);

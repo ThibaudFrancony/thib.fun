@@ -109,7 +109,7 @@ export function projectTrouNoir(
     !state.acknowledgedBy.includes(viewerId)
   )
     allowedActions.push("NEXT");
-  if (state.phase !== "finished") allowedActions.push("RESIGN", "CLAIM_FORFEIT");
+  if (state.phase !== "finished") allowedActions.push("RESIGN");
 
   return {
     kind: "trou-noir",

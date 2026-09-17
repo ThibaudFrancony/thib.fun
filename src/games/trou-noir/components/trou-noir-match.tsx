@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { TrouNoirAction, TrouNoirView } from "@/games/trou-noir/types";
-import { canClaimForfeit, parseMatchSnapshot, useResourceNetwork } from "@/lib/network-sync";
+import { parseMatchSnapshot, useResourceNetwork } from "@/lib/network-sync";
 
 type MatchResponse = {
   matchId: string;
@@ -40,7 +40,6 @@ export function TrouNoirMatch({ matchId }: { matchId: string }) {
     error,
     busy,
     serverOffset,
-    opponentLastSeenAt,
     refresh,
     send,
   } = useResourceNetwork<MatchResponse, TrouNoirAction>({
@@ -87,7 +86,6 @@ export function TrouNoirMatch({ matchId }: { matchId: string }) {
   const me = view.players[view.mySeat];
   const opponent = view.players[(1 - view.mySeat) as 0 | 1];
   const isMyTurn = view.phase === "answering" && view.question?.addresseeIsMe === true;
-  const opponentAbsent = canClaimForfeit(opponentLastSeenAt, now, serverOffset);
 
   return (
     <main className="geo-page geo-match-page">
@@ -270,15 +268,7 @@ export function TrouNoirMatch({ matchId }: { matchId: string }) {
             <div className="geo-forfeit-panel">
               <p>Partenaire absent ?</p>
               <span>Le forfait devient disponible après 90 secondes sans signal.</span>
-              <button
-                type="button"
-                disabled={!opponentAbsent || busy}
-                onClick={() => void send({ type: "CLAIM_FORFEIT" })}
-                className="geo-secondary-button"
-              >
-                {opponentAbsent ? "Réclamer le forfait" : "Forfait indisponible"}
-              </button>
-            </div>
+              </div>
           </div>
         )}
       </div>

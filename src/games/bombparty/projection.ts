@@ -30,7 +30,7 @@ export function projectBombparty(
   const allowedActions: string[] = [];
   if (state.phase === "playing") {
     if (active) allowedActions.push("SUBMIT_WORD");
-    allowedActions.push("RESIGN", "CLAIM_FORFEIT");
+    allowedActions.push("RESIGN");
   }
 
   const result: BombpartyView["result"] =

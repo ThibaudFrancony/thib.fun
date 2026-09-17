@@ -566,47 +566,26 @@ select throws_ok(
     )
   $q$,
   'P0001',
-  'FORFEIT_NOT_AVAILABLE',
-  'Le forfait est refusé avant 90 secondes d''absence'
+  'INVALID_COMMAND_TYPE',
+  'Le forfait n''est plus une commande joueur'
+);
+
+select is(
+  (select status from private.matches where id = '00000000-0000-4000-8000-0000000000c3'::uuid),
+  'active',
+  'Le refus du forfait conserve la partie active'
 );
 
 select is(
   (select status from private.matches where id = '00000000-0000-4000-8000-0000000000c4'::uuid),
   'active',
-  'Le refus de forfait conserve la partie active'
-);
-
-insert into step3_responses (name, response)
-select 'forfeit', public.server_commit_match(
-  pg_temp.step3_player_envelope(
-    '00000000-0000-4000-8000-0000000000c4'::uuid,
-    '00000000-0000-4000-8000-000000001004'::uuid,
-    '00000000-0000-4000-8000-0000000000a1'::uuid,
-    0,
-    '00000000-0000-4000-8000-0000000000d4'::uuid,
-    'CLAIM_FORFEIT', repeat('5', 64),
-    '00000000-0000-4000-8000-0000000000e4'::uuid,
-    null, null,
-    pg_temp.step3_result(
-      'win',
-      '00000000-0000-4000-8000-0000000000a1'::uuid,
-      'claimed_forfeit',
-      null,
-      null
-    ),
-    'FORFEIT_CLAIMED', '[]'::jsonb, '[]'::jsonb
-  )
+  'Aucun forfait ne peut clore une partie, même après absence'
 );
 
 select is(
-  (select status from private.matches where id = '00000000-0000-4000-8000-0000000000c4'::uuid),
-  'completed',
-  'Le forfait est accepté après l''absence requise'
-);
-select is(
-  (select winner_id from private.match_results where match_id = '00000000-0000-4000-8000-0000000000c4'::uuid),
-  '00000000-0000-4000-8000-0000000000a1'::uuid,
-  'Le forfait attribue la victoire au demandeur'
+  (select count(*) from private.command_receipts where match_id = '00000000-0000-4000-8000-0000000000c4'::uuid),
+  0::bigint,
+  'Le forfait refusé ne laisse aucun reçu'
 );
 
 insert into step3_responses (name, response)

@@ -99,7 +99,7 @@ export function projectTtmc(
   if (state.phase === "reveal" && state.contest?.status !== "pending" && !state.acknowledgedBy.includes(viewerId)) {
     allowedActions.push("NEXT");
   }
-  if (state.phase !== "finished") allowedActions.push("RESIGN", "CLAIM_FORFEIT");
+  if (state.phase !== "finished") allowedActions.push("RESIGN");
 
   const lastChanceOfRound =
     state.phase !== "finished" &&

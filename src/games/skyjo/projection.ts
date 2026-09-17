@@ -56,7 +56,7 @@ export function projectSkyjo(
   }
   if (active && state.phase === "replace_discard") allowedActions.push("REPLACE");
   if (state.phase === "round_reveal" && !state.acknowledgedBy.includes(viewerId)) allowedActions.push("NEXT");
-  if (state.phase !== "finished") allowedActions.push("RESIGN", "CLAIM_FORFEIT");
+  if (state.phase !== "finished") allowedActions.push("RESIGN");
 
   const countRevealed = (seat: Seat): number => state.grids[seat].filter((cell) => cell && cell.revealed).length;
   const countRemaining = (seat: Seat): number => state.grids[seat].filter((cell) => cell !== null).length;

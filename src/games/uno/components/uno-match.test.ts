@@ -26,7 +26,7 @@ function viewFor(seat: 0 | 1, overrides: Partial<UnoView> = {}): UnoView {
     ],
     turns: 2,
     counters: { cardsPlayed: 0, cardsDrawn: 0, penaltyCardsTaken: 0, missedAnnouncements: 0, turns: 0 },
-    actions: { canDraw: true, canPlay: true, canPlayDrawn: false, canKeepDrawn: false, canResign: true, canClaimForfeit: true },
+    actions: { canDraw: true, canPlay: true, canPlayDrawn: false, canKeepDrawn: false, canResign: true },
     result: null,
     ...overrides,
   };
@@ -48,7 +48,7 @@ describe("composants UNO", () => {
       hand: [{ id: "drawn-wild", color: null, symbol: "wild" }],
       drawnCard: { id: "drawn-wild", color: null, symbol: "wild" },
       playableCardIds: ["drawn-wild"],
-      actions: { canDraw: false, canPlay: false, canPlayDrawn: true, canKeepDrawn: true, canResign: true, canClaimForfeit: true },
+      actions: { canDraw: false, canPlay: false, canPlayDrawn: true, canKeepDrawn: true, canResign: true },
     });
     const pending: PendingPlay = { type: "PLAY_DRAWN" };
     expect(isPendingPlayValid(pending, view)).toBe(true);

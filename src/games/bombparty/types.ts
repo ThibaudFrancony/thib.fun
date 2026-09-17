@@ -62,7 +62,6 @@ export type BombpartyState = z.infer<typeof bombpartyStateSchema>;
 export const bombpartyActionSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("SUBMIT_WORD"), word: z.string().min(1).max(60) }).strict(),
   z.object({ type: z.literal("RESIGN") }).strict(),
-  z.object({ type: z.literal("CLAIM_FORFEIT") }).strict(),
 ]);
 
 export type BombpartyAction = z.infer<typeof bombpartyActionSchema>;

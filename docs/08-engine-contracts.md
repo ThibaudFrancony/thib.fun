@@ -111,12 +111,12 @@ Le RPC prend le verrou de la partie avant de lire la version et le reçu, puis p
 |---|---|---|---|
 | Coup ordinaire | joueur | `dbNow >= blocking deadline` refuse `DEADLINE_EXPIRED` ; `null` signifie sans échéance joueur | transition joueur |
 | `RESIGN` | joueur | reste admissible après l'échéance courante | fin compétitive, adversaire gagnant, sauf avant le premier tour |
-| `CLAIM_FORFEIT` | joueur | reste admissible après l'échéance, mais seulement si l'absence adverse continue depuis au moins 90 s à l'heure DB | fin compétitive, demandeur gagnant |
-| Absence / `check_absence` | job | `run_at` dû, puis condition revalidée : deux joueurs absents depuis 120 s ou un joueur depuis 180 s ; aucun `phaseId` n'est requis | abandon sans gagnant, ou no-op sans version si la condition n'est plus vraie |
+| `RESIGN` | joueur | reste admissible après l'échéance (départ volontaire) | compétitif : adversaire gagnant ; coopératif : abandon sans gagnant ; avant premier tour : abandoned |
+| Absence / `check_absence` | job | `run_at` dû, puis condition revalidée : un joueur absent depuis 30 s ou les deux ; aucun `phaseId` n'est requis | si un seul joueur est absent, l'autre gagne (compétitif) ; si les deux, abandon sans gagnant ; no-op sans version si la condition n'est plus vraie. Le forfait réclamé n'existe plus. |
 | Jugement | job | `run_at` du job dû, avec phase et bail valides ; pas de deadline de réponse joueur | transition de jugement |
 | Préparation | job | job dû, phase cohérente et deadline bloquante de préparation atteinte | transition d'expiration |
 | Timeout de phase / révélation | job | job dû, phase cohérente et deadline bloquante atteinte | transition d'expiration |
-| Interruption coopérative | joueur | même admissibilité de sortie que `RESIGN`/`CLAIM_FORFEIT`, selon le type envoyé | abandon coopératif sans gagnant ni défaite artificielle |
+| Interruption coopérative | joueur | même admissibilité de sortie que `RESIGN`, selon le type envoyé | abandon coopératif sans gagnant ni défaite artificielle |
 
 La comparaison est inclusive à la frontière (`>=`). Une commande refusée ne met à jour ni `last_seen_at`, ni état, ni version, ni job, ni résultat.
 
@@ -140,7 +140,7 @@ Une panne réessayable (worker, fournisseur IA indisponible) remet le job en `pe
 
 Le dispatcher Cron réserve seulement jobs pending dus ou running au bail expiré ; pas jobs done/cancelled/failed. Chaque requête HTTP du batch contient les quatre couples ID/token maximum. Le worker n'accepte pas des instructions métier libres contenues dans cette requête : il recharge payload stocké en base. Les tentatives de job et réservations IA sont distinctes (un retry réseau de transport ne doit pas multiplier des appels IA déjà reçus).
 
-Pour une deadline en retard, `onDeadline` applique une transition à l'heure DB actuelle. Le prochain tour bénéficie de sa durée complète à partir du traitement, **pas de l'ancienne échéance déjà passée**. Une panne ne fait donc pas perdre plusieurs vies instantanément par rattrapage de dix échéances théoriques. Pour check_absence, prochain runAt=now+30s. Pour une révélation raccourcie par NEXT, annuler ancien job et nouveau phaseId ; l'ancien ne peut pas avancer une deuxième fois.
+Pour une deadline en retard, `onDeadline` applique une transition à l'heure DB actuelle. Le prochain tour bénéficie de sa durée complète à partir du traitement, **pas de l'ancienne échéance déjà passée**. Une panne ne fait donc pas perdre plusieurs vies instantanément par rattrapage de dix échéances théoriques. Pour check_absence, prochain runAt=now+5s. Pour une révélation raccourcie par NEXT, annuler ancien job et nouveau phaseId ; l'ancien ne peut pas avancer une deuxième fois.
 
 Après 5 erreurs techniques de worker, effectuer un abandon commun via RPC de finalisation restreinte : état status abandoned, reason technical_error, jobs annulés, projections safe de fin et stats abandoned seulement. Cette RPC fonctionne même si le moteur du jeu échoue : elle conserve la dernière projection déjà sûre avec le résultat d'interruption, sans essayer de révéler les secrets. Si DB elle-même indisponible, conserver job/panne et alerte, ne pas prétendre avoir finalisé.
 

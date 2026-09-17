@@ -471,17 +471,6 @@ describe("abandons et absence", () => {
     expect(transition.result).toMatchObject({ outcome: "abandoned", reason: "resign", winnerId: null });
   });
 
-  it("CLAIM_FORFEIT avant le premier tour : abandoned sans vainqueur", () => {
-    const started = initializeBombparty({ lives: 3, initialSeconds: 15, sequenceDifficulty: "normal" }, contextFor());
-    const transition = reduceBombparty(
-      started.state,
-      { type: "CLAIM_FORFEIT" },
-      { lives: 3, initialSeconds: 15, sequenceDifficulty: "normal" },
-      contextFor(),
-    );
-    expect(transition.result).toMatchObject({ outcome: "abandoned", reason: "claimed_forfeit", winnerId: null });
-  });
-
   it("RESIGN après le premier tour : victoire de l'adversaire", () => {
     const started = initializeBombparty({ lives: 3, initialSeconds: 15, sequenceDifficulty: "normal" }, contextFor());
     const word = wordContaining(started.state.sequence);
@@ -500,39 +489,21 @@ describe("abandons et absence", () => {
     expect(transition.result).toMatchObject({ outcome: "win", reason: "resign", winnerId: PARTICIPANTS[0] });
   });
 
-  it("CLAIM_FORFEIT après le premier tour : victoire du demandeur", () => {
-    const started = initializeBombparty({ lives: 3, initialSeconds: 15, sequenceDifficulty: "normal" }, contextFor());
-    const word = wordContaining(started.state.sequence);
-    const afterFirst = reduceBombparty(
-      started.state,
-      { type: "SUBMIT_WORD", word },
-      { lives: 3, initialSeconds: 15, sequenceDifficulty: "normal" },
-      contextFor({ entropy: [0.2] }),
-    );
-    const transition = reduceBombparty(
-      afterFirst.state,
-      { type: "CLAIM_FORFEIT" },
-      { lives: 3, initialSeconds: 15, sequenceDifficulty: "normal" },
-      contextFor({ actorId: PARTICIPANTS[1] }),
-    );
-    expect(transition.result).toMatchObject({ outcome: "win", reason: "claimed_forfeit", winnerId: PARTICIPANTS[1] });
-  });
-
-  it("seuils d'absence 120 s à deux / 180 s à un", () => {
+  it("seuils d'absence : une grâce unique de 30 secondes", () => {
     const now = Date.parse("2026-09-11T12:00:00.000Z");
     expect(shouldAbandonForBombpartyAbsence(["2026-09-11T11:57:00.000Z", "2026-09-11T11:57:30.000Z"], now)).toBe(true);
     expect(shouldAbandonForBombpartyAbsence(["2026-09-11T11:59:00.000Z", "2026-09-11T11:57:00.000Z"], now)).toBe(true);
-    expect(shouldAbandonForBombpartyAbsence(["2026-09-11T11:59:30.000Z", "2026-09-11T12:00:00.000Z"], now)).toBe(false);
+    expect(shouldAbandonForBombpartyAbsence(["2026-09-11T11:59:31.000Z", "2026-09-11T12:00:00.000Z"], now)).toBe(false);
   });
 
-  it("onBombpartyAbsence interrompt sans vainqueur", () => {
+  it("onBombpartyAbsence avec un seul parti donne la victoire au resté", () => {
     const started = initializeBombparty({ lives: 3, initialSeconds: 15, sequenceDifficulty: "normal" }, contextFor());
     const transition = onBombpartyAbsence(
       started.state,
       { lives: 3, initialSeconds: 15, sequenceDifficulty: "normal" },
-      contextFor({ actorId: null }),
+      contextFor({ actorId: PARTICIPANTS[1] }),
     );
-    expect(transition.result).toMatchObject({ outcome: "abandoned", reason: "absence", winnerId: null });
+    expect(transition.result).toMatchObject({ outcome: "win", reason: "absence", winnerId: PARTICIPANTS[0] });
   });
 });
 

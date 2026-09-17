@@ -78,7 +78,6 @@ export const navalActionSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("UNREADY_FLEET") }).strict(),
   z.object({ type: z.literal("FIRE"), row: coordinateSchema, col: coordinateSchema }).strict(),
   z.object({ type: z.literal("RESIGN") }).strict(),
-  z.object({ type: z.literal("CLAIM_FORFEIT") }).strict(),
 ]);
 
 export type NavalAction = z.infer<typeof navalActionSchema>;

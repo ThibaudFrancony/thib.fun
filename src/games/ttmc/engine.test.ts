@@ -351,20 +351,15 @@ describe("moteur TTMC", () => {
     expect(resigned.result?.winnerId).toBe(participants[(1 - lateSeat) as 0 | 1]);
   });
 
-  it("CLAIM_FORFEIT tardif fait gagner le demandeur, absence technique abandonne", () => {
-    let lateState = init().state;
-    lateState = { ...lateState, round: 3 };
-    const seat = ttmcActiveSeat(lateState);
-    const actor = participants[seat];
-    const claimed = reduceTtmc(lateState, { type: "CLAIM_FORFEIT" }, config30, context(actor, { phaseId: "p0", nextPhaseId: "p9" }));
-    expect(claimed.result?.winnerId).toBe(actor);
-
+  it("la grâce de sortie est de 30 s et le joueur resté gagne", () => {
     const base = Date.parse("2026-09-11T12:00:00.000Z");
     expect(shouldAbandonForTtmcAbsence(
       [new Date(base - 200_000).toISOString(), new Date(base - 10_000).toISOString()], base,
     )).toBe(true);
-    const abandoned = onTtmcAbsence(init().state, config30, context(null, { nowMs: base, phaseId: "p0", nextPhaseId: "p9" }));
-    expect(abandoned.result?.outcome).toBe("abandoned");
+    const leaver = onTtmcAbsence(init().state, config30, context(participants[0], { nowMs: base, phaseId: "p0", nextPhaseId: "p9" }));
+    expect(leaver.result).toMatchObject({ outcome: "win", winnerId: participants[1], reason: "absence" });
+    const both = onTtmcAbsence(init().state, config30, context(null, { nowMs: base, phaseId: "p0", nextPhaseId: "p9" }));
+    expect(both.result?.outcome).toBe("abandoned");
   });
 
   it("ancien job contest_timeout après clôture => STALE_DEADLINE", () => {
@@ -534,23 +529,11 @@ describe("moteur TTMC", () => {
     ).toThrow("MATCH_FINISHED");
   });
 
-  it("CLAIM_FORFEIT avant premier tour => abandoned sans vainqueur", () => {
-    const started = init();
-    const seat = ttmcActiveSeat(started.state);
-    const actor = participants[seat];
-    const claimed = reduceTtmc(started.state, { type: "CLAIM_FORFEIT" }, config30,
-      context(actor, { phaseId: "p0", nextPhaseId: "p9" }));
-    expect(claimed.state.phase).toBe("finished");
-    expect(claimed.result?.outcome).toBe("abandoned");
-    expect(claimed.result?.winnerId).toBeNull();
-    expect(claimed.result?.reason).toBe("claimed_forfeit");
-  });
-
-  it("seuils d'absence : les deux à 120 s ou un seul à 180 s", () => {
+  it("seuils d'absence : grâce unique de 30 s", () => {
     const base = Date.parse("2026-09-11T12:00:00.000Z");
     const isoAt = (ageMs: number) => new Date(base - ageMs).toISOString();
-    expect(shouldAbandonForTtmcAbsence([isoAt(121_000), isoAt(121_000)], base)).toBe(true);
-    expect(shouldAbandonForTtmcAbsence([isoAt(119_000), isoAt(10_000)], base)).toBe(false);
+    expect(shouldAbandonForTtmcAbsence([isoAt(31_000), isoAt(31_000)], base)).toBe(true);
+    expect(shouldAbandonForTtmcAbsence([isoAt(29_000), isoAt(10_000)], base)).toBe(false);
     expect(shouldAbandonForTtmcAbsence([isoAt(181_000), isoAt(5_000)], base)).toBe(true);
   });
 

@@ -585,8 +585,6 @@ export function reduceTrouNoir(
     }
     case "RESIGN":
       return resignTransition(ctx, state, actorSeat, "resign");
-    case "CLAIM_FORFEIT":
-      return resignTransition(ctx, state, actorSeat, "claimed_forfeit");
   }
 }
 
@@ -762,7 +760,7 @@ export function onTrouNoirDeadline(
 
 export function shouldAbandonForTrouNoirAbsence(lastSeenAt: readonly [string, string], nowMs: number): boolean {
   const ages = lastSeenAt.map((value) => nowMs - Date.parse(value));
-  return ages.every((age) => age >= 120_000) || ages.some((age) => age >= 180_000);
+  return ages.some((age) => age >= 30_000);
 }
 
 export function onTrouNoirAbsence(
@@ -773,7 +771,9 @@ export function onTrouNoirAbsence(
   const state = trouNoirStateSchema.parse(stateInput);
   trouNoirConfigSchema.parse(configInput);
   if (state.phase === "finished") throw new TrouNoirRuleError("MATCH_FINISHED");
-  const result = resultFor(state, ctx, "absence", "abandoned", null);
+  const leaverSeat = ctx.actorId ? seatForActor(ctx) : null;
+  const winnerSeat = leaverSeat === null ? null : ((1 - leaverSeat) as Seat);
+  const result = resultFor(state, ctx, "absence", winnerSeat === null ? "abandoned" : "win", winnerSeat);
   return transition(ctx, finishedState(state, result), {
     phaseId: ctx.nextPhaseId,
     deadlineAt: null,

@@ -606,8 +606,6 @@ export function reduceNaval(
     }
     case "RESIGN":
       return abandonTransition(ctx, state, actorSeat, "resign");
-    case "CLAIM_FORFEIT":
-      return abandonTransition(ctx, state, actorSeat, "claimed_forfeit");
   }
 }
 
@@ -689,14 +687,16 @@ export function onNavalDeadline(
 
 export function shouldAbandonForNavalAbsence(lastSeenAt: readonly [string, string], nowMs: number): boolean {
   const ages = lastSeenAt.map((value) => nowMs - Date.parse(value));
-  return ages.every((age) => age >= 120_000) || ages.some((age) => age >= 180_000);
+  return ages.some((age) => age >= 30_000);
 }
 
 export function onNavalAbsence(stateInput: unknown, configInput: unknown, ctx: NavalEngineContext): NavalTransition {
   const state = navalStateSchema.parse(stateInput);
   navalConfigSchema.parse(configInput);
   if (state.phase === "finished") throw new NavalRuleError("MATCH_FINISHED");
-  const result = abandonResult(state, ctx, "absence", null);
+  const leaverSeat = ctx.actorId ? seatForActor(ctx) : null;
+  const winnerSeat = leaverSeat === null ? null : ((1 - leaverSeat) as Seat);
+  const result = abandonResult(state, ctx, "absence", winnerSeat);
   return transition(ctx, finishedState(state, result), {
     phaseId: ctx.nextPhaseId,
     deadlineAt: null,

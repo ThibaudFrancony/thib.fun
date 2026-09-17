@@ -67,7 +67,6 @@ export const unoActionSchema = z.discriminatedUnion("type", [
   }).strict(),
   z.object({ type: z.literal("KEEP_DRAWN") }).strict(),
   z.object({ type: z.literal("RESIGN") }).strict(),
-  z.object({ type: z.literal("CLAIM_FORFEIT") }).strict(),
 ]);
 
 export type UnoAction = z.infer<typeof unoActionSchema>;
@@ -106,7 +105,6 @@ export type UnoView = {
     canPlayDrawn: boolean;
     canKeepDrawn: boolean;
     canResign: boolean;
-    canClaimForfeit: boolean;
   };
   result: UnoResultView | null;
 };

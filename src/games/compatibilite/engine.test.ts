@@ -121,7 +121,7 @@ describe("moteur Compatibilité", () => {
   });
 
   it("abandonne sans score coopératif normal et applique les seuils d'absence", () => {
-    expect(shouldAbandonForCompatibiliteAbsence(["2026-09-11T19:57:59.000Z", "2026-09-11T19:59:00.000Z"], Date.parse("2026-09-11T20:00:00.000Z"))).toBe(false);
+    expect(shouldAbandonForCompatibiliteAbsence(["2026-09-11T19:59:45.000Z", "2026-09-11T19:59:40.000Z"], Date.parse("2026-09-11T20:00:00.000Z"))).toBe(false);
     expect(shouldAbandonForCompatibiliteAbsence(["2026-09-11T19:57:59.000Z", "2026-09-11T19:57:59.000Z"], Date.parse("2026-09-11T20:00:00.000Z"))).toBe(true);
     const result = onCompatibiliteAbsence(started(), config, ctx(null));
     expect(result.state.phase).toBe("finished");
@@ -129,18 +129,16 @@ describe("moteur Compatibilité", () => {
     expect(result.result?.sharedScore).toBeNull();
   });
 
-  it("garde RESIGN et CLAIM_FORFEIT comme interruptions coopératives pour chaque siège", () => {
+  it("garde RESIGN comme interruption coopérative pour chaque siège", () => {
     for (const actorId of [A, B]) {
-      for (const action of [{ type: "RESIGN" as const }, { type: "CLAIM_FORFEIT" as const }]) {
-        const result = reduceCompatibilite(started(), action, config, ctx(actorId)).result;
-        expect(result).toMatchObject({
-          kind: "cooperative",
-          outcome: "abandoned",
-          winnerId: null,
-          sharedScore: null,
-          reason: action.type === "RESIGN" ? "resign" : "claimed_forfeit",
-        });
-      }
+      const result = reduceCompatibilite(started(), { type: "RESIGN" }, config, ctx(actorId)).result;
+      expect(result).toMatchObject({
+        kind: "cooperative",
+        outcome: "abandoned",
+        winnerId: null,
+        sharedScore: null,
+        reason: "resign",
+      });
     }
   });
 

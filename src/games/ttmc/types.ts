@@ -131,7 +131,6 @@ export const ttmcActionSchema = z.discriminatedUnion("type", [
     .strict(),
   z.object({ type: z.literal("NEXT") }).strict(),
   z.object({ type: z.literal("RESIGN") }).strict(),
-  z.object({ type: z.literal("CLAIM_FORFEIT") }).strict(),
 ]);
 
 export type TtmcAction = z.infer<typeof ttmcActionSchema>;

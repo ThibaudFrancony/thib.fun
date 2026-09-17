@@ -456,23 +456,24 @@ describe("forfaits et absence", () => {
     expect(transition.result?.winnerId).toBeNull();
   });
 
-  it("RESIGN après des tirs donne la victoire à l'adversaire, CLAIM au demandeur", () => {
+  it("RESIGN après des tirs donne la victoire à l'adversaire", () => {
     const { state } = playingState();
     const started = reduceNaval(state, { type: "FIRE", row: 9, col: 0 }, { turnSeconds: null }, ctx(A)).state;
     const resigned = reduceNaval(started, { type: "RESIGN" }, { turnSeconds: null }, ctx(B));
     expect(resigned.result?.winnerId).toBe(A);
-    const claimed = reduceNaval(started, { type: "CLAIM_FORFEIT" }, { turnSeconds: null }, ctx(B));
-    expect(claimed.result?.winnerId).toBe(B);
   });
 
-  it("l'absence commune abandonne sans vainqueur", () => {
-    expect(shouldAbandonForNavalAbsence(["2026-09-11T11:57:00.000Z", "2026-09-11T11:57:00.000Z"], Date.parse("2026-09-11T12:00:00.000Z"))).toBe(true);
-    expect(shouldAbandonForNavalAbsence(["2026-09-11T11:59:30.000Z", "2026-09-11T11:56:00.000Z"], Date.parse("2026-09-11T12:00:00.000Z"))).toBe(true);
-    expect(shouldAbandonForNavalAbsence(["2026-09-11T11:59:30.000Z", "2026-09-11T11:59:30.000Z"], Date.parse("2026-09-11T12:00:00.000Z"))).toBe(false);
+  it("la grâce de sortie est de 30 secondes et le joueur resté gagne", () => {
+    expect(shouldAbandonForNavalAbsence(["2026-09-11T11:56:00.000Z", "2026-09-11T11:57:00.000Z"], Date.parse("2026-09-11T12:00:00.000Z"))).toBe(true);
+    expect(shouldAbandonForNavalAbsence(["2026-09-11T11:59:31.000Z", "2026-09-11T11:59:31.000Z"], Date.parse("2026-09-11T12:00:00.000Z"))).toBe(false);
     const { state } = playingState();
-    const transition = onNavalAbsence(state, { turnSeconds: null }, ctx(null));
-    expect(transition.result?.outcome).toBe("abandoned");
-    expect(transition.result?.reason).toBe("absence");
+    const leaver = onNavalAbsence(state, { turnSeconds: null }, ctx(A));
+    expect(leaver.result?.outcome).toBe("win");
+    expect(leaver.result?.winnerId).toBe(B);
+    expect(leaver.result?.reason).toBe("absence");
+    const both = onNavalAbsence(state, { turnSeconds: null }, ctx(null));
+    expect(both.result?.outcome).toBe("abandoned");
+    expect(both.result?.winnerId).toBeNull();
   });
 });
 
@@ -559,23 +560,12 @@ describe("cycle 2 — revue release", () => {
     expect(JSON.stringify(third)).toBe(before);
   });
 
-  it("CLAIM_FORFEIT pendant la préparation abandonne sans vainqueur", () => {
-    const transition = reduceNaval(setupState(), { type: "CLAIM_FORFEIT" }, { turnSeconds: null }, ctx(B));
-    expect(transition.state.phase).toBe("finished");
-    expect(transition.result?.outcome).toBe("abandoned");
-    expect(transition.result?.winnerId).toBeNull();
-  });
-
-  it("CLAIM_FORFEIT reste possible après l'échéance de tir", () => {
+  it("un coup ordinaire reste refusé après l'échéance de tir", () => {
     const { state } = playingState();
     const past = new Date(Date.parse("2026-09-11T12:00:00.000Z") - 1000).toISOString();
-    const context = ctx(B, { currentDeadlineAt: past, currentDeadlineKind: "turn_timeout" });
     expect(codeOf(() => reduceNaval(state, { type: "FIRE", row: 0, col: 0 }, { turnSeconds: 60 }, ctx(A, { currentDeadlineAt: past, currentDeadlineKind: "turn_timeout" })))).toBe(
       "DEADLINE_EXPIRED",
     );
-    // Avant le premier tir : abandon sans vainqueur même après échéance.
-    const claimed = reduceNaval(state, { type: "CLAIM_FORFEIT" }, { turnSeconds: 60 }, context);
-    expect(claimed.result?.outcome).toBe("abandoned");
   });
 
   it("le tir automatique ne dépend pas de la flotte cachée et vise l'inconnu", () => {

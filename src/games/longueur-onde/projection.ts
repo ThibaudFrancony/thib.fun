@@ -41,7 +41,7 @@ export function projectLongueurOnde(
   if (state.phase === "clue" && isGiver) allowedActions.push("SUBMIT_CLUE");
   if (state.phase === "guessing" && isGuesser && state.guess === null) allowedActions.push("SUBMIT_GUESS");
   if (state.phase === "reveal" && !state.acknowledgedBy.includes(viewerId)) allowedActions.push("NEXT");
-  if (isActive) allowedActions.push("RESIGN", "CLAIM_FORFEIT");
+  if (isActive) allowedActions.push("RESIGN");
 
   return {
     kind: "longueur-onde",

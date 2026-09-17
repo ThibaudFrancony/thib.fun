@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { SkyjoAction, SkyjoCellView, SkyjoView } from "@/games/skyjo/types";
-import { canClaimForfeit, parseMatchSnapshot, useResourceNetwork } from "@/lib/network-sync";
+import { parseMatchSnapshot, useResourceNetwork } from "@/lib/network-sync";
 
 type MatchResponse = {
   matchId: string;
@@ -48,7 +48,6 @@ export function SkyjoMatch({ matchId }: { matchId: string }) {
     error,
     busy,
     serverOffset,
-    opponentLastSeenAt,
     refresh,
     send: networkSend,
   } = useResourceNetwork<MatchResponse, SkyjoAction>({
@@ -81,7 +80,6 @@ export function SkyjoMatch({ matchId }: { matchId: string }) {
   }
 
   const remaining = match?.deadlineAt ? Math.max(0, Math.ceil((Date.parse(match.deadlineAt) - (now + serverOffset)) / 1000)) : null;
-  const opponentAbsent = canClaimForfeit(opponentLastSeenAt, now, serverOffset);
   if (error && !match) {
     return <main className="min-h-screen px-5 py-12"><div role="alert" className="mx-auto max-w-xl rounded-2xl bg-red-50 p-5 text-red-700">{error}</div></main>;
   }
@@ -191,8 +189,7 @@ export function SkyjoMatch({ matchId }: { matchId: string }) {
             <span className="text-[var(--muted)]">Besoin d&apos;arrêter la partie ?</span>
             <div className="flex gap-2">
               <button type="button" disabled={busy} onClick={() => { if (window.confirm("Abandonner cette partie ?")) void send({ type: "RESIGN" }); }} className="rounded-full px-3 py-2 font-bold text-[var(--muted)] hover:bg-red-50 hover:text-red-700">Abandonner</button>
-              <button type="button" disabled={!opponentAbsent || busy} onClick={() => void send({ type: "CLAIM_FORFEIT" })} className="rounded-full border border-[var(--line)] px-3 py-2 font-bold">{opponentAbsent ? "Réclamer un forfait" : "Forfait indisponible"}</button>
-            </div>
+              </div>
           </div>
         )}
         {error && <p role="alert" className="mt-4 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}

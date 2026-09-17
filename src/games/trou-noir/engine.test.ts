@@ -472,7 +472,7 @@ describe("moteur Trou Noir", () => {
     expect(running.perPlayer[0].contestsAccepted).toBe(1);
   });
 
-  it("forfait : RESIGN fait gagner l'adversaire, CLAIM_FORFEIT le demandeur, abandon avant le premier tour", () => {
+  it("forfait : RESIGN fait gagner l'adversaire, abandon avant le premier tour", () => {
     const config = { maxRounds: 5, answerSeconds: 60, categories: ["culture"] };
     const fresh = init(5, 0).state;
     const resigned = reduceTrouNoir(
@@ -484,18 +484,6 @@ describe("moteur Trou Noir", () => {
     expect(resigned.state.phase).toBe("finished");
     expect(resigned.result?.outcome).toBe("abandoned");
     expect(resigned.result?.winnerId).toBeNull();
-    // CLAIM_FORFEIT avant le premier tour : aucun tour joué => abandon sans vainqueur.
-    const claimedEarly = reduceTrouNoir(
-      fresh,
-      { type: "CLAIM_FORFEIT" },
-      config,
-      context("alice", { nowMs: Date.parse("2026-09-11T12:00:06.000Z"), phaseId: "p0", nextPhaseId: "p-claim-early" }),
-    );
-    expect(claimedEarly.state.phase).toBe("finished");
-    expect(claimedEarly.result?.outcome).toBe("abandoned");
-    expect(claimedEarly.result?.winnerId).toBeNull();
-    expect(claimedEarly.result?.reason).toBe("claimed_forfeit");
-    // Après un tour joué, le forfait départage réellement.
     let played = answerFlow(fresh, 0, "bonne", "accept", Date.parse("2026-09-11T12:00:10.000Z"));
     played = closeReveal(played, Date.parse("2026-09-11T12:00:30.000Z"));
     const resignLate = reduceTrouNoir(
@@ -507,15 +495,6 @@ describe("moteur Trou Noir", () => {
     expect(resignLate.result?.outcome).toBe("win");
     expect(resignLate.result?.winnerId).toBe("bob");
     expect(resignLate.result?.reason).toBe("resign");
-    const claimed = reduceTrouNoir(
-      played,
-      { type: "CLAIM_FORFEIT" },
-      config,
-      context("alice", { nowMs: Date.parse("2026-09-11T12:01:00.000Z"), phaseId: "p1", nextPhaseId: "p-claim" }),
-    );
-    expect(claimed.result?.outcome).toBe("win");
-    expect(claimed.result?.winnerId).toBe("alice");
-    expect(claimed.result?.reason).toBe("claimed_forfeit");
   });
 
   it("NEXT exige deux confirmations distinctes sans contestation en cours", () => {

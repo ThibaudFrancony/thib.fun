@@ -269,11 +269,8 @@ export function RoomLobby({ roomId, roomManagementEnabled }: { roomId: string; r
         <div className="geo-panel geo-lobby-panel">
           <p className="geo-kicker geo-kicker-warm">Salon {publicGameBySlug(room.gameSlug)?.displayName ?? room.gameSlug}</p>
           <h1 className="geo-lobby-title">Partie en cours</h1>
-          <p className="geo-panel-note mt-3">Une partie est déjà lancée dans ce salon. Reprends-la pour continuer, ou reviens ici une fois terminée pour préparer la revanche.</p>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Link href={`/parties/${room.currentMatchId}`} className="geo-primary-button">Reprendre la partie</Link>
-            {backToGames}
-          </div>
+          <p className="geo-panel-note mt-3">Une partie est déjà lancée dans ce salon. Elle se termine par un abandon ou par la fin normale de la partie ; le salon rouvre ensuite pour une nouvelle partie.</p>
+          <div className="mt-4 flex flex-wrap gap-2">{backToGames}</div>
           <p className="mt-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--muted)]">{networkStatus === "RECONNECTING" ? "Reconnexion…" : "Salon synchronisé"}</p>
         </div>
       </section>

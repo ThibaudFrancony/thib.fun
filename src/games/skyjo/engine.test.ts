@@ -524,8 +524,6 @@ describe("scores, victoire et abandons", () => {
     const resigned = reduce(mid, { type: "RESIGN" }, PARTICIPANTS[0]);
     expect(resigned.result?.outcome).toBe("win");
     expect(resigned.result?.winnerId).toBe(PARTICIPANTS[1]);
-    const claimed = reduce(mid, { type: "CLAIM_FORFEIT" }, PARTICIPANTS[0]);
-    expect(claimed.result?.winnerId).toBe(PARTICIPANTS[0]);
   });
 
   it("MATCH_FINISHED après la fin et STALE_DEADLINE hors sujet", () => {

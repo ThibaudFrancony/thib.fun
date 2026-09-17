@@ -38,7 +38,6 @@ function view(hand: UnoView["hand"]): UnoView {
       canPlayDrawn: false,
       canKeepDrawn: false,
       canResign: true,
-      canClaimForfeit: true,
     },
     result: null,
   };

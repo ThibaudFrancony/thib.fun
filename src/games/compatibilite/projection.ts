@@ -46,7 +46,7 @@ export function projectCompatibilite(
   }
   if (state.phase === "reveal" && !state.acknowledgedBy.includes(viewerId)) allowedActions.push("NEXT");
   if (state.phase !== "finished") {
-    allowedActions.push("RESIGN", "CLAIM_FORFEIT");
+    allowedActions.push("RESIGN");
   }
 
   return {

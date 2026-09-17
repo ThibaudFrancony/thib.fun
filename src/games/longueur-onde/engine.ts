@@ -361,7 +361,6 @@ export function reduceLongueurOnde(
   const seat = seatForActor(ctx);
   if (state.phase === "finished") throw new LongueurOndeRuleError("MATCH_FINISHED");
   if (action.type === "RESIGN") return abandon(ctx, state, config, "resign");
-  if (action.type === "CLAIM_FORFEIT") return abandon(ctx, state, config, "claimed_forfeit");
 
   if (action.type === "SUBMIT_CLUE") {
     if (state.phase !== "clue") throw new LongueurOndeRuleError("WRONG_PHASE");
@@ -424,7 +423,7 @@ export function onLongueurOndeDeadline(
 
 export function shouldAbandonForLongueurOndeAbsence(lastSeenAt: readonly [string, string], nowMs: number): boolean {
   const ages = lastSeenAt.map((value) => nowMs - Date.parse(value));
-  return ages.every((age) => age >= 120_000) || ages.some((age) => age >= 180_000);
+  return ages.some((age) => age >= 30_000);
 }
 
 export function onLongueurOndeAbsence(

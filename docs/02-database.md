@@ -155,7 +155,7 @@ Index `(viewer_id,ended_at DESC,match_id DESC)`, `(viewer_id,opponent_id,game_sl
 
 `user_id uuid FK profiles`, `game_slug text FK games`, `played integer DEFAULT 0`, `wins integer DEFAULT 0`, `losses integer DEFAULT 0`, `draws integer DEFAULT 0`, `cooperative integer DEFAULT 0`, `abandoned integer DEFAULT 0`, `metrics jsonb`, `updated_at`, PK `(user_id,game_slug)`.
 
-CHECK `played=wins+losses+draws+cooperative`. `abandoned` distinct, non inclus dans played. Les forfaits explicites compétitifs comptent win/loss. `metrics` est défini par chaque jeu ; pour les moyennes conserver total + count, calculer l'arrondi à la lecture. Les statistiques globales sont la somme de ces compteurs, pas une deuxième table pouvant diverger.
+CHECK `played=wins+losses+draws+cooperative`. `abandoned` distinct, non inclus dans played. Les abandons volontaires et les absences compétitives comptent win/loss (le joueur parti perd). `metrics` est défini par chaque jeu ; pour les moyennes conserver total + count, calculer l'arrondi à la lecture. Les statistiques globales sont la somme de ces compteurs, pas une deuxième table pouvant diverger.
 
 ### `private.pair_game_stats`
 

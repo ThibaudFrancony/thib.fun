@@ -133,7 +133,6 @@ export const trouNoirActionSchema = z.discriminatedUnion("type", [
     .strict(),
   z.object({ type: z.literal("NEXT") }).strict(),
   z.object({ type: z.literal("RESIGN") }).strict(),
-  z.object({ type: z.literal("CLAIM_FORFEIT") }).strict(),
 ]);
 
 export type TrouNoirAction = z.infer<typeof trouNoirActionSchema>;

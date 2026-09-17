@@ -76,7 +76,6 @@ export const longueurOndeActionSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("SUBMIT_GUESS"), position: z.number().int().min(0).max(100) }).strict(),
   z.object({ type: z.literal("NEXT") }).strict(),
   z.object({ type: z.literal("RESIGN") }).strict(),
-  z.object({ type: z.literal("CLAIM_FORFEIT") }).strict(),
 ]);
 
 export type LongueurOndeAction = z.infer<typeof longueurOndeActionSchema>;

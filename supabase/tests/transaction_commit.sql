@@ -39,11 +39,12 @@ select ok(
 
 select ok(
   (
-    select lower(source) like '%v_command_type not in (''resign'', ''claim_forfeit'')%'
+    select lower(source) like '%v_command_type <> ''resign''%'
       and lower(source) like '%v_now >= v_match.deadline_at%'
+      and lower(source) like '%''claim_forfeit''%'
     from step3_function_sources where name = 'commit'
   ),
-  'Expiration à la limite : les sorties admissibles restent possibles'
+  'Expiration à la limite : seul RESIGN reste admissible, le forfait est bloqué'
 );
 
 select ok(
@@ -57,21 +58,24 @@ select ok(
 
 select ok(
   (
-    select lower(source) like '%v_now - interval ''90 seconds''%'
-      and lower(source) like '%forfeit_not_available%'
+    select lower(source) like '%v_job_kind = ''check_absence''%'
+      and lower(source) like '%v_now - interval ''30 seconds''%'
+      and lower(source) not like '%forfeit_not_available%'
+      and lower(source) not like '%interval ''90 seconds''%'
     from step3_function_sources where name = 'commit'
   ),
-  'Forfait : l''absence adverse de 90 secondes est vérifiée sous verrou'
+  'Sortie : la grâce est de 30 secondes et le forfait n''existe plus'
 );
 
 select ok(
   (
-    select lower(source) like '%interval ''120 seconds''%'
-      and lower(source) like '%interval ''180 seconds''%'
-      and lower(source) like '%v_job_kind = ''check_absence''%'
+    select lower(source) like '%v_job_kind = ''check_absence''%'
+      and lower(source) like '%interval ''30 seconds''%'
+      and lower(source) not like '%interval ''120 seconds''%'
+      and lower(source) not like '%interval ''180 seconds''%'
     from step3_function_sources where name = 'commit'
   ),
-  'Abandon : check_absence revalide les deux seuils sans phase'
+  'Abandon : check_absence revalide une grâce unique sans phase'
 );
 
 select ok(

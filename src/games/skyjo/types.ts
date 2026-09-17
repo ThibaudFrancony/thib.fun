@@ -77,7 +77,6 @@ export const skyjoActionSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("DISCARD_AND_REVEAL"), slot: z.number().int().min(0).max(11) }).strict(),
   z.object({ type: z.literal("NEXT") }).strict(),
   z.object({ type: z.literal("RESIGN") }).strict(),
-  z.object({ type: z.literal("CLAIM_FORFEIT") }).strict(),
 ]);
 
 export type SkyjoAction = z.infer<typeof skyjoActionSchema>;

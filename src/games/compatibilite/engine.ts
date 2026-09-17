@@ -321,7 +321,6 @@ export function reduceCompatibilite(
   if (state.phase === "finished") throw new CompatibiliteRuleError("MATCH_FINISHED");
 
   if (action.type === "RESIGN") return resign(ctx, state, config, "resign");
-  if (action.type === "CLAIM_FORFEIT") return resign(ctx, state, config, "claimed_forfeit");
 
   if (action.type === "SUBMIT_CHOICE") {
     if (state.phase !== "answering") throw new CompatibiliteRuleError("WRONG_PHASE");
@@ -398,7 +397,7 @@ export function onCompatibiliteDeadline(
 
 export function shouldAbandonForCompatibiliteAbsence(lastSeenAt: readonly [string, string], nowMs: number): boolean {
   const ages = lastSeenAt.map((value) => nowMs - Date.parse(value));
-  return ages.every((age) => age >= 120_000) || ages.some((age) => age >= 180_000);
+  return ages.some((age) => age >= 30_000);
 }
 
 export function onCompatibiliteAbsence(

@@ -80,7 +80,6 @@ export const geoActionSchema = z.discriminatedUnion("type", [
   }),
   z.object({ type: z.literal("NEXT") }),
   z.object({ type: z.literal("RESIGN") }),
-  z.object({ type: z.literal("CLAIM_FORFEIT") }),
 ]);
 
 export type GeoAction = z.infer<typeof geoActionSchema>;

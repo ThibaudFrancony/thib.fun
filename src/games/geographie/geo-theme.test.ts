@@ -29,7 +29,7 @@ describe("direction artistique ExaPoint", () => {
     for (const token of ["/api/rooms", "/api/rooms/join", "gameSlug", "rounds", "turnSeconds", "difficulty", "room-code"]) {
       expect(setup).toContain(token);
     }
-    for (const token of ["/api/matches/", "PLACE_CITY", "SET_CITY_SELECTION", "CONFIRM_CITY_SELECTION", "RESIGN", "NEXT", "CLAIM_FORFEIT", "aria-live", "role=\"alert\""]) {
+    for (const token of ["/api/matches/", "PLACE_CITY", "SET_CITY_SELECTION", "CONFIRM_CITY_SELECTION", "RESIGN", "NEXT", "Abandonner", "aria-live", "role=\"alert\""]) {
       expect(match).toContain(token);
     }
     for (const token of ["role=\"application\"", "tabIndex={0}", "data-map-ready", "aria-busy", "onKeyDown", "onPointerDown", "onWheel", "ResizeObserver", "Zoomer", "Recentrer"]) {

@@ -138,6 +138,16 @@ function orderedPlayers(players: MatchPlayerSnapshot[]): [MatchPlayerSnapshot, M
   return [ordered[0], ordered[1]];
 }
 
+/** Grâce de sortie : un joueur absent 30 s est considéré comme ayant quitté. */
+const ABSENCE_GRACE_MS = 30_000;
+
+function absentActorId(players: [MatchPlayerSnapshot, MatchPlayerSnapshot], nowMs: number): string | null {
+  const absent = players.filter(
+    (player) => typeof player.lastSeenAt === "string" && nowMs - Date.parse(player.lastSeenAt) >= ABSENCE_GRACE_MS,
+  );
+  return absent.length === 1 ? absent[0].id : null;
+}
+
 function isStaleJob(code: string): boolean {
   return ["JOB_LEASE_INVALID", "STALE_JOB", "STALE_DEADLINE", "MATCH_NOT_ACTIVE", "MATCH_NOT_FOUND"].includes(code);
 }
@@ -368,9 +378,10 @@ async function processAbsenceJob(job: WorkerJob, context: JobContext): Promise<R
   const content = await loadGeoContent();
   const participants = [players[0].id, players[1].id] as const;
   const identities = players.map((player) => ({ id: player.id, pseudo: player.pseudo })) as [{ id: string; pseudo: string }, { id: string; pseudo: string }];
+  const absenceNowMs = Date.parse(context.serverNow);
   const transition = onGeoAbsence(context.state, config, {
-    nowMs: Date.parse(context.serverNow),
-    actorId: null,
+    nowMs: absenceNowMs,
+    actorId: absentActorId(players, absenceNowMs),
     matchId: context.matchId,
     participants,
     content,
@@ -469,8 +480,9 @@ async function processUnoAbsenceJob(job: WorkerJob, context: JobContext): Promis
   const config = unoConfigSchema.parse(context.config);
   const participants = [players[0].id, players[1].id] as const;
   const identities = players.map((player) => ({ id: player.id, pseudo: player.pseudo })) as [{ id: string; pseudo: string }, { id: string; pseudo: string }];
+  const absenceNowMs = Date.parse(context.serverNow);
   const transition = onUnoAbsence(context.state, config, {
-    nowMs: Date.parse(context.serverNow), actorId: null, matchId: context.matchId, participants,
+    nowMs: absenceNowMs, actorId: absentActorId(players, absenceNowMs), matchId: context.matchId, participants,
     content: null, entropy: [], phaseId: context.phaseId, nextPhaseId: randomUUID(),
     currentDeadlineAt: context.deadlineAt, currentDeadlineKind: context.deadlineKind,
   });
@@ -668,9 +680,10 @@ async function processTrouNoirAbsenceJob(job: WorkerJob, context: JobContext): P
   const content = await loadTrouNoirContent();
   const participants = [players[0].id, players[1].id] as const;
   const identities = players.map((player) => ({ id: player.id, pseudo: player.pseudo })) as [{ id: string; pseudo: string }, { id: string; pseudo: string }];
+  const absenceNowMs = Date.parse(context.serverNow);
   const transition = onTrouNoirAbsence(context.state, config, {
-    nowMs: Date.parse(context.serverNow),
-    actorId: null,
+    nowMs: absenceNowMs,
+    actorId: absentActorId(players, absenceNowMs),
     matchId: context.matchId,
     participants,
     content,
@@ -880,9 +893,10 @@ async function processTtmcAbsenceJob(job: WorkerJob, context: JobContext): Promi
   const content = await loadTtmcContent();
   const participants = [players[0].id, players[1].id] as const;
   const identities = players.map((player) => ({ id: player.id, pseudo: player.pseudo })) as [{ id: string; pseudo: string }, { id: string; pseudo: string }];
+  const absenceNowMs = Date.parse(context.serverNow);
   const transition = onTtmcAbsence(context.state, config, {
-    nowMs: Date.parse(context.serverNow),
-    actorId: null,
+    nowMs: absenceNowMs,
+    actorId: absentActorId(players, absenceNowMs),
     matchId: context.matchId,
     participants,
     content,
@@ -950,8 +964,9 @@ async function processSkyjoAbsenceJob(job: WorkerJob, context: JobContext): Prom
   const config = skyjoConfigSchema.parse(context.config);
   const participants = [players[0].id, players[1].id] as const;
   const identities = players.map((player) => ({ id: player.id, pseudo: player.pseudo })) as [{ id: string; pseudo: string }, { id: string; pseudo: string }];
+  const absenceNowMs = Date.parse(context.serverNow);
   const transition = onSkyjoAbsence(context.state, config, {
-    nowMs: Date.parse(context.serverNow), actorId: null, matchId: context.matchId, participants,
+    nowMs: absenceNowMs, actorId: absentActorId(players, absenceNowMs), matchId: context.matchId, participants,
     content: null, entropy: [], phaseId: context.phaseId, nextPhaseId: randomUUID(),
     currentDeadlineAt: context.deadlineAt, currentDeadlineKind: context.deadlineKind,
   });
@@ -1012,8 +1027,9 @@ async function processBombpartyAbsenceJob(job: WorkerJob, context: JobContext): 
   const content = await loadBombpartyContent();
   const participants = [players[0].id, players[1].id] as const;
   const identities = players.map((player) => ({ id: player.id, pseudo: player.pseudo })) as [{ id: string; pseudo: string }, { id: string; pseudo: string }];
+  const absenceNowMs = Date.parse(context.serverNow);
   const transition = onBombpartyAbsence(context.state, config, {
-    nowMs: Date.parse(context.serverNow), actorId: null, matchId: context.matchId, participants,
+    nowMs: absenceNowMs, actorId: absentActorId(players, absenceNowMs), matchId: context.matchId, participants,
     content, entropy: [], phaseId: context.phaseId, nextPhaseId: randomUUID(),
     currentDeadlineAt: context.deadlineAt, currentDeadlineKind: context.deadlineKind,
   });
@@ -1072,8 +1088,9 @@ async function processNavalAbsenceJob(job: WorkerJob, context: JobContext): Prom
   const config = navalConfigSchema.parse(context.config);
   const participants = [players[0].id, players[1].id] as const;
   const identities = players.map((player) => ({ id: player.id, pseudo: player.pseudo })) as [{ id: string; pseudo: string }, { id: string; pseudo: string }];
+  const absenceNowMs = Date.parse(context.serverNow);
   const transition = onNavalAbsence(context.state, config, {
-    nowMs: Date.parse(context.serverNow), actorId: null, matchId: context.matchId, participants,
+    nowMs: absenceNowMs, actorId: absentActorId(players, absenceNowMs), matchId: context.matchId, participants,
     content: null, entropy: [], phaseId: context.phaseId, nextPhaseId: randomUUID(),
     currentDeadlineAt: context.deadlineAt, currentDeadlineKind: context.deadlineKind,
   });
@@ -1165,8 +1182,9 @@ async function processLongueurOndeAbsenceJob(job: WorkerJob, context: JobContext
   const content = await loadLongueurOndeContent();
   const participants = [players[0].id, players[1].id] as const;
   const identities = players.map((player) => ({ id: player.id, pseudo: player.pseudo })) as [{ id: string; pseudo: string }, { id: string; pseudo: string }];
+  const absenceNowMs = Date.parse(context.serverNow);
   const transition = onLongueurOndeAbsence(context.state, config, {
-    nowMs: Date.parse(context.serverNow), actorId: null, matchId: context.matchId, participants,
+    nowMs: absenceNowMs, actorId: absentActorId(players, absenceNowMs), matchId: context.matchId, participants,
     content, entropy: [], phaseId: context.phaseId, nextPhaseId: randomUUID(),
     currentDeadlineAt: context.deadlineAt, currentDeadlineKind: context.deadlineKind,
   });
@@ -1193,8 +1211,9 @@ async function processCompatibiliteAbsenceJob(job: WorkerJob, context: JobContex
   const content = await loadCompatibiliteContent();
   const participants = [players[0].id, players[1].id] as const;
   const identities = players.map((player) => ({ id: player.id, pseudo: player.pseudo })) as [{ id: string; pseudo: string }, { id: string; pseudo: string }];
+  const absenceNowMs = Date.parse(context.serverNow);
   const transition = onCompatibiliteAbsence(context.state, config, {
-    nowMs: Date.parse(context.serverNow), actorId: null, matchId: context.matchId, participants,
+    nowMs: absenceNowMs, actorId: absentActorId(players, absenceNowMs), matchId: context.matchId, participants,
     content, entropy: [], phaseId: context.phaseId, nextPhaseId: randomUUID(),
     currentDeadlineAt: context.deadlineAt, currentDeadlineKind: context.deadlineKind,
   });

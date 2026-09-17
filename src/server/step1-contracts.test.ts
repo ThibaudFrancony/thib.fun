@@ -54,14 +54,14 @@ describe("contrats de l'étape 1", () => {
     })).toEqual({ jobs: [validJob] });
   });
 
-  it("applique les seuils de présence avec une horloge contrôlable dans tous les moteurs", () => {
+  it("applique la grâce de présence avec une horloge contrôlable dans tous les moteurs", () => {
     const clock = createTestClock();
-    const recent = new Date(clock.now() - 119_999).toISOString();
-    const bothStale = new Date(clock.now() - 120_000).toISOString();
+    const recent = new Date(clock.now() - 29_999).toISOString();
+    const bothStale = new Date(clock.now() - 30_000).toISOString();
     const oneStale = new Date(clock.now() - 180_000).toISOString();
     for (const [name, check] of checks) {
       expect(check([recent, recent], clock.now()), `${name}: deux joueurs récents`).toBe(false);
-      expect(check([bothStale, bothStale], clock.now()), `${name}: deux joueurs à 120 s`).toBe(true);
+      expect(check([bothStale, bothStale], clock.now()), `${name}: deux joueurs à 30 s`).toBe(true);
       expect(check([oneStale, recent], clock.now()), `${name}: un joueur à 180 s`).toBe(true);
     }
     clock.advanceBy(1);

@@ -82,7 +82,6 @@ export const compatibiliteActionSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("SKIP_QUESTION") }).strict(),
   z.object({ type: z.literal("NEXT") }).strict(),
   z.object({ type: z.literal("RESIGN") }).strict(),
-  z.object({ type: z.literal("CLAIM_FORFEIT") }).strict(),
 ]);
 
 export type CompatibiliteAction = z.infer<typeof compatibiliteActionSchema>;
