@@ -706,6 +706,7 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
   color: #d9cdf0;
   font-size: clamp(0.92rem, 1.05vw, 1rem);
   line-height: 1.7;
+  text-shadow: 0 2px 14px rgba(10, 4, 24, 0.85);
 }
 
 .geo-hx-facts {
@@ -750,24 +751,34 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
 
 .geo-hx-france {
   position: relative;
-  width: clamp(290px, 30vw, 500px);
+  width: clamp(220px, min(30vw, 32vh), 500px);
   max-width: 100%;
   margin-top: clamp(0.75rem, 2.5vh, 1.75rem);
   pointer-events: none;
 }
 
 .geo-hx-france-image {
+  --fx: clamp(12px, 1.9vw, 26px);
+  --fy: clamp(9px, 1.4vw, 19px);
   display: block;
   width: 100%;
   height: auto;
-  animation: geoFranceFloat 7s ease-in-out infinite;
+  animation: geoFranceFloat 9s linear infinite;
   will-change: transform;
   filter: drop-shadow(0 15px 30px rgba(60, 100, 255, 0.15));
 }
 
+/* Tracé en forme de 8 (deux boucles) : plus d'amplitude, mouvement continu. */
 @keyframes geoFranceFloat {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
+  0% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  12.5% { transform: translate3d(calc(var(--fx) * 0.7), calc(var(--fy) * -1), 0) rotate(1deg); }
+  25% { transform: translate3d(var(--fx), 0, 0) rotate(1.6deg); }
+  37.5% { transform: translate3d(calc(var(--fx) * 0.7), var(--fy), 0) rotate(1deg); }
+  50% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  62.5% { transform: translate3d(calc(var(--fx) * -0.7), calc(var(--fy) * -1), 0) rotate(-1deg); }
+  75% { transform: translate3d(calc(var(--fx) * -1), 0, 0) rotate(-1.6deg); }
+  87.5% { transform: translate3d(calc(var(--fx) * -0.7), var(--fy), 0) rotate(-1deg); }
+  100% { transform: translate3d(0, 0, 0) rotate(0deg); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -890,6 +901,103 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
 }
 
 .geo-hexapoint .geo-join-panel .geo-secondary-button:active:not(:disabled) { transform: translateY(0); }
+
+/* --- Desktop : tout tient dans l'écran, sans scroll de page --- */
+@media (min-width: 1024px) {
+  .geo-hexapoint {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .geo-hexapoint .geo-header { min-height: 0; padding-block: clamp(0.55rem, 1.2vh, 0.9rem); }
+
+  .geo-hx-content {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    padding-top: 0.25rem;
+    padding-bottom: clamp(0.5rem, 1.5vh, 1rem);
+  }
+
+  .geo-hx-back { min-height: 34px; }
+
+  .geo-hx-layout {
+    flex: 1;
+    min-height: 0;
+    align-items: stretch;
+    gap: clamp(1.5rem, 4vw, 4rem);
+    margin-top: 0.25rem;
+  }
+
+  .geo-hx-copy { min-height: 0; overflow: hidden; }
+
+  .geo-hx-actions {
+    min-height: 0;
+    justify-content: safe center;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
+
+  .geo-hx-title { font-size: clamp(1.9rem, min(3.6vw, 5.4vh), 3.4rem); }
+  .geo-hx-lede { margin-top: 0.7rem; }
+  .geo-hx-facts { margin-top: clamp(0.5rem, 1.4vh, 1rem); }
+  .geo-hx-france { width: clamp(180px, min(28vw, 30vh), 460px); margin-top: clamp(0.4rem, 1.4vh, 1rem); }
+
+  .geo-hexapoint .geo-setup-panel,
+  .geo-hexapoint .geo-join-panel { padding: clamp(0.75rem, 1.7vh, 1.3rem); }
+
+  .geo-hexapoint .geo-panel-heading { margin-bottom: clamp(0.35rem, 1vh, 0.6rem); }
+  .geo-hexapoint .geo-panel-title { font-size: clamp(1.15rem, 2.4vh, 1.5rem); }
+  .geo-hexapoint .geo-subtitle { margin-bottom: clamp(0.35rem, 1vh, 0.6rem); }
+  .geo-hexapoint .geo-form-stack { gap: clamp(0.25rem, 0.8vh, 0.5rem); }
+  .geo-hexapoint .geo-select,
+  .geo-hexapoint .geo-input { min-height: clamp(38px, 5.2vh, 46px); }
+  .geo-hexapoint .geo-radio-fieldset { margin-top: clamp(0.35rem, 1vh, 0.6rem); }
+  .geo-hexapoint .geo-radio-card { padding: clamp(0.4rem, 1.1vh, 0.6rem) 0.7rem; }
+  .geo-hexapoint .geo-panel-note { margin-top: clamp(0.35rem, 1vh, 0.6rem); }
+  .geo-hexapoint .geo-setup-panel .geo-primary-button,
+  .geo-hexapoint .geo-join-panel .geo-secondary-button {
+    min-height: clamp(44px, 5.6vh, 50px);
+    margin-top: clamp(0.4rem, 1.2vh, 0.7rem);
+  }
+}
+
+/* --- Desktop peu haut : compacter pour rester sans scroll --- */
+@media (min-width: 1024px) and (max-height: 940px) {
+  .geo-hx-title { font-size: clamp(1.6rem, min(3.1vw, 4.4vh), 2.4rem); }
+  .geo-hx-lede { margin-top: 0.45rem; font-size: 0.86rem; line-height: 1.45; }
+  .geo-hx-facts { gap: 0.45rem; margin-top: 0.45rem; }
+  .geo-hexapoint .geo-fact { padding: 0.45rem 0.65rem; }
+  .geo-hx-france { width: clamp(150px, min(22vw, 25vh), 320px); margin-top: 0.35rem; }
+  .geo-hx-actions { gap: 0.6rem; }
+
+  .geo-hexapoint .geo-setup-panel,
+  .geo-hexapoint .geo-join-panel { padding: 0.6rem 0.75rem; }
+  .geo-hexapoint .geo-panel-heading { margin-bottom: 0.3rem; }
+  .geo-hexapoint .geo-panel-title { font-size: 1.05rem; }
+  .geo-hexapoint .geo-subtitle { margin-bottom: 0.3rem; font-size: 1rem; }
+  .geo-hexapoint .geo-kicker { font-size: 0.62rem; }
+  .geo-hexapoint .geo-label { margin-top: 0.3rem; font-size: 0.62rem; }
+  .geo-hexapoint .geo-form-stack { gap: 0.25rem; }
+  .geo-hexapoint .geo-select,
+  .geo-hexapoint .geo-input { min-height: 33px; padding: 0.3rem 0.55rem; font-size: 0.92rem; }
+  .geo-hexapoint .geo-radio-fieldset { margin-top: 0.3rem; }
+  .geo-hexapoint .geo-radio-card { min-height: 0; padding: 0.4rem 0.55rem; }
+  .geo-hexapoint .geo-radio-card strong { font-size: 0.86rem; }
+  .geo-hexapoint .geo-radio-card small { font-size: 0.7rem; }
+  .geo-hexapoint .geo-panel-note { margin-top: 0.3rem; font-size: 0.66rem; line-height: 1.4; }
+  .geo-hexapoint .geo-setup-panel .geo-primary-button,
+  .geo-hexapoint .geo-join-panel .geo-secondary-button {
+    min-height: 40px;
+    margin-top: 0.4rem;
+    font-size: 0.92rem;
+  }
+}
 
 /* --- Responsive --- */
 @media (max-width: 1023px) {
