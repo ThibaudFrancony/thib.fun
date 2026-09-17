@@ -71,7 +71,7 @@ describe("contrats de l'étape 1", () => {
   it("conserve une empreinte idempotente et sensible au payload", () => {
     const first = hashCommand("55555555-5555-4555-8555-555555555555", "alice", "RESIGN", { type: "RESIGN" });
     const retry = hashCommand("55555555-5555-4555-8555-555555555555", "alice", "RESIGN", { type: "RESIGN" });
-    const different = hashCommand("55555555-5555-4555-8555-555555555555", "alice", "CLAIM_FORFEIT", { type: "CLAIM_FORFEIT" });
+    const different = hashCommand("55555555-5555-4555-8555-555555555555", "alice", "DRAW", { type: "DRAW" });
     expect(retry).toBe(first);
     expect(different).not.toBe(first);
   });

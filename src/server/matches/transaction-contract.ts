@@ -1,9 +1,7 @@
 import { z } from "zod";
 import type { JobSpec, ResultReason, Seat } from "@/games/contracts";
 
-export const ABSENCE_FORFEIT_AFTER_MS = 90_000;
-export const ABSENCE_BOTH_PLAYERS_AFTER_MS = 120_000;
-export const ABSENCE_ONE_PLAYER_AFTER_MS = 180_000;
+export const ABSENCE_GRACE_MS = 30_000;
 export const MAX_JOB_ATTEMPTS = 5;
 export const JOB_RETRY_BACKOFF_MS = [1_000, 2_000, 4_000, 8_000] as const;
 
@@ -49,7 +47,6 @@ export type CommitSnapshot = SnapshotKey & {
 export type TransactionCommandClass =
   | "normal_move"
   | "resign"
-  | "claim_forfeit"
   | "cooperative_interruption"
   | "absence"
   | "judgment"
@@ -66,11 +63,6 @@ export const TRANSACTION_COMMAND_RULES = {
   resign: {
     source: "player",
     deadline: "allowed_after_current_deadline",
-    actor: "authenticated_seat",
-  },
-  claim_forfeit: {
-    source: "player",
-    deadline: "allowed_after_current_deadline_if_absence_90s",
     actor: "authenticated_seat",
   },
   cooperative_interruption: {
@@ -122,7 +114,6 @@ export function classifyTransactionCommand(
 ): TransactionCommandClass {
   if (source === "player") {
     if (commandType === "RESIGN") return matchKind === "cooperative" ? "cooperative_interruption" : "resign";
-    if (commandType === "CLAIM_FORFEIT") return matchKind === "cooperative" ? "cooperative_interruption" : "claim_forfeit";
     return "normal_move";
   }
   if (commandType === "check_absence") return "absence";
@@ -191,11 +182,6 @@ export function isAtOrAfterDeadline(nowMs: number, deadlineAt: string | null | u
   return deadlineMs !== null && nowMs >= deadlineMs;
 }
 
-export function isClaimForfeitAvailable(opponentLastSeenAt: string | null | undefined, nowMs: number): boolean {
-  const lastSeenMs = parsedTime(opponentLastSeenAt);
-  return lastSeenMs !== null && nowMs - lastSeenMs >= ABSENCE_FORFEIT_AFTER_MS;
-}
-
 export function isAbsenceConditionMet(
   playersLastSeenAt: readonly [string | null | undefined, string | null | undefined],
   nowMs: number,
@@ -205,13 +191,12 @@ export function isAbsenceConditionMet(
     return lastSeenMs === null ? null : nowMs - lastSeenMs;
   });
   const stalePlayers = staleFor.filter((ageMs): ageMs is number => ageMs !== null);
-  return stalePlayers.filter((ageMs) => ageMs >= ABSENCE_BOTH_PLAYERS_AFTER_MS).length === 2
-    || stalePlayers.some((ageMs) => ageMs >= ABSENCE_ONE_PLAYER_AFTER_MS);
+  return stalePlayers.some((ageMs) => ageMs >= ABSENCE_GRACE_MS);
 }
 
 export type DeadlineDecision =
   | { allowed: true; mode: "player" | "exit" | "job" }
-  | { allowed: false; code: "DEADLINE_EXPIRED" | "FORFEIT_NOT_AVAILABLE" | "JOB_NOT_DUE" | "STALE_JOB" | "UNSUPPORTED_COMMAND" }
+  | { allowed: false; code: "DEADLINE_EXPIRED" | "JOB_NOT_DUE" | "STALE_JOB" | "UNSUPPORTED_COMMAND" }
   | { allowed: false; disposition: "absence_noop" };
 
 export type DeadlineCheck = {
@@ -246,12 +231,6 @@ export function evaluateDeadline(check: DeadlineCheck): DeadlineDecision {
 
   if (commandClass === "resign" || commandClass === "cooperative_interruption") {
     return { allowed: true, mode: "exit" };
-  }
-
-  if (commandClass === "claim_forfeit") {
-    return isClaimForfeitAvailable(check.opponentLastSeenAt, check.nowMs)
-      ? { allowed: true, mode: "exit" }
-      : { allowed: false, code: "FORFEIT_NOT_AVAILABLE" };
   }
 
   if (commandClass === "absence") {
@@ -297,7 +276,6 @@ export type CommitErrorCode =
   | "JOB_LEASE_INVALID"
   | "STALE_JOB"
   | "DEADLINE_EXPIRED"
-  | "FORFEIT_NOT_AVAILABLE"
   | "JOB_NOT_DUE"
   | "UNSUPPORTED_COMMAND";
 
@@ -380,13 +358,13 @@ export function decideCommit(input: {
   return { kind: "reject", code: deadline.code };
 }
 
-export type ExitKind = "resign" | "claimed_forfeit" | "absence";
+export type ExitKind = "resign" | "absence";
 
 export type ExitOutcome = {
   outcome: "win" | "abandoned";
   winnerId: string | null;
   sharedScore: number | null;
-  reason: Extract<ResultReason, "resign" | "claimed_forfeit" | "absence">;
+  reason: Extract<ResultReason, "resign" | "absence">;
 };
 
 export function outcomeForExit(input: {
@@ -396,12 +374,12 @@ export function outcomeForExit(input: {
   opponentId: string;
   firstTurnStarted: boolean;
 }): ExitOutcome {
-  if (input.matchKind === "cooperative" || input.exit === "absence" || !input.firstTurnStarted) {
-    return { outcome: "abandoned", winnerId: null, sharedScore: null, reason: input.exit === "absence" ? "absence" : input.exit };
+  if (input.matchKind === "cooperative" || (input.exit === "resign" && !input.firstTurnStarted)) {
+    return { outcome: "abandoned", winnerId: null, sharedScore: null, reason: input.exit };
   }
   return {
     outcome: "win",
-    winnerId: input.exit === "resign" ? input.opponentId : input.actorId,
+    winnerId: input.opponentId,
     sharedScore: null,
     reason: input.exit,
   };

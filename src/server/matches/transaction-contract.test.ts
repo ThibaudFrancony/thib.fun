@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  ABSENCE_FORFEIT_AFTER_MS,
+  ABSENCE_GRACE_MS,
   JOB_RETRY_BACKOFF_MS,
   MAX_JOB_ATTEMPTS,
   absenceDedupeKey,
@@ -12,7 +12,6 @@ import {
   inspectReceipt,
   isAbsenceConditionMet,
   isAtOrAfterDeadline,
-  isClaimForfeitAvailable,
   isNewerSnapshot,
   judgeDedupeKey,
   outcomeForExit,
@@ -102,7 +101,7 @@ describe("contrat transactionnel commun — règles d'échéance", () => {
   it("distingue les commandes joueur des jobs et les interruptions coopératives", () => {
     expect(classifyTransactionCommand("player", "MOVE", "competitive")).toBe("normal_move");
     expect(classifyTransactionCommand("player", "RESIGN", "competitive")).toBe("resign");
-    expect(classifyTransactionCommand("player", "CLAIM_FORFEIT", "competitive")).toBe("claim_forfeit");
+    expect(classifyTransactionCommand("player", "CLAIM_FORFEIT", "competitive")).toBe("normal_move");
     expect(classifyTransactionCommand("player", "RESIGN", "cooperative")).toBe("cooperative_interruption");
     expect(classifyTransactionCommand("job", "check_absence", "competitive")).toBe("absence");
     expect(classifyTransactionCommand("job", "judge_answer", "competitive")).toBe("judgment");
@@ -128,7 +127,7 @@ describe("contrat transactionnel commun — règles d'échéance", () => {
     })).toEqual({ allowed: true, mode: "player" });
   });
 
-  it("laisse RESIGN passer après expiration mais réserve CLAIM_FORFEIT à l'absence continue", () => {
+  it("laisse RESIGN passer après expiration, sans commande de forfait", () => {
     expect(evaluateDeadline({
       source: "player",
       commandType: "RESIGN",
@@ -136,35 +135,23 @@ describe("contrat transactionnel commun — règles d'échéance", () => {
       nowMs,
       blockingDeadlineAt: expiredAt,
     })).toEqual({ allowed: true, mode: "exit" });
-    expect(isClaimForfeitAvailable(new Date(nowMs - ABSENCE_FORFEIT_AFTER_MS).toISOString(), nowMs)).toBe(true);
     expect(evaluateDeadline({
       source: "player",
       commandType: "CLAIM_FORFEIT",
       matchKind: "competitive",
       nowMs,
       blockingDeadlineAt: expiredAt,
-      opponentLastSeenAt: new Date(nowMs - ABSENCE_FORFEIT_AFTER_MS + 1).toISOString(),
-    })).toEqual({ allowed: false, code: "FORFEIT_NOT_AVAILABLE" });
-    expect(evaluateDeadline({
-      source: "player",
-      commandType: "CLAIM_FORFEIT",
-      matchKind: "competitive",
-      nowMs,
-      blockingDeadlineAt: expiredAt,
-      opponentLastSeenAt: new Date(nowMs - ABSENCE_FORFEIT_AFTER_MS).toISOString(),
-    })).toEqual({ allowed: true, mode: "exit" });
+      opponentLastSeenAt: new Date(nowMs - ABSENCE_GRACE_MS).toISOString(),
+    })).toEqual({ allowed: false, code: "DEADLINE_EXPIRED" });
   });
 
-  it("applique les seuils d'absence 120 s pour deux joueurs ou 180 s pour un seul", () => {
-    const recent = new Date(nowMs - ABSENCE_FORFEIT_AFTER_MS).toISOString();
-    const staleTwo = new Date(nowMs - 120_000).toISOString();
-    const staleOne = new Date(nowMs - 180_000).toISOString();
-    const beforeOne = new Date(nowMs - 179_999).toISOString();
+  it("applique la grâce d'absence unique de 30 secondes", () => {
+    const recent = new Date(nowMs - ABSENCE_GRACE_MS + 1).toISOString();
+    const stale = new Date(nowMs - ABSENCE_GRACE_MS).toISOString();
 
-    expect(isAbsenceConditionMet([staleTwo, staleTwo], nowMs)).toBe(true);
-    expect(isAbsenceConditionMet([staleOne, recent], nowMs)).toBe(true);
-    expect(isAbsenceConditionMet([beforeOne, recent], nowMs)).toBe(false);
-    expect(isAbsenceConditionMet([staleTwo, recent], nowMs)).toBe(false);
+    expect(isAbsenceConditionMet([stale, recent], nowMs)).toBe(true);
+    expect(isAbsenceConditionMet([stale, stale], nowMs)).toBe(true);
+    expect(isAbsenceConditionMet([recent, recent], nowMs)).toBe(false);
   });
 
   it("sépare jugement, préparation, timeout de phase et absence", () => {
@@ -225,12 +212,12 @@ describe("contrat transactionnel commun — règles d'échéance", () => {
   it("produit un abandon sans gagnant pour les interruptions coopératives et techniques", () => {
     expect(outcomeForExit({ matchKind: "competitive", exit: "resign", actorId: ALICE, opponentId: BOB, firstTurnStarted: true }))
       .toEqual({ outcome: "win", winnerId: BOB, sharedScore: null, reason: "resign" });
-    expect(outcomeForExit({ matchKind: "competitive", exit: "claimed_forfeit", actorId: ALICE, opponentId: BOB, firstTurnStarted: true }))
-      .toEqual({ outcome: "win", winnerId: ALICE, sharedScore: null, reason: "claimed_forfeit" });
     expect(outcomeForExit({ matchKind: "competitive", exit: "resign", actorId: ALICE, opponentId: BOB, firstTurnStarted: false }))
       .toEqual({ outcome: "abandoned", winnerId: null, sharedScore: null, reason: "resign" });
-    expect(outcomeForExit({ matchKind: "cooperative", exit: "claimed_forfeit", actorId: ALICE, opponentId: BOB, firstTurnStarted: true }))
-      .toEqual({ outcome: "abandoned", winnerId: null, sharedScore: null, reason: "claimed_forfeit" });
+    expect(outcomeForExit({ matchKind: "competitive", exit: "absence", actorId: ALICE, opponentId: BOB, firstTurnStarted: true }))
+      .toEqual({ outcome: "win", winnerId: BOB, sharedScore: null, reason: "absence" });
+    expect(outcomeForExit({ matchKind: "cooperative", exit: "absence", actorId: ALICE, opponentId: BOB, firstTurnStarted: true }))
+      .toEqual({ outcome: "abandoned", winnerId: null, sharedScore: null, reason: "absence" });
     expect(technicalErrorOutcome()).toEqual({ outcome: "abandoned", winnerId: null, sharedScore: null, reason: "technical_error" });
   });
 });

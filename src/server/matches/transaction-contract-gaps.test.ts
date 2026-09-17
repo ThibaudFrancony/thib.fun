@@ -10,6 +10,10 @@ const correctiveMigration = readFileSync(
   resolve(process.cwd(), "supabase/migrations/20260913200823_step3_transactional_commit_and_job_recovery.sql"),
   "utf8",
 );
+const graceMigration = readFileSync(
+  resolve(process.cwd(), "supabase/migrations/20260917172349_step10_remove_forfeit_and_leave_grace.sql"),
+  "utf8",
+);
 const commandsRoute = readFileSync(
   resolve(process.cwd(), "src/app/api/matches/[matchId]/commands/route.ts"),
   "utf8",
@@ -62,13 +66,20 @@ describe("contrat SQL de l'étape 3", () => {
     expect(source.slice(0, terminalGuard)).not.toMatch(/update private\.jobs[\s\S]*where match_id = v_match_id[\s\S]*and status in/);
   });
 
-  it("applique la matrice d'échéance et la règle de forfait", () => {
-    const source = functionSource(correctiveMigration, "public", "server_commit_match");
+  it("applique la grâce de 30 s et bloque définitivement le forfait", () => {
+    const lower = graceMigration.toLowerCase();
+    const start = lower.indexOf("create or replace function public.server_commit_match");
+    const end = lower.indexOf("create or replace function public.server_finish_job", start + 1);
+    const source = lower.slice(start, end < 0 ? lower.length : end);
+    const joinStart = lower.indexOf("create or replace function public.server_join_room");
+    const join = lower.slice(joinStart);
 
-    expect(source).toContain("v_command_type not in ('RESIGN', 'CLAIM_FORFEIT')");
-    expect(source).toContain("v_now >= v_match.deadline_at");
-    expect(source).toContain("v_now - interval '90 seconds'");
-    expect(source).toContain("'FORFEIT_NOT_AVAILABLE'");
+    expect(source).toContain("v_command_type <> 'resign'");
+    expect(source).toContain("'claim_forfeit'");
+    expect(source).toContain("interval '30 seconds'");
+    expect(source).not.toContain("interval '90 seconds'");
+    expect(source).not.toContain("'forfeit_not_available'");
+    expect(join).toContain("v_room.status <> 'waiting'");
   });
 
   it("finalise résultat, statistiques et historique une seule fois", () => {
