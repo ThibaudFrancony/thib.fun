@@ -37,6 +37,7 @@ const stableRpcErrorCodes = new Set([
   "RESULT_ALREADY_FINALIZED",
   "ROOM_NOT_FOUND",
   "ROOM_NOT_WAITING",
+  "ROOM_EXPIRED",
   "STALE_JOB",
   "UNSUPPORTED_COMMAND",
   "VERSION_CONFLICT",
@@ -336,8 +337,27 @@ export async function failJob(jobId: string, leaseToken: string, errorCode: stri
 
 export async function getRoomView(actorId: string, roomId: string): Promise<Record<string, unknown>> {
   const response = await createAdminClient().rpc("server_get_room", { p_actor: actorId, p_room_id: roomId });
-  if (response.error || !response.data) throw new Error("ROOM_NOT_FOUND");
+  if (response.error) throw new Error(rpcErrorCode(response.error.message, "DATABASE_UNAVAILABLE"));
+  if (!response.data) throw new Error("ROOM_NOT_FOUND");
   return response.data as Record<string, unknown>;
+}
+
+export type RoomPreview = {
+  roomId: string;
+  code: string;
+  gameSlug: string;
+  status: "waiting" | "playing" | "closed";
+  expiresAt: string;
+  memberCount: number;
+  viewerIsMember: boolean;
+  currentMatchId: string | null;
+};
+
+export async function getRoomPreview(actorId: string, roomId: string): Promise<RoomPreview> {
+  const response = await createAdminClient().rpc("server_get_room_preview", { p_actor: actorId, p_room_id: roomId });
+  if (response.error) throw new Error(rpcErrorCode(response.error.message, "DATABASE_UNAVAILABLE"));
+  if (!response.data) throw new Error("ROOM_NOT_FOUND");
+  return response.data as RoomPreview;
 }
 
 function mapHistoryEntry(row: Record<string, unknown>): HistoryEntry {
@@ -433,7 +453,7 @@ export async function createRoom(actorId: string, requestId: string, gameSlug: s
     p_game_slug: gameSlug,
     p_config: config,
   });
-  if (response.error) throw new Error(response.error.message);
+  if (response.error) throw new Error(rpcErrorCode(response.error.message, "DATABASE_UNAVAILABLE"));
   return response.data as Record<string, unknown>;
 }
 
@@ -443,7 +463,7 @@ export async function joinRoom(actorId: string, requestId: string, code: string)
     p_request_id: requestId,
     p_code: code,
   });
-  if (response.error) throw new Error(response.error.message);
+  if (response.error) throw new Error(rpcErrorCode(response.error.message, "DATABASE_UNAVAILABLE"));
   return response.data as Record<string, unknown>;
 }
 
@@ -498,7 +518,7 @@ export async function startMatch(args: {
     p_engine_version: args.engineVersion,
     p_state_schema_version: args.stateSchemaVersion,
   });
-  if (response.error) throw new Error(response.error.message);
+  if (response.error) throw new Error(rpcErrorCode(response.error.message, "DATABASE_UNAVAILABLE"));
   return response.data as Record<string, unknown>;
 }
 

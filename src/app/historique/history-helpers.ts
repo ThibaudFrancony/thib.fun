@@ -54,6 +54,8 @@ export function historyReasonLabel(reason: string, outcome: HistoryEntry["outcom
     technical_error: "Partie interrompue techniquement",
     dictionary_exhausted: "Dictionnaire épuisé",
     judging_unavailable: "Correction indisponible",
+    superseded: "Partie remplacée par une nouvelle",
+    worker_unreachable: "Partie interrompue techniquement",
   };
   return labels[reason] ?? (outcome === "abandoned" ? "Partie interrompue" : "Résultat enregistré");
 }

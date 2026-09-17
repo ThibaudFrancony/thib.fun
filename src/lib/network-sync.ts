@@ -120,6 +120,12 @@ export function shouldRefreshFromHeartbeat(currentVersion: number | null, data: 
   return nextVersion !== null && (currentVersion === null || nextVersion > currentVersion);
 }
 
+export const FORFEIT_ABSENCE_THRESHOLD_MS = 90_000;
+
+export function canClaimForfeit(opponentLastSeenAt: number | null, nowMs: number, serverOffsetMs = 0): boolean {
+  return opponentLastSeenAt !== null && nowMs + serverOffsetMs - opponentLastSeenAt >= FORFEIT_ABSENCE_THRESHOLD_MS;
+}
+
 export function actionFingerprint(action: unknown): string {
   try {
     return JSON.stringify(action) ?? "null";

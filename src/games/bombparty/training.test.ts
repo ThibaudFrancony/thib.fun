@@ -77,6 +77,8 @@ describe("vérification d'entraînement", () => {
     expect(isCurrentTrainingResponse(4, 4, "ch", "ch")).toBe(true);
     expect(isCurrentTrainingResponse(3, 4, "ch", "ch")).toBe(false);
     expect(isCurrentTrainingResponse(4, 4, "ch", "te")).toBe(false);
+    expect(isCurrentTrainingResponse(4, 4, null, null)).toBe(true);
+    expect(isCurrentTrainingResponse(4, 4, null, "ch")).toBe(false);
   });
 
   it("borne les mots utilisés après normalisation et déduplication", () => {

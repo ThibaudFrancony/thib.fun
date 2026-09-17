@@ -24,6 +24,8 @@ const HISTORY_REASONS = new Set([
   "absence",
   "judging_unavailable",
   "technical_error",
+  "superseded",
+  "worker_unreachable",
 ]);
 
 export type HistoryPage = { entries: HistoryListItem[]; nextCursor: string | null };

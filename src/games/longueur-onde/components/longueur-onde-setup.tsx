@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { postJson } from "@/lib/client-request";
 import { DEFAULT_LONGUEUR_ONDE_CONFIG, type LongueurOndeConfig } from "@/games/longueur-onde/config";
 
 export function LongueurOndeSetup() {
@@ -13,15 +14,13 @@ export function LongueurOndeSetup() {
   async function createRoom() {
     setBusy(true);
     setError(null);
-    const response = await fetch("/api/rooms", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ requestId: crypto.randomUUID(), gameSlug: "longueur-onde", config }),
-    });
-    const data = await response.json().catch(() => null) as { roomId?: string; error?: { message?: string } } | null;
-    if (!response.ok || !data?.roomId) setError(data?.error?.message ?? "Impossible de créer le salon.");
-    else router.push(`/salons/${data.roomId}`);
-    setBusy(false);
+    try {
+      const result = await postJson<{ roomId?: string }>("/api/rooms", { requestId: crypto.randomUUID(), gameSlug: "longueur-onde", config });
+      if (!result.ok || !result.data?.roomId) setError(result.ok ? "Impossible de créer le salon." : result.message);
+      else router.push(`/salons/${result.data.roomId}`);
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (

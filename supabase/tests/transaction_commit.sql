@@ -16,7 +16,8 @@ values
   ('claim', pg_get_functiondef('private.claim_due_jobs(integer)'::regprocedure)),
   ('dispatch', pg_get_functiondef('private.dispatch_due_jobs()'::regprocedure)),
   ('result', pg_get_functiondef('private.record_match_result(uuid, private.matches, jsonb, timestamptz)'::regprocedure)),
-  ('technical', pg_get_functiondef('private.finalize_match_technical_error(uuid, private.matches, uuid, text, timestamptz)'::regprocedure));
+  ('technical', pg_get_functiondef('private.finalize_match_technical_error(uuid, private.matches, uuid, text, timestamptz)'::regprocedure)),
+  ('abandoned', pg_get_functiondef('private.finalize_match_abandoned(uuid, private.matches, uuid, text, timestamptz)'::regprocedure));
 
 select ok(
   (
@@ -117,11 +118,15 @@ select ok(
 
 select ok(
   (
+    select lower(source) like '%private.finalize_match_abandoned%'
+      and lower(source) like '%''technical_error''%'
+    from step3_function_sources where name = 'technical'
+  )
+  and (
     select lower(source) like '%''outcome'', ''abandoned''%'
       and lower(source) like '%''winnerid'', null%'
-      and lower(source) like '%''technical_error''%'
       and lower(source) like '%status = ''abandoned''%'
-    from step3_function_sources where name = 'technical'
+    from step3_function_sources where name = 'abandoned'
   ),
   'Abandon technique : technical_error ne fabrique pas de gagnant'
 );

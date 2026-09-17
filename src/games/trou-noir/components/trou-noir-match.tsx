@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { TrouNoirAction, TrouNoirView } from "@/games/trou-noir/types";
-import { parseMatchSnapshot, useResourceNetwork } from "@/lib/network-sync";
+import { canClaimForfeit, parseMatchSnapshot, useResourceNetwork } from "@/lib/network-sync";
 
 type MatchResponse = {
   matchId: string;
@@ -87,7 +87,7 @@ export function TrouNoirMatch({ matchId }: { matchId: string }) {
   const me = view.players[view.mySeat];
   const opponent = view.players[(1 - view.mySeat) as 0 | 1];
   const isMyTurn = view.phase === "answering" && view.question?.addresseeIsMe === true;
-  const opponentAbsent = opponentLastSeenAt !== null && now + serverOffset - opponentLastSeenAt >= 90_000;
+  const opponentAbsent = canClaimForfeit(opponentLastSeenAt, now, serverOffset);
 
   return (
     <main className="geo-page geo-match-page">

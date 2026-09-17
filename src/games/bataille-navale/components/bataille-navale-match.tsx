@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { NAVAL_SHIP_CATALOG } from "@/games/bataille-navale/config";
 import type { NavalAction, NavalShipView, NavalShotView, NavalView } from "@/games/bataille-navale/types";
-import { parseMatchSnapshot, useResourceNetwork } from "@/lib/network-sync";
+import { canClaimForfeit, parseMatchSnapshot, useResourceNetwork } from "@/lib/network-sync";
 
 type MatchResponse = {
   matchId: string;
@@ -72,6 +72,7 @@ export function BatailleNavaleMatch({ matchId }: { matchId: string }) {
     error,
     busy,
     serverOffset,
+    opponentLastSeenAt,
     refresh,
     send,
   } = useResourceNetwork<MatchResponse, NavalAction>({
@@ -96,6 +97,7 @@ export function BatailleNavaleMatch({ matchId }: { matchId: string }) {
 
   const view = match?.view ?? null;
   const remaining = match?.deadlineAt ? Math.max(0, Math.ceil((Date.parse(match.deadlineAt) - (now + serverOffset)) / 1000)) : null;
+  const opponentAbsent = canClaimForfeit(opponentLastSeenAt, now, serverOffset);
 
   if (error && !match) {
     return <main className="min-h-screen px-5 py-12"><div role="alert" className="mx-auto max-w-xl rounded-2xl bg-red-50 p-5 text-red-700">{error}</div></main>;
@@ -177,7 +179,7 @@ export function BatailleNavaleMatch({ matchId }: { matchId: string }) {
             <span className="text-[var(--muted)]">Besoin d&apos;arrêter la partie ?</span>
             <div className="flex gap-2">
               <button type="button" disabled={busy} onClick={() => { if (window.confirm("Abandonner cette partie ?")) void send({ type: "RESIGN" }); }} className="rounded-full px-3 py-2 font-bold text-[var(--muted)] hover:bg-red-50 hover:text-red-700">Abandonner</button>
-              <button type="button" disabled={busy} onClick={() => void send({ type: "CLAIM_FORFEIT" })} className="rounded-full border border-[var(--line)] px-3 py-2 font-bold">Réclamer un forfait</button>
+              <button type="button" disabled={!opponentAbsent || busy} onClick={() => void send({ type: "CLAIM_FORFEIT" })} className="rounded-full border border-[var(--line)] px-3 py-2 font-bold">{opponentAbsent ? "Réclamer un forfait" : "Forfait indisponible"}</button>
             </div>
           </div>
         )}
@@ -530,7 +532,7 @@ function FinishedPanel({ view, back }: { view: NavalView; back: () => void }) {
         </div>
       )}
       <button type="button" onClick={back} className="mt-7 rounded-full bg-[#6d28d9] px-5 py-3 font-bold text-white hover:bg-[#5b21b6]">
-        Retour au salon pour une revanche
+        Retour au salon
       </button>
     </section>
   );

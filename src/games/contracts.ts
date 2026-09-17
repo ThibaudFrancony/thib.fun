@@ -46,7 +46,9 @@ export type ResultReason =
   | "claimed_forfeit"
   | "absence"
   | "judging_unavailable"
-  | "technical_error";
+  | "technical_error"
+  | "superseded"
+  | "worker_unreachable";
 
 export type ResultSpec = {
   kind: "competitive" | "cooperative";

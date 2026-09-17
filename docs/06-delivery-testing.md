@@ -19,16 +19,18 @@ Ces plans ne créent ni compte fournisseur ni abonnement. Lorsqu'une implémenta
 | Variable | Visibilité | Rôle |
 |---|---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | publique | endpoint projet de l'environnement |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | publique | SDK navigateur + RLS ; pas une clé privilégiée |
-| `SUPABASE_SECRET_KEY` | serveur | RPC restreintes/Storage ; SDK actuel et rôle effectif à vérifier |
-| `APP_ORIGIN` | serveur | URL canonique autorisée/links/Origin |
-| `INTERNAL_JOB_SECRET` | serveur + Vault | secret aléatoire >= 32 octets, jamais client |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | publique | SDK navigateur + RLS ; pas une clé privilégiée. Noms historiques `PUBLISHABLE_KEY`/`SECRET_KEY` non lus par le code actuel |
+| `SUPABASE_SERVICE_ROLE_KEY` | serveur | RPC restreintes/Storage ; clé privilégiée, jamais `NEXT_PUBLIC_` |
+| `SUPABASE_URL` / `SUPABASE_ANON_KEY` | serveur | repli serveur optionnel des deux valeurs publiques |
+| `APP_ORIGIN` | serveur | URL canonique autorisée/links/Origin ; comparaison exacte avec l'en-tête `Origin` |
+| `INTERNAL_JOB_SECRET` | serveur + Vault | secret aléatoire >= 32 caractères, identique à Vault, jamais client |
 | `DEEPSEEK_API_KEY` | serveur | API IA |
 | `DEEPSEEK_MODEL` | serveur | ID effectivement testé |
-| `AI_DAILY_BUDGET_USD` | serveur | plafond configuré, pas un prix hardcodé |
+| `AI_DAILY_BUDGET_USD` | serveur | plafond configuré, **obligatoire et strictement positif** sinon START quiz refuse |
+| `AI_DAILY_CALL_LIMIT` / `AI_RESERVED_CALL_COST_USD` | serveur | plafond d'appels (défaut 1000) et coût réservé par appel (défaut 0) |
 | `ROOM_CHANGE_RPC_ENABLED` | serveur | active explicitement les mutations avancées de salon après application/vérification du schéma compatible |
 | `QUIZ_AI_LOCAL_FIXTURE` | serveur local uniquement | verdict déterministe `accept`, `reject` ou `ambiguous`; refusé en production et si `APP_ORIGIN` ou Supabase n'est pas loopback |
-| `CONTENT_ENV` | serveur | `fixtures` local ou `production` ; prod interdit fixtures |
+| `GEO_CONTENT_SOURCE`, `QUIZ_CONTENT_SOURCE`, `COMPATIBILITY_CONTENT_SOURCE`, `LONGUEUR_ONDE_CONTENT_SOURCE` | serveur | `database` (défaut) ou `file` ; en production, `database` exige les packs publiés |
 
 Vault contient `worker_origin` et `internal_job_secret` correspondants. Configurer Cron seconde et nettoyage quotidien via migration/config selon environnement ; en local, worker joignable depuis PostgreSQL via adresse réseau adaptée, pas `localhost` supposé identique. Tester l'URL de bout en bout. Les secrets ne sont jamais écrits en migration. Prévoir rotation secret en acceptant ancien/nouveau pendant une courte fenêtre de déploiement puis révocation de l'ancien.
 

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { LongueurOndeAction, LongueurOndeResultView, LongueurOndeView } from "@/games/longueur-onde/types";
 import { dialArcPath, positionToDialPoint } from "@/games/longueur-onde/dial";
-import { parseMatchSnapshot, useResourceNetwork } from "@/lib/network-sync";
+import { canClaimForfeit, parseMatchSnapshot, useResourceNetwork } from "@/lib/network-sync";
 
 type MatchResponse = {
   matchId: string;
@@ -30,6 +30,7 @@ export function LongueurOndeMatch({ matchId }: { matchId: string }) {
     error,
     busy,
     serverOffset,
+    opponentLastSeenAt,
     refresh,
     send,
   } = useResourceNetwork<MatchResponse, LongueurOndeAction>({
@@ -61,6 +62,7 @@ export function LongueurOndeMatch({ matchId }: { matchId: string }) {
   const draftClue = clueDraft.round === view.round ? clueDraft.value : "";
   const draftGuess = guessDraft.round === view.round ? guessDraft.value : 50;
   const remaining = match.deadlineAt ? Math.max(0, Math.ceil((Date.parse(match.deadlineAt) - (now + serverOffset)) / 1000)) : null;
+  const opponentAbsent = canClaimForfeit(opponentLastSeenAt, now, serverOffset);
   const displayGuess = view.myGuess ?? (view.phase === "guessing" && !view.isClueGiver ? draftGuess : null);
 
   return (
@@ -94,7 +96,7 @@ export function LongueurOndeMatch({ matchId }: { matchId: string }) {
         </section>}
 
         {view.phase === "finished" && view.result && <ResultPanel result={view.result} />}
-        {view.phase !== "finished" && <div className="mt-6 flex justify-end gap-2"><button type="button" disabled={busy} onClick={() => void send({ type: "CLAIM_FORFEIT" })} className="rounded-full px-3 py-2 text-xs font-bold text-[var(--muted)]">Signaler une absence</button><button type="button" disabled={busy} onClick={() => void send({ type: "RESIGN" })} className="rounded-full px-3 py-2 text-xs font-bold text-[var(--muted)]">Quitter la partie</button></div>}
+        {view.phase !== "finished" && <div className="mt-6 flex justify-end gap-2"><button type="button" disabled={!opponentAbsent || busy} onClick={() => void send({ type: "CLAIM_FORFEIT" })} className="rounded-full px-3 py-2 text-xs font-bold text-[var(--muted)]">{opponentAbsent ? "Signaler une absence" : "Absence non constatée"}</button><button type="button" disabled={busy} onClick={() => void send({ type: "RESIGN" })} className="rounded-full px-3 py-2 text-xs font-bold text-[var(--muted)]">Quitter la partie</button></div>}
       </div>
     </main>
   );

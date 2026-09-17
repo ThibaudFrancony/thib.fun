@@ -12,9 +12,13 @@ export function SignOutButton({ className = "" }: { className?: string }) {
     const supabase = getBrowserSupabase();
     if (!supabase) return;
     setBusy(true);
-    await supabase.auth.signOut();
-    router.push("/");
-    router.refresh();
+    try {
+      await supabase.auth.signOut();
+      router.push("/");
+      router.refresh();
+    } finally {
+      setBusy(false);
+    }
   }
 
   return <button type="button" onClick={signOut} disabled={busy} className={className}>{busy ? "Déconnexion…" : "Se déconnecter"}</button>;

@@ -312,7 +312,7 @@ export function TrainingSyllabes() {
     } catch (caught) {
       if (!isAbortError(caught) && isCurrent(token, null)) setError("Impossible de tirer une séquence. Vérifie ta connexion puis réessaie.");
     } finally {
-      if (isCurrent(token, null)) {
+      if (requestTokenRef.current === token) {
         setBusy(false);
         if (requestControllerRef.current === controller) requestControllerRef.current = null;
       }

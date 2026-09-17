@@ -3,6 +3,8 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   actionFingerprint,
+  canClaimForfeit,
+  FORFEIT_ABSENCE_THRESHOLD_MS,
   heartbeatVersion,
   parseMatchSnapshot,
   parseRoomSnapshot,
@@ -88,5 +90,20 @@ describe("synchronisation des vues versionnées", () => {
     const room = readFileSync(resolve(process.cwd(), "src/app/salons/[roomId]/room-lobby.tsx"), "utf8");
     expect(room).toContain("heartbeatUrl");
     expect(room).toContain("useResourceNetwork");
+  });
+});
+
+describe("éligibilité du forfait", () => {
+  it("refuse le forfait sans présence connue et avant 90 secondes", () => {
+    const now = 1_000_000;
+    expect(canClaimForfeit(null, now)).toBe(false);
+    expect(canClaimForfeit(now - FORFEIT_ABSENCE_THRESHOLD_MS + 1, now)).toBe(false);
+  });
+
+  it("accepte le forfait à 90 secondes, en tenant compte du décalage serveur", () => {
+    const now = 1_000_000;
+    expect(canClaimForfeit(now - FORFEIT_ABSENCE_THRESHOLD_MS, now)).toBe(true);
+    expect(canClaimForfeit(now - FORFEIT_ABSENCE_THRESHOLD_MS, now, -5_000)).toBe(false);
+    expect(canClaimForfeit(now - FORFEIT_ABSENCE_THRESHOLD_MS - 10_000, now, 5_000)).toBe(true);
   });
 });

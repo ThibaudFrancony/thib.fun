@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { postJson } from "@/lib/client-request";
 import { DEFAULT_TROU_NOIR_CONFIG, type TrouNoirCategory, type TrouNoirConfig } from "@/games/trou-noir/config";
 
 const CATEGORY_LABELS: Array<{ value: TrouNoirCategory; label: string }> = [
@@ -34,15 +35,13 @@ export function TrouNoirSetup() {
     }
     setBusy(true);
     setError(null);
-    const response = await fetch("/api/rooms", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ requestId: crypto.randomUUID(), gameSlug: "trou-noir", config }),
-    });
-    const data = (await response.json().catch(() => null)) as { roomId?: string; error?: { message?: string } } | null;
-    if (!response.ok || !data?.roomId) setError(data?.error?.message ?? "Impossible de créer le salon.");
-    else router.push(`/salons/${data.roomId}`);
-    setBusy(false);
+    try {
+      const result = await postJson<{ roomId?: string }>("/api/rooms", { requestId: crypto.randomUUID(), gameSlug: "trou-noir", config });
+      if (!result.ok || !result.data?.roomId) setError(result.ok ? "Impossible de créer le salon." : result.message);
+      else router.push(`/salons/${result.data.roomId}`);
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -115,15 +114,13 @@ export function TrouNoirRoomJoin() {
     event.preventDefault();
     setBusy(true);
     setError(null);
-    const response = await fetch("/api/rooms/join", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ requestId: crypto.randomUUID(), code: code.trim().toUpperCase() }),
-    });
-    const data = (await response.json().catch(() => null)) as { roomId?: string; error?: { message?: string } } | null;
-    if (!response.ok || !data?.roomId) setError(data?.error?.message ?? "Impossible de rejoindre ce salon.");
-    else router.push(`/salons/${data.roomId}`);
-    setBusy(false);
+    try {
+      const result = await postJson<{ roomId?: string }>("/api/rooms/join", { requestId: crypto.randomUUID(), code: code.trim().toUpperCase() });
+      if (!result.ok || !result.data?.roomId) setError(result.ok ? "Impossible de rejoindre ce salon." : result.message);
+      else router.push(`/salons/${result.data.roomId}`);
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (

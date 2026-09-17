@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { CompatibiliteAction, CompatibiliteView, CompatibilityRound } from "@/games/compatibilite/types";
-import { parseMatchSnapshot, useResourceNetwork } from "@/lib/network-sync";
+import { canClaimForfeit, parseMatchSnapshot, useResourceNetwork } from "@/lib/network-sync";
 
 type MatchResponse = {
   matchId: string;
@@ -38,6 +38,7 @@ export function CompatibiliteMatch({ matchId }: { matchId: string }) {
     error,
     busy,
     serverOffset,
+    opponentLastSeenAt,
     refresh,
     send: networkSend,
   } = useResourceNetwork<MatchResponse, CompatibiliteAction>({
@@ -73,6 +74,7 @@ export function CompatibiliteMatch({ matchId }: { matchId: string }) {
   const me = view.players[view.mySeat];
   const opponent = view.players[(1 - view.mySeat) as 0 | 1];
   const remaining = match.deadlineAt ? Math.max(0, Math.ceil((Date.parse(match.deadlineAt) - (now + serverOffset)) / 1000)) : null;
+  const opponentAbsent = canClaimForfeit(opponentLastSeenAt, now, serverOffset);
   const selectedId = selected && selected.questionId === view.question?.itemId ? selected.optionId : null;
 
   return (
@@ -113,7 +115,7 @@ export function CompatibiliteMatch({ matchId }: { matchId: string }) {
         )}
 
         {view.phase === "finished" && view.result && <ResultPanel result={view.result} />}
-        {view.phase !== "finished" && <div className="mt-6 flex justify-end gap-2"><button type="button" disabled={busy} onClick={() => void send({ type: "CLAIM_FORFEIT" })} className="rounded-full px-3 py-2 text-xs font-bold text-[var(--muted)]">Signaler une absence</button><button type="button" disabled={busy} onClick={() => void send({ type: "RESIGN" })} className="rounded-full px-3 py-2 text-xs font-bold text-[var(--muted)]">Quitter la partie</button></div>}
+        {view.phase !== "finished" && <div className="mt-6 flex justify-end gap-2"><button type="button" disabled={!opponentAbsent || busy} onClick={() => void send({ type: "CLAIM_FORFEIT" })} className="rounded-full px-3 py-2 text-xs font-bold text-[var(--muted)]">{opponentAbsent ? "Signaler une absence" : "Absence non constatée"}</button><button type="button" disabled={busy} onClick={() => void send({ type: "RESIGN" })} className="rounded-full px-3 py-2 text-xs font-bold text-[var(--muted)]">Quitter la partie</button></div>}
       </div>
     </main>
   );

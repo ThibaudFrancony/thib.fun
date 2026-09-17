@@ -1,38 +1,35 @@
 # État de réalisation
 
-Dernière mise à jour : 13 septembre 2026.
+Dernière mise à jour : 17 septembre 2026.
 
 Le suivi opérationnel détaillé et maintenu après chaque changement se trouve dans [progression.md](../progression.md). Ce document conserve le suivi de réalisation par lots et doit rester cohérent avec lui.
 
-**Les neuf jeux ont du code sur `main`, mais leur fonctionnement complet n'est pas validé.** L'[audit du 13 septembre](audit-code-2026-09-13.md) identifie 29 défauts de code/produit et 6 observations d'infrastructure, dont des blocages de progression, d'abandon/forfait, de sécurité et de finalisation. Les 21 migrations sont appliquées sur le projet Supabase lié ; trois parties TTMC et six jobs échus restent bloqués. L'étape 1 a renforcé le harnais de tests et la CI sans corriger le comportement métier ni toucher à la production. Le [plan pas à pas](plan-correction-2026-09-13.md) reste la référence pour les étapes 2 à 10.
+**Les neuf jeux ont du code sur `main`.** La gate Étape 8 passe localement (session invitée, gestion réelle du salon, tour Trou Noir et tour TTMC sur desktop/mobile). Une passe de durcissement multijoueur du 17 septembre ajoute : rejoindre un salon par lien partagé, sortie d'un salon fermé, reçu de START vérifié, clôture explicite des parties actives remplacées (`superseded`), jobs de service non abandonnants et reprise des baux épuisés par cron. La migration additive `20260917163900_step10_multiplayer_hardening` est appliquée au PostgreSQL local et au projet Supabase distant ; le Docker pgTAP passe 7 fichiers / 204 assertions.
 
-Contrôles du 13 septembre après l'étape 1 : 43 fichiers Vitest, 330 tests réussis et 2 sentinelles d'échec attendu ; types, lint et build webpack restent réussis. Les E2E exécutés hors CI totalisent 10 résultats acceptés (4 scénarios ordinaires et 6 échecs attendus des 3 régressions UNO sur deux navigateurs) et 16 ignorés : 14 scénarios multijoueurs sans `E2E_PASSWORD` et 2 sessions anonymes réservées à la CI Supabase locale. Les contrôles SQL filtrent maintenant chaque pack publié par `pack_id`/manifest, mais pgTAP n'a pas été rejoué sans Docker. La matrice [`test-coverage-2026-09-13.md`](test-coverage-2026-09-13.md) conserve les causes `blocked`, `fail` et `not-run`.
+**La production reste limitée par sa configuration, pas par le schéma.** Au 17 septembre, l'historique distant compte 36 migrations alignées, aucun match actif, aucun job en attente. Les 4 parties bloquées et leurs jobs échus ont été clôturés explicitement (`technical_error`, données conservées) après autorisation. Le worker durable reste volontairement inactif tant que Vercel et Vault n'ont pas la même valeur `INTERNAL_JOB_SECRET`, la bonne `APP_ORIGIN`, la configuration IA et `ROOM_CHANGE_RPC_ENABLED=true`. L'Étape 9 (recette manuelle des neuf jeux jusqu'à l'historique, invité et tiers) n'est pas exécutée.
 
 | Lot | État | Dépendances |
 |---|---|---|
 | Spécifications communes et AGENTS | Rédigées | Revue de cohérence documentaire |
 | Neuf plans de jeux | Rédigés | Défauts de règles explicités dans les fiches |
 | DA visuelle | Base provisoire documentée | Validation sur écrans réels |
-| Accueil et sélection des jeux | Implémenté le 10 septembre 2026 | Rail responsive des neuf jeux ; Géographie, Trou Noir, TTMC et UNO activables dans le registre ; contrôle browser manuel antérieur ; E2E de jeu à deux sessions dépend des identifiants de recette |
-| Bootstrap Next/Vercel/GitHub | 🟡 Partiel | Versions et scripts vérifiés ; workflow CI statique + Supabase local versionné dans `.github/workflows/ci.yml`. Liaison et variables Vercel restent à vérifier séparément. |
-| Supabase CLI/configuration | Projet lié ; inspection distante en lecture seule | Projet `ttogfwnlknmiscnmlhof`, historique des 21 migrations concordant ; Vault vide malgré Cron actif |
-| Supabase schéma/Auth/Storage/RLS | Migrations appliquées et vérifiées à distance | RLS publiques et fonctions serveur contrôlées ; protection des mots de passe compromis à activer dans Auth |
-| Salons/transactions/Realtime/jobs | Présents, corrections bloquantes nécessaires | Audit D01–D13/D19 ; recette du circuit complet requise |
-| Profils/historique/duos | Partiels | Finalisations, issues, agrégats, pagination et édition à corriger/compléter |
-| Géographie | Implémenté sur `main` | Tests moteur/projection et parcours E2E présents ; migration distante vérifiée, recette à deux à finaliser |
-| Trou Noir | Implémenté sur `main` (11 septembre 2026) | Moteur, projection, correction, UI, worker, pack/RPC et tests présents ; migration distante vérifiée, recette à deux sessions et benchmark IA à finaliser |
-| TTMC | Implémenté sur `main`, commit `b5a49b5` (11 septembre 2026, cycle 2 terminé) | Moteur, projection, correction, UI, worker, pack 22 thèmes/440 questions, typecheck/lint/build webpack/docs:check OK ; migration distante vérifiée, recette à deux sessions et benchmark IA à finaliser |
-| Bataille navale | Implémenté sur `main`, commit `34fcd67` (11 septembre 2026, deux cycles Muse + revue de contrat terminés) | Moteur pur, projection sans fuite, flotte/tirs serveur, API/worker, UI violette sobre, migration distante vérifiée ; recette à deux sessions et E2E à finaliser |
-| BombParty + entraînement | Implémenté sur `main`, commit `cb88b8c` (11 septembre 2026, deux cycles Muse terminés) | Moteur pur, projection sans fuite, index serveur, API/worker, entraînement solo, UI, migration distante vérifiée ; pack `content/bombparty/lexicon.json` inchangé (431 formes, CC0-1.0, sha256 vérifié) ; recette à deux sessions, E2E et mesure latence à finaliser |
-| Skyjo | Implémenté sur `main`, commit `2745261` (11 septembre 2026, deux cycles Muse terminés) | Moteur pur, projection sans fuite, API/worker, UI, migration distante vérifiée ; 43 tests Skyjo, recette à deux sessions et E2E à finaliser |
-| UNO | Implémenté sur `main` le 10 septembre 2026 | Moteur pur, projection secrète, API/worker, UI, migration distante vérifiée ; 13 tests UNO, recette Chromium à deux sessions à finaliser |
-| Compatibilité | Implémenté le 11 septembre 2026 | Moteur, projection sans fuite, contenu 160 questions, API/worker, UI, migration/RPC et vérification distante ; 13 tests dédiés ; E2E à deux comptes à finaliser |
-| Longueur d'onde | Implémenté et activé | Moteur, projection, cible/indice/estimation, cadran SVG, UI responsive, API/worker, pack de 80 axes, migrations initiale et corrective vérifiées à distance, 16 tests dédiés ; E2E à deux sessions reste à finaliser |
+| Accueil et sélection des jeux | Implémenté | Rail responsive des neuf jeux ; les 9 entrées sont `ready` et les parcours locaux passent |
+| Bootstrap Next/Vercel/GitHub | 🟡 Partiel | Workflow CI statique + Supabase local versionné ; variables Vercel et déploiement du HEAD à vérifier |
+| Supabase CLI/configuration | Projet lié, 36/36 migrations distantes | Worker inactif : Vault vide, configuration Vercel à compléter |
+| Salons/transactions/Realtime/jobs | 🟢 Local, 🟡 production | Lien partagé, sortie de salon fermé, reçu START et clôture `superseded` ajoutés et testés localement ; recette distante à faire |
+| Profils/historique/duos | Partiels mais fonctionnels | Recette distante à deux comptes restante |
+| Géographie | Implémenté | Tests moteur/projection et E2E présents ; recette à deux à finaliser |
+| Trou Noir | Implémenté | Moteur, projection, correction, UI, worker, pack/RPC et tests présents ; recette à deux sessions et benchmark IA à finaliser |
+| TTMC | Implémenté | Pack 22 thèmes/440 questions ; recette à deux sessions et benchmark IA à finaliser |
+| Bataille navale | Implémenté | Moteur, projection, API/worker, UI, migration distante vérifiée ; E2E à finaliser |
+| BombParty + entraînement | Implémenté | Pack inchangé ; E2E et mesure de latence à finaliser |
+| Skyjo | Implémenté | Moteur, projection, API/worker, UI ; E2E à finaliser |
+| UNO | Implémenté | Moteur, projection, API/worker, UI ; E2E à finaliser |
+| Compatibilité | Implémenté | Moteur, contenu 160 questions, API/worker, UI ; E2E à finaliser |
+| Longueur d'onde | Implémenté | Moteur, projection, pack 80 axes, API/worker, UI ; E2E à finaliser |
 
 Pour chaque lot terminé ajouter date, version/commit si existant, tests effectués et limitations réelles. Ne pas cocher « terminé » sur la base du plan seul.
 
 ## Accès invité
 
-Le parcours est présent localement : CTA dans le mode inscription, dialogue d'avertissement, session Auth anonyme, pseudo aléatoire généré côté serveur, accès aux salons/parties et distinction explicite entre invité et compte permanent dans les routes de compte et d'historique. La migration additive `20260912000100_anonymous_guest_access.sql` protège aussi les écritures d'historique et de statistiques personnelles.
-
-La migration d'accès invité et ses corrections sont appliquées à distance ; le journal opérationnel contient les vérifications antérieures de connexion invitée. L'audit du 13 septembre n'a pas rejoué la recette complète avec deux sessions réelles. Le nettoyage automatique des utilisateurs anonymes reste à vérifier/configurer.
+Le parcours est présent et validé localement : CTA dans le mode inscription, dialogue d'avertissement, session Auth anonyme, pseudo aléatoire généré côté serveur, accès aux salons/parties et distinction entre invité et compte permanent. La migration additive `20260912000100_anonymous_guest_access.sql` protège les écritures d'historique et de statistiques personnelles. Le nettoyage automatique des utilisateurs anonymes reste à vérifier/configurer.
