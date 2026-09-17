@@ -754,6 +754,8 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
   width: clamp(220px, min(30vw, 32vh), 500px);
   max-width: 100%;
   margin-top: clamp(0.75rem, 2.5vh, 1.75rem);
+  margin-left: auto;
+  margin-right: clamp(0rem, 2vw, 2.5rem);
   pointer-events: none;
 }
 
@@ -1002,7 +1004,7 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
 /* --- Responsive --- */
 @media (max-width: 1023px) {
   .geo-hx-layout { grid-template-columns: 1fr; gap: clamp(1.5rem, 4vw, 2.5rem); }
-  .geo-hx-france { width: min(90vw, 460px); }
+  .geo-hx-france { width: min(90vw, 460px); margin-inline: auto; }
   .geo-hx-actions { width: 100%; }
 }
 

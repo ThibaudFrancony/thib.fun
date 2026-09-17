@@ -446,6 +446,12 @@ Ne pas y inventer de risques théoriques. Si la cause n'est pas confirmée, l'in
 - Contradiction : aucune avec `AGENTS.md`; les migrations sont restées immuables, GitHub n'a pas servi à appliquer le schéma et aucune mutation distante n'a été lancée.
 - Statut : les parcours compte, historique, duo et entraînement sont présents dans le code et validés localement; les garde-fous de confidentialité et d'exactement deux membres sont en place. L'étape n'est pas déclarée déployée ni validée avec deux comptes permanents; la gestion avancée des salons reste en attente de la RPC/projection serveur mentionnée ci-dessus. Prochaine étape utile : étape 9 sur environnement isolé, puis une tâche explicitement autorisée pour réconcilier le schéma salon et valider deux sessions.
 
+### 17/09/2026 — Gate Étape 8 après redémarrage de Docker
+
+- Problème : la gate `node scripts/run-step8-gate.mjs geographie.spec.ts` a d'abord échoué (`Cannot connect to the Docker daemon`), puis le fixture local a renvoyé `/auth/v1/admin/users?per_page=1000: 503 name resolution failed` et `http://127.0.0.1:3000 is already used`. Cause confirmée : Docker était arrêté et le Supabase local venait d'être démarré (conteneur Auth encore en cours de chauffe), plus un serveur de développement local déjà présent.
+- Résolution : démarrage de Docker, `supabase start`, attente du health Auth (`auth up after 15s`), arrêt du serveur de développement occupant le port 3000, puis relance de la gate.
+- Vérification : premier passage après chauffe = `1 failed, 1 flaky`, puis immédiatement après `2 passed` sur Chromium desktop et mobile. Échec attribué à la chauffe du stack local, pas à une régression applicative ; aucun changement de code en cause.
+
 ## Points à savoir pour les prochains développements
 
 - Une fiche Markdown est un contrat de conception, pas la preuve qu'une fonction existe.
@@ -781,4 +787,12 @@ Ces corrections ne constituent pas des contradictions de l'utilisateur avec `AGE
 - Réalisation : `geoFranceFloat` remplacé par un tracé en lemniscate (9 points `translate3d` + rotation ±1,6°), amplitude pilotée par `--fx`/`--fy` (`clamp(12px, 1.9vw, 26px)` / `clamp(9px, 1.4vw, 19px)`), 9 s en `linear`, boucle infinie ; `prefers-reduced-motion` toujours respecté. Ajout de deux media queries desktop dans `src/app/globals.css` : `(min-width: 1024px)` fixe `.geo-hexapoint` à `height: 100dvh` avec `overflow: hidden`, colonne actions centrée verticalement (`justify-content: safe center`) et tailles en `vh` ; `(min-width: 1024px) and (max-height: 940px)` compacte encore (cartes radio sans `min-height: 76px`, selects 33 px, boutons 40 px) pour les écrans courts. Léger `text-shadow` sur la description pour rester lisible sur le fond. Légère garde `overflow-y: auto` sur `.geo-hx-actions` en secours si une hauteur extrême est rencontrée.
 - Vérifications : script Playwright temporaire sur 1920×1080, 1440×900, 1366×768, 1280×720 — **0 px de débordement de page**, **0 px de débordement de la colonne actions**, bouton « Rejoindre le salon » visible, aucune erreur console/pageerror ; interactivité confirmée (select Manches 10→15, bascule Défi, création active, code normalisé `ABC123`, rejoindre actif, header présent). `tsc`, `eslint` propres ; Vitest 61 fichiers / 431 réussis + 2 sentinelles ; `next build --webpack` OK ; `supabase test db --local` 204 assertions OK ; gate Étape 8 sur `geographie.spec.ts` 2/2 desktop/mobile ; captures avant/après inspectées.
 - Limites : sur mobile (< 1024 px) la page reste défilante — le contenu (titre, description, 3 cartes, France, deux panneaux) dépasse la hauteur d'un téléphone ; aucune coupe de contenu n'a été faite sans accord. À 1024 px de large et moins de 940 px de haut, le header revient aussi en deux lignes.
+- Livraison : commit et push sur `main` (déploiement Vercel automatique).
+
+### 17/09/2026 — Géographie : France décalée dans la zone vide
+
+- Demande : décaler la France vers la droite pour l'installer dans la zone plus vide de la page (entre le texte et le panneau « créer / rejoindre »), au lieu de chevaucher la mascotte du fond à gauche.
+- Réalisation : `.geo-hx-france` passe en `margin-left: auto` avec `margin-right: clamp(0rem, 2vw, 2.5rem)` dans `src/app/globals.css` : la France s'aligne sur le bord droit de sa colonne, donc dans le vide central, sans toucher le panneau. Sur `< 1024px`, `margin-inline: auto` la recentre dans le flux normal.
+- Vérifications : script Playwright temporaire sur 1920×1080, 1440×900, 1366×768, 1280×720 — 0 px de débordement de page, 0 px de débordement de la colonne actions, bouton « Rejoindre » visible, écart France→panneau mesuré entre 77 et 102 px, aucune erreur console ; gate Étape 8 `geographie.spec.ts` 2/2 desktop/mobile ; captures 1440×900, 1920×1080 et mobile inspectées.
+- Limites : positionnement dépendant de la largeur disponible ; sur les écrans très étroits la France reste centrée sous les mini-cartes.
 - Livraison : commit et push sur `main` (déploiement Vercel automatique).
