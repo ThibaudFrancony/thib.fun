@@ -589,12 +589,13 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
 }
 
 /* ==========================================================================
-   HexaPoint (Géographie) — refonte visuelle alignée sur la homepage.
-   Tous les styles sont scopés à .geo-hexapoint : les autres pages de jeu
-   (qui partagent le header geo et RoomJoin) restent inchangées.
+   Accueils de jeux — DA HexaPoint (Géographie) généralisée.
+   Tous les styles sont scopés à :is(.geo-hexapoint, .game-landing) :
+   .geo-hexapoint est conservé pour compatibilité, .game-landing est la
+   classe générique utilisée par les 9 pages d'accueil de jeux.
    ========================================================================== */
 
-.geo-hexapoint {
+:is(.geo-hexapoint, .game-landing) {
   position: relative;
   min-height: 100svh;
   min-height: 100dvh;
@@ -607,7 +608,7 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
 .geo-hx-bg { position: absolute; inset: 0; z-index: 0; overflow: hidden; }
 .geo-hx-bg-image { object-fit: cover; object-position: center; }
 
-.geo-hexapoint .geo-header {
+:is(.geo-hexapoint, .game-landing) .geo-header {
   position: relative;
   z-index: 2;
   width: min(100% - 2rem, 1320px);
@@ -618,11 +619,11 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
   backdrop-filter: none;
 }
 
-.geo-hexapoint .geo-brand { color: #fff; }
+:is(.geo-hexapoint, .game-landing) .geo-brand { color: #fff; }
 
-.geo-hexapoint .geo-nav { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+:is(.geo-hexapoint, .game-landing) .geo-nav { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 
-.geo-hexapoint .geo-nav-link {
+:is(.geo-hexapoint, .game-landing) .geo-nav-link {
   display: inline-flex;
   min-height: 44px;
   align-items: center;
@@ -639,7 +640,7 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
   transition: background-color 180ms ease, border-color 180ms ease;
 }
 
-.geo-hexapoint .geo-nav-link:hover { background: rgba(60, 30, 120, 0.5); border-color: rgba(200, 160, 255, 0.65); }
+:is(.geo-hexapoint, .game-landing) .geo-nav-link:hover { background: rgba(60, 30, 120, 0.5); border-color: rgba(200, 160, 255, 0.65); }
 
 .geo-hx-content {
   position: relative;
@@ -717,7 +718,7 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
   margin-top: clamp(1rem, 2.5vh, 1.6rem);
 }
 
-.geo-hexapoint .geo-fact {
+:is(.geo-hexapoint, .game-landing) .geo-fact {
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
@@ -728,7 +729,7 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
   backdrop-filter: blur(10px);
 }
 
-.geo-hexapoint .geo-fact p {
+:is(.geo-hexapoint, .game-landing) .geo-fact p {
   display: flex;
   align-items: center;
   gap: 0.4rem;
@@ -738,7 +739,7 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
   font-weight: 800;
 }
 
-.geo-hexapoint .geo-fact p::before {
+:is(.geo-hexapoint, .game-landing) .geo-fact p::before {
   content: "";
   width: 8px;
   height: 8px;
@@ -747,13 +748,13 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
   box-shadow: 0 0 10px rgba(255, 64, 200, 0.5);
 }
 
-.geo-hexapoint .geo-fact span { color: #c7b8e6; font-size: 0.72rem; font-weight: 600; }
+:is(.geo-hexapoint, .game-landing) .geo-fact span { color: #c7b8e6; font-size: 0.72rem; font-weight: 600; }
 
 .geo-hx-actions { display: flex; flex-direction: column; gap: 1rem; min-width: 0; }
 
 /* --- Cartes glass : créer / rejoindre --- */
-.geo-hexapoint .geo-setup-panel,
-.geo-hexapoint .geo-join-panel {
+:is(.geo-hexapoint, .game-landing) .geo-setup-panel,
+:is(.geo-hexapoint, .game-landing) .geo-join-panel {
   padding: clamp(1rem, 1.6vw, 1.4rem);
   border: 1px solid rgba(190, 110, 255, 0.45);
   border-radius: 24px;
@@ -762,18 +763,18 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
   box-shadow: 0 0 40px rgba(140, 60, 255, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
-.geo-hexapoint .geo-panel-heading { margin-bottom: 0.7rem; }
-.geo-hexapoint .geo-panel-title { color: #fff; }
-.geo-hexapoint .geo-subtitle { margin: 0.1rem 0 0.7rem; color: #fff; font-size: 1.15rem; font-weight: 800; }
+:is(.geo-hexapoint, .game-landing) .geo-panel-heading { margin-bottom: 0.7rem; }
+:is(.geo-hexapoint, .game-landing) .geo-panel-title { color: #fff; }
+:is(.geo-hexapoint, .game-landing) .geo-subtitle { margin: 0.1rem 0 0.7rem; color: #fff; font-size: 1.15rem; font-weight: 800; }
 
-.geo-hexapoint .geo-kicker { color: #c8a9f4; }
+:is(.geo-hexapoint, .game-landing) .geo-kicker { color: #c8a9f4; }
 
-.geo-hexapoint .geo-form-stack { display: grid; gap: 0.45rem; }
+:is(.geo-hexapoint, .game-landing) .geo-form-stack { display: grid; gap: 0.45rem; }
 
-.geo-hexapoint .geo-label { color: #e6dcff; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; }
+:is(.geo-hexapoint, .game-landing) .geo-label { color: #e6dcff; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; }
 
-.geo-hexapoint .geo-select,
-.geo-hexapoint .geo-input {
+:is(.geo-hexapoint, .game-landing) .geo-select,
+:is(.geo-hexapoint, .game-landing) .geo-input {
   width: 100%;
   min-height: 46px;
   padding: 0.6rem 0.8rem;
@@ -785,22 +786,22 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
   transition: border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
 }
 
-.geo-hexapoint .geo-select:hover,
-.geo-hexapoint .geo-input:hover { border-color: rgba(255, 255, 255, 0.24); }
+:is(.geo-hexapoint, .game-landing) .geo-select:hover,
+:is(.geo-hexapoint, .game-landing) .geo-input:hover { border-color: rgba(255, 255, 255, 0.24); }
 
-.geo-hexapoint .geo-select:focus-visible,
-.geo-hexapoint .geo-input:focus-visible {
+:is(.geo-hexapoint, .game-landing) .geo-select:focus-visible,
+:is(.geo-hexapoint, .game-landing) .geo-input:focus-visible {
   outline: none;
   border-color: rgba(120, 200, 255, 0.7);
   box-shadow: 0 0 0 3px rgba(90, 160, 255, 0.2);
 }
 
-.geo-hexapoint .geo-code-input { letter-spacing: 0.35em; text-transform: uppercase; font-weight: 800; }
+:is(.geo-hexapoint, .game-landing) .geo-code-input { letter-spacing: 0.35em; text-transform: uppercase; font-weight: 800; }
 
-.geo-hexapoint .geo-radio-fieldset { margin-top: 0.7rem; padding: 0; border: 0; }
-.geo-hexapoint .geo-radio-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.55rem; margin-top: 0.45rem; }
+:is(.geo-hexapoint, .game-landing) .geo-radio-fieldset { margin-top: 0.7rem; padding: 0; border: 0; }
+:is(.geo-hexapoint, .game-landing) .geo-radio-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.55rem; margin-top: 0.45rem; }
 
-.geo-hexapoint .geo-radio-card {
+:is(.geo-hexapoint, .game-landing) .geo-radio-card {
   padding: 0.6rem 0.7rem;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 16px;
@@ -808,17 +809,17 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
   transition: border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease, transform 180ms ease;
 }
 
-.geo-hexapoint .geo-radio-card:hover { border-color: rgba(255, 255, 255, 0.28); }
+:is(.geo-hexapoint, .game-landing) .geo-radio-card:hover { border-color: rgba(255, 255, 255, 0.28); }
 
-.geo-hexapoint .geo-radio-card[data-selected="true"] {
+:is(.geo-hexapoint, .game-landing) .geo-radio-card[data-selected="true"] {
   border-color: rgba(120, 200, 255, 0.85);
   background: linear-gradient(145deg, rgba(40, 90, 180, 0.4), rgba(70, 40, 140, 0.4));
   box-shadow: 0 0 22px rgba(90, 160, 255, 0.25);
 }
 
-.geo-hexapoint .geo-panel-note { margin: 0.7rem 0 0; color: #c7b8e6; font-size: 0.74rem; line-height: 1.6; }
+:is(.geo-hexapoint, .game-landing) .geo-panel-note { margin: 0.7rem 0 0; color: #c7b8e6; font-size: 0.74rem; line-height: 1.6; }
 
-.geo-hexapoint .geo-error {
+:is(.geo-hexapoint, .game-landing) .geo-error {
   margin: 0.75rem 0 0;
   padding: 0.5rem 0.7rem;
   border: 1px solid rgba(255, 120, 170, 0.4);
@@ -829,7 +830,7 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
   font-weight: 650;
 }
 
-.geo-hexapoint .geo-setup-panel .geo-primary-button {
+:is(.geo-hexapoint, .game-landing) .geo-setup-panel .geo-primary-button {
   width: 100%;
   min-height: 50px;
   margin-top: 0.8rem;
@@ -842,10 +843,10 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
   transition: transform 180ms ease, filter 180ms ease, opacity 180ms ease;
 }
 
-.geo-hexapoint .geo-setup-panel .geo-primary-button:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.05); }
-.geo-hexapoint .geo-setup-panel .geo-primary-button:active:not(:disabled) { transform: translateY(0); }
+:is(.geo-hexapoint, .game-landing) .geo-setup-panel .geo-primary-button:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.05); }
+:is(.geo-hexapoint, .game-landing) .geo-setup-panel .geo-primary-button:active:not(:disabled) { transform: translateY(0); }
 
-.geo-hexapoint .geo-join-panel .geo-secondary-button {
+:is(.geo-hexapoint, .game-landing) .geo-join-panel .geo-secondary-button {
   width: 100%;
   min-height: 50px;
   margin-top: 0.8rem;
@@ -858,17 +859,17 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
   transition: background-color 180ms ease, border-color 180ms ease, transform 180ms ease;
 }
 
-.geo-hexapoint .geo-join-panel .geo-secondary-button:hover:not(:disabled) {
+:is(.geo-hexapoint, .game-landing) .geo-join-panel .geo-secondary-button:hover:not(:disabled) {
   transform: translateY(-1px);
   border-color: rgba(255, 255, 255, 0.42);
   background: rgba(255, 255, 255, 0.12);
 }
 
-.geo-hexapoint .geo-join-panel .geo-secondary-button:active:not(:disabled) { transform: translateY(0); }
+:is(.geo-hexapoint, .game-landing) .geo-join-panel .geo-secondary-button:active:not(:disabled) { transform: translateY(0); }
 
 /* --- Desktop : tout tient dans l'écran, sans scroll de page --- */
 @media (min-width: 1024px) {
-  .geo-hexapoint {
+  :is(.geo-hexapoint, .game-landing) {
     display: flex;
     flex-direction: column;
     height: 100dvh;
@@ -876,7 +877,7 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
     overflow: hidden;
   }
 
-  .geo-hexapoint .geo-header { min-height: 0; padding-block: clamp(0.55rem, 1.2vh, 0.9rem); }
+  :is(.geo-hexapoint, .game-landing) .geo-header { min-height: 0; padding-block: clamp(0.55rem, 1.2vh, 0.9rem); }
 
   .geo-hx-content {
     display: flex;
@@ -911,20 +912,20 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
   .geo-hx-lede { margin-top: 0.7rem; }
   .geo-hx-facts { margin-top: clamp(0.5rem, 1.4vh, 1rem); }
 
-  .geo-hexapoint .geo-setup-panel,
-  .geo-hexapoint .geo-join-panel { padding: clamp(0.75rem, 1.7vh, 1.3rem); }
+  :is(.geo-hexapoint, .game-landing) .geo-setup-panel,
+  :is(.geo-hexapoint, .game-landing) .geo-join-panel { padding: clamp(0.75rem, 1.7vh, 1.3rem); }
 
-  .geo-hexapoint .geo-panel-heading { margin-bottom: clamp(0.35rem, 1vh, 0.6rem); }
-  .geo-hexapoint .geo-panel-title { font-size: clamp(1.15rem, 2.4vh, 1.5rem); }
-  .geo-hexapoint .geo-subtitle { margin-bottom: clamp(0.35rem, 1vh, 0.6rem); }
-  .geo-hexapoint .geo-form-stack { gap: clamp(0.25rem, 0.8vh, 0.5rem); }
-  .geo-hexapoint .geo-select,
-  .geo-hexapoint .geo-input { min-height: clamp(38px, 5.2vh, 46px); }
-  .geo-hexapoint .geo-radio-fieldset { margin-top: clamp(0.35rem, 1vh, 0.6rem); }
-  .geo-hexapoint .geo-radio-card { padding: clamp(0.4rem, 1.1vh, 0.6rem) 0.7rem; }
-  .geo-hexapoint .geo-panel-note { margin-top: clamp(0.35rem, 1vh, 0.6rem); }
-  .geo-hexapoint .geo-setup-panel .geo-primary-button,
-  .geo-hexapoint .geo-join-panel .geo-secondary-button {
+  :is(.geo-hexapoint, .game-landing) .geo-panel-heading { margin-bottom: clamp(0.35rem, 1vh, 0.6rem); }
+  :is(.geo-hexapoint, .game-landing) .geo-panel-title { font-size: clamp(1.15rem, 2.4vh, 1.5rem); }
+  :is(.geo-hexapoint, .game-landing) .geo-subtitle { margin-bottom: clamp(0.35rem, 1vh, 0.6rem); }
+  :is(.geo-hexapoint, .game-landing) .geo-form-stack { gap: clamp(0.25rem, 0.8vh, 0.5rem); }
+  :is(.geo-hexapoint, .game-landing) .geo-select,
+  :is(.geo-hexapoint, .game-landing) .geo-input { min-height: clamp(38px, 5.2vh, 46px); }
+  :is(.geo-hexapoint, .game-landing) .geo-radio-fieldset { margin-top: clamp(0.35rem, 1vh, 0.6rem); }
+  :is(.geo-hexapoint, .game-landing) .geo-radio-card { padding: clamp(0.4rem, 1.1vh, 0.6rem) 0.7rem; }
+  :is(.geo-hexapoint, .game-landing) .geo-panel-note { margin-top: clamp(0.35rem, 1vh, 0.6rem); }
+  :is(.geo-hexapoint, .game-landing) .geo-setup-panel .geo-primary-button,
+  :is(.geo-hexapoint, .game-landing) .geo-join-panel .geo-secondary-button {
     min-height: clamp(44px, 5.6vh, 50px);
     margin-top: clamp(0.4rem, 1.2vh, 0.7rem);
   }
@@ -935,26 +936,26 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
   .geo-hx-title { font-size: clamp(1.6rem, min(3.1vw, 4.4vh), 2.4rem); }
   .geo-hx-lede { margin-top: 0.45rem; font-size: 0.86rem; line-height: 1.45; }
   .geo-hx-facts { gap: 0.45rem; margin-top: 0.45rem; }
-  .geo-hexapoint .geo-fact { padding: 0.45rem 0.65rem; }
+  :is(.geo-hexapoint, .game-landing) .geo-fact { padding: 0.45rem 0.65rem; }
   .geo-hx-actions { gap: 0.6rem; }
 
-  .geo-hexapoint .geo-setup-panel,
-  .geo-hexapoint .geo-join-panel { padding: 0.6rem 0.75rem; }
-  .geo-hexapoint .geo-panel-heading { margin-bottom: 0.3rem; }
-  .geo-hexapoint .geo-panel-title { font-size: 1.05rem; }
-  .geo-hexapoint .geo-subtitle { margin-bottom: 0.3rem; font-size: 1rem; }
-  .geo-hexapoint .geo-kicker { font-size: 0.62rem; }
-  .geo-hexapoint .geo-label { margin-top: 0.3rem; font-size: 0.62rem; }
-  .geo-hexapoint .geo-form-stack { gap: 0.25rem; }
-  .geo-hexapoint .geo-select,
-  .geo-hexapoint .geo-input { min-height: 33px; padding: 0.3rem 0.55rem; font-size: 0.92rem; }
-  .geo-hexapoint .geo-radio-fieldset { margin-top: 0.3rem; }
-  .geo-hexapoint .geo-radio-card { min-height: 0; padding: 0.4rem 0.55rem; }
-  .geo-hexapoint .geo-radio-card strong { font-size: 0.86rem; }
-  .geo-hexapoint .geo-radio-card small { font-size: 0.7rem; }
-  .geo-hexapoint .geo-panel-note { margin-top: 0.3rem; font-size: 0.66rem; line-height: 1.4; }
-  .geo-hexapoint .geo-setup-panel .geo-primary-button,
-  .geo-hexapoint .geo-join-panel .geo-secondary-button {
+  :is(.geo-hexapoint, .game-landing) .geo-setup-panel,
+  :is(.geo-hexapoint, .game-landing) .geo-join-panel { padding: 0.6rem 0.75rem; }
+  :is(.geo-hexapoint, .game-landing) .geo-panel-heading { margin-bottom: 0.3rem; }
+  :is(.geo-hexapoint, .game-landing) .geo-panel-title { font-size: 1.05rem; }
+  :is(.geo-hexapoint, .game-landing) .geo-subtitle { margin-bottom: 0.3rem; font-size: 1rem; }
+  :is(.geo-hexapoint, .game-landing) .geo-kicker { font-size: 0.62rem; }
+  :is(.geo-hexapoint, .game-landing) .geo-label { margin-top: 0.3rem; font-size: 0.62rem; }
+  :is(.geo-hexapoint, .game-landing) .geo-form-stack { gap: 0.25rem; }
+  :is(.geo-hexapoint, .game-landing) .geo-select,
+  :is(.geo-hexapoint, .game-landing) .geo-input { min-height: 33px; padding: 0.3rem 0.55rem; font-size: 0.92rem; }
+  :is(.geo-hexapoint, .game-landing) .geo-radio-fieldset { margin-top: 0.3rem; }
+  :is(.geo-hexapoint, .game-landing) .geo-radio-card { min-height: 0; padding: 0.4rem 0.55rem; }
+  :is(.geo-hexapoint, .game-landing) .geo-radio-card strong { font-size: 0.86rem; }
+  :is(.geo-hexapoint, .game-landing) .geo-radio-card small { font-size: 0.7rem; }
+  :is(.geo-hexapoint, .game-landing) .geo-panel-note { margin-top: 0.3rem; font-size: 0.66rem; line-height: 1.4; }
+  :is(.geo-hexapoint, .game-landing) .geo-setup-panel .geo-primary-button,
+  :is(.geo-hexapoint, .game-landing) .geo-join-panel .geo-secondary-button {
     min-height: 40px;
     margin-top: 0.4rem;
     font-size: 0.92rem;
@@ -968,10 +969,10 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
 }
 
 @media (max-width: 639px) {
-  .geo-hexapoint .geo-header,
+  :is(.geo-hexapoint, .game-landing) .geo-header,
   .geo-hx-content { width: min(100% - 2rem, 1320px); }
   .geo-hx-title { font-size: clamp(1.9rem, 9vw, 2.6rem); }
   .geo-hx-facts { grid-template-columns: 1fr; max-width: none; }
-  .geo-hexapoint .geo-radio-grid { grid-template-columns: 1fr; }
+  :is(.geo-hexapoint, .game-landing) .geo-radio-grid { grid-template-columns: 1fr; }
   .geo-hx-bg-image { object-position: 50% 42%; }
 }

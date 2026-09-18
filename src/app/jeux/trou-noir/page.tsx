@@ -1,28 +1,35 @@
+import Image from "next/image";
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
 import { TrouNoirRoomJoin, TrouNoirSetup } from "@/games/trou-noir/components/trou-noir-setup";
 
 export default function TrouNoirSetupPage() {
   return (
-    <main className="geo-page geo-setup-page">
+    <main className="geo-page game-landing">
+      <div className="geo-hx-bg" aria-hidden="true">
+        <Image src="/geographie/background.png" alt="" fill priority sizes="100vw" className="geo-hx-bg-image" />
+      </div>
       <SiteHeader variant="geo" />
-      <div className="geo-content geo-setup-content">
-        <Link href="/" className="geo-back-link">← Tous les jeux</Link>
-        <div className="geo-setup-layout">
-          <section className="geo-hero-copy">
-            <p className="geo-kicker">Chute libre · Trou Noir</p>
-            <h1 className="geo-hero-title">Réponds juste pour éviter la chute.</h1>
-            <p className="geo-hero-lede">
+      <div className="geo-hx-content">
+        <Link href="/" className="geo-hx-back">← Tous les jeux</Link>
+        <div className="geo-hx-layout">
+          <section className="geo-hx-copy">
+            <p className="geo-hx-kicker">Chute libre · Trou Noir</p>
+            <h1 className="geo-hx-title">
+              Réponds juste.<br />
+              Évite la <span className="geo-hx-accent">chute.</span>
+            </h1>
+            <p className="geo-hx-lede">
               100 points de réserve, −10 par mauvaise réponse. Même nombre de tours pour chacun, questions appariées
               par niveau, correction automatique et contestation tranchée par ton adversaire.
             </p>
-            <div className="geo-facts">
+            <div className="geo-hx-facts">
               <Fact title="2 joueurs" text="Un lien de salon privé" />
               <Fact title="5 ou 10" text="Manches au choix" />
               <Fact title="5 catégories" text="Niveaux 3 à 6" />
             </div>
           </section>
-          <div className="geo-setup-actions"><TrouNoirSetup /><TrouNoirRoomJoin /></div>
+          <div className="geo-hx-actions"><TrouNoirSetup /><TrouNoirRoomJoin /></div>
         </div>
       </div>
     </main>
