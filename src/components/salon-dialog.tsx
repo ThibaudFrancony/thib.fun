@@ -5,6 +5,8 @@ import Link from "next/link";
 import { PUBLIC_GAMES } from "@/games/registry";
 import { postJson } from "@/lib/client-request";
 import { useGroupRoom, type GroupRoomState } from "@/lib/group-room";
+import { useRoomAvatars } from "@/lib/room-avatars";
+import { Avatar } from "@/components/avatar";
 import type { RoomView } from "@/server/rooms/schemas";
 
 type Panel = "choice" | "join" | "group" | null;
@@ -80,6 +82,7 @@ export function SalonLauncher({ connected }: { connected: boolean }) {
   const seat0 = room?.members.find((member) => member.seat === 0);
   const seat1 = room?.members.find((member) => member.seat === 1);
   const full = (room?.members.length ?? 0) === 2;
+  const avatars = useRoomAvatars(room?.roomId ?? lobbyId, room?.members.map((member) => member.id) ?? []);
 
   return (
     <div className="salon-anchor" ref={anchorRef} data-salon-ready={loaded ? "true" : "false"}>
@@ -93,8 +96,8 @@ export function SalonLauncher({ connected }: { connected: boolean }) {
             aria-label="Salon du groupe"
           >
             <span className="salon-chip-avatars" aria-hidden="true">
-              <span className="salon-chip-avatar" data-filled={Boolean(seat0)}>{seat0 ? seat0.pseudo.slice(0, 1).toUpperCase() : ""}</span>
-              <span className="salon-chip-avatar" data-filled={Boolean(seat1)}>{seat1 ? seat1.pseudo.slice(0, 1).toUpperCase() : ""}</span>
+              {seat0 ? <Avatar name={seat0.pseudo} preset={seat0.avatarPreset} imageUrl={avatars[seat0.id] ?? null} size={24} /> : <span className="salon-chip-avatar" data-filled={false} />}
+              {seat1 ? <Avatar name={seat1.pseudo} preset={seat1.avatarPreset} imageUrl={avatars[seat1.id] ?? null} size={24} /> : <span className="salon-chip-avatar" data-filled={false} />}
             </span>
             {group.isHost && <span className="salon-chip-code">{room?.code ?? "…"}</span>}
           </button>
@@ -116,7 +119,7 @@ export function SalonLauncher({ connected }: { connected: boolean }) {
           {!connected ? (
             <SalonAuthPrompt onClose={() => setPanel(null)} />
           ) : panel === "group" ? (
-            <SalonGroupBody group={group} room={room} seat0={seat0} seat1={seat1} full={full} onDoor={() => void leaveGroup()} />
+            <SalonGroupBody group={group} room={room} seat0={seat0} seat1={seat1} full={full} avatars={avatars} onDoor={() => void leaveGroup()} />
           ) : (
             <SalonChoice
               step={panel}
@@ -239,6 +242,7 @@ function SalonGroupBody({
   seat0,
   seat1,
   full,
+  avatars,
   onDoor,
 }: {
   group: GroupRoomState;
@@ -246,6 +250,7 @@ function SalonGroupBody({
   seat0: RoomView["members"][number] | undefined;
   seat1: RoomView["members"][number] | undefined;
   full: boolean;
+  avatars: Record<string, string>;
   onDoor: () => void;
 }) {
   const [copyStatus, setCopyStatus] = useState<string | null>(null);
@@ -281,8 +286,8 @@ function SalonGroupBody({
       </div>
 
       <div className="salon-slots">
-        <SalonSlot member={seat0?.pseudo ?? null} label={seat0?.id === room?.viewerId ? "Toi" : "Joueur 1"} />
-        <SalonSlot member={seat1?.pseudo ?? null} label={seat1?.id === room?.viewerId ? "Toi" : "Joueur 2"} />
+        <SalonSlot member={seat0?.pseudo ?? null} label={seat0?.id === room?.viewerId ? "Toi" : "Joueur 1"} preset={seat0?.avatarPreset ?? "orbit-1"} imageUrl={seat0 ? avatars[seat0.id] ?? null : null} />
+        <SalonSlot member={seat1?.pseudo ?? null} label={seat1?.id === room?.viewerId ? "Toi" : "Joueur 2"} preset={seat1?.avatarPreset ?? "orbit-1"} imageUrl={seat1 ? avatars[seat1.id] ?? null : null} />
       </div>
 
       {room && group.isHost && (
@@ -312,10 +317,10 @@ function SalonGroupBody({
   );
 }
 
-function SalonSlot({ member, label }: { member: string | null; label: string }) {
+function SalonSlot({ member, label, preset, imageUrl }: { member: string | null; label: string; preset: string; imageUrl: string | null }) {
   return (
     <div className="salon-slot" data-filled={Boolean(member)}>
-      <span className="salon-avatar" aria-hidden="true">{member ? member.slice(0, 1).toUpperCase() : ""}</span>
+      <Avatar name={member ?? label} preset={preset} imageUrl={imageUrl} size={36} />
       <span className="salon-slot-text">
         <strong>{member ?? "En attente…"}</strong>
         <small>{label}</small>

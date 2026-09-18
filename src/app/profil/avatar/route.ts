@@ -41,6 +41,27 @@ export async function GET() {
   }
 }
 
+export async function DELETE(request: Request) {
+  const originError = assertMutationOrigin(request);
+  if (originError) return originError;
+  if (!getSupabaseServerConfig()) return jsonError("CONFIGURATION_REQUIRED", 503, "Le serveur de données n'est pas configuré.");
+  const account = await getAuthenticatedAccount();
+  if (!account) return jsonError("UNAUTHORIZED", 401, "Connecte-toi pour modifier ton avatar.");
+  if (account.isGuest) return jsonError("ACCOUNT_REQUIRED", 403, "Crée un compte permanent pour modifier ton avatar.");
+  const path = account.member.avatarPath;
+  if (!path) return jsonOk({ avatarPath: null });
+  if (!isOwnAvatarPath(path, account.member.id)) return jsonError("DATABASE_UNAVAILABLE", 503, "L'avatar enregistré est indisponible.");
+  try {
+    const admin = createAdminClient();
+    const updated = await admin.from("profiles").update({ avatar_path: null }).eq("id", account.member.id);
+    if (updated.error) throw new Error("DATABASE_UNAVAILABLE");
+    await admin.storage.from("avatars").remove([path]);
+    return jsonOk({ avatarPath: null });
+  } catch (error) {
+    return mapServerError(error);
+  }
+}
+
 export async function POST(request: Request) {
   const originError = assertMutationOrigin(request);
   if (originError) return originError;
@@ -87,10 +108,16 @@ export async function POST(request: Request) {
       upsert: false,
     });
     if (upload.error) throw new Error("DATABASE_UNAVAILABLE");
+    const previous = account.member.avatarPath;
     const updated = await admin.from("profiles").update({ avatar_path: path }).eq("id", account.member.id);
     if (updated.error) {
       await admin.storage.from("avatars").remove([path]);
       throw new Error("DATABASE_UNAVAILABLE");
+    }
+    // Hygiène de stockage : un seul avatar actif par compte. L'ancien fichier
+    // est supprimé en best-effort, sans faire échouer la requête.
+    if (previous && previous !== path && isOwnAvatarPath(previous, account.member.id)) {
+      await admin.storage.from("avatars").remove([previous]).catch(() => undefined);
     }
     return jsonOk({ avatarPath: path, width: 256, height: 256 });
   } catch (error) {

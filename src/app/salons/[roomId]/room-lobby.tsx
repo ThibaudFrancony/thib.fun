@@ -7,6 +7,8 @@ import { PUBLIC_GAMES, publicGameBySlug } from "@/games/registry";
 import { DEFAULT_ROOM_CONFIGS } from "@/games/default-configs";
 import { postJson } from "@/lib/client-request";
 import { parseRoomSnapshot, useResourceNetwork } from "@/lib/network-sync";
+import { useRoomAvatars } from "@/lib/room-avatars";
+import { Avatar } from "@/components/avatar";
 import type { RoomView } from "@/server/rooms/schemas";
 import {
   roomExpirationLabel,
@@ -127,6 +129,7 @@ export function RoomLobby({ roomId, roomManagementEnabled }: { roomId: string; r
 
   const preview = previewState.roomId === roomId ? previewState.value : null;
   const previewChecked = previewState.roomId === roomId && previewState.checked;
+  const avatars = useRoomAvatars(room?.roomId ?? null, room?.members.map((member) => member.id) ?? []);
 
   async function copyRoomCode() {
     setCopyStatus(null);
@@ -328,7 +331,7 @@ export function RoomLobby({ roomId, roomManagementEnabled }: { roomId: string; r
         <div className="geo-members-grid">
           {[0, 1].map((seat) => {
             const player = room.members.find((member) => member.seat === seat);
-            return <div key={seat} className="geo-member-card"><div><p className="geo-member-seat">Place {seat + 1}{player?.id === room.viewerId ? " · toi" : ""}</p><p className="geo-member-name">{player?.pseudo ?? "En attente…"}</p></div>{player && <span className="geo-ready-badge" data-ready={player.ready}>{player.ready ? "Prêt" : "Pas prêt"}</span>}</div>;
+            return <div key={seat} className="geo-member-card"><div className="flex items-center gap-3">{player && <Avatar name={player.pseudo} preset={player.avatarPreset} imageUrl={avatars[player.id] ?? null} size={40} />}<div><p className="geo-member-seat">Place {seat + 1}{player?.id === room.viewerId ? " · toi" : ""}</p><p className="geo-member-name">{player?.pseudo ?? "En attente…"}</p></div></div>{player && <span className="geo-ready-badge" data-ready={player.ready}>{player.ready ? "Prêt" : "Pas prêt"}</span>}</div>;
           })}
         </div>
 

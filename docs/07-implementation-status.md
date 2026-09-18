@@ -18,7 +18,7 @@ Le suivi opérationnel détaillé et maintenu après chaque changement se trouve
 | Supabase CLI/configuration | Projet lié, 36/36 migrations distantes | Worker inactif : Vault vide, configuration Vercel à compléter |
 | Salons/transactions/Realtime/jobs | 🟢 Local, 🟡 production | Lien partagé, sortie de salon fermé, reçu START et clôture `superseded` ajoutés et testés localement ; recette distante à faire |
 | Salon d'accueil (groupe) | 🟢 Local, 🟡 migration distante | Bouton Salon, popup créer/rejoindre, places en direct, détection du groupe et lancement depuis la page de jeu ; tests pgTAP/Vitest/E2E locaux ; migration distante non appliquée |
-| Profils/historique/duos | Partiels mais fonctionnels | Recette distante à deux comptes restante |
+| Profils/historique/duos | Profils 🟢 local (bouton, onboarding, noms), historique/duos partiels | Migration `20260918191811_profile_account_and_display_name` non appliquée au distant ; recette distante à deux comptes restante |
 | Géographie | Implémenté | Tests moteur/projection et E2E présents ; recette à deux à finaliser |
 | Trou Noir | Implémenté | Moteur, projection, correction, UI, worker, pack/RPC et tests présents ; recette à deux sessions et benchmark IA à finaliser |
 | TTMC | Implémenté | Pack 22 thèmes/440 questions ; recette à deux sessions et benchmark IA à finaliser |

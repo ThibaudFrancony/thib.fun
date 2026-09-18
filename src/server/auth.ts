@@ -7,6 +7,10 @@ import { isAnonymousUser } from "@/lib/auth-identity";
 export type AuthenticatedMember = {
   id: string;
   pseudo: string;
+  accountName: string | null;
+  displayName: string | null;
+  effectiveName: string;
+  needsOnboarding: boolean;
   avatarPreset: string;
   avatarPath: string | null;
 };
@@ -25,10 +29,25 @@ async function getAuthenticatedAccountInternal(): Promise<AuthenticatedAccount |
   const admin = createAdminClient();
   const actor = await admin.rpc("server_get_actor", { p_actor: data.user.id });
   if (actor.error || !actor.data) return null;
+  // Compatibilité : la migration des noms peut ne pas être appliquée quand le
+  // code est déployé. Les nouveaux champs sont donc repliés localement.
+  const raw = actor.data as Partial<AuthenticatedMember> & { pseudo?: string };
+  const pseudo = typeof raw.pseudo === "string" ? raw.pseudo : "Joueur";
+  const accountName = typeof raw.accountName === "string" ? raw.accountName : null;
+  const displayName = typeof raw.displayName === "string" ? raw.displayName : null;
   return {
     email: data.user.email ?? null,
     isGuest: isAnonymousUser(data.user),
-    member: actor.data as AuthenticatedMember,
+    member: {
+      id: data.user.id,
+      pseudo,
+      accountName,
+      displayName,
+      effectiveName: typeof raw.effectiveName === "string" ? raw.effectiveName : (displayName ?? accountName ?? pseudo),
+      needsOnboarding: typeof raw.needsOnboarding === "boolean" ? raw.needsOnboarding : false,
+      avatarPreset: typeof raw.avatarPreset === "string" ? raw.avatarPreset : "orbit-1",
+      avatarPath: typeof raw.avatarPath === "string" ? raw.avatarPath : null,
+    },
   };
 }
 

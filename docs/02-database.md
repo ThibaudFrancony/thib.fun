@@ -15,9 +15,9 @@ Contrat V1. Générer les migrations lors de l'implémentation avec `supabase mi
 
 ### `public.profiles`
 
-`id uuid PK FK auth.users.id`, `pseudo text` (2–24 caractères après trim, lettres/chiffres/espace/underscore/tiret), `pseudo_key text UNIQUE` (normalisé casse et espaces, accents conservés), `avatar_path text?`, `avatar_preset text DEFAULT 'orbit-1'`, `created_at`, `updated_at`.
+`id uuid PK FK auth.users.id`, `pseudo text` (2–24 caractères après trim, lettres/chiffres/espace/underscore/tiret), `pseudo_key text UNIQUE` (normalisé casse et espaces, accents conservés), `account_name text?` (nom de création choisi à la première connexion, unique, figé ensuite par trigger sauf première pose), `display_name text?` + `display_name_key text? UNIQUE partiel` (nom affiché optionnel qui remplace l'affichage quand renseigné), `avatar_path text?`, `avatar_preset text DEFAULT 'orbit-1'`, `created_at`, `updated_at`.
 
-Ne pas stocker e-mail dans cette table lisible. Un avatar personnalisé et un preset sont autorisés dans le schéma ; si `avatar_path` est renseigné il prime. Mise à jour uniquement via API serveur, qui impose que l'acteur modifie son profil. Au signup libre, le profil minimal et l’admission sont provisionnés côté serveur à partir de l’identité Auth ; les métadonnées éventuelles ne servent jamais à une décision d’autorisation.
+Ne pas stocker e-mail dans cette table lisible. Un avatar personnalisé et un preset sont autorisés dans le schéma ; si `avatar_path` est renseigné il prime. Mise à jour uniquement via API serveur, qui impose que l'acteur modifie son profil. Au signup libre, le profil minimal (pseudo technique temporaire, `account_name` NULL) et l’admission sont provisionnés côté serveur à partir de l’identité Auth ; l'utilisateur choisit ensuite son nom de création une seule fois via la route dédiée (`POST /profil/account-name`) ; les métadonnées éventuelles ne servent jamais à une décision d’autorisation. Les vues de salon exposent le nom effectif (`display_name ?? account_name ?? pseudo`) et les champs avatar ; les snapshots de match le figent au démarrage.
 
 ### `private.site_members`
 
