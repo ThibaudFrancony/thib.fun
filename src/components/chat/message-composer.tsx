@@ -78,7 +78,8 @@ export function MessageComposer({
     const textarea = textareaRef.current;
     if (!textarea) return;
     textarea.style.height = "auto";
-    textarea.style.height = `${Math.min(textarea.scrollHeight, 132)}px`;
+    const next = Math.min(Math.max(textarea.scrollHeight, 42), 132);
+    textarea.style.height = `${next}px`;
   }
 
   async function submit() {

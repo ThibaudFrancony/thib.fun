@@ -155,6 +155,16 @@ export function ChatDock() {
     });
   }, []);
 
+  const resetConversation = useCallback(() => {
+    conversationIdRef.current = null;
+    messagesConversationRef.current = null;
+    setActiveConversationId(null);
+    setMessages([]);
+    setHasMore(false);
+    setConversationTitle(null);
+    setConversationMember(null);
+  }, []);
+
   const openGeneral = useCallback(async () => {
     const current = summaryRef.current;
     if (!current) return;
@@ -162,6 +172,7 @@ export function ChatDock() {
     setNotice(null);
     setError(null);
     setLoadingMessages(true);
+    resetConversation();
     try {
       const payload = await loadConversation(current.general.conversationId);
       const lastSeq = payload.messages.at(-1)?.seq ?? 0;
@@ -171,7 +182,7 @@ export function ChatDock() {
     } finally {
       setLoadingMessages(false);
     }
-  }, [loadConversation, markActiveRead]);
+  }, [loadConversation, markActiveRead, resetConversation]);
 
   const openDirect = useCallback(
     async (friend: ChatFriend) => {
@@ -179,6 +190,7 @@ export function ChatDock() {
       setNotice(null);
       setError(null);
       setLoadingMessages(true);
+      resetConversation();
       try {
         let conversationId = friend.conversationId;
         if (!conversationId) {
@@ -201,7 +213,7 @@ export function ChatDock() {
         setLoadingMessages(false);
       }
     },
-    [loadConversation, markActiveRead],
+    [loadConversation, markActiveRead, resetConversation],
   );
 
   const loadOlder = useCallback(async () => {
@@ -312,13 +324,7 @@ export function ChatDock() {
       if (result.ok) {
         setNotice(`${friend.name} a été retiré de tes amis.`);
         if (viewRef.current.type === "direct" && viewRef.current.friendId === friend.userId) {
-          conversationIdRef.current = null;
-          messagesConversationRef.current = null;
-          setActiveConversationId(null);
-          setMessages([]);
-          setHasMore(false);
-          setConversationTitle(null);
-          setConversationMember(null);
+          resetConversation();
           setView({ type: "friends" });
         }
       } else {
@@ -327,7 +333,7 @@ export function ChatDock() {
       setBusyId(null);
       await refreshSummary();
     },
-    [refreshSummary],
+    [refreshSummary, resetConversation],
   );
 
   const relationFor = useCallback((userId: string): ChatRelation => {
@@ -580,12 +586,34 @@ export function ChatDock() {
               loading={loadingMessages}
               emptyLabel={view.type === "general" ? "Aucun message pour le moment. Lance la conversation !" : "Aucun message privé pour le moment."}
             />
-            <MessageComposer
-              canWrite={summary.viewer.canWrite}
-              active={open}
-              notice={summary.viewer.canWrite ? undefined : "Les invités peuvent lire le chat. Crée un compte pour écrire et ajouter des amis."}
-              onSend={handleSend}
-            />
+            {activeConversationId === null ? (
+              <div className="chat-composer chat-composer-locked">
+                {loadingMessages ? (
+                  <p className="chat-loading-note">
+                    <span className="chat-spinner" aria-hidden="true" />
+                    Connexion à la conversation…
+                  </p>
+                ) : (
+                  <button
+                    type="button"
+                    className="chat-retry"
+                    onClick={() => {
+                      if (view.type === "direct" && activeFriend) void openDirect(activeFriend);
+                      else void openGeneral();
+                    }}
+                  >
+                    Réessayer
+                  </button>
+                )}
+              </div>
+            ) : (
+              <MessageComposer
+                canWrite={summary.viewer.canWrite}
+                active={open}
+                notice={summary.viewer.canWrite ? undefined : "Les invités peuvent lire le chat. Crée un compte pour écrire et ajouter des amis."}
+                onSend={handleSend}
+              />
+            )}
           </div>
         )}
       </aside>

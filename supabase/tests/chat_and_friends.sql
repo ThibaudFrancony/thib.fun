@@ -1,6 +1,6 @@
 begin;
 
-select plan(32);
+select plan(34);
 
 -- ---------------------------------------------------------------------------
 -- Structure, privilèges et realtime
@@ -242,6 +242,28 @@ select throws_ok(
   'P0001',
   'CONVERSATION_NOT_FOUND',
   'Chat : un tiers ne lit pas une conversation privée'
+);
+
+select is(
+  public.server_get_chat_messages(
+    '00000000-0000-4000-8000-00000000a102'::uuid,
+    (select id from private.chat_conversations where kind = 'general'),
+    null::bigint,
+    50
+  )->'conversation'->'member',
+  'null'::jsonb,
+  'Chat : le membre d''une conversation générale est null, jamais un tableau'
+);
+
+select is(
+  public.server_get_chat_messages(
+    '00000000-0000-4000-8000-00000000a102'::uuid,
+    (select conversation_id from chat_ctx),
+    null::bigint,
+    50
+  )->'conversation'->'member'->>'userId',
+  '00000000-0000-4000-8000-00000000a101',
+  'Chat : le membre d''une conversation directe est un objet complet'
 );
 
 select is(

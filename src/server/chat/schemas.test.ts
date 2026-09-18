@@ -90,6 +90,29 @@ describe("schémas du chat et des amis", () => {
     expect(broken.success).toBe(false);
   });
 
+  it("exige un membre objet ou null, jamais un tableau", () => {
+    const base = {
+      conversation: { id: UUID_A, kind: "general", title: "Général", member: null },
+      messages: [],
+      hasMore: false,
+    };
+    expect(chatMessagesRpcSchema.safeParse(base).success).toBe(true);
+    expect(
+      chatMessagesRpcSchema.safeParse({ ...base, conversation: { ...base.conversation, member: [] } }).success,
+    ).toBe(false);
+    expect(
+      chatMessagesRpcSchema.safeParse({
+        ...base,
+        conversation: {
+          id: UUID_A,
+          kind: "direct",
+          title: "Léa",
+          member: { userId: UUID_B, name: "Léa", avatarPath: null, avatarPreset: "avatar-2", online: false },
+        },
+      }).success,
+    ).toBe(true);
+  });
+
   it("coerce la pagination et borne la limite", () => {
     const parsed = chatMessagesQuerySchema.parse({ before: "42", limit: "100" });
     expect(parsed).toEqual({ before: 42, limit: 100 });
