@@ -17,6 +17,14 @@ Ce fichier décrit la réalité du dépôt et non les seules capacités prévues
 
 **Diagnostic du 13 septembre : le code des neuf jeux est présent, mais leur disponibilité fonctionnelle n'est pas acquise.** L'[audit complet](docs/audit-code-2026-09-13.md) et le [plan pas à pas](docs/plan-correction-2026-09-13.md) identifient 29 défauts de code/produit et 6 observations d'infrastructure : blocages du worker, abandon/forfait, présence, finalisation, réseau, sécurité et parcours incomplets. L'étape 1 est appliquée au harnais de tests ; le contrat commun de l'étape 2 est intégré à `main` (`d885079`), le raccordement SQL de l'étape 3 est versionné dans `6130c99` et sa validation PostgreSQL isolée ainsi que sa concurrence à deux sessions sont désormais démontrées localement. L'inspection Supabase du 16 septembre rapporte 33 migrations distantes, alignées avec les fichiers locaux, mais elle reste strictement en lecture seule. Quatre parties actives (trois TTMC et une Géographie), dix jobs échus en attente et deux joueurs engagés dans plusieurs parties doivent être préservés en production. Aucun secret, traitement de donnée, migration distante, écriture Vault, déploiement ou opération de reprise n'a été effectué dans la présente session. Les observations datées ci-dessous restent historiques ; l'audit et le préflight Étape 10 prévalent pour les limitations actuelles.
 
+### 18/09/2026 — Profil : bascule vers le choix des jeux après Enregistrer
+
+- Demande : à l'enregistrement des changements de profil, l'écran doit basculer sur le choix des jeux au lieu de rester sur `/profil` avec un statut d'attente.
+- Réalisation : `src/app/profil/profile-editor.tsx` — ajout de `useRouter` (`next/navigation`) ; dans `saveProfile`, après le POST réussi et la mise à jour de l'état local, `router.push("/")` + `router.refresh()` remplacent `setNotice("Profil enregistré.")`. Aucune modification de route, de payload, d'API ni de validation ; les statuts de l'upload et de la suppression de photo restent inchangés.
+- Vérifications : `pnpm typecheck`, `pnpm lint`, `pnpm test` (62 fichiers / 436 réussis + 2 sentinelles) et `pnpm exec next build --webpack` propres ; `next-env.d.ts` régénéré par le build puis restauré.
+- Contradiction : aucune avec `AGENTS.md` ; navigation purement client vers `/`, qui porte `HomeGameSelector` (choix des jeux).
+- Limite : recette connectée (Enregistrer → bascule sur les jeux + avatars) à jouer en production après redéploiement, Docker local fermé.
+
 ### 18/09/2026 — Bouton Profil, pseudo figé à l'onboarding et nom affiché
 
 - Demande : bouton « Profil » avec photo (vide au début, upload recadré/optimisé), nom affiché modifiable et optionnel, nom de création immuable réutilisé dans les groupes ; au signup on ne demande pas de pseudo, à la première connexion on le demande avec l'avertissement qu'il ne pourra plus être changé.

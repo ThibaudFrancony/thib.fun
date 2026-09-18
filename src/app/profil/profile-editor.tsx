@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { AVATAR_PRESETS, AVATAR_PRESET_LABELS, avatarPresetImage, type AvatarPreset } from "./profile-helpers";
 
@@ -27,6 +28,7 @@ export function ProfileEditor({
   avatarPath: string | null;
 }) {
   const [name, setName] = useState(initialName);
+  const router = useRouter();
   const [avatarPreset, setAvatarPreset] = useState<AvatarPreset>(
     AVATAR_PRESETS.includes(initialPreset as AvatarPreset) ? (initialPreset as AvatarPreset) : AVATAR_PRESETS[0],
   );
@@ -76,7 +78,8 @@ export function ProfileEditor({
       }
       if (data?.displayName !== undefined) setName(data.displayName ?? "");
       if (data?.avatarPreset) setAvatarPreset(data.avatarPreset);
-      setNotice("Profil enregistré.");
+      router.push("/");
+      router.refresh();
     } catch {
       setError("Enregistrement impossible. Vérifie ta connexion puis réessaie.");
     } finally {
