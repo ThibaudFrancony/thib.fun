@@ -796,3 +796,12 @@ Ces corrections ne constituent pas des contradictions de l'utilisateur avec `AGE
 - Vérifications : script Playwright temporaire sur 1920×1080, 1440×900, 1366×768, 1280×720 — 0 px de débordement de page, 0 px de débordement de la colonne actions, bouton « Rejoindre » visible, écart France→panneau mesuré entre 77 et 102 px, aucune erreur console ; gate Étape 8 `geographie.spec.ts` 2/2 desktop/mobile ; captures 1440×900, 1920×1080 et mobile inspectées.
 - Limites : positionnement dépendant de la largeur disponible ; sur les écrans très étroits la France reste centrée sous les mini-cartes.
 - Livraison : commit et push sur `main` (déploiement Vercel automatique).
+
+### 18/09/2026 — Géographie : retrait de la France animée, fond seul
+
+- Demande : sur l'écran d'accueil Géographie, enlever l'image de la France qui se déplace et garder uniquement le fond.
+- Contradiction : aucune avec `AGENTS.md` ; il s'agit d'un retrait d'asset UI scopé à `/jeux/geographie`, sans changement de logique, de contenu ou d'identifiant.
+- Réalisation : `src/app/jeux/geographie/page.tsx` ne rend plus le bloc `.geo-hx-france` (`/geographie/france.png`) ; le fond `/geographie/background.png` en `next/image fill object-cover` est inchangé. `src/app/globals.css` : suppression de `.geo-hx-france`, `.geo-hx-france-image`, `@keyframes geoFranceFloat`, du `prefers-reduced-motion` associé et des 3 règles `.geo-hx-france` dans les media queries desktop/compact/mobile. Fichier `public/geographie/france.png` conservé sur disque mais plus référencé dans `src`.
+- Vérifications : `pnpm typecheck` et `pnpm lint` propres ; `pnpm vitest run src/games/geographie` 4 fichiers / 19 tests réussis ; `grep` `geo-hx-france|geoFranceFloat|france.png` sans résultat dans `src`.
+- Limites : colonne gauche désormais texte + 3 mini-cartes uniquement, sans visuel complémentaire ; à réévaluer si un vide visuel est constaté sur grand écran.
+- Livraison : commit et push sur `main` (déploiement Vercel automatique).

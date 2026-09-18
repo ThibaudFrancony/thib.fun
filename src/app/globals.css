@@ -749,44 +749,6 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
 
 .geo-hexapoint .geo-fact span { color: #c7b8e6; font-size: 0.72rem; font-weight: 600; }
 
-.geo-hx-france {
-  position: relative;
-  width: clamp(220px, min(30vw, 32vh), 500px);
-  max-width: 100%;
-  margin-top: clamp(0.75rem, 2.5vh, 1.75rem);
-  margin-left: auto;
-  margin-right: clamp(0rem, 2vw, 2.5rem);
-  pointer-events: none;
-}
-
-.geo-hx-france-image {
-  --fx: clamp(12px, 1.9vw, 26px);
-  --fy: clamp(9px, 1.4vw, 19px);
-  display: block;
-  width: 100%;
-  height: auto;
-  animation: geoFranceFloat 9s linear infinite;
-  will-change: transform;
-  filter: drop-shadow(0 15px 30px rgba(60, 100, 255, 0.15));
-}
-
-/* Tracé en forme de 8 (deux boucles) : plus d'amplitude, mouvement continu. */
-@keyframes geoFranceFloat {
-  0% { transform: translate3d(0, 0, 0) rotate(0deg); }
-  12.5% { transform: translate3d(calc(var(--fx) * 0.7), calc(var(--fy) * -1), 0) rotate(1deg); }
-  25% { transform: translate3d(var(--fx), 0, 0) rotate(1.6deg); }
-  37.5% { transform: translate3d(calc(var(--fx) * 0.7), var(--fy), 0) rotate(1deg); }
-  50% { transform: translate3d(0, 0, 0) rotate(0deg); }
-  62.5% { transform: translate3d(calc(var(--fx) * -0.7), calc(var(--fy) * -1), 0) rotate(-1deg); }
-  75% { transform: translate3d(calc(var(--fx) * -1), 0, 0) rotate(-1.6deg); }
-  87.5% { transform: translate3d(calc(var(--fx) * -0.7), var(--fy), 0) rotate(-1deg); }
-  100% { transform: translate3d(0, 0, 0) rotate(0deg); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .geo-hx-france-image { animation: none; }
-}
-
 .geo-hx-actions { display: flex; flex-direction: column; gap: 1rem; min-width: 0; }
 
 /* --- Cartes glass : créer / rejoindre --- */
@@ -948,7 +910,6 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
   .geo-hx-title { font-size: clamp(1.9rem, min(3.6vw, 5.4vh), 3.4rem); }
   .geo-hx-lede { margin-top: 0.7rem; }
   .geo-hx-facts { margin-top: clamp(0.5rem, 1.4vh, 1rem); }
-  .geo-hx-france { width: clamp(180px, min(28vw, 30vh), 460px); margin-top: clamp(0.4rem, 1.4vh, 1rem); }
 
   .geo-hexapoint .geo-setup-panel,
   .geo-hexapoint .geo-join-panel { padding: clamp(0.75rem, 1.7vh, 1.3rem); }
@@ -975,7 +936,6 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
   .geo-hx-lede { margin-top: 0.45rem; font-size: 0.86rem; line-height: 1.45; }
   .geo-hx-facts { gap: 0.45rem; margin-top: 0.45rem; }
   .geo-hexapoint .geo-fact { padding: 0.45rem 0.65rem; }
-  .geo-hx-france { width: clamp(150px, min(22vw, 25vh), 320px); margin-top: 0.35rem; }
   .geo-hx-actions { gap: 0.6rem; }
 
   .geo-hexapoint .geo-setup-panel,
@@ -1004,7 +964,6 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
 /* --- Responsive --- */
 @media (max-width: 1023px) {
   .geo-hx-layout { grid-template-columns: 1fr; gap: clamp(1.5rem, 4vw, 2.5rem); }
-  .geo-hx-france { width: min(90vw, 460px); margin-inline: auto; }
   .geo-hx-actions { width: 100%; }
 }
 

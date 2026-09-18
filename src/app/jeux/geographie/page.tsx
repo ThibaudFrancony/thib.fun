@@ -28,9 +28,6 @@ export default function GeographySetupPage() {
               <Fact title="5 à 15" text="Manches au choix" />
               <Fact title="France" text="Métropole + Corse" />
             </div>
-            <div className="geo-hx-france" aria-hidden="true">
-              <Image src="/geographie/france.png" alt="" width={1254} height={1254} priority className="geo-hx-france-image" />
-            </div>
           </section>
           <div className="geo-hx-actions">
             <GeographySetup />
