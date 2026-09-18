@@ -486,6 +486,16 @@ Ne pas y inventer de risques théoriques. Si la cause n'est pas confirmée, l'in
 - Résolution : démarrage de Docker, `supabase start`, attente du health Auth (`auth up after 15s`), arrêt du serveur de développement occupant le port 3000, puis relance de la gate.
 - Vérification : premier passage après chauffe = `1 failed, 1 flaky`, puis immédiatement après `2 passed` sur Chromium desktop et mobile. Échec attribué à la chauffe du stack local, pas à une régression applicative ; aucun changement de code en cause.
 
+### 18/09/2026 — Avatars PNG 404 en production : déploiement Vercel figé
+
+- Problème signalé : sur `https://thibfun.vercel.app/profil`, le nouveau design s'affiche mais les 10 avatars sont des icônes cassées.
+- Cause confirmée (lecture seule) : `curl -I https://thibfun.vercel.app/avatars/avatar-1.png` répond **404** (`x-matched-path: /_not-found`) et l'accueil `/` répond 200. GitHub `origin/main` est sur `24d19f8` (vérifié par `git ls-remote origin refs/heads/main` = `24d19f8ea8d731f3e5ea9f97f29fa7365c0c107e`) et les 10 PNG sont bien suivis (`git ls-files public/avatars/`). La production sert donc un déploiement antérieur à `07519b6` — celui de `19ddd80`, qui référence `/avatars/<preset>.png` sans contenir les fichiers — alors que le code local est sain (`src/app/profil/profile-helpers.ts`, `avatarPresetImage` → `/avatars/<preset>.png`).
+- Hypothèse non prouvée : l'intégration Git GitHub→Vercel ne redéploie plus la branche `main` (ou le dernier build a échoué) ; ce n'est ni un défaut de code ni un problème de chemin d'asset.
+- Blocage d'exécution : aucun accès Vercel n'est disponible dans cet environnement (pas de CLI `vercel`, ni `VERCEL_TOKEN`, ni `.vercel/project.json`, ni connecteur Vercel) ; le redéploiement n'a pas pu être déclenché ici. Un push sur `main` a été tenté pour voir si l'auto-déploiement repartait ; `avatar-1.png` restait 404 après ~90 s de sondage.
+- Action utilisateur requise : dans le dashboard Vercel, projet `thib.fun` (`prj_SIq42aMngLTaKKMWbNGwmlU1RQKf`, équipe `team_UrGuXgGQZHe1NQuwU3IFwoZz`), vérifier que l'auto-déploiement depuis `ThibaudFrancony/thib.fun`, branche `main`, est actif ; si le dernier déploiement de production est antérieur à `07519b6` ou en échec, relancer un **Redeploy** sur `main` (sans cache si besoin).
+- Vérification attendue : `curl -I https://thibfun.vercel.app/avatars/avatar-1.png` → **200**, puis `/profil` connecté affiche les 10 avatars, la pastille de sélection et la photo centrale = preset choisi ; changer Nom + avatar + Enregistrer affiche « Profil enregistré » et persiste au refresh. Si un 200 est obtenu mais que les images restent cassées, inspecter l'onglet Réseau (`/_next/image?...`) : piste optimiseur d'images Vercel, pas le code.
+- Invariants : ne pas renommer/déplacer `public/avatars/*.png` (chemins codés en dur) ; ne pas réécrire l'historique Git ; aucune migration Supabase en attente (45/45, `db push --dry-run` = rien à appliquer) ; limite connue : Docker local fermé, recette UI production restant à jouer après le redéploiement.
+
 ## Points à savoir pour les prochains développements
 
 - Une fiche Markdown est un contrat de conception, pas la preuve qu'une fonction existe.
