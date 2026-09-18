@@ -6,7 +6,7 @@
       "id": "unit-and-contracts",
       "label": "Unitaires et contrats serveur",
       "status": "pass",
-      "evidence": "Chat et amis du 18/09 : 67 fichiers, 465 tests réussis et 2 sentinelles d'échec attendu ; s'ajoutent le formatage du chat, les schémas zod du chat/amis (dont le contrat `member` objet ou null), les routes résumé, demandes d'ami et envoi de message (multipart, upload, nettoyage). Les contrats existants (salon, projections, reprise, IA locale) restent exécutés."
+      "evidence": "Chat, amis et cache du 18/09 : 68 fichiers, 471 tests réussis et 2 sentinelles d'échec attendu ; s'ajoutent le formatage du chat, les schémas zod du chat/amis (dont le contrat `member` objet ou null), le cache par conversation (fusion de pages, hasMore, péremption) et les routes résumé, demandes d'ami et envoi de message (multipart, upload, nettoyage). Les contrats existants (salon, projections, reprise, IA locale) restent exécutés."
     },
     {
       "id": "chat-and-friends-browser",

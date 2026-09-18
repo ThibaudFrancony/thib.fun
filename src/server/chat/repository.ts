@@ -149,7 +149,7 @@ export async function getChatMessages(
     p_actor: actorId,
     p_conversation_id: conversationId,
     p_before_seq: options.before ?? null,
-    p_limit: options.limit ?? 50,
+    p_limit: options.limit ?? 30,
   });
   const data = rpcData(response, (value) => {
     const parsed = chatMessagesRpcSchema.safeParse(value);

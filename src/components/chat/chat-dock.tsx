@@ -17,17 +17,19 @@ import {
   usePersistentChatOpen,
   usePersistentChatSound,
 } from "@/lib/chat-client";
-import { formatMessageCount, mergeMessages } from "@/lib/chat-format";
-import type {
-  ChatConversationMember,
-  ChatFriend,
-  ChatMessage,
-  ChatRelation,
-  ChatSummary,
-} from "@/lib/chat-types";
+import { formatMessageCount } from "@/lib/chat-format";
+import {
+  CHAT_PAGE_SIZE,
+  isConversationStale,
+  mergeConversationPage,
+  type ConversationCache,
+} from "@/lib/chat-cache";
+import type { ChatConversationPayload, ChatFriend, ChatMessage, ChatRelation, ChatSummary } from "@/lib/chat-types";
 import { postJson } from "@/lib/client-request";
 
 type ChatView = { type: "general" } | { type: "friends" } | { type: "direct"; friendId: string };
+
+const REALTIME_DEBOUNCE_MS = 200;
 
 export function ChatDock() {
   const [open, setOpen] = usePersistentChatOpen();
@@ -35,13 +37,10 @@ export function ChatDock() {
   const [summary, setSummary] = useState<ChatSummary | null>(null);
   const [available, setAvailable] = useState<boolean | null>(null);
   const [view, setView] = useState<ChatView>({ type: "general" });
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [hasMore, setHasMore] = useState(false);
-  const [loadingMessages, setLoadingMessages] = useState(false);
+  const [conversations, setConversations] = useState<Record<string, ConversationCache>>({});
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [loadingConversation, setLoadingConversation] = useState(false);
   const [loadingOlder, setLoadingOlder] = useState(false);
-  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
-  const [conversationTitle, setConversationTitle] = useState<string | null>(null);
-  const [conversationMember, setConversationMember] = useState<ChatConversationMember | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -50,12 +49,14 @@ export function ChatDock() {
   const viewRef = useRef<ChatView>(view);
   const openRef = useRef(open);
   const soundRef = useRef(soundEnabled);
-  const conversationIdRef = useRef<string | null>(null);
-  const messagesRef = useRef<ChatMessage[]>([]);
-  const messagesConversationRef = useRef<string | null>(null);
+  const cacheRef = useRef<Record<string, ConversationCache>>({});
+  const activeIdRef = useRef<string | null>(null);
   const refreshingRef = useRef(false);
   const loadingOlderRef = useRef(false);
   const refreshTimerRef = useRef<number | null>(null);
+  const conversationTimersRef = useRef<Map<string, number>>(new Map());
+  const inflightRef = useRef<Map<string, Promise<ChatConversationPayload>>>(new Map());
+  const prefetchedRef = useRef(false);
   const seenRef = useRef<{ general: number; friends: Map<string, number>; requests: number } | null>(null);
 
   useEffect(() => {
@@ -68,8 +69,11 @@ export function ChatDock() {
     soundRef.current = soundEnabled;
   }, [soundEnabled]);
   useEffect(() => {
-    messagesRef.current = messages;
-  }, [messages]);
+    cacheRef.current = conversations;
+  }, [conversations]);
+  useEffect(() => {
+    activeIdRef.current = activeId;
+  }, [activeId]);
 
   const applySummary = useCallback((next: ChatSummary) => {
     const previous = seenRef.current;
@@ -116,30 +120,42 @@ export function ChatDock() {
     }
   }, [applySummary]);
 
-  const loadConversation = useCallback(async (conversationId: string, options: { before?: number } = {}) => {
-    const payload = await fetchChatMessages(conversationId, { before: options.before });
-    conversationIdRef.current = payload.conversation.id;
-    setActiveConversationId(payload.conversation.id);
-    setConversationTitle(payload.conversation.title);
-    setConversationMember(payload.conversation.member ?? null);
-    if (messagesConversationRef.current === payload.conversation.id) {
-      setMessages((current) => mergeMessages(current, payload.messages));
-    } else {
-      messagesConversationRef.current = payload.conversation.id;
-      setMessages(payload.messages);
-    }
-    setHasMore(payload.hasMore);
-    return payload;
+  /**
+   * Une seule requête réseau, puis fusion dans le cache par conversation.
+   * La page récente (30) alimente le cache sans écraser l'historique déjà
+   * chargé ; la pagination `before` reste additive.
+   */
+  const fetchConversationPage = useCallback(async (conversationId: string, options: { before?: number } = {}) => {
+    const key = `${conversationId}:${options.before ?? "latest"}`;
+    const inflight = inflightRef.current.get(key);
+    if (inflight) return inflight;
+    const task = (async () => {
+      try {
+        const payload = await fetchChatMessages(conversationId, { before: options.before, limit: CHAT_PAGE_SIZE });
+        setConversations((previous) => ({
+          ...previous,
+          [conversationId]: mergeConversationPage(previous[conversationId], payload, options),
+        }));
+        return payload;
+      } finally {
+        inflightRef.current.delete(key);
+      }
+    })();
+    inflightRef.current.set(key, task);
+    return task;
   }, []);
 
-  const markActiveRead = useCallback((lastSeq: number) => {
-    const conversationId = conversationIdRef.current;
-    if (!conversationId || lastSeq <= 0) return;
+  const markActiveRead = useCallback((conversationId: string, options: { force?: boolean } = {}) => {
+    if (activeIdRef.current !== conversationId || viewRef.current.type === "friends") return;
+    if (!options.force && (!openRef.current || document.hidden)) return;
+    const entry = cacheRef.current[conversationId];
+    const lastSeq = entry?.messages.at(-1)?.seq ?? 0;
+    if (lastSeq <= 0) return;
     void markConversationRead(conversationId, lastSeq).catch(() => undefined);
     setSummary((current) => {
       if (!current) return current;
       const activeView = viewRef.current;
-      if (activeView.type === "general") {
+      if (activeView.type === "general" && current.general.conversationId === conversationId) {
         if (current.general.unread === 0) return current;
         return { ...current, general: { ...current.general, unread: 0 } };
       }
@@ -155,15 +171,34 @@ export function ChatDock() {
     });
   }, []);
 
-  const resetConversation = useCallback(() => {
-    conversationIdRef.current = null;
-    messagesConversationRef.current = null;
-    setActiveConversationId(null);
-    setMessages([]);
-    setHasMore(false);
-    setConversationTitle(null);
-    setConversationMember(null);
-  }, []);
+  /**
+   * Affiche une conversation : cache immédiat si présent, sinon chargement.
+   * Une entrée périmée est rafraîchie en arrière-plan sans bloquer l'affichage.
+   */
+  const activate = useCallback(
+    async (conversationId: string): Promise<boolean> => {
+      setActiveId(conversationId);
+      const cached = cacheRef.current[conversationId];
+      if (cached) {
+        if (isConversationStale(cached)) {
+          void fetchConversationPage(conversationId)
+            .then(() => markActiveRead(conversationId))
+            .catch(() => undefined);
+        }
+        return true;
+      }
+      setLoadingConversation(true);
+      try {
+        await fetchConversationPage(conversationId);
+        return true;
+      } catch {
+        return false;
+      } finally {
+        setLoadingConversation(false);
+      }
+    },
+    [fetchConversationPage, markActiveRead],
+  );
 
   const openGeneral = useCallback(async () => {
     const current = summaryRef.current;
@@ -171,76 +206,62 @@ export function ChatDock() {
     setView({ type: "general" });
     setNotice(null);
     setError(null);
-    setLoadingMessages(true);
-    resetConversation();
-    try {
-      const payload = await loadConversation(current.general.conversationId);
-      const lastSeq = payload.messages.at(-1)?.seq ?? 0;
-      markActiveRead(lastSeq);
-    } catch {
-      setError("La conversation n'a pas pu être chargée.");
-    } finally {
-      setLoadingMessages(false);
-    }
-  }, [loadConversation, markActiveRead, resetConversation]);
+    const loaded = await activate(current.general.conversationId);
+    if (!loaded) setError("La conversation n'a pas pu être chargée.");
+    else markActiveRead(current.general.conversationId, { force: true });
+  }, [activate, markActiveRead]);
 
   const openDirect = useCallback(
     async (friend: ChatFriend) => {
       setView({ type: "direct", friendId: friend.userId });
       setNotice(null);
       setError(null);
-      setLoadingMessages(true);
-      resetConversation();
-      try {
-        let conversationId = friend.conversationId;
-        if (!conversationId) {
-          const result = await postJson<{ conversationId: string }>("/api/chat/direct", {
-            requestId: crypto.randomUUID(),
-            targetId: friend.userId,
-          });
-          if (!result.ok) {
-            setError(result.message);
-            return;
-          }
-          conversationId = result.data.conversationId;
+      let conversationId = friend.conversationId;
+      if (!conversationId) {
+        const result = await postJson<{ conversationId: string }>("/api/chat/direct", {
+          requestId: crypto.randomUUID(),
+          targetId: friend.userId,
+        });
+        if (!result.ok) {
+          setError(result.message);
+          return;
         }
-        const payload = await loadConversation(conversationId);
-        const lastSeq = payload.messages.at(-1)?.seq ?? 0;
-        markActiveRead(lastSeq);
-      } catch {
-        setError("La conversation n'a pas pu être chargée.");
-      } finally {
-        setLoadingMessages(false);
+        conversationId = result.data.conversationId;
       }
+      const loaded = await activate(conversationId);
+      if (!loaded) setError("La conversation n'a pas pu être chargée.");
+      else markActiveRead(conversationId, { force: true });
     },
-    [loadConversation, markActiveRead, resetConversation],
+    [activate, markActiveRead],
   );
 
   const loadOlder = useCallback(async () => {
-    const conversationId = conversationIdRef.current;
-    const minSeq = messagesRef.current[0]?.seq;
+    const conversationId = activeIdRef.current;
+    const entry = conversationId ? cacheRef.current[conversationId] : null;
+    const minSeq = entry?.messages[0]?.seq;
     if (!conversationId || !minSeq || loadingOlderRef.current) return;
     loadingOlderRef.current = true;
     setLoadingOlder(true);
     try {
-      await loadConversation(conversationId, { before: minSeq });
+      await fetchConversationPage(conversationId, { before: minSeq });
     } catch {
       setError("Les messages précédents n'ont pas pu être chargés.");
     } finally {
       loadingOlderRef.current = false;
       setLoadingOlder(false);
     }
-  }, [loadConversation]);
+  }, [fetchConversationPage]);
 
   const handleSend = useCallback(
     async (body: string | null, file: File | null): Promise<{ ok: true } | { ok: false; message: string }> => {
-      const conversationId = conversationIdRef.current;
+      const conversationId = activeIdRef.current;
       const current = summaryRef.current;
-      if (!conversationId || !current) return { ok: false, message: "La conversation n'est pas prête." };
+      const entry = conversationId ? cacheRef.current[conversationId] : null;
+      if (!conversationId || !entry || !current) return { ok: false, message: "La conversation n'est pas prête." };
       const requestId = crypto.randomUUID();
       const optimistic: ChatMessage = {
         id: `local-${requestId}`,
-        seq: (messagesRef.current.at(-1)?.seq ?? 0) + 1,
+        seq: (entry.messages.at(-1)?.seq ?? 0) + 1,
         authorId: current.viewer.id,
         authorName: current.viewer.name,
         authorAvatarUrl: null,
@@ -252,18 +273,39 @@ export function ChatDock() {
         imageHeight: null,
         createdAt: new Date().toISOString(),
       };
-      setMessages((previous) => [...previous, optimistic]);
+      setConversations((previous) => {
+        const target = previous[conversationId];
+        if (!target) return previous;
+        return { ...previous, [conversationId]: { ...target, messages: [...target.messages, optimistic] } };
+      });
       try {
         await sendChatMessageRequest(conversationId, { requestId, body, file });
-        const payload = await fetchChatMessages(conversationId);
-        messagesConversationRef.current = payload.conversation.id;
-        setMessages((previous) => mergeMessages(previous.filter((message) => message.id !== optimistic.id), payload.messages));
-        setHasMore(payload.hasMore);
+        const payload = await fetchChatMessages(conversationId, { limit: CHAT_PAGE_SIZE });
+        setConversations((previous) => {
+          const target = previous[conversationId];
+          const withoutOptimistic = target
+            ? { ...target, messages: target.messages.filter((message) => message.id !== optimistic.id) }
+            : undefined;
+          return {
+            ...previous,
+            [conversationId]: mergeConversationPage(withoutOptimistic, payload),
+          };
+        });
         if (optimistic.imageUrl) URL.revokeObjectURL(optimistic.imageUrl);
         void refreshSummary();
         return { ok: true };
       } catch (sendError) {
-        setMessages((previous) => previous.filter((message) => message.id !== optimistic.id));
+        setConversations((previous) => {
+          const target = previous[conversationId];
+          if (!target) return previous;
+          return {
+            ...previous,
+            [conversationId]: {
+              ...target,
+              messages: target.messages.filter((message) => message.id !== optimistic.id),
+            },
+          };
+        });
         if (optimistic.imageUrl) URL.revokeObjectURL(optimistic.imageUrl);
         return {
           ok: false,
@@ -324,8 +366,16 @@ export function ChatDock() {
       if (result.ok) {
         setNotice(`${friend.name} a été retiré de tes amis.`);
         if (viewRef.current.type === "direct" && viewRef.current.friendId === friend.userId) {
-          resetConversation();
+          setActiveId(null);
           setView({ type: "friends" });
+        }
+        if (friend.conversationId) {
+          setConversations((previous) => {
+            if (!previous[friend.conversationId as string]) return previous;
+            const next = { ...previous };
+            delete next[friend.conversationId as string];
+            return next;
+          });
         }
       } else {
         setError(result.message);
@@ -333,7 +383,7 @@ export function ChatDock() {
       setBusyId(null);
       await refreshSummary();
     },
-    [refreshSummary, resetConversation],
+    [refreshSummary],
   );
 
   const relationFor = useCallback((userId: string): ChatRelation => {
@@ -364,27 +414,83 @@ export function ChatDock() {
     };
   }, [applySummary]);
 
+  // Préchargement des 30 derniers messages dès l'ouverture du site : le cache
+  // est prêt avant même que la barre latérale soit ouverte.
+  useEffect(() => {
+    if (!available || prefetchedRef.current) return;
+    const current = summaryRef.current;
+    if (!current) return;
+    prefetchedRef.current = true;
+    const targets = [
+      current.general.conversationId,
+      ...current.friends.map((friend) => friend.conversationId).filter((id): id is string => Boolean(id)),
+    ];
+    let cancelled = false;
+    void (async () => {
+      for (const conversationId of targets) {
+        if (cancelled) return;
+        if (cacheRef.current[conversationId]) continue;
+        try {
+          await fetchConversationPage(conversationId);
+        } catch {
+          return;
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [available, fetchConversationPage]);
+
   useChatRealtime(summary?.viewer.id ?? null, (event) => {
     if (refreshTimerRef.current !== null) window.clearTimeout(refreshTimerRef.current);
     refreshTimerRef.current = window.setTimeout(() => {
       refreshTimerRef.current = null;
       void refreshSummary();
-      if (event.type === "chat" && event.conversationId === conversationIdRef.current) {
-        void fetchChatMessages(event.conversationId)
-          .then((payload) => {
-            setMessages((current) => mergeMessages(current, payload.messages));
-            setHasMore(payload.hasMore);
-            markActiveRead(payload.messages.at(-1)?.seq ?? 0);
-          })
-          .catch(() => undefined);
-      }
     }, 250);
+    if (event.type !== "chat") return;
+    const conversationId = event.conversationId;
+    const entry = cacheRef.current[conversationId];
+    if (!entry) return;
+    const viewingThis =
+      activeIdRef.current === conversationId
+      && openRef.current
+      && !document.hidden
+      && viewRef.current.type !== "friends";
+    if (!viewingThis) {
+      // Cache conservé sans requête : la prochaine ouverture revalidera.
+      setConversations((previous) => {
+        const target = previous[conversationId];
+        if (!target) return previous;
+        return { ...previous, [conversationId]: { ...target, stale: true } };
+      });
+      return;
+    }
+    const timers = conversationTimersRef.current;
+    const existing = timers.get(conversationId);
+    if (existing !== undefined) window.clearTimeout(existing);
+    const timer = window.setTimeout(() => {
+      timers.delete(conversationId);
+      void fetchConversationPage(conversationId)
+        .then(() => markActiveRead(conversationId))
+        .catch(() => undefined);
+    }, REALTIME_DEBOUNCE_MS);
+    timers.set(conversationId, timer);
   });
 
   useEffect(() => {
     if (!available) return;
     const ping = () => {
       if (document.visibilityState === "visible") void recordChatActivity().catch(() => undefined);
+    };
+    const refreshActiveIfStale = () => {
+      const conversationId = activeIdRef.current;
+      const entry = conversationId ? cacheRef.current[conversationId] : null;
+      if (!conversationId || !entry) return;
+      if (!isConversationStale(entry)) return;
+      void fetchConversationPage(conversationId)
+        .then(() => markActiveRead(conversationId))
+        .catch(() => undefined);
     };
     ping();
     const presenceTimer = window.setInterval(ping, 60_000);
@@ -395,6 +501,7 @@ export function ChatDock() {
       if (document.visibilityState !== "visible") return;
       ping();
       void refreshSummary();
+      refreshActiveIfStale();
     };
     document.addEventListener("visibilitychange", onVisible);
     window.addEventListener("online", onVisible);
@@ -404,7 +511,7 @@ export function ChatDock() {
       document.removeEventListener("visibilitychange", onVisible);
       window.removeEventListener("online", onVisible);
     };
-  }, [available, refreshSummary]);
+  }, [available, refreshSummary, fetchConversationPage, markActiveRead]);
 
   useEffect(() => {
     if (!open) return;
@@ -419,8 +526,11 @@ export function ChatDock() {
   }, [open, setOpen]);
 
   useEffect(() => {
+    const timers = conversationTimersRef.current;
     return () => {
       if (refreshTimerRef.current !== null) window.clearTimeout(refreshTimerRef.current);
+      for (const timer of timers.values()) window.clearTimeout(timer);
+      timers.clear();
     };
   }, []);
 
@@ -430,13 +540,19 @@ export function ChatDock() {
   const totalBadge = generalBadge + friendsBadge;
   const activeFriend =
     view.type === "direct" && summary ? summary.friends.find((friend) => friend.userId === view.friendId) ?? null : null;
+  const activeCache = activeId ? conversations[activeId] ?? null : null;
+  const activeMessages = activeCache?.messages ?? [];
+  const activeHasMore = activeCache?.hasMore ?? false;
+  const activeConversation = activeCache?.conversation ?? null;
+  const showConversationLoading = activeId !== null && !activeCache && loadingConversation;
 
   if (available !== true || !summary) return null;
 
   function toggleOpen() {
     const next = !openRef.current;
     setOpen(next);
-    if (!next || conversationIdRef.current !== null) return;
+    if (!next) return;
+    if (activeIdRef.current && cacheRef.current[activeIdRef.current]) return;
     const activeView = viewRef.current;
     if (activeView.type === "direct") {
       const friend = summaryRef.current?.friends.find((entry) => entry.userId === activeView.friendId);
@@ -477,7 +593,8 @@ export function ChatDock() {
               aria-selected={view.type !== "friends"}
               data-active={view.type !== "friends"}
               onClick={() => {
-                if (viewRef.current.type === "general" && conversationIdRef.current === summary.general.conversationId) return;
+                const generalId = summary.general.conversationId;
+                if (viewRef.current.type === "general" && activeIdRef.current === generalId && cacheRef.current[generalId]) return;
                 void openGeneral();
               }}
             >
@@ -558,37 +675,39 @@ export function ChatDock() {
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6" /></svg>
                 </button>
                 <ChatAvatar
-                  name={conversationMember?.name ?? activeFriend?.name ?? conversationTitle ?? "Conversation"}
-                  preset={conversationMember?.avatarPreset ?? activeFriend?.avatarPreset ?? "avatar-1"}
-                  imageUrl={conversationMember?.avatarUrl ?? activeFriend?.avatarUrl ?? null}
+                  name={activeConversation?.member?.name ?? activeFriend?.name ?? activeConversation?.title ?? "Conversation"}
+                  preset={activeConversation?.member?.avatarPreset ?? activeFriend?.avatarPreset ?? "avatar-1"}
+                  imageUrl={activeConversation?.member?.avatarUrl ?? activeFriend?.avatarUrl ?? null}
                   size={36}
-                  online={activeFriend?.online ?? conversationMember?.online}
+                  online={activeFriend?.online ?? activeConversation?.member?.online}
                 />
                 <div className="chat-conversation-copy">
-                  <p className="chat-conversation-title">{conversationTitle ?? activeFriend?.name ?? "Conversation"}</p>
+                  <p className="chat-conversation-title">
+                    {activeConversation?.title ?? activeFriend?.name ?? "Conversation"}
+                  </p>
                   <p className="chat-conversation-sub">
-                    {(activeFriend?.online ?? conversationMember?.online) ? "En ligne" : "Hors ligne"}
+                    {(activeFriend?.online ?? activeConversation?.member?.online) ? "En ligne" : "Hors ligne"}
                   </p>
                 </div>
               </div>
             )}
 
             <MessageList
-              key={activeConversationId ?? "chat"}
-              messages={messages}
+              key={activeId ?? "chat"}
+              messages={activeMessages}
               viewerId={summary.viewer.id}
               relationFor={relationFor}
               friendBusy={busyId !== null}
               onAddFriend={(userId) => void addFriend(userId)}
-              hasMore={hasMore}
+              hasMore={activeHasMore}
               loadingOlder={loadingOlder}
               onLoadOlder={loadOlder}
-              loading={loadingMessages}
+              loading={showConversationLoading}
               emptyLabel={view.type === "general" ? "Aucun message pour le moment. Lance la conversation !" : "Aucun message privé pour le moment."}
             />
-            {activeConversationId === null ? (
+            {!activeCache ? (
               <div className="chat-composer chat-composer-locked">
-                {loadingMessages ? (
+                {showConversationLoading ? (
                   <p className="chat-loading-note">
                     <span className="chat-spinner" aria-hidden="true" />
                     Connexion à la conversation…

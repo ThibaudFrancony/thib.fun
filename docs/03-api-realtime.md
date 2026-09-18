@@ -47,7 +47,7 @@ type MatchCommand = {
 | GET `/players/:id` | — | profil public de membre + agrégats |
 | GET `/players/:id/versus-me` | cursor?, game? | statistiques de ce duo et confrontations |
 | GET `/chat/summary` | — | résumé authentifié : non-lus, amis, demandes reçues/envoyées, compteur en ligne, droit d'écriture |
-| GET `/chat/conversations/:id/messages` | before?, limit? | page de 1..100 messages, accès général ou ami vérifié, URLs signées courtes |
+| GET `/chat/conversations/:id/messages` | before?, limit? | page de 1..100 messages (30 par défaut), accès général ou ami vérifié, URLs signées courtes |
 | POST `/chat/conversations/:id/messages` | multipart requestId, body?, file? | permanent actif ; texte ≤ 1000 ou une photo JPEG/PNG/WebP ≤ 4 Mo réencodée WebP ≤ 1280 px ; reçu idempotent |
 | POST `/chat/conversations/:id/read` | lastReadSeq | marqueur de lecture monotone, accès vérifié |
 | POST `/chat/direct` | requestId, targetId | amis acceptés uniquement ; renvoie la conversation directe stable |

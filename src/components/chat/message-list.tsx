@@ -69,7 +69,18 @@ export function MessageList({
   }
 
   return (
-    <div className="chat-messages" ref={containerRef} role="log" aria-live="polite" aria-relevant="additions">
+    <div
+      className="chat-messages"
+      ref={containerRef}
+      role="log"
+      aria-live="polite"
+      aria-relevant="additions"
+      onScroll={() => {
+        const container = containerRef.current;
+        if (!container || !hasMore || loadingOlder) return;
+        if (container.scrollTop < 80) void handleLoadOlder();
+      }}
+    >
       {hasMore ? (
         <button
           type="button"

@@ -19,10 +19,11 @@ export async function fetchChatSummary(): Promise<ChatSummary | null> {
 
 export async function fetchChatMessages(
   conversationId: string,
-  options: { before?: number } = {},
+  options: { before?: number; limit?: number } = {},
 ): Promise<ChatConversationPayload> {
   const params = new URLSearchParams();
   if (options.before) params.set("before", String(options.before));
+  if (options.limit) params.set("limit", String(options.limit));
   const query = params.toString();
   const response = await fetch(`/api/chat/conversations/${conversationId}/messages${query ? `?${query}` : ""}`, {
     cache: "no-store",
