@@ -834,3 +834,11 @@ Ces corrections ne constituent pas des contradictions de l'utilisateur avec `AGE
 - Correction : `getActiveLobbyForViewer` (`src/server/lobbies.ts`) intercepte toute erreur RPC et retourne `null` ; les pages de jeu retombent alors sur le parcours créer/rejoindre historique tant que la migration n'est pas appliquée. Les routes `POST /api/lobbies` et `POST /api/lobbies/[roomId]/prepare` ne sont sollicitées que par une action explicite du bouton Salon et échouent proprement en message utilisateur.
 - Vérification : `tsc --noEmit` et `eslint .` propres après le correctif.
 - Reste à faire : appliquer les migrations `20260918174047_step11_home_lobby` et `20260918174528_step11_lobby_prepare` au projet Supabase distant, **après autorisation explicite**, puis vérifier le résultat.
+
+### 18/09/2026 — Vérification distante des migrations du salon d'accueil
+
+- Constat : `supabase migration list --linked` montre `20260918174047_step11_home_lobby` et `20260918174528_step11_lobby_prepare` **déjà présentes dans l'historique distant** ; aucune migration n'était donc en attente (pas de `migration up --linked` nécessaire).
+- Vérification en lecture seule par `supabase db dump --linked` (public + private) : `public.server_create_lobby`, `public.server_get_active_lobby` et `public.server_prepare_lobby_match` existent, sont `SECURITY INVOKER`, `REVOKE` de `PUBLIC` et `GRANT` à `service_role` ; `private.rooms.game_slug` est bien devenu nullable. Aucune donnée lue ou modifiée.
+- Production : `/`, `/jeux/geographie`, `/jeux/uno` répondent 200 ; `GET /api/lobbies/active` répond 200 (`{lobby:null}` sans session) ; `POST /api/lobbies` répond 405 en GET. Le bouton Salon est présent dans le HTML déployé.
+- Point de gouvernance à surveiller : les migrations ont été appliquées au distant sans commande de notre côté, peu après le push sur `main`. Cause la plus probable : une **connexion GitHub→Supabase encore active** qui applique les migrations à la branche de production. `AGENTS.md` interdit ce mécanisme ; à vérifier et déconnecter dans Supabase → Project Settings → Integrations. Hypothèse à confirmer par l'utilisateur, non prouvée ici (le jeton n'a pas été extrait).
+- Reste à faire : recette réelle du parcours salon à deux comptes sur la production.
