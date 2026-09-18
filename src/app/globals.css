@@ -2092,21 +2092,6 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
 .chat-input::placeholder { color: var(--chat-faint); }
 .chat-input:focus { outline: none; border-color: rgba(168, 85, 247, 0.75); background: rgba(255, 255, 255, 0.09); }
 
-.chat-composer-hint {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  margin: 0;
-  padding: 0 0.15rem;
-  color: var(--chat-faint);
-  font-size: 0.68rem;
-  font-weight: 600;
-}
-
-.chat-composer-hint-note { display: inline-flex; align-items: center; gap: 0.3rem; }
-.chat-composer-hint-note svg { width: 13px; height: 13px; fill: none; stroke: var(--chat-green); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-
 .chat-composer-error { margin: 0; color: #ffb3d3; font-size: 0.78rem; font-weight: 600; }
 
 .chat-attachment { position: relative; width: fit-content; animation: chatPop 180ms ease-out both; }

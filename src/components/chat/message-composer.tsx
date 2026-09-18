@@ -189,15 +189,6 @@ export function MessageComposer({
           )}
         </button>
       </div>
-      {!attachment ? (
-        <p className="chat-composer-hint">
-          <span>Ctrl+V pour coller une image</span>
-          <span className="chat-composer-hint-note">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19c8 0 12-5 13-13-6 1-11 3-11 8a4 4 0 0 0 .6 2" /></svg>
-            Images optimisées avant envoi
-          </span>
-        </p>
-      ) : null}
     </div>
   );
 }

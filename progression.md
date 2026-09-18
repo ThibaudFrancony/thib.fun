@@ -940,3 +940,11 @@ Ces corrections ne constituent pas des contradictions de l'utilisateur avec `AGE
 - Robustesse UI : le composer n'est plus affiché tant que la conversation n'est pas chargée (état « Connexion à la conversation… » puis bouton « Réessayer ») ; changer de conversation réinitialise immédiatement messages et identifiant pour ne jamais envoyer dans la mauvaise conversation.
 - Tests : Vitest 67 fichiers / 465 réussis + 2 sentinelles (nouveau test de contrat « member objet ou null, jamais un tableau »), `typecheck`, `lint`, build propres. Le pgTAP `chat_and_friends.sql` passe à 34 assertions avec deux contrôles de forme du membre (non exécutés, Docker fermé).
 - Limites : la vérification navigateur réelle des deux correctifs reste à faire à deux sessions ; la production est mise à jour par le push (déploiement Vercel automatique).
+
+### 18/09/2026 — Chat : suppression du bandeau sous la zone d'écriture
+
+- Demande : enlever « Ctrl+V pour coller une image / Images optimisées avant envoi » en dessous du chat, jugé inutile.
+- Réalisation : `src/components/chat/message-composer.tsx` — suppression du bloc `<p className="chat-composer-hint">` ; `src/app/globals.css` — suppression des règles `.chat-composer-hint` / `.chat-composer-hint-note`. Le collage Ctrl+V, l'import et l'optimisation restent fonctionnels, sans texte d'aide.
+- Vérifications : `pnpm typecheck`, `pnpm lint`, `pnpm test` (67 fichiers / 465 réussis + 2 sentinelles), `pnpm test:matrix`, `pnpm content:validate`, `pnpm docs:check`, `pnpm exec next build --webpack` propres ; suites Docker/pgTAP/E2E non exécutées (Docker opt-in, daemon fermé).
+- Contradiction : aucune avec `AGENTS.md`.
+- Limite : recette visuelle (composer sans bandeau, Ctrl+V/import toujours actifs) à jouer en production après redéploiement.
