@@ -3,13 +3,17 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { postJson } from "@/lib/client-request";
+import { useGroupRoom } from "@/lib/group-room";
+import { GroupLaunchControls } from "@/components/group-launch-controls";
 import { DEFAULT_GEO_CONFIG, type GeoConfig } from "@/games/geographie/config";
 
-export function GeographySetup() {
+export function GeographySetup({ groupRoomId }: { groupRoomId?: string } = {}) {
   const router = useRouter();
   const [config, setConfig] = useState<GeoConfig>(DEFAULT_GEO_CONFIG);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const group = useGroupRoom(groupRoomId ?? null);
+  const inGroup = Boolean(groupRoomId);
 
   function update<Key extends keyof GeoConfig>(key: Key, value: GeoConfig[Key]) {
     setConfig((current) => ({ ...current, [key]: value }));
@@ -29,7 +33,7 @@ export function GeographySetup() {
 
   return (
     <section className="geo-panel geo-setup-panel">
-      <div className="geo-panel-heading"><p className="geo-kicker geo-kicker-accent">Créer une table</p><h2 className="geo-panel-title">Choisis vos règles</h2></div>
+      <div className="geo-panel-heading"><p className="geo-kicker geo-kicker-accent">{inGroup ? "Groupe" : "Créer une table"}</p><h2 className="geo-panel-title">{inGroup ? "Choisis les règles de la partie" : "Choisis vos règles"}</h2></div>
       <div className="geo-form-stack">
         <label className="geo-label" htmlFor="rounds">Manches</label>
         <select id="rounds" value={config.rounds} onChange={(event) => update("rounds", Number(event.target.value) as GeoConfig["rounds"])} className="geo-select"><option value={5}>5 manches · rapide</option><option value={10}>10 manches · classique</option><option value={15}>15 manches · longue</option></select>
@@ -41,7 +45,7 @@ export function GeographySetup() {
       <fieldset className="geo-radio-fieldset"><legend className="geo-label">Sélection des villes</legend><div className="geo-radio-grid"><label className="geo-radio-card" data-selected={config.selection === "random"}><input className="geo-visually-hidden" type="radio" name="selection" checked={config.selection === "random"} onChange={() => update("selection", "random")} /> <span><strong>Aléatoire</strong><small>Sans remise</small></span></label><label className="geo-radio-card" data-selected={config.selection === "challenge"}><input className="geo-visually-hidden" type="radio" name="selection" checked={config.selection === "challenge"} onChange={() => update("selection", "challenge")} /> <span><strong>Défi</strong><small>Vous les proposez</small></span></label></div></fieldset>
       <p className="geo-panel-note">Le salon sera accessible avec un code à partager. Il faut deux comptes connectés pour lancer la partie.</p>
       {error && <p role="alert" className="geo-error">{error}</p>}
-      <button disabled={busy} onClick={createRoom} className="geo-primary-button">{busy ? "Création…" : "Créer le salon"}</button>
+      {inGroup ? <GroupLaunchControls gameSlug="geographie" config={config} group={group} /> : <button disabled={busy} onClick={createRoom} className="geo-primary-button">{busy ? "Création…" : "Créer le salon"}</button>}
     </section>
   );
 }

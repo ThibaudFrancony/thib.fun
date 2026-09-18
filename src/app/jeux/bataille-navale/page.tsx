@@ -1,10 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
+import { GroupRoomBanner } from "@/components/group-room-banner";
+import { getActiveLobbyForViewer } from "@/server/lobbies";
 import { RoomJoin } from "@/games/geographie/components/geography-setup";
 import { BatailleNavaleSetup } from "@/games/bataille-navale/components/bataille-navale-setup";
 
-export default function BatailleNavalePage() {
+export default async function BatailleNavalePage() {
+  const group = await getActiveLobbyForViewer();
   return (
     <main className="geo-page game-landing">
       <div className="geo-hx-bg" aria-hidden="true">
@@ -29,7 +32,7 @@ export default function BatailleNavalePage() {
               <Fact title="1 tir / tour" text="Sans rejouer" />
             </div>
           </section>
-          <div className="geo-hx-actions"><BatailleNavaleSetup /><RoomJoin /></div>
+          <div className="geo-hx-actions"><BatailleNavaleSetup groupRoomId={group?.roomId} />{group ? <GroupRoomBanner roomId={group.roomId} /> : <RoomJoin />}</div>
         </div>
       </div>
     </main>

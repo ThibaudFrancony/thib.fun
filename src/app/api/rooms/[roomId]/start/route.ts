@@ -58,6 +58,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ roo
   try {
     const room = roomViewSchema.parse(await getRoomView(member.id, roomId));
     if (room.members.length !== 2) throw new Error("TWO_PLAYERS_REQUIRED");
+    if (!room.gameSlug) throw new Error("GAME_NOT_READY");
     if (["trou-noir", "ttmc"].includes(room.gameSlug) && !getQuizAiConfiguration()) {
       throw new Error("AI_CONFIGURATION_REQUIRED");
     }

@@ -3,13 +3,17 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { postJson } from "@/lib/client-request";
+import { useGroupRoom } from "@/lib/group-room";
+import { GroupLaunchControls } from "@/components/group-launch-controls";
 import { DEFAULT_BOMBPARTY_CONFIG, type BombpartyConfig } from "@/games/bombparty/config";
 
-export function BombpartySetup() {
+export function BombpartySetup({ groupRoomId }: { groupRoomId?: string } = {}) {
   const router = useRouter();
   const [config, setConfig] = useState<BombpartyConfig>(DEFAULT_BOMBPARTY_CONFIG);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const group = useGroupRoom(groupRoomId ?? null);
+  const inGroup = Boolean(groupRoomId);
 
   async function createRoom() {
     setBusy(true);
@@ -26,8 +30,8 @@ export function BombpartySetup() {
   return (
     <section className="geo-panel geo-setup-panel">
       <div className="geo-panel-heading">
-        <p className="geo-kicker geo-kicker-accent">Créer une table</p>
-        <h2 className="geo-panel-title">Syllabe Express, le mot juste avant le chrono</h2>
+        <p className="geo-kicker geo-kicker-accent">{inGroup ? "Groupe" : "Créer une table"}</p>
+        <h2 className="geo-panel-title">{inGroup ? "Choisis les règles de la partie" : "Syllabe Express, le mot juste avant le chrono"}</h2>
       </div>
       <div className="geo-form-stack">
         <label className="geo-label" htmlFor="bombparty-lives">Vies par joueur</label>
@@ -72,9 +76,9 @@ export function BombpartySetup() {
         temps écoulé coûte une vie.
       </p>
       {error && <p role="alert" className="geo-error">{error}</p>}
-      <button disabled={busy} onClick={() => void createRoom()} className="geo-primary-button">
+      {inGroup ? <GroupLaunchControls gameSlug="bombparty" config={config} group={group} /> : <button disabled={busy} onClick={() => void createRoom()} className="geo-primary-button">
         {busy ? "Création…" : "Créer le salon Syllabe Express"}
-      </button>
+      </button>}
     </section>
   );
 }

@@ -37,7 +37,7 @@ Token aléatoire 32 octets URL-safe ; seul SHA-256 conservé. Les invitations pe
 
 ### `private.rooms`
 
-`id uuid PK`, `code text UNIQUE` (6 caractères alphabet `ABCDEFGHJKLMNPQRSTUVWXYZ23456789`), `host_id uuid FK profiles`, `game_slug text FK public.games`, `config jsonb`, `status text CHECK IN ('waiting','playing','closed')`, `version bigint DEFAULT 0`, `current_match_id uuid?`, `created_at`, `updated_at`, `expires_at`.
+`id uuid PK`, `code text UNIQUE` (6 caractères alphabet `ABCDEFGHJKLMNPQRSTUVWXYZ23456789`), `host_id uuid FK profiles`, `game_slug text FK public.games` (**nullable** : un salon d'accueil peut exister avant le choix du jeu), `config jsonb`, `status text CHECK IN ('waiting','playing','closed')`, `version bigint DEFAULT 0`, `current_match_id uuid?`, `created_at`, `updated_at`, `expires_at`.
 
 Code généré serveur avec retry sur collision. Durée d'un salon sans partie active : 24 h après dernière activité significative ; jamais fermer une partie active sur cette échéance. `current_match_id` FK ajoutée après création de matches pour résoudre le cycle. Ne pas réutiliser un code existant, même fermé. Changement jeu/config seulement en attente ; remet tous les ready à false.
 
@@ -189,6 +189,9 @@ Toutes les RPC `server_*` suivantes sont exécutables uniquement par rôle serve
 |---|---|
 | `server_provision_account(actor, pseudo?)` | provisionnement/rattrapage idempotent du profil et de l’admission du compte Auth courant |
 | `server_create_room(actor, requestId, slug, config)` | membre actif, limite salons, code unique, siège 0 + projection + reçu |
+| `server_create_lobby(actor, requestId)` | salon d'accueil sans jeu (`game_slug` null) ; renvoie le salon générique actif existant du membre au lieu d'en créer un second, code unique, siège 0 + projection + reçu |
+| `server_get_active_lobby(actor)` | salon générique actif d'un membre (`waiting`, `game_slug is null`, non expiré) ; même forme que `server_get_room` (viewerId, hostId, expiresAt), `null` sinon |
+| `server_prepare_lobby_match(actor, commandId, roomVersion, slug, config)` | hôte seul, salon complet et en attente : pose le jeu et la configuration, marque les deux joueurs prêts de façon atomique, puis la route serveur lance la partie habituelle |
 | `server_join_room(actor, requestId, code)` | verrou salon, existe/en attente/non expiré, place, join idempotent |
 | `server_change_room(actor, commandId, expectedVersion, action)` | ready/config/leave/rematch, droits hôte, projections atomiques |
 | `server_start_match(actor, commandId, roomVersion, initialState, projections, jobs, manifest)` | verrou room/profils, 2 ready, aucun match actif, versions/contenu compatibles, création tout ou rien |

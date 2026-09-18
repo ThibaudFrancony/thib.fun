@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { postJson } from "@/lib/client-request";
+import { useGroupRoom } from "@/lib/group-room";
+import { GroupLaunchControls } from "@/components/group-launch-controls";
 import { DEFAULT_TROU_NOIR_CONFIG, type TrouNoirCategory, type TrouNoirConfig } from "@/games/trou-noir/config";
 
 const CATEGORY_LABELS: Array<{ value: TrouNoirCategory; label: string }> = [
@@ -13,11 +15,13 @@ const CATEGORY_LABELS: Array<{ value: TrouNoirCategory; label: string }> = [
   { value: "sciences", label: "Sciences" },
 ];
 
-export function TrouNoirSetup() {
+export function TrouNoirSetup({ groupRoomId }: { groupRoomId?: string } = {}) {
   const router = useRouter();
   const [config, setConfig] = useState<TrouNoirConfig>(DEFAULT_TROU_NOIR_CONFIG);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const group = useGroupRoom(groupRoomId ?? null);
+  const inGroup = Boolean(groupRoomId);
 
   function toggleCategory(value: TrouNoirCategory) {
     setConfig((current) => ({
@@ -47,8 +51,8 @@ export function TrouNoirSetup() {
   return (
     <section className="geo-panel geo-setup-panel">
       <div className="geo-panel-heading">
-        <p className="geo-kicker geo-kicker-accent">Créer une table</p>
-        <h2 className="geo-panel-title">Choisis vos règles</h2>
+        <p className="geo-kicker geo-kicker-accent">{inGroup ? "Groupe" : "Créer une table"}</p>
+        <h2 className="geo-panel-title">{inGroup ? "Choisis les règles de la partie" : "Choisis vos règles"}</h2>
       </div>
       <div className="geo-form-stack">
         <label className="geo-label" htmlFor="tn-rounds">Manches</label>
@@ -97,9 +101,9 @@ export function TrouNoirSetup() {
         écoulé : −10. Le salon sera accessible avec un code à partager.
       </p>
       {error && <p role="alert" className="geo-error">{error}</p>}
-      <button disabled={busy} onClick={createRoom} className="geo-primary-button">
+      {inGroup ? <GroupLaunchControls gameSlug="trou-noir" config={config} group={group} /> : <button disabled={busy} onClick={createRoom} className="geo-primary-button">
         {busy ? "Création…" : "Créer le salon"}
-      </button>
+      </button>}
     </section>
   );
 }

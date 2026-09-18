@@ -24,7 +24,7 @@ type RoomAction =
 
 type LobbyDraft = {
   baseConfig: string;
-  baseGameSlug: string;
+  baseGameSlug: string | null;
   configText: string;
   selectedGameSlug: string;
   transferTarget: string;
@@ -33,7 +33,7 @@ type LobbyDraft = {
 type RoomPreview = {
   roomId: string;
   code: string;
-  gameSlug: string;
+  gameSlug: string | null;
   status: "waiting" | "playing" | "closed";
   expiresAt: string;
   memberCount: number;
@@ -42,6 +42,14 @@ type RoomPreview = {
 
 function copyErrorMessage(error: unknown): string {
   return error instanceof Error && error.message ? error.message : "Copie impossible. Tu peux sélectionner le code manuellement.";
+}
+
+function gameDisplayName(slug: string | null): string {
+  return publicGameBySlug(slug ?? "")?.displayName ?? "à choisir";
+}
+
+function gameSetupHref(slug: string | null): string {
+  return slug ? `/jeux/${slug}` : "/";
 }
 
 export function RoomLobby({ roomId, roomManagementEnabled }: { roomId: string; roomManagementEnabled: boolean }) {
@@ -96,7 +104,7 @@ export function RoomLobby({ roomId, roomManagementEnabled }: { roomId: string; r
       };
     },
     onCommandAccepted: (data, action) => {
-      if (action.type === "LEAVE" && typeof data.gameSlug === "string") router.push(`/jeux/${data.gameSlug}`);
+      if (action.type === "LEAVE") router.push(typeof data.gameSlug === "string" ? `/jeux/${data.gameSlug}` : "/");
     },
     onSnapshotApplied,
   });
@@ -171,7 +179,7 @@ export function RoomLobby({ roomId, roomManagementEnabled }: { roomId: string; r
     if (!window.confirm("Quitter ce salon d'attente ? Ta place sera libérée.")) return;
     setLocalError(null);
     const next = await send({ type: "LEAVE" });
-    if (next) router.push(`/jeux/${next.gameSlug}`);
+    if (next) router.push(typeof next.gameSlug === "string" ? `/jeux/${next.gameSlug}` : "/");
   }
 
   async function joinFromPreview() {
@@ -219,7 +227,7 @@ export function RoomLobby({ roomId, roomManagementEnabled }: { roomId: string; r
       }
       return (
         <div className="geo-panel geo-lobby-panel mt-10">
-          <p className="geo-kicker geo-kicker-warm">Salon {publicGameBySlug(preview.gameSlug)?.displayName ?? preview.gameSlug}</p>
+          <p className="geo-kicker geo-kicker-warm">Salon {gameDisplayName(preview.gameSlug)}</p>
           <h1 className="geo-lobby-title">Code <span>{preview.code}</span></h1>
           <p className="geo-panel-note mt-3">Tu as reçu ce lien : rejoins le salon pour prendre la seconde place.</p>
           {localError && <p role="alert" className="geo-error mt-3">{localError}</p>}
@@ -251,11 +259,11 @@ export function RoomLobby({ roomId, roomManagementEnabled }: { roomId: string; r
     return (
       <section className="geo-room-lobby">
         <div className="geo-panel geo-lobby-panel">
-          <p className="geo-kicker geo-kicker-warm">Salon {publicGameBySlug(room.gameSlug)?.displayName ?? room.gameSlug}</p>
+          <p className="geo-kicker geo-kicker-warm">Salon {gameDisplayName(room.gameSlug)}</p>
           <h1 className="geo-lobby-title">Salon fermé</h1>
           <p className="geo-panel-note mt-3">Ce salon a expiré ou a été fermé par ses joueurs. Crée une nouvelle table pour rejouer.</p>
           <div className="mt-4 flex flex-wrap gap-2">
-            <Link href={`/jeux/${room.gameSlug}`} className="geo-primary-button">Créer une nouvelle table</Link>
+            <Link href={gameSetupHref(room.gameSlug)} className="geo-primary-button">Créer une nouvelle table</Link>
             {backToGames}
           </div>
         </div>
@@ -267,7 +275,7 @@ export function RoomLobby({ roomId, roomManagementEnabled }: { roomId: string; r
     return (
       <section className="geo-room-lobby">
         <div className="geo-panel geo-lobby-panel">
-          <p className="geo-kicker geo-kicker-warm">Salon {publicGameBySlug(room.gameSlug)?.displayName ?? room.gameSlug}</p>
+          <p className="geo-kicker geo-kicker-warm">Salon {gameDisplayName(room.gameSlug)}</p>
           <h1 className="geo-lobby-title">Partie en cours</h1>
           <p className="geo-panel-note mt-3">Une partie est déjà lancée dans ce salon. Elle se termine par un abandon ou par la fin normale de la partie ; le salon rouvre ensuite pour une nouvelle partie.</p>
           <div className="mt-4 flex flex-wrap gap-2">{backToGames}</div>
@@ -282,13 +290,13 @@ export function RoomLobby({ roomId, roomManagementEnabled }: { roomId: string; r
   const hasTwoMembers = roomHasExactlyTwoMembers(room);
   const me = room.members.find((member) => member.id === room.viewerId);
   const canStart = room.status === "waiting" && isHost && hasTwoMembers && room.members.every((member) => member.ready);
-  const game = publicGameBySlug(room.gameSlug);
+  const game = publicGameBySlug(room.gameSlug ?? "");
   const expiration = roomExpirationLabel(metadataRoom);
   const otherMembers = room.members.filter((member) => member.id !== room.viewerId);
   const serverConfigText = JSON.stringify(room.config);
   const roomDraft = draft && draft.baseConfig === serverConfigText && draft.baseGameSlug === room.gameSlug ? draft : null;
   const configText = roomDraft?.configText ?? JSON.stringify(room.config, null, 2);
-  const selectedGameSlug = roomDraft?.selectedGameSlug ?? room.gameSlug;
+  const selectedGameSlug = roomDraft?.selectedGameSlug ?? room.gameSlug ?? "geographie";
   const transferTarget = roomDraft?.transferTarget ?? otherMembers[0]?.id ?? "";
   const updateDraft = (changes: Partial<Omit<LobbyDraft, "baseConfig" | "baseGameSlug">>) => {
     const current = roomDraft ?? {
@@ -306,7 +314,7 @@ export function RoomLobby({ roomId, roomManagementEnabled }: { roomId: string; r
       <div className="geo-panel geo-lobby-panel">
         <div className="geo-lobby-heading">
           <div>
-            <p className="geo-kicker geo-kicker-warm">Salon {game?.displayName ?? room.gameSlug}</p>
+            <p className="geo-kicker geo-kicker-warm">Salon {game?.displayName ?? gameDisplayName(room.gameSlug)}</p>
             <h1 className="geo-lobby-title">Code <span>{room.code}</span></h1>
             <p className="geo-panel-note">Partage ce code ou le lien du salon à ton partenaire.</p>
             {expiration && <p className="mt-2 text-sm font-bold text-[var(--muted)]">{expiration}</p>}

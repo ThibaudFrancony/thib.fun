@@ -1,12 +1,12 @@
 {
   "version": 1,
-  "updatedAt": "2026-09-17",
+  "updatedAt": "2026-09-18",
   "entries": [
     {
       "id": "unit-and-contracts",
       "label": "Unitaires et contrats serveur",
       "status": "pass",
-      "evidence": "Durcissement multijoueur du 17/09 : 61 fichiers, 438 tests réussis et 2 sentinelles d'échec attendu ; les contrats, projections, garde-fous de reprise, la configuration IA locale, l'éligibilité du forfait (`canClaimForfeit`), le client HTTP des salons et l'hydratation du formulaire sont exécutés."
+      "evidence": "Salon d'accueil du 18/09 : 62 fichiers, 434 tests réussis et 2 sentinelles d'échec attendu ; les contrats (dont `roomViewSchema.gameSlug` nullable), projections, garde-fous de reprise, la configuration IA locale et l'hydratation du formulaire sont exécutés."
     },
     {
       "id": "home-and-guest-browser",
@@ -18,13 +18,19 @@
       "id": "multiplayer-browser",
       "label": "E2E multijoueur avec deux comptes",
       "status": "pass",
-      "evidence": "Run du 17/09 (arbre du durcissement multijoueur), deux comptes permanents et deux contextes indépendants sur desktop/mobile : `node scripts/run-step8-gate.mjs` passe 12/12 sans retry, dont session invitée, gestion réelle du salon, nouveau scénario de rejoindre par lien partagé, Trou Noir et TTMC. Le transport IA local déterministe est réservé à l'environnement isolé."
+      "evidence": "Salon d'accueil du 18/09 : `tests/e2e/home-salon.spec.ts` passe 2/2 sur Chromium desktop et iPhone 13 mobile — création depuis l'accueil, rejoindre par code (code masqué), place remplie en direct, détection du groupe sur la page de jeu sans créer/rejoindre, lancement par l'hôte, et porte qui libère la place. Gate Étape 8 `run-step8-gate.mjs` 12/12 sans retry, `geographie.spec.ts` 2/2. Le transport IA local déterministe est réservé à l'environnement isolé."
+    },
+    {
+      "id": "home-salon-browser",
+      "label": "Salon d'accueil générique (créer / rejoindre / groupe)",
+      "status": "pass",
+      "evidence": "Run local du 18/09, Docker/Supabase isolé, Next dev 127.0.0.1:3000, deux comptes Alice/Bob : création du salon depuis la modale du header, rejoindre par code avec code masqué, remplissage de la seconde place en direct, mode groupe sur `/jeux/geographie` sans interface créer/rejoindre, `server_prepare_lobby_match` puis `server_start_match` menant les deux joueurs à `/parties/<id>`, et quitter le groupe qui libère la place. 2/2 sur Chromium desktop et iPhone 13 mobile ; migrations distantes non appliquées."
     },
     {
       "id": "database-pgtap",
       "label": "Migrations et tests pgTAP isolés",
       "status": "pass",
-      "evidence": "Docker local sain ; les 7 fichiers pgTAP locaux passent avec 204 assertions, dont `step10_multiplayer_hardening.sql`. `supabase migration list` aligne 36 migrations locales et distantes. Le 17/09, avec autorisation explicite de la tâche : la migration additive `20260917163900` a été appliquée au projet distant et les 4 parties bloquées ont été clôturées en `technical_error` (données conservées)."
+      "evidence": "Docker local sain ; les 8 fichiers pgTAP locaux passent avec 223 assertions, dont `step10_multiplayer_hardening.sql` et `step11_home_lobby.sql` (salon générique, préparation de partie, garde de démarrage sans jeu). `supabase migration list` aligne 38 migrations locales ; les migrations `step11` ne sont pas appliquées au distant. Le 17/09, avec autorisation explicite : `20260917163900` a été appliquée au projet distant et les 4 parties bloquées ont été clôturées en `technical_error` (données conservées)."
     },
     {
       "id": "local-fixture-identities",
@@ -42,7 +48,7 @@
       "id": "common-contracts",
       "label": "Dispatcher, échéance, reçus, présence et triggers",
       "status": "pass",
-      "evidence": "Tests SQL locaux : 7 fichiers, 204 assertions ; `supabase db lint --local` termine sans erreur de schéma, avec seulement des avertissements PL/pgSQL non bloquants. La migration Step10 a été appliquée et vérifiée sur le PostgreSQL Docker local puis, sous autorisation explicite, sur le projet distant (36/36)."
+      "evidence": "Tests SQL locaux : 8 fichiers, 223 assertions ; `supabase db lint --local` termine sans erreur de schéma, avec seulement des avertissements PL/pgSQL non bloquants. `20260917163900` a été appliquée et vérifiée sur le PostgreSQL Docker local puis, sous autorisation explicite, sur le projet distant (36/36) ; les migrations `step11` restent locales."
     },
     {
       "id": "uno-browser-regressions",
@@ -60,7 +66,7 @@
       "id": "step8-gate",
       "label": "Gate de sortie de l'Étape 8",
       "status": "pass",
-      "evidence": "Run anonymisé `step10-hardening-20260917-01`, Docker/Supabase local uniquement : 204 assertions SQL, 438 tests unitaires, puis `node scripts/run-step8-gate.mjs` à 12/12 sans retry sur Chromium desktop et iPhone 13 mobile. La session invitée, la configuration/transfert/départ/reprise de salon, la reprise par lien partagé et START Trou Noir/TTMC sont effectifs."
+      "evidence": "Run local du 18/09 : 223 assertions SQL, 434 tests unitaires, puis `node scripts/run-step8-gate.mjs` à 12/12 sans retry sur Chromium desktop et iPhone 13 mobile. La session invitée, la configuration/transfert/départ/reprise de salon, la reprise par lien partagé et START Trou Noir/TTMC sont effectifs ; le nouveau parcours salon d'accueil est couvert par une spec dédiée."
     },
     {
       "id": "nine-game-complete-run",

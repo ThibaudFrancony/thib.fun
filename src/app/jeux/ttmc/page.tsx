@@ -1,9 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
+import { GroupRoomBanner } from "@/components/group-room-banner";
+import { getActiveLobbyForViewer } from "@/server/lobbies";
 import { TtmcRoomJoin, TtmcSetup } from "@/games/ttmc/components/ttmc-setup";
 
-export default function TtmcSetupPage() {
+export default async function TtmcSetupPage() {
+  const group = await getActiveLobbyForViewer();
   return (
     <main className="geo-page game-landing">
       <div className="geo-hx-bg" aria-hidden="true">
@@ -30,7 +33,7 @@ export default function TtmcSetupPage() {
               <Fact title="22 thèmes" text="10 niveaux chacun" />
             </div>
           </section>
-          <div className="geo-hx-actions"><TtmcSetup /><TtmcRoomJoin /></div>
+          <div className="geo-hx-actions"><TtmcSetup groupRoomId={group?.roomId} />{group ? <GroupRoomBanner roomId={group.roomId} /> : <TtmcRoomJoin />}</div>
         </div>
       </div>
     </main>

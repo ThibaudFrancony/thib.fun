@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getAuthenticatedAccount } from "@/server/auth";
 import { SignOutButton } from "@/components/sign-out-button";
+import { SalonLauncher } from "@/components/salon-dialog";
 
 export async function SiteHeader({ variant = "default" }: { variant?: "default" | "home" | "geo" }) {
   const account = await getAuthenticatedAccount();
@@ -18,6 +19,7 @@ export async function SiteHeader({ variant = "default" }: { variant?: "default" 
           <span>tibo.fun</span>
         </Link>
         <nav className="home-auth-nav" aria-label="Accès au compte">
+          <SalonLauncher connected={Boolean(account)} />
           {account ? account.isGuest ? <><span className="home-auth-link" aria-label={`Invité ${account.member.pseudo}`}>Invité · {account.member.pseudo}</span><Link href="/connexion?mode=signUp" className="home-auth-link home-signup-link">Créer un compte</Link><SignOutButton className="home-auth-link" /></> : <><Link href="/profil" className="home-auth-link">Mon compte</Link><SignOutButton className="home-auth-link" /></> : <><Link href="/connexion" className="home-auth-link">Connexion</Link><Link href="/connexion?mode=signUp" className="home-auth-link home-signup-link">Inscription</Link></>}
         </nav>
       </header>

@@ -3,13 +3,17 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { postJson } from "@/lib/client-request";
+import { useGroupRoom } from "@/lib/group-room";
+import { GroupLaunchControls } from "@/components/group-launch-controls";
 import { DEFAULT_NAVAL_CONFIG, type NavalConfig } from "@/games/bataille-navale/config";
 
-export function BatailleNavaleSetup() {
+export function BatailleNavaleSetup({ groupRoomId }: { groupRoomId?: string } = {}) {
   const router = useRouter();
   const [config, setConfig] = useState<NavalConfig>(DEFAULT_NAVAL_CONFIG);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const group = useGroupRoom(groupRoomId ?? null);
+  const inGroup = Boolean(groupRoomId);
 
   async function createRoom() {
     setBusy(true);
@@ -26,8 +30,8 @@ export function BatailleNavaleSetup() {
   return (
     <section className="geo-panel geo-setup-panel">
       <div className="geo-panel-heading">
-        <p className="geo-kicker geo-kicker-accent">Créer une table</p>
-        <h2 className="geo-panel-title">Flotte cachée, 17 cases à couler</h2>
+        <p className="geo-kicker geo-kicker-accent">{inGroup ? "Groupe" : "Créer une table"}</p>
+        <h2 className="geo-panel-title">{inGroup ? "Choisis les règles de la partie" : "Flotte cachée, 17 cases à couler"}</h2>
       </div>
       <div className="geo-form-stack">
         <label className="geo-label" htmlFor="naval-turn-seconds">Chronomètre de tir</label>
@@ -52,9 +56,9 @@ export function BatailleNavaleSetup() {
         Toucher ne fait pas rejouer. Les bateaux peuvent se toucher.
       </p>
       {error && <p role="alert" className="geo-error">{error}</p>}
-      <button disabled={busy} onClick={() => void createRoom()} className="geo-primary-button">
+      {inGroup ? <GroupLaunchControls gameSlug="bataille-navale" config={config} group={group} /> : <button disabled={busy} onClick={() => void createRoom()} className="geo-primary-button">
         {busy ? "Création…" : "Créer le salon Flotte cachée"}
-      </button>
+      </button>}
     </section>
   );
 }

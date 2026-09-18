@@ -3,13 +3,17 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { postJson } from "@/lib/client-request";
+import { useGroupRoom } from "@/lib/group-room";
+import { GroupLaunchControls } from "@/components/group-launch-controls";
 import { DEFAULT_SKYJO_CONFIG, type SkyjoConfig } from "@/games/skyjo/config";
 
-export function SkyjoSetup() {
+export function SkyjoSetup({ groupRoomId }: { groupRoomId?: string } = {}) {
   const router = useRouter();
   const [config, setConfig] = useState<SkyjoConfig>(DEFAULT_SKYJO_CONFIG);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const group = useGroupRoom(groupRoomId ?? null);
+  const inGroup = Boolean(groupRoomId);
 
   async function createRoom() {
     setBusy(true);
@@ -26,8 +30,8 @@ export function SkyjoSetup() {
   return (
     <section className="geo-panel geo-setup-panel">
       <div className="geo-panel-heading">
-        <p className="geo-kicker geo-kicker-accent">Créer une table</p>
-        <h2 className="geo-panel-title">Douze cases, le plus petit total gagne</h2>
+        <p className="geo-kicker geo-kicker-accent">{inGroup ? "Groupe" : "Créer une table"}</p>
+        <h2 className="geo-panel-title">{inGroup ? "Choisis les règles de la partie" : "Douze cases, le plus petit total gagne"}</h2>
       </div>
       <div className="geo-form-stack">
         <label className="geo-label" htmlFor="skyjo-format">Format de partie</label>
@@ -59,9 +63,9 @@ export function SkyjoSetup() {
         colonne disparaissent. Celui qui finit en premier offre un dernier tour à son adversaire.
       </p>
       {error && <p role="alert" className="geo-error">{error}</p>}
-      <button disabled={busy} onClick={() => void createRoom()} className="geo-primary-button">
+      {inGroup ? <GroupLaunchControls gameSlug="skyjo" config={config} group={group} /> : <button disabled={busy} onClick={() => void createRoom()} className="geo-primary-button">
         {busy ? "Création…" : "Créer le salon Douze cases"}
-      </button>
+      </button>}
     </section>
   );
 }

@@ -1,10 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
+import { GroupRoomBanner } from "@/components/group-room-banner";
+import { getActiveLobbyForViewer } from "@/server/lobbies";
 import { RoomJoin } from "@/games/geographie/components/geography-setup";
 import { UnoSetup } from "@/games/uno/components/uno-setup";
 
-export default function UnoPage() {
+export default async function UnoPage() {
+  const group = await getActiveLobbyForViewer();
   return (
     <main className="geo-page game-landing">
       <div className="geo-hx-bg" aria-hidden="true">
@@ -29,7 +32,7 @@ export default function UnoPage() {
               <Fact title="+4 contrôlé" text="Sans contestation" />
             </div>
           </section>
-          <div className="geo-hx-actions"><UnoSetup /><RoomJoin /></div>
+          <div className="geo-hx-actions"><UnoSetup groupRoomId={group?.roomId} />{group ? <GroupRoomBanner roomId={group.roomId} /> : <RoomJoin />}</div>
         </div>
       </div>
     </main>

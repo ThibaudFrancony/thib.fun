@@ -3,14 +3,18 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { postJson } from "@/lib/client-request";
+import { useGroupRoom } from "@/lib/group-room";
+import { GroupLaunchControls } from "@/components/group-launch-controls";
 import { DEFAULT_UNO_CONFIG, type UnoConfig } from "@/games/uno/config";
 import { RoomJoin } from "@/games/geographie/components/geography-setup";
 
-export function UnoSetup() {
+export function UnoSetup({ groupRoomId }: { groupRoomId?: string } = {}) {
   const router = useRouter();
   const [config, setConfig] = useState<UnoConfig>(DEFAULT_UNO_CONFIG);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const group = useGroupRoom(groupRoomId ?? null);
+  const inGroup = Boolean(groupRoomId);
 
   async function createRoom() {
     setBusy(true);
@@ -27,8 +31,8 @@ export function UnoSetup() {
   return (
     <section className="geo-panel geo-setup-panel">
       <div className="geo-panel-heading">
-        <p className="geo-kicker geo-kicker-accent">Créer une table</p>
-        <h2 className="geo-panel-title">Une partie classique à deux</h2>
+        <p className="geo-kicker geo-kicker-accent">{inGroup ? "Groupe" : "Créer une table"}</p>
+        <h2 className="geo-panel-title">{inGroup ? "Choisis les règles de la partie" : "Une partie classique à deux"}</h2>
       </div>
       <div className="geo-form-stack">
         <label className="geo-label" htmlFor="uno-turn-seconds">Temps par tour</label>
@@ -42,7 +46,7 @@ export function UnoSetup() {
         108 cartes, 7 cartes chacun, pas de cumul de pénalités. Le +4 n&apos;est jouable que si tu n&apos;as aucune carte de la couleur active.
       </p>
       {error && <p role="alert" className="geo-error">{error}</p>}
-      <button disabled={busy} onClick={() => void createRoom()} className="geo-primary-button">{busy ? "Création…" : "Créer le salon UNO"}</button>
+      {inGroup ? <GroupLaunchControls gameSlug="uno" config={config} group={group} /> : <button disabled={busy} onClick={() => void createRoom()} className="geo-primary-button">{busy ? "Création…" : "Créer le salon UNO"}</button>}
     </section>
   );
 }

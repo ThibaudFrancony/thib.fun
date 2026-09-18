@@ -1,9 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
+import { GroupRoomBanner } from "@/components/group-room-banner";
+import { getActiveLobbyForViewer } from "@/server/lobbies";
 import { GeographySetup, RoomJoin } from "@/games/geographie/components/geography-setup";
 
-export default function GeographySetupPage() {
+export default async function GeographySetupPage() {
+  const group = await getActiveLobbyForViewer();
   return (
     <main className="geo-page geo-hexapoint">
       <div className="geo-hx-bg" aria-hidden="true">
@@ -30,8 +33,8 @@ export default function GeographySetupPage() {
             </div>
           </section>
           <div className="geo-hx-actions">
-            <GeographySetup />
-            <RoomJoin />
+            <GeographySetup groupRoomId={group?.roomId} />
+            {group ? <GroupRoomBanner roomId={group.roomId} /> : <RoomJoin />}
           </div>
         </div>
       </div>

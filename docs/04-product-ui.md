@@ -32,6 +32,8 @@ Après connexion, conserver uniquement un `returnTo` relatif allowlisté pour re
 
 Header : identité tibo.fun, navigation Jeux / Historique / Profil, avatar et déconnexion. Desktop : largeur max 1200 px, 3 cartes prioritaires dans un bloc « À jouer maintenant », puis grille des 6 autres. Mobile : une colonne, cartes compactes ; aucun carrousel obligatoire cachant les priorités.
 
+Le header d'accueil porte aussi un bouton **Salon** : il ouvre une modale (fond flouté, fermeture Échap/clic extérieur, focus piégé) avec deux choix « Créer un salon » / « Rejoindre ». Créer affiche le code d'invitation, notre rond d'avatar, la place vide qui se remplit en direct et un bouton porte qui fait quitter le groupe ; rejoindre demande uniquement le code puis affiche la même interface sans le code. Quand les deux joueurs sont présents, la grille des neuf jeux apparaît et mène à la page normale du jeu, en mode « groupe » : l'hôte règle les options et lance, l'invité attend et rejoint automatiquement la partie. Le parcours historique créer/rejoindre depuis une page de jeu reste disponible hors groupe.
+
 Carte : nom d'affichage, illustration, description une phrase, « 2 joueurs », durée indicative issue de la fiche, badge disponible/bêta/bientôt et bouton Jouer. Bientôt désactive Jouer avec explication. Les trois jeux prioritaires restent mis en avant même non implémentés. Bouton global « Rejoindre avec un code ». Si partie active existante, bandeau « Reprendre ma partie ».
 
 Descriptions seed : Chute libre « Réponds juste pour éviter la chute. » ; À ton niveau « Choisis ta difficulté et mise sur tes connaissances. » ; HexaPoint « Place les villes au plus près sur la carte. » ; Douze cases « Révèle et échange tes cartes pour réduire ton total. » ; Dernière carte « Débarrasse-toi de ta main avant ton adversaire. » ; Syllabe Express « Trouve le bon mot avant la fin du chrono. » ; Flotte cachée « Repère et coule la flotte adverse. » ; Même réponse ? « Comparez vos choix et découvrez vos points communs. » ; À l'unisson « Donne un indice et trouvez la même longueur d'onde. »
@@ -45,6 +47,8 @@ Profil personnel : édition pseudo/avatar, parties terminées, victoires, défai
 ## 5. Salon
 
 Deux emplacements fixes : avatars/pseudos, état présent/prêt. Code copiable avec feedback et lien copiable ; bouton partage natif si disponible, clipboard sinon. Options du jeu visibles par les deux, éditables par l'hôte seulement. Changer les options annule les deux ready, avec message explicite.
+
+Depuis un salon d'accueil générique, la page de jeu détecte le groupe et remplace créer/rejoindre par un bandeau « Groupe » (code, joueur(s), quitter). L'hôte règle les options puis « Lancer la partie » (le serveur pose le jeu et arme les deux prêts) ; l'invité voit l'attente et est redirigé dès le démarrage. Il faut deux joueurs connectés et un jeu choisi ; le serveur refuse tout démarrage sans jeu.
 
 Chaque joueur a « Je suis prêt ». Hôte a « Lancer » seulement si deux prêts et corpus disponible ; le serveur répète ces contrôles. Règles adaptées résumées avant start, avec accès aux détails. Hôte non arbitre : questions, tours et corrections sont automatiques.
 

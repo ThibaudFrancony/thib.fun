@@ -3,13 +3,17 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { postJson } from "@/lib/client-request";
+import { useGroupRoom } from "@/lib/group-room";
+import { GroupLaunchControls } from "@/components/group-launch-controls";
 import { DEFAULT_TTMC_CONFIG, type TtmcConfig } from "@/games/ttmc/config";
 
-export function TtmcSetup() {
+export function TtmcSetup({ groupRoomId }: { groupRoomId?: string } = {}) {
   const router = useRouter();
   const [config, setConfig] = useState<TtmcConfig>(DEFAULT_TTMC_CONFIG);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const group = useGroupRoom(groupRoomId ?? null);
+  const inGroup = Boolean(groupRoomId);
 
   function setTarget(targetScore: 20 | 30 | 50) {
     setConfig((current) => ({
@@ -34,8 +38,8 @@ export function TtmcSetup() {
   return (
     <section className="geo-panel geo-setup-panel">
       <div className="geo-panel-heading">
-        <p className="geo-kicker geo-kicker-accent">Créer une table</p>
-        <h2 className="geo-panel-title">Choisis vos règles</h2>
+        <p className="geo-kicker geo-kicker-accent">{inGroup ? "Groupe" : "Créer une table"}</p>
+        <h2 className="geo-panel-title">{inGroup ? "Choisis les règles de la partie" : "Choisis vos règles"}</h2>
       </div>
       <div className="geo-form-stack">
         <label className="geo-label" htmlFor="ttmc-target">Score à atteindre</label>
@@ -70,9 +74,9 @@ export function TtmcSetup() {
         actuel de 22 thèmes, le serveur refuse aussi son démarrage.
       </p>
       {error && <p role="alert" className="geo-error">{error}</p>}
-      <button disabled={busy} onClick={createRoom} className="geo-primary-button">
+      {inGroup ? <GroupLaunchControls gameSlug="ttmc" config={config} group={group} /> : <button disabled={busy} onClick={createRoom} className="geo-primary-button">
         {busy ? "Création…" : "Créer le salon"}
-      </button>
+      </button>}
     </section>
   );
 }

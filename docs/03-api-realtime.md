@@ -34,6 +34,9 @@ type MatchCommand = {
 | GET `/games` | — | registre disponible pour membre |
 | POST `/rooms` | requestId, gameSlug, config | roomView avec code/lien |
 | POST `/rooms/join` | requestId, code | roomView ; espace/casse normalisés |
+| POST `/lobbies` | requestId | cree (ou renvoie) le salon d'accueil generique du membre, sans jeu ni configuration |
+| GET `/lobbies/active` | — | salon d'accueil actif du membre (`null` sinon), projection authentifiee |
+| POST `/lobbies/:id/prepare` | commandId, expectedVersion, gameSlug, config | hote seul : pose le jeu/la configuration et marque les deux joueurs prets dans le salon d'accueil |
 | GET `/rooms/:id` | — | projection du membre |
 | POST `/rooms/:id/commands` | commandId, expectedVersion, type, payload | roomView |
 | POST `/rooms/:id/heartbeat` | matchId? | serverTime + présence des membres |
@@ -50,7 +53,7 @@ type MatchCommand = {
 
 Limites : corps JSON navigateur 8 Ko, corps worker 16 Ko ; réponse libre 240 caractères ; indice 120 ; profil 24. Les transferts serveur de contenu/état vers RPC ne sont pas soumis à cette limite navigateur. Limitation persistante (table privée `rate_limits` documentée dans SQL) : join 10/min/utilisateur et 30/min/IP hashée, create 5/min/utilisateur, commandes 120/min/utilisateur avec plafond 10/s, quiz 10/min/utilisateur, suggestions 30/min/utilisateur, avatar 5/h. Nettoyage quotidien des fenêtres expirées. Les jobs internes ont secret et taille de batch, pas de quota utilisateur. Invites admin : expiresInDays 1..30 défaut 7, maxUses 1..10 défaut 1.
 
-Commandes salon : `SET_READY {ready:boolean}`, `SET_CONFIG {gameSlug,config}` hôte seul, `START {}` hôte et deux prêts, `LEAVE {}`, `REMATCH {}` hôte après fin. REMATCH garde participants/config et demande de nouveau ready ; crée une nouvelle partie seulement au START. Hôte ne voit aucun secret supplémentaire.
+Commandes salon : `SET_READY {ready:boolean}`, `SET_CONFIG {gameSlug,config}` hôte seul, `PREPARE_MATCH` hôte seul depuis un salon d'accueil (pose le jeu/la configuration et arme les deux prêts), `START {}` hôte et deux prêts, `LEAVE {}`, `REMATCH {}` hôte après fin. REMATCH garde participants/config et demande de nouveau ready ; crée une nouvelle partie seulement au START. Hôte ne voit aucun secret supplémentaire.
 
 ## 3. Snapshot commun
 
@@ -68,7 +71,7 @@ type MatchView = {
 };
 ```
 
-`allowedActions` est ergonomique, le serveur vérifie encore. Si phase simultanée, activePlayerId=null et game comporte `submittedByPlayer`, sans réponse cachée. Result expose seulement les données de fin autorisées. RoomView : id/code/hôte/slug/config/version/membres(prêt,lastSeen)/status/currentMatchId. Pas de tokens d'invitation de compte dans les salons.
+`allowedActions` est ergonomique, le serveur vérifie encore. Si phase simultanée, activePlayerId=null et game comporte `submittedByPlayer`, sans réponse cachée. Result expose seulement les données de fin autorisées. RoomView : id/code/hôte/slug/config/version/membres(prêt,lastSeen)/status/currentMatchId. Un salon d'accueil avant choix du jeu porte `gameSlug = null` ; les pages de jeu détectent ce groupe via `/lobbies/active` et masquent alors créer/rejoindre. Pas de tokens d'invitation de compte dans les salons.
 
 ## 4. Broadcast et réconciliation
 

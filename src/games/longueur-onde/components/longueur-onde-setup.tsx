@@ -3,13 +3,17 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { postJson } from "@/lib/client-request";
+import { useGroupRoom } from "@/lib/group-room";
+import { GroupLaunchControls } from "@/components/group-launch-controls";
 import { DEFAULT_LONGUEUR_ONDE_CONFIG, type LongueurOndeConfig } from "@/games/longueur-onde/config";
 
-export function LongueurOndeSetup() {
+export function LongueurOndeSetup({ groupRoomId }: { groupRoomId?: string } = {}) {
   const router = useRouter();
   const [config, setConfig] = useState<LongueurOndeConfig>(DEFAULT_LONGUEUR_ONDE_CONFIG);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const group = useGroupRoom(groupRoomId ?? null);
+  const inGroup = Boolean(groupRoomId);
 
   async function createRoom() {
     setBusy(true);
@@ -26,8 +30,8 @@ export function LongueurOndeSetup() {
   return (
     <section className="geo-panel geo-setup-panel">
       <div className="geo-panel-heading">
-        <p className="geo-kicker geo-kicker-accent">Créer une table</p>
-        <h2 className="geo-panel-title">À l&apos;unisson</h2>
+        <p className="geo-kicker geo-kicker-accent">{inGroup ? "Groupe" : "Créer une table"}</p>
+        <h2 className="geo-panel-title">{inGroup ? "Choisis les règles de la partie" : "À l'unisson"}</h2>
       </div>
       <div className="geo-form-stack">
         <label className="geo-label" htmlFor="longueur-onde-rounds">Manches</label>
@@ -52,9 +56,9 @@ export function LongueurOndeSetup() {
       </div>
       <p className="geo-panel-note">Un joueur donne un indice, l&apos;autre place l&apos;aiguille. Les rôles changent à chaque manche.</p>
       {error && <p role="alert" className="geo-error">{error}</p>}
-      <button type="button" disabled={busy} onClick={() => void createRoom()} className="geo-primary-button">
+      {inGroup ? <GroupLaunchControls gameSlug="longueur-onde" config={config} group={group} /> : <button type="button" disabled={busy} onClick={() => void createRoom()} className="geo-primary-button">
         {busy ? "Création…" : "Créer le salon À l'unisson"}
-      </button>
+      </button>}
     </section>
   );
 }

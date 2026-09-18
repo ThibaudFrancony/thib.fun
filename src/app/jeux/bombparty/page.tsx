@@ -1,10 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
+import { GroupRoomBanner } from "@/components/group-room-banner";
+import { getActiveLobbyForViewer } from "@/server/lobbies";
 import { RoomJoin } from "@/games/geographie/components/geography-setup";
 import { BombpartySetup } from "@/games/bombparty/components/bombparty-setup";
 
-export default function BombpartyPage() {
+export default async function BombpartyPage() {
+  const group = await getActiveLobbyForViewer();
   return (
     <main className="geo-page game-landing">
       <div className="geo-hx-bg" aria-hidden="true">
@@ -33,7 +36,7 @@ export default function BombpartyPage() {
               <Link href="/entrainement/syllabes" className="underline font-bold text-white">Syllabes en solo</Link>.
             </p>
           </section>
-          <div className="geo-hx-actions"><BombpartySetup /><RoomJoin /></div>
+          <div className="geo-hx-actions"><BombpartySetup groupRoomId={group?.roomId} />{group ? <GroupRoomBanner roomId={group.roomId} /> : <RoomJoin />}</div>
         </div>
       </div>
     </main>

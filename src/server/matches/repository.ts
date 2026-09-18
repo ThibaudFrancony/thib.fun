@@ -344,7 +344,7 @@ export async function getRoomView(actorId: string, roomId: string): Promise<Reco
 export type RoomPreview = {
   roomId: string;
   code: string;
-  gameSlug: string;
+  gameSlug: string | null;
   status: "waiting" | "playing" | "closed";
   expiresAt: string;
   memberCount: number;
@@ -463,6 +463,45 @@ export async function joinRoom(actorId: string, requestId: string, code: string)
     p_code: code,
   });
   if (response.error) throw new Error(rpcErrorCode(response.error.message, "DATABASE_UNAVAILABLE"));
+  return response.data as Record<string, unknown>;
+}
+
+export async function createLobby(actorId: string, requestId: string): Promise<Record<string, unknown>> {
+  const response = await createAdminClient().rpc("server_create_lobby", {
+    p_actor: actorId,
+    p_request_id: requestId,
+  });
+  if (response.error) throw new Error(rpcErrorCode(response.error.message, "DATABASE_UNAVAILABLE"));
+  if (!response.data) throw new Error("DATABASE_UNAVAILABLE");
+  return response.data as Record<string, unknown>;
+}
+
+export async function getActiveLobby(actorId: string): Promise<Record<string, unknown> | null> {
+  const response = await createAdminClient().rpc("server_get_active_lobby", { p_actor: actorId });
+  if (response.error) throw new Error(rpcErrorCode(response.error.message, "DATABASE_UNAVAILABLE"));
+  return (response.data as Record<string, unknown> | null) ?? null;
+}
+
+export async function prepareLobbyMatch(args: {
+  actorId: string;
+  commandId: string;
+  roomId: string;
+  expectedVersion: number;
+  gameSlug: string;
+  config: Record<string, unknown>;
+}): Promise<Record<string, unknown>> {
+  const response = await createAdminClient().rpc("server_prepare_lobby_match", {
+    p_actor: args.actorId,
+    p_command_id: args.commandId,
+    p_room_id: args.roomId,
+    p_expected_version: args.expectedVersion,
+    p_game_slug: args.gameSlug,
+    p_config: args.config,
+  });
+  // Le message brut porte un code métier stable (HOST_REQUIRED, GAME_NOT_READY,
+  // VERSION_CONFLICT, …) que la route traduit via mapServerError.
+  if (response.error) throw new Error(response.error.message);
+  if (!response.data) throw new Error("DATABASE_UNAVAILABLE");
   return response.data as Record<string, unknown>;
 }
 
