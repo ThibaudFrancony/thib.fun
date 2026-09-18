@@ -216,7 +216,7 @@ export function ProfileEditor({
         <div className="pf-grid" role="radiogroup" aria-label="Choisis un avatar">
           {AVATAR_PRESETS.map((preset) => {
             const selected = avatarPreset === preset;
-            const image = avatarPresetImage(preset);
+            const image = presetBroken ? null : avatarPresetImage(preset);
             return (
               <label key={preset} className="pf-avatar-option" data-selected={selected} title={AVATAR_PRESET_LABELS[preset]}>
                 <input
