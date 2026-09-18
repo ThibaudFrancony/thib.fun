@@ -89,6 +89,15 @@ Les slugs techniques sont stables. Les noms d'affichage sont des propositions mo
 - Périmètre : admission, provisionnement/rattrapage des profils, callback de confirmation, écran de compte et navigation ; les invitations admin restent disponibles comme mécanisme historique optionnel et ne contrôlent plus l’accès.
 - Raison : permettre à deux amis de créer leur compte eux-mêmes sans intervention manuelle, tout en conservant l’authentification Supabase et les contrôles serveur/RLS.
 
+### Docker local opt-in — jamais automatique (18 septembre 2026)
+
+- Demande utilisateur : ne jamais imposer Docker (Desktop / daemon, RAM) ; permettre le push sans tests Docker ; l'agent demande l'ouverture de Docker avant toute recette qui l'exige.
+- Ancienne règle : la CI `push`/`PR` incluait un job `PostgreSQL local et E2E obligatoires` (`supabase start`, `db reset`, pgTAP, Playwright) et les recettes locales/Docker étaient attendues avant push.
+- Nouvelle règle : Docker/Supabase local est strictement opt-in. Interdit sans autorisation explicite dans la tâche active : `docker *`, `supabase start/stop/status`, `supabase db reset/diff/lint`, `supabase test db --local`, `supabase migration list --local` contre daemon local, `pnpm test:db`, `pnpm test:e2e`, `pnpm test:step8`, `pnpm local:env`, `pnpm local:fixture` (ce dernier prépare la DB locale). Avant de les proposer, l'agent demande à l'utilisateur d'ouvrir Docker et attend sa confirmation ; en cas de refus ou sans réponse, il continue sans Docker et le note comme limite.
+- Périmètre : travail agent local, vérifications pré-push/commit, CI automatique (`ci.yml` sans Docker), recette manuelle (`docker-e2e.yml` en `workflow_dispatch` uniquement), `docs/06-delivery-testing.md`.
+- Raison : Docker Desktop consomme beaucoup de RAM ; l'utilisateur veut garder le daemon fermé par défaut et ne l'ouvrir que pour une recette Docker explicitement demandée.
+- Vérification pré-push par défaut (sans Docker) : `pnpm test:matrix`, `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm content:validate`, `pnpm docs:check`, `pnpm exec next build --webpack`. Les suites Docker/pgTAP/E2E ne bloquent ni le commit ni le push ; leur absence est notée en limitation dans `progression.md`.
+
 ### Mise à jour proactive du suivi
 
 - Lire `AGENTS.md` et `progression.md` avant toute modification substantielle.

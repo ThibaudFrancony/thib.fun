@@ -1,0 +1,58 @@
+name: Recette Docker manuelle
+
+# Recette Docker opt-in uniquement : jamais déclenchée par un push ou une PR.
+# Lancer à la main depuis l'onglet Actions (workflow_dispatch) quand Docker
+# est disponible et souhaité (pgTAP + E2E multijoueurs sur Supabase local).
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  isolated:
+    name: PostgreSQL local et E2E manuels
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+      LOCAL_FIXTURE_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+      SUPABASE_TELEMETRY_DISABLED: "1"
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v4
+      - name: Installer pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+      - name: Installer Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.20.2
+          cache: pnpm
+      - name: Installer Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: 2.104.0
+      - name: Installer les dépendances
+        run: pnpm install --frozen-lockfile
+      - name: Refuser un E2E sans secret de fixture
+        run: |
+          if [ -z "$E2E_PASSWORD" ]; then
+            echo "::error::Le secret E2E_PASSWORD est obligatoire pour la recette multijoueur."
+            exit 1
+          fi
+      - name: Installer le navigateur Playwright
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Démarrer Supabase local
+        run: supabase start
+      - name: Réinitialiser la base isolée
+        run: supabase db reset
+      - name: Préparer les variables locales éphémères
+        run: pnpm local:env
+      - name: Créer Alice, Bob et le tiers non membre
+        run: pnpm local:fixture
+      - name: Exécuter les tests pgTAP
+        run: pnpm test:db
+      - name: Exécuter les E2E multijoueurs
+        run: pnpm test:e2e

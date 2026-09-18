@@ -52,7 +52,11 @@ Au choix du plan payant, vérifier tarifs/quotas actuels : connexions/messages R
 
 Scripts de l'application à créer : `pnpm dev`, `pnpm build`, `pnpm lint` (ESLint explicite), `pnpm typecheck`, `pnpm test`, `pnpm test:matrix`, `pnpm test:db`, `pnpm test:e2e`, `pnpm test:step8`, `pnpm local:env`, `pnpm local:fixture`, `pnpm content:validate`, `pnpm docs:check`. Définir réellement chaque script dans package.json ; ne pas déclarer réussi un script absent. `local:env` écrit des variables éphémères depuis `supabase status`, active les dépendances strictement locales de la gate Étape 8, et `local:fixture` crée uniquement les identités fictives locales avec un mot de passe fourni par l'environnement. `test:step8` génère lui-même ce mot de passe sans l'afficher puis exécute les deux profils Playwright avec un seul worker.
 
-CI : installation frozen-lockfile ; lint/typecheck ; unitaires moteurs ; validation corpus ; DB locale migrations + tests d'autorisation/concurrence ; build ; parcours E2E du périmètre implémenté. Pas d'appel payant DeepSeek en CI standard, provider mock avec timeout/JSON invalide ; benchmark réel manuel daté avant activation et après changement modèle/prompt.
+CI automatique (`ci.yml`, `push`/`PR`) : installation frozen-lockfile ; lint/typecheck ; unitaires moteurs ; validation corpus ; build ; `test:matrix` ; `docs:check`. Sans Docker, sans Supabase local, sans pgTAP, sans Playwright. Pas d'appel payant DeepSeek en CI standard, provider mock avec timeout/JSON invalide ; benchmark réel manuel daté avant activation et après changement modèle/prompt.
+
+Recette Docker manuelle (`docker-e2e.yml`, `workflow_dispatch` uniquement, jamais sur `push`/`PR`) : `supabase start`, `supabase db reset`, `local:env`, `local:fixture`, DB locale migrations + tests d'autorisation/concurrence (`test:db`), parcours E2E du périmètre implémenté (`test:e2e`). L'agent local suit la même règle opt-in : il demande l'ouverture de Docker et attend la confirmation avant toute commande Docker/Supabase local (`docker *`, `supabase start/stop/status`, `db reset/diff/lint`, `test db --local`, `test:db`, `test:e2e`, `test:step8`, `local:env`, `local:fixture`).
+
+Vérification pré-push par défaut (sans Docker) : `pnpm test:matrix`, `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm content:validate`, `pnpm docs:check`, `pnpm exec next build --webpack`. L'absence de recette Docker est notée en limitation dans `progression.md`, pas bloquante pour commit/push.
 
 ## 6. Matrice commune de tests
 
