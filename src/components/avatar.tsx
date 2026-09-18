@@ -1,4 +1,7 @@
+"use client";
+
 import Image from "next/image";
+import { useState } from "react";
 import { avatarPresetImage } from "@/app/profil/profile-helpers";
 
 function initialOf(name: string): string {
@@ -10,6 +13,7 @@ function initialOf(name: string): string {
  * Rond d'avatar partagé (header, salons, parties, profil).
  * Priorité : photo privée (`imageUrl`) > PNG du preset > initiale.
  * Jamais de chemin brut exposé : `imageUrl` est une URL signée courte.
+ * Un PNG manquant retombe sur l'initiale au lieu d'une icône cassée.
  */
 export function Avatar({
   name,
@@ -24,16 +28,24 @@ export function Avatar({
   size?: number;
   emptyLabel?: string;
 }) {
+  const [broken, setBroken] = useState(false);
   const style = { width: size, height: size, fontSize: Math.max(14, Math.round(size * 0.42)) };
   if (imageUrl) {
     // eslint-disable-next-line @next/next/no-img-element
     return <img src={imageUrl} alt={`Photo de ${name}`} width={size} height={size} style={style} className="shrink-0 rounded-full object-cover" />;
   }
-  const presetImage = avatarPresetImage(preset);
+  const presetImage = broken ? null : avatarPresetImage(preset);
   if (presetImage) {
     return (
       <span style={style} className="relative grid shrink-0 place-items-center overflow-hidden rounded-full bg-[#1d1040]">
-        <Image src={presetImage} alt={`Avatar de ${name}`} width={size} height={size} style={{ width: "88%", height: "88%", objectFit: "contain" }} />
+        <Image
+          src={presetImage}
+          alt={`Avatar de ${name}`}
+          width={size}
+          height={size}
+          style={{ width: "88%", height: "88%", objectFit: "contain" }}
+          onError={() => setBroken(true)}
+        />
       </span>
     );
   }

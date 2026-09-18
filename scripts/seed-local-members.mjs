@@ -3,9 +3,9 @@ import { execFileSync } from "node:child_process";
 const supabaseEnv = { ...process.env, SUPABASE_TELEMETRY_DISABLED: "1" };
 
 const LOCAL_USERS = [
-  { email: process.env.E2E_ALICE_EMAIL ?? "alice@local.tibo.fun", pseudo: "Alice", avatarPreset: "orbit-1", status: "active" },
-  { email: process.env.E2E_BOB_EMAIL ?? "bob@local.tibo.fun", pseudo: "Bob", avatarPreset: "orbit-2", status: "active" },
-  { email: process.env.E2E_NON_MEMBER_EMAIL ?? "mallory@local.tibo.fun", pseudo: "Tiers", avatarPreset: "orbit-3", status: "disabled" },
+  { email: process.env.E2E_ALICE_EMAIL ?? "alice@local.tibo.fun", pseudo: "Alice", avatarPreset: "avatar-1", status: "active" },
+  { email: process.env.E2E_BOB_EMAIL ?? "bob@local.tibo.fun", pseudo: "Bob", avatarPreset: "avatar-2", status: "active" },
+  { email: process.env.E2E_NON_MEMBER_EMAIL ?? "mallory@local.tibo.fun", pseudo: "Tiers", avatarPreset: "avatar-3", status: "disabled" },
 ];
 const password = process.env.LOCAL_FIXTURE_PASSWORD;
 
@@ -68,15 +68,16 @@ for (const fixture of LOCAL_USERS) {
 
 const sqlLiteral = (value) => `'${String(value).replaceAll("'", "''")}'`;
 const profileValues = users
-  .map((user) => `(${sqlLiteral(user.id)}, ${sqlLiteral(user.pseudo)}, ${sqlLiteral(user.pseudo.toLocaleLowerCase("fr-FR"))}, ${sqlLiteral(user.avatarPreset)})`)
+  .map((user) => `(${sqlLiteral(user.id)}, ${sqlLiteral(user.pseudo)}, ${sqlLiteral(user.pseudo.toLocaleLowerCase("fr-FR"))}, ${sqlLiteral(user.pseudo)}, ${sqlLiteral(user.avatarPreset)})`)
   .join(",\n  ");
 const memberValues = users.map((user) => `(${sqlLiteral(user.id)}, 'member', ${sqlLiteral(user.status)})`).join(",\n  ");
-const profilesSql = `insert into public.profiles (id, pseudo, pseudo_key, avatar_preset)
+const profilesSql = `insert into public.profiles (id, pseudo, pseudo_key, account_name, avatar_preset)
 values
   ${profileValues}
 on conflict (id) do update set
   pseudo = excluded.pseudo,
   pseudo_key = excluded.pseudo_key,
+  account_name = excluded.account_name,
   avatar_preset = excluded.avatar_preset`;
 const membersSql = `insert into private.site_members (user_id, role, status)
 values
