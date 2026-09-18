@@ -11,8 +11,14 @@ import { roomViewSchema, type RoomView } from "@/server/rooms/schemas";
 export async function getActiveLobbyForViewer(): Promise<RoomView | null> {
   const member = await getAuthenticatedMember();
   if (!member) return null;
-  const lobby = await getActiveLobby(member.id);
-  if (!lobby) return null;
-  const parsed = roomViewSchema.safeParse(lobby);
-  return parsed.success ? parsed.data : null;
+  try {
+    const lobby = await getActiveLobby(member.id);
+    if (!lobby) return null;
+    const parsed = roomViewSchema.safeParse(lobby);
+    return parsed.success ? parsed.data : null;
+  } catch {
+    // Migration distante éventuellement non appliquée : la page de jeu doit
+    // rester utilisable en parcours historique plutôt que de planter.
+    return null;
+  }
 }

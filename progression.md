@@ -827,3 +827,10 @@ Ces corrections ne constituent pas des contradictions de l'utilisateur avec `AGE
 - Difficultés rencontrées et résolues : (1) la carte 3D du carrousel interceptait les clics de la modale rendue dans le header — `createPortal` vers `document.body` ; (2) `react-hooks/set-state-in-effect` refusait les remises à zéro synchrones de `useGroupRoom` — état indexé par `roomId` et `loading` dérivé ; (3) les tests uniques échouaient faute de comptes seedés/salon actif résiduel — helper `resetLobby` qui libère le salon générique avant chaque test ; (4) un premier jet pgTAP échouait en appels inline dans `ok()` — réponses capturées dans des tables temporaires puis assertions.
 - Contradiction : aucune avec `AGENTS.md`. Le mot initial « dissoudre le groupe » a été précisé par la réponse utilisateur (« l'hôte quitte, l'autre reste ») : la porte est un `LEAVE` existant, aucune action serveur nouvelle de dissolution n'a été ajoutée.
 - Livraison : commit et push sur `main` ; migration distante à appliquer après autorisation explicite.
+
+### 18/09/2026 — Compatibilité de déploiement du salon d'accueil
+
+- Contexte : le push du salon d'accueil déclenche un build Vercel avant que les migrations `step11` soient appliquées au projet distant. Sans garde-fou, chaque page de jeu aurait appelé `server_get_active_lobby` (fonction absente au distant) et renvoyé une erreur 500.
+- Correction : `getActiveLobbyForViewer` (`src/server/lobbies.ts`) intercepte toute erreur RPC et retourne `null` ; les pages de jeu retombent alors sur le parcours créer/rejoindre historique tant que la migration n'est pas appliquée. Les routes `POST /api/lobbies` et `POST /api/lobbies/[roomId]/prepare` ne sont sollicitées que par une action explicite du bouton Salon et échouent proprement en message utilisateur.
+- Vérification : `tsc --noEmit` et `eslint .` propres après le correctif.
+- Reste à faire : appliquer les migrations `20260918174047_step11_home_lobby` et `20260918174528_step11_lobby_prepare` au projet Supabase distant, **après autorisation explicite**, puis vérifier le résultat.
