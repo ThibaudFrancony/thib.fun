@@ -179,7 +179,9 @@ Toutes les tables public : activer RLS, révoquer INSERT/UPDATE/DELETE de anon/a
 
 Pour Realtime : canal `user:<auth.uid()>`, privé. Politique SELECT sur `realtime.messages` limitée à ce topic, extension broadcast et membre actif. Pas de droit d'envoyer des événements métier aux clients. Presence peut être ajouté au topic `presence:room:<roomId>` avec vérification d'appartenance par helper restreint ; **V1 utilise les heartbeats persistants et projections pour éviter ce second canal**. Ne pas confondre signal présence avec droit de jouer.
 
-Storage : bucket `avatars` privé, lecture signée via serveur pour membres, URL valable 1 h ; upload par API serveur uniquement, clé `userId/randomUUID.webp`. Bucket `content-packs` privé serveur uniquement. Contrôler fichiers réels (décodage/réencodage), taille et dimensions ; pas de SVG utilisateur.
+Chat et amis (18/09/2026) : un second topic privé `chat:<auth.uid()>` est autorisé par la politique `chat_broadcast_receive` pour les membres actifs ; il ne porte que les invalidations `chat.updated` et `friend.updated`. Aucune table de chat n'est publiée en Postgres Changes.
+
+Storage : bucket `avatars` privé, lecture signée via serveur pour membres, URL valable 1 h ; upload par API serveur uniquement, clé `userId/randomUUID.webp`. Bucket `content-packs` privé serveur uniquement. Bucket `chat-images` privé (18/09/2026), lecture par URL signée courte uniquement, clé `auteur/randomUUID.webp`, réencodage serveur obligatoire. Contrôler fichiers réels (décodage/réencodage), taille et dimensions ; pas de SVG utilisateur.
 
 ## 8. RPC à implémenter
 
@@ -205,6 +207,15 @@ Toutes les RPC `server_*` suivantes sont exécutables uniquement par rôle serve
 | `server_attempt_and_cache(operation, arguments)` | lecture cache/tentative et métriques IA ; mutations de résultat incluses au commit du match |
 | `server_check_rate_limit(actor, operation, ipHash?)` | incrément atomique des fenêtres et renvoi allowed/retryAfter |
 | `server_reserve_ai_usage` / `server_settle_ai_usage` | réservation par tentative et réconciliation idempotente de consommation |
+| `server_send_friend_request(actor, requestId, targetId)` | comptes permanents actifs, pas soi-même ; création ou reprise d'une demande en attente, refus antérieur reversible, reçu idempotent |
+| `server_respond_friend_request(actor, requestId, friendshipId, accept)` | destinataire seul d'une demande en attente ; accepte ou refuse, reçu idempotent |
+| `server_remove_friend(actor, requestId, targetId)` | retire une amitié acceptée ; l'historique de conversation reste stocké mais n'est plus accessible |
+| `server_open_direct_conversation(actor, requestId, targetId)` | amis acceptés uniquement ; conversation directe stable et unique par paire |
+| `server_send_chat_message(actor, requestId, conversationId, body, imagePath, width, height)` | permanent actif, accès général ou paire d'amis, plafond 1000 caractères et 30 messages/min, idempotent par `(author_id, request_id)` |
+| `server_get_chat_summary(actor)` | résumé serveur : non-lus, amis, demandes reçues/envoyées, compteur en ligne |
+| `server_get_chat_messages(actor, conversationId, beforeSeq, limit)` | page de 1..100 messages, accès vérifié, ordre `seq` |
+| `server_mark_chat_read(actor, conversationId, lastReadSeq)` | marqueur de lecture monotone par conversation |
+| `server_record_activity(actor)` | heartbeat de présence approximative (fenêtre 2 min, purge 30 jours) |
 | `server_admin_invitation(actor, operation, arguments)` | admin vérifié en DB, création/révocation/listage sans exposer les hashes |
 
 Ces RPC sont l'accès aux tables privées depuis le SDK Supabase : **ne pas utiliser `.schema('private')` via une Data API qui n'expose pas ce schéma**. Le repository serveur encapsule les RPC et ne retourne jamais leurs objets complets à un navigateur. Les lectures de projections publiques peuvent utiliser le client à session utilisateur, dont RLS assure le filtrage.
@@ -222,3 +233,17 @@ Tester avec clients anon, membre A, B participant, C membre tiers et clé serveu
 Ordre conseillé, chaque fichier créé par CLI et jamais renommé après déploiement : (1) private/permissions/profiles/site_members/invitations ; (2) games et packs/items ; (3) rooms/members puis matches/players et ajout FK current_match ; (4) projections et RLS ; (5) reçus/événements/jobs/quiz/cache/usage/rate limits ; (6) résultats/historique/stats ; (7) helpers et RPC après existence des tables ; (8) triggers Broadcast et Storage ; (9) extensions et fonctions Cron/Vault/pg_net configurées sans secrets dans Git ; (10) seeds métadonnées. Les fichiers de fixture joueurs utilisent Auth local, jamais identifiants de production.
 
 Défauts de dimensions : 2 salons waiting maximum par hôte, 1 match actif par joueur, 2 joueurs/partie, état privé max 1 Mo vérifié serveur, projection max 128 Ko, jobs batch 4. À l'approche de ces tailles, tronquer seulement les journaux affichés (les détails restent dans round_results), jamais une carte/position nécessaire au moteur. Contrôler le JSON entier avant commit et retourner incident explicite en cas de violation ; aucune écriture partielle. L'historique long est paginé, pas recopié intégralement dans toutes les projections de chaque tour.
+
+## 11. Chat, amis et présence (18/09/2026)
+
+Migration `20260918214832_chat_and_friends.sql`, additive et immuable.
+
+| Objet | Rôle et contraintes |
+|---|---|
+| `private.friendships` | `requester_id`, `addressee_id`, statut `pending/accepted/refused`, paire canonique `(pair_low, pair_high)` unique et ordonnée, pas soi-même. Un refus peut repartir en attente au profit du demandeur. |
+| `private.chat_conversations` | `kind general/direct` ; une seule générale semée avec un UUID stable ; une seule directe par paire ordonnée. |
+| `private.chat_messages` | Immuables, `seq bigint identity` pour la pagination et le non-lu, unique `(author_id, request_id)`, texte ≤ 1000 ou image WebP (largeur/hauteur), index `(conversation_id, seq desc)`. |
+| `private.chat_read_state` | `(user_id, conversation_id)` → `last_read_seq` monotone. |
+| `private.user_activity` | Dernière activité par membre, purge au-delà de 30 jours ; en ligne = activité < 2 minutes. |
+
+Toutes ces tables sont dans `private`, sans droit `anon`/`authenticated` ; `service_role` reçoit des grants explicites. Le chat général est lisible par tout membre actif (invités compris) ; l'écriture exige un compte permanent. Une conversation directe n'est accessible qu'entre amis acceptés. Les triggers Broadcast sont `SECURITY DEFINER`, `search_path=''`, et n'envoient que `{id, version}`.

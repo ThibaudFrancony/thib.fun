@@ -135,6 +135,17 @@ const PUBLIC_ERROR_DEFINITIONS: Readonly<Record<string, PublicErrorDefinition>> 
   SELECTION_CLOSED: { status: 409, message: "La sélection est fermée." },
   DEEPSEEK_FIXTURE_ERROR: { status: 503, message: "La correction automatique est momentanément indisponible." },
   DEEPSEEK_INVALID_JSON: { status: 503, message: "La correction automatique a renvoyé une réponse invalide." },
+  CANNOT_FRIEND_SELF: { status: 422, message: "Tu ne peux pas t'ajouter toi-même." },
+  FRIEND_TARGET_UNAVAILABLE: { status: 422, message: "Ce joueur ne peut pas recevoir de demande d'ami." },
+  FRIEND_REQUEST_NOT_FOUND: { status: 404, message: "Cette demande d'ami n'existe plus." },
+  NOT_FRIENDS: { status: 403, message: "Vous n'êtes pas amis." },
+  CONVERSATION_NOT_FOUND: { status: 404, message: "Cette conversation est introuvable." },
+  MESSAGE_EMPTY: { status: 422, message: "Écris un message ou joins une photo." },
+  MESSAGE_TOO_LONG: { status: 422, message: "Le message ne doit pas dépasser 1000 caractères." },
+  RATE_LIMITED: { status: 429, message: "Tu envoies des messages trop vite. Patiente un instant." },
+  IMAGE_INVALID: { status: 400, message: "Cette image est invalide ou illisible." },
+  IMAGE_TOO_LARGE: { status: 413, message: "La photo ne doit pas dépasser 4 Mo." },
+  IMAGE_UNAVAILABLE: { status: 503, message: "La photo n'a pas pu être enregistrée. Réessaie." },
 };
 
 const NO_STORE = "private, no-store";

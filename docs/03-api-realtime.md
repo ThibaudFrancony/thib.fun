@@ -46,12 +46,21 @@ type MatchCommand = {
 | GET `/history/:matchId` | — | résultat + résumés révélés pour participant |
 | GET `/players/:id` | — | profil public de membre + agrégats |
 | GET `/players/:id/versus-me` | cursor?, game? | statistiques de ce duo et confrontations |
+| GET `/chat/summary` | — | résumé authentifié : non-lus, amis, demandes reçues/envoyées, compteur en ligne, droit d'écriture |
+| GET `/chat/conversations/:id/messages` | before?, limit? | page de 1..100 messages, accès général ou ami vérifié, URLs signées courtes |
+| POST `/chat/conversations/:id/messages` | multipart requestId, body?, file? | permanent actif ; texte ≤ 1000 ou une photo JPEG/PNG/WebP ≤ 4 Mo réencodée WebP ≤ 1280 px ; reçu idempotent |
+| POST `/chat/conversations/:id/read` | lastReadSeq | marqueur de lecture monotone, accès vérifié |
+| POST `/chat/direct` | requestId, targetId | amis acceptés uniquement ; renvoie la conversation directe stable |
+| POST `/chat/presence` | — | heartbeat de présence approximative (membre actif) |
+| POST `/friends/requests` | requestId, targetId | permanent actif, pas soi-même, cible permanente ; idempotent par paire |
+| POST `/friends/requests/:id/respond` | requestId, accept | destinataire seul d'une demande en attente |
+| POST `/friends/:id/remove` | requestId | retire une amitié acceptée ; la conversation privée n'est plus accessible |
 | POST `/admin/invitations` | maxUses?, email?, expiresInDays? | admin seul, lien affiché ; aucun message envoyé automatiquement |
 | GET `/admin/invitations` | cursor? | admin seul, état/expiration/utilisations, jamais tokens/hashes |
 | DELETE `/admin/invitations/:id` | — | admin seul, révoque une invitation, pas les comptes déjà admis |
 | POST `/internal/jobs/run` | ids et leaseTokens | secret worker ; pas Auth navigateur |
 
-Limites : corps JSON navigateur 8 Ko, corps worker 16 Ko ; réponse libre 240 caractères ; indice 120 ; profil 24. Les transferts serveur de contenu/état vers RPC ne sont pas soumis à cette limite navigateur. Limitation persistante (table privée `rate_limits` documentée dans SQL) : join 10/min/utilisateur et 30/min/IP hashée, create 5/min/utilisateur, commandes 120/min/utilisateur avec plafond 10/s, quiz 10/min/utilisateur, suggestions 30/min/utilisateur, avatar 5/h. Nettoyage quotidien des fenêtres expirées. Les jobs internes ont secret et taille de batch, pas de quota utilisateur. Invites admin : expiresInDays 1..30 défaut 7, maxUses 1..10 défaut 1.
+Limites : corps JSON navigateur 8 Ko, corps worker 16 Ko ; réponse libre 240 caractères ; indice 120 ; profil 24. Les transferts serveur de contenu/état vers RPC ne sont pas soumis à cette limite navigateur. Limitation persistante (table privée `rate_limits` documentée dans SQL) : join 10/min/utilisateur et 30/min/IP hashée, create 5/min/utilisateur, commandes 120/min/utilisateur avec plafond 10/s, quiz 10/min/utilisateur, suggestions 30/min/utilisateur, avatar 5/h. Le chat applique 30 messages/min/utilisateur en SQL et un plafond photo de 4 Mo en entrée (WebP 1280 px / ≤ 400 Ko après réencodage serveur). Nettoyage quotidien des fenêtres expirées. Les jobs internes ont secret et taille de batch, pas de quota utilisateur. Invites admin : expiresInDays 1..30 défaut 7, maxUses 1..10 défaut 1.
 
 Commandes salon : `SET_READY {ready:boolean}`, `SET_CONFIG {gameSlug,config}` hôte seul, `PREPARE_MATCH` hôte seul depuis un salon d'accueil (pose le jeu/la configuration et arme les deux prêts), `START {}` hôte et deux prêts, `LEAVE {}`, `REMATCH {}` hôte après fin. REMATCH garde participants/config et demande de nouveau ready ; crée une nouvelle partie seulement au START. Hôte ne voit aucun secret supplémentaire.
 
@@ -76,6 +85,8 @@ type MatchView = {
 ## 4. Broadcast et réconciliation
 
 Après Auth, ouvrir un seul canal privé `user:<userId>` pour les invalidations persistantes. Événements `room.updated`, `match.updated`, `history.updated`, payload limité à `{id,version}` (history peut inclure matchId). Les clients ne publient pas ces événements. Les triggers sont déclenchés sur écriture des projections/historique dans la transaction de commit.
+
+Le chat utilise un second canal privé `chat:<userId>`, abonné à l'ouverture de la barre latérale. Événements `chat.updated` (payload `{id: conversationId, version: seq}`) et `friend.updated` (`{id: friendshipId, version: 1}`). Ces messages ne transportent aucun contenu : le client relit toujours `/chat/summary` et la page de messages, avec polling de secours toutes les 30 s et heartbeat de présence toutes les 60 s.
 
 À l'ouverture d'une page : s'abonner, attendre SUBSCRIBED, puis charger snapshot ; ce séquencement évite un trou entre lecture et abonnement. À chaque invalidation version supérieure, recharger via GET. Fusionner les relectures concurrentes ; conserver le plus grand version, ignorer réponses hors ordre. À la reconnexion et au retour au premier plan : recharger systématiquement. Si un événement n'arrive jamais, le heartbeat toutes les 15 s permet de vérifier la version et relire. Le heartbeat retourne donc également `roomVersion` et `matchVersion` courantes ; cette précision complète sa ligne de route.
 

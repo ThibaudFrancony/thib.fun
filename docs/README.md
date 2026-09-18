@@ -52,7 +52,7 @@ Chaque tranche comprend ses tests et son UI réelle. Les cartes des jeux non dis
 
 ## Hors périmètre V1
 
-Matchmaking public, plus de deux joueurs, équipes, classement mondial, argent réel, monétisation, messagerie/vocal, bots adversaires, app native, génération de quiz à la volée, éditeur de règles, replay animé complet, spectateurs. L'entraînement BombParty est la seule activité solo initiale. L'historique conserve des résumés de manches, pas des enregistrements vidéo.
+Matchmaking public, plus de deux joueurs, équipes, classement mondial, argent réel, monétisation, vocal, bots adversaires, app native, génération de quiz à la volée, éditeur de règles, replay animé complet, spectateurs. Le chat général du site et les conversations privées entre amis ont été ajoutés au périmètre le 18 septembre 2026 à la demande du propriétaire (voir [Produit et UI](04-product-ui.md) §10) : messages texte et photos, pas de vocal. L'entraînement BombParty est la seule activité solo initiale. L'historique conserve des résumés de manches, pas des enregistrements vidéo.
 
 ## Références techniques vérifiées au cadrage
 

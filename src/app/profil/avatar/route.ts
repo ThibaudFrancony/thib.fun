@@ -1,24 +1,14 @@
 import { randomUUID } from "node:crypto";
-import { createRequire } from "node:module";
 import { getAuthenticatedAccount } from "@/server/auth";
 import { getSupabaseServerConfig } from "@/server/config";
 import { assertMutationOrigin, jsonError, jsonOk, mapServerError } from "@/server/http";
+import { ALLOWED_IMAGE_CONTENT_TYPES, imageOptimizerTools } from "@/server/images/optimizer";
 import { createAdminClient } from "@/server/supabase/admin";
 
 const MAX_BYTES = 2 * 1024 * 1024;
 const MAX_DIMENSION = 4096;
 const SIGNED_URL_SECONDS = 5 * 60;
-const ALLOWED_CONTENT_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
-const requireFromRoute = createRequire(import.meta.url);
-
-type ImageOptimizerTools = typeof import("next/dist/server/image-optimizer");
-
-function imageOptimizerTools(): Pick<ImageOptimizerTools, "detectContentType" | "getSharp"> {
-  // Le module Next charge sharp depuis ses dépendances serveur. Le require
-  // différé évite d'embarquer les binaires natifs dans le bundle Webpack.
-  const moduleName = ["next", "dist", "server", "image-optimizer"].join("/");
-  return requireFromRoute(moduleName) as Pick<ImageOptimizerTools, "detectContentType" | "getSharp">;
-}
+const ALLOWED_CONTENT_TYPES = ALLOWED_IMAGE_CONTENT_TYPES;
 
 function isOwnAvatarPath(path: string, memberId: string): boolean {
   return path.startsWith(`${memberId}/`) && !path.includes("..") && path.endsWith(".webp");

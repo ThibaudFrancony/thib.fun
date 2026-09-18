@@ -6,7 +6,13 @@
       "id": "unit-and-contracts",
       "label": "Unitaires et contrats serveur",
       "status": "pass",
-      "evidence": "Salon d'accueil du 18/09 : 62 fichiers, 434 tests réussis et 2 sentinelles d'échec attendu ; les contrats (dont `roomViewSchema.gameSlug` nullable), projections, garde-fous de reprise, la configuration IA locale et l'hydratation du formulaire sont exécutés."
+      "evidence": "Chat et amis du 18/09 : 67 fichiers, 464 tests réussis et 2 sentinelles d'échec attendu ; s'ajoutent le formatage du chat, les schémas zod du chat/amis et les routes résumé, demandes d'ami et envoi de message (multipart, upload, nettoyage). Les contrats existants (salon, projections, reprise, IA locale) restent exécutés."
+    },
+    {
+      "id": "chat-and-friends-browser",
+      "label": "Chat général, amis et conversations privées",
+      "status": "not-run",
+      "evidence": "Fonctionnalité codée et migration `20260918214832_chat_and_friends` appliquée au distant le 18/09 (push CLI vérifié, migration list alignée). Aucune recette navigateur à deux comptes réels n'a été exécutée : les suites Playwright/E2E exigent Docker et une autorisation explicite ; la barre latérale, les badges temps réel, le son, le collage Ctrl+V et la compression photo restent à valider sur session réelle. Le pgTAP `supabase/tests/chat_and_friends.sql` (32 assertions) est écrit mais Docker n'a pas été ouvert."
     },
     {
       "id": "home-and-guest-browser",

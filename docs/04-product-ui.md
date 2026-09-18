@@ -74,6 +74,18 @@ Carte Géographie et cadran longueur-onde ont navigation clavier décrite dans l
 
 ## 9. Hors périmètre UI
 
-Pas d'écran paiement, publicité, chat, invitations e-mail envoyées par notre app, thème personnalisable, marché d'avatars ou classement mondial. Mode sombre après V1 seulement si demandé. Ne pas remplir l'interface de noms techniques Supabase/LLM/RPC : « Vérification de ta réponse » suffit.
+Pas d'écran paiement, publicité, invitations e-mail envoyées par notre app, thème personnalisable, marché d'avatars ou classement mondial. Mode sombre après V1 seulement si demandé. Ne pas remplir l'interface de noms techniques Supabase/LLM/RPC : « Vérification de ta réponse » suffit.
+
+Chat et amis ont été sortis du hors-périmètre le 18 septembre 2026 (voir §10) ; le vocal, lui, reste exclu.
 
 Depuis le mode inscription, « Continuer en tant qu’invité » ouvre un dialogue précisant que le pseudo et la progression ne seront pas sauvegardés. La session anonyme reçoit un pseudo aléatoire serveur et peut jouer dans les salons ; elle ne dispose pas d’historique, de statistiques ni de profil de compte permanent. La perte de la session navigateur est définitive pour cet invité.
+
+## 10. Chat et amis — décision du 18 septembre 2026
+
+Décision produit : ajouter un chat de site et des amis, alors que le cadrage initial plaçait « messagerie » hors périmètre V1. Le vocal reste hors périmètre.
+
+- Une flèche discrète reste ancrée au bord droit de toutes les pages. Elle ouvre une barre latérale violet sombre conforme à la maquette fournie : onglets « Général » et « Amis » avec pastilles de non-lus, compteur de messages, compteur approximatif de membres en ligne (activité < 2 min).
+- Le chat général est lisible par tout membre actif, invités anonymes compris ; seuls les comptes permanents écrivent. Chaque message montre pseudo, heure (date dès que le message n'est plus du jour) et contenu ; les jours sont séparés (« Hier · 17 septembre »). Cliquer un pseudo propose « Profil » (historique du duo) et « Ajouter en ami » avec les états déjà ami, demande envoyée ou reçue.
+- L'onglet Amis liste les demandes reçues (Accepter/Refuser), les demandes envoyées et « Mes amis » avec présence, aperçu et non-lus. Un ami ouvre une conversation privée texte et photo ; il peut être retiré depuis la liste. Une photo est jointe par import ou Ctrl+V, compressée dans le navigateur (1280 px, WebP ~150 Ko) puis re-vérifiée et réencodée côté serveur.
+- Notifications : pastilles de non-lus temps réel et son discret (WebAudio, coupable, débloqué au premier geste utilisateur). Accessibilité : `role="tablist"`, `role="log"`, Échap ferme les menus, focus visible, cibles ≥ 44 px, `prefers-reduced-motion` respecté.
+- Une demande d'ami refusée peut être renvoyée plus tard ; la suppression d'un ami conserve les messages en base mais rend la conversation inaccessible.
