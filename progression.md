@@ -27,6 +27,12 @@ Ce fichier décrit la réalité du dépôt et non les seules capacités prévues
 - Contradiction : oui, avec l'ancien pseudo dérivé de l'e-mail et modifiable (`docs/02-database.md`, `docs/04-product-ui.md` mis à jour dans le même changement) ; aucune avec `AGENTS.md`.
 - Prochaine étape utile : appliquer la migration au distant (autorisation), recette à deux comptes (onboarding, upload, override, salons), puis étendre les photos aux bandeaux de partie et à l'historique.
 
+### 18/09/2026 — Push distant des migrations avatar (rien à appliquer)
+
+- Demande : appliquer au distant les 5 migrations avatar/profil (`...18201033` presets PNG + reprise `orbit-*`, `...18202228` preset par défaut, `...18204359` `hostId`/`expiresAt` restaurés, `...18210214` UPDATE `profiles` au rôle serveur, `...18210444` EXECUTE des fonctions de triggers). Choix utilisateur : push distant direct, sans rouvrir Docker.
+- Inspection (CLI, lecture seule) : `migration list` aligne 45/45 versions, `db push --linked --dry-run` répond « Remote database is up to date ». Aucune mutation distante exécutée. Comme pour `...18191811`, l'historique distant contient des versions créées localement sans push de cette session : à confirmer par contrôle objet (requête fournie), pas par l'historique seul.
+- Limite inchangée : passe fonctionnelle UI (Enregistrer + upload + persistance) non rejouée après les correctifs de droits — validée au niveau client serveur en local, à refaire à la prochaine session Docker ou en production après redéploiement.
+
 ### 18/09/2026 — Redesign page Profil style gaming (sans scroll desktop)
 
 - Demande : redesign complet de `/profil` d'après capture cible (carte violet nuit, titre « C'est toi ! », photo centrale avec badge caméra, champ Nom unique, grille 5×2, CTA dégradé rose→violet), en réutilisant le background de la landing et sans toucher à la logique (auth, routes, APIs, sauvegarde). Contrainte absolue : aucun scroll sur desktop (1920×1080, 1440×900, 1366×768).
