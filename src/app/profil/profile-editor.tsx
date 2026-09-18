@@ -1,50 +1,43 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Avatar } from "@/components/avatar";
-import { AVATAR_PRESETS, type AvatarPreset } from "./profile-helpers";
-
-const PRESET_LABELS: Record<AvatarPreset, string> = {
-  "orbit-1": "Étoile verte",
-  "orbit-2": "Étoile orange",
-  "orbit-3": "Lune violette",
-  "orbit-4": "Lune bleue",
-  "orbit-5": "Soleil jaune",
-  "orbit-6": "Soleil rose",
-  "orbit-7": "Comète bleue",
-  "orbit-8": "Comète rouge",
-};
+import Image from "next/image";
+import { useEffect, useRef, useState } from "react";
+import { AVATAR_PRESETS, AVATAR_PRESET_LABELS, avatarPresetImage, type AvatarPreset } from "./profile-helpers";
 
 type ApiPayload = {
-  pseudo?: string;
-  effectiveName?: string;
   displayName?: string | null;
   avatarPreset?: AvatarPreset;
   avatarPath?: string | null;
   error?: { message?: string };
 };
 
+/**
+ * Carte profil : photo (clic = upload), champ Nom unique (nom affiché),
+ * grille 5×2 des presets PNG, bouton Enregistrer.
+ * Logique serveur inchangée : POST /profil/profile {displayName, avatarPreset},
+ * POST /profil/avatar (FormData), DELETE /profil/avatar.
+ */
 export function ProfileEditor({
-  accountName,
-  displayName: initialDisplayName,
+  initialName,
   avatarPreset: initialPreset,
   avatarPath: initialAvatarPath,
 }: {
-  accountName: string;
-  displayName: string | null;
+  initialName: string;
   avatarPreset: string;
   avatarPath: string | null;
 }) {
-  const effective = initialDisplayName ?? accountName;
-  const [displayName, setDisplayName] = useState(initialDisplayName ?? "");
-  const [avatarPreset, setAvatarPreset] = useState<AvatarPreset>(AVATAR_PRESETS.includes(initialPreset as AvatarPreset) ? initialPreset as AvatarPreset : AVATAR_PRESETS[0]);
+  const [name, setName] = useState(initialName);
+  const [avatarPreset, setAvatarPreset] = useState<AvatarPreset>(
+    AVATAR_PRESETS.includes(initialPreset as AvatarPreset) ? (initialPreset as AvatarPreset) : AVATAR_PRESETS[0],
+  );
   const [avatarPath, setAvatarPath] = useState(initialAvatarPath);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [file, setFile] = useState<File | null>(null);
+  const [presetBroken, setPresetBroken] = useState(false);
   const [busy, setBusy] = useState(false);
   const [uploadBusy, setUploadBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!avatarPath) return;
@@ -57,6 +50,7 @@ export function ProfileEditor({
   }, [avatarPath]);
 
   const effectiveAvatarUrl = avatarPath ? avatarUrl : null;
+  const presetImage = presetBroken ? null : avatarPresetImage(avatarPreset);
 
   function messageFrom(data: ApiPayload | null, fallback: string): string {
     return data?.error?.message ?? fallback;
@@ -69,19 +63,20 @@ export function ProfileEditor({
     setError(null);
     setNotice(null);
     try {
+      const trimmed = name.trim();
       const response = await fetch("/profil/profile", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ displayName: displayName.trim() === "" ? null : displayName, avatarPreset }),
+        body: JSON.stringify({ displayName: trimmed === "" ? null : trimmed, avatarPreset }),
       });
       const data = (await response.json().catch(() => null)) as ApiPayload | null;
       if (!response.ok) {
         setError(messageFrom(data, "Le profil n'a pas pu être enregistré."));
         return;
       }
-      if (data?.displayName !== undefined) setDisplayName(data.displayName ?? "");
+      if (data?.displayName !== undefined) setName(data.displayName ?? "");
       if (data?.avatarPreset) setAvatarPreset(data.avatarPreset);
-      setNotice("Ton profil est à jour.");
+      setNotice("Profil enregistré.");
     } catch {
       setError("Enregistrement impossible. Vérifie ta connexion puis réessaie.");
     } finally {
@@ -89,9 +84,8 @@ export function ProfileEditor({
     }
   }
 
-  async function uploadAvatar(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!file || busy || uploadBusy) return;
+  async function uploadFile(file: File) {
+    if (busy || uploadBusy) return;
     setUploadBusy(true);
     setError(null);
     setNotice(null);
@@ -101,33 +95,33 @@ export function ProfileEditor({
       const response = await fetch("/profil/avatar", { method: "POST", body: form });
       const data = (await response.json().catch(() => null)) as ApiPayload | null;
       if (!response.ok) {
-        setError(messageFrom(data, "L'avatar n'a pas pu être envoyé."));
+        setError(messageFrom(data, "L'image doit être un JPEG, PNG ou WebP de 2 Mo maximum."));
         return;
       }
       setAvatarPath(data?.avatarPath ?? null);
-      setFile(null);
-      setNotice("Photo de profil enregistrée. Elle apparaît dans les groupes et les parties.");
+      setNotice("Photo enregistrée.");
     } catch {
       setError("Envoi impossible. Vérifie ta connexion puis réessaie.");
     } finally {
       setUploadBusy(false);
+      if (fileRef.current) fileRef.current.value = "";
     }
   }
 
   async function removeAvatar() {
-    if (busy || uploadBusy) return;
-    if (!window.confirm("Supprimer ta photo de profil ? Ton initiale sera affichée à la place.")) return;
+    if (busy || uploadBusy || !avatarPath) return;
     setUploadBusy(true);
     setError(null);
     setNotice(null);
     try {
       const response = await fetch("/profil/avatar", { method: "DELETE" });
-      const data = (await response.json().catch(() => null)) as ApiPayload | null;
       if (!response.ok) {
+        const data = (await response.json().catch(() => null)) as ApiPayload | null;
         setError(messageFrom(data, "La photo n'a pas pu être supprimée."));
         return;
       }
       setAvatarPath(null);
+      setAvatarUrl(null);
       setNotice("Photo supprimée.");
     } catch {
       setError("Suppression impossible. Vérifie ta connexion puis réessaie.");
@@ -137,63 +131,129 @@ export function ProfileEditor({
   }
 
   return (
-    <div className="mt-8 grid gap-5">
-      <section aria-labelledby="profile-photo-title" className="rounded-2xl bg-[var(--paper-deep)] p-5">
-        <div className="flex items-center gap-4">
-          <Avatar name={effective} preset={avatarPreset} imageUrl={effectiveAvatarUrl} size={72} />
-          <div>
-            <h2 id="profile-photo-title" className="text-xl font-black">Photo de profil</h2>
-            <p className="mt-1 text-sm leading-6 text-[var(--muted)]">
-              {avatarPath ? "Visible dans les groupes et les parties." : "Vide pour l'instant : ton initiale est affichée."}
-            </p>
-          </div>
-        </div>
-        <p className="mt-4 text-sm leading-6 text-[var(--muted)]">JPEG, PNG ou WebP, 2 Mo maximum. L&apos;image est recadrée automatiquement puis réduite en WebP 256 × 256 pour un affichage web léger.</p>
-        <form onSubmit={uploadAvatar} className="mt-4">
-          <label className="block text-sm font-bold" htmlFor="profile-avatar">Choisir une image</label>
-          <input id="profile-avatar" type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => setFile(event.target.files?.[0] ?? null)} className="mt-2 block w-full text-sm" />
-          <div className="mt-4 flex flex-wrap gap-3">
-            <button type="submit" disabled={!file || busy || uploadBusy} className="min-h-11 rounded-full bg-[var(--green)] px-5 py-3 font-bold text-white disabled:opacity-50">{uploadBusy ? "Envoi…" : "Téléverser ma photo"}</button>
-            {avatarPath && <button type="button" disabled={busy || uploadBusy} onClick={() => void removeAvatar()} className="min-h-11 rounded-full border border-[var(--line)] bg-white px-5 py-3 font-bold">Supprimer</button>}
-          </div>
-        </form>
-      </section>
+    <form onSubmit={saveProfile} className="pf-card" aria-label="Mon profil">
+      <p className="pf-kicker">Mon profil</p>
+      <h1 className="pf-title">
+        C&apos;est <span className="pf-title-accent">toi !</span>
+      </h1>
+      <p className="pf-subtitle">Personnalise ton profil et rejoins la partie !</p>
 
-      <form onSubmit={saveProfile} className="rounded-2xl bg-[var(--paper-deep)] p-5">
-        <h2 className="text-xl font-black">Noms</h2>
-        <div className="mt-4 rounded-xl border border-[var(--line)] bg-white px-4 py-3">
-          <p className="text-xs font-black uppercase tracking-[0.12em] text-[var(--muted)]">Nom de création (figé)</p>
-          <p className="mt-1 font-bold">{accountName}</p>
-          <p className="mt-1 text-sm text-[var(--muted)]">Choisi à la première connexion, il ne peut pas être changé.</p>
-        </div>
-        <label className="mt-5 block text-sm font-bold" htmlFor="profile-displayname">Nom affiché (optionnel)</label>
+      <div className="pf-photo-wrap">
+        <button
+          type="button"
+          className="pf-photo-button"
+          onClick={() => fileRef.current?.click()}
+          aria-label="Changer ma photo de profil"
+          disabled={uploadBusy}
+        >
+          {effectiveAvatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={effectiveAvatarUrl} alt="Ma photo de profil" />
+          ) : presetImage ? (
+            <Image
+              src={presetImage}
+              alt="Mon avatar"
+              width={160}
+              height={160}
+              className="pf-photo-preset"
+              onError={() => setPresetBroken(true)}
+            />
+          ) : (
+            <span className="pf-photo-initial" aria-hidden="true">
+              {name.trim().slice(0, 1).toLocaleUpperCase("fr-FR") || "?"}
+            </span>
+          )}
+        </button>
+        <button
+          type="button"
+          className="pf-camera"
+          onClick={() => fileRef.current?.click()}
+          aria-label="Changer ma photo de profil"
+          disabled={uploadBusy}
+        >
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+            <path d="M4 8h3l2-2.5h6L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z" />
+            <circle cx="12" cy="13" r="3.2" />
+          </svg>
+        </button>
         <input
-          id="profile-displayname"
-          value={displayName}
-          onChange={(event) => setDisplayName(event.target.value)}
+          ref={fileRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          hidden
+          aria-hidden="true"
+          tabIndex={-1}
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            if (file) void uploadFile(file);
+          }}
+        />
+      </div>
+      <p className="pf-photo-hint">{uploadBusy ? "Envoi de la photo…" : "Cliquer pour changer ma photo"}</p>
+      {avatarPath && (
+        <button type="button" className="pf-photo-remove" onClick={() => void removeAvatar()} disabled={busy || uploadBusy}>
+          Supprimer ma photo
+        </button>
+      )}
+
+      <div className="pf-field">
+        <label className="pf-label" htmlFor="profile-name">Nom</label>
+        <input
+          id="profile-name"
+          value={name}
+          onChange={(event) => setName(event.target.value)}
           minLength={2}
           maxLength={24}
-          placeholder={accountName}
+          required
           autoComplete="nickname"
-          className="mt-2 w-full rounded-xl border border-[var(--line)] bg-white px-4 py-3 outline-none focus:border-[var(--green)]"
+          className="pf-input"
         />
-        <p className="mt-2 text-sm text-[var(--muted)]">Laisse vide pour afficher ton nom de création. S&apos;il est rempli, il le remplace partout (groupes, parties, historique).</p>
-        <fieldset className="mt-5">
-          <legend className="text-sm font-bold">Avatar de secours (sans photo)</legend>
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            {AVATAR_PRESETS.map((preset) => (
-              <label key={preset} className={`flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 text-sm font-bold ${avatarPreset === preset ? "border-[var(--green)] bg-white" : "border-[var(--line)]"}`}>
-                <input type="radio" name="avatar-preset" value={preset} checked={avatarPreset === preset} onChange={() => setAvatarPreset(preset)} />
-                <span>{PRESET_LABELS[preset]}</span>
-              </label>
-            ))}
-          </div>
-        </fieldset>
-        <button type="submit" disabled={busy || uploadBusy} className="mt-6 min-h-11 rounded-full bg-[var(--green)] px-5 py-3 font-bold text-white disabled:opacity-50">{busy ? "Enregistrement…" : "Enregistrer le profil"}</button>
-      </form>
+        <p className="pf-hint">C&apos;est le nom qui s&apos;affiche pour les autres joueurs.</p>
+      </div>
 
-      {error && <p role="alert" className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
-      {notice && <p role="status" className="rounded-xl bg-[var(--green)]/10 px-3 py-2 text-sm font-bold text-[var(--green-dark)]">{notice}</p>}
-    </div>
+      <fieldset className="pf-avatars" style={{ border: 0, margin: 0, padding: 0 }}>
+        <legend className="pf-label">Choisis un avatar</legend>
+        <div className="pf-grid" role="radiogroup" aria-label="Choisis un avatar">
+          {AVATAR_PRESETS.map((preset) => {
+            const selected = avatarPreset === preset;
+            const image = avatarPresetImage(preset);
+            return (
+              <label key={preset} className="pf-avatar-option" data-selected={selected} title={AVATAR_PRESET_LABELS[preset]}>
+                <input
+                  type="radio"
+                  name="avatar-preset"
+                  value={preset}
+                  checked={selected}
+                  onChange={() => {
+                    setAvatarPreset(preset);
+                    setPresetBroken(false);
+                  }}
+                  className="sr-only"
+                  aria-label={AVATAR_PRESET_LABELS[preset]}
+                />
+                <span className="pf-avatar-circle" aria-hidden="true">
+                  {image ? (
+                    <Image src={image} alt="" width={72} height={72} onError={() => setPresetBroken(true)} />
+                  ) : (
+                    <span style={{ color: "#fff", fontWeight: 900 }}>{AVATAR_PRESET_LABELS[preset].slice(0, 1)}</span>
+                  )}
+                </span>
+                <span className="pf-avatar-check" aria-hidden="true">
+                  <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" focusable="false">
+                    <path d="m3 8.5 3.2 3.2L13 5" />
+                  </svg>
+                </span>
+              </label>
+            );
+          })}
+        </div>
+      </fieldset>
+
+      <p className="pf-status" role="status" data-tone={error ? "error" : "ok"}>{error ?? notice ?? ""}</p>
+
+      <button type="submit" disabled={busy || uploadBusy} className="pf-cta">
+        {busy ? "Enregistrement…" : "Enregistrer"}
+      </button>
+    </form>
   );
 }

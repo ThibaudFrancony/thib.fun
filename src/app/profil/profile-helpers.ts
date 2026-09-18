@@ -1,15 +1,40 @@
 export const AVATAR_PRESETS = [
-  "orbit-1",
-  "orbit-2",
-  "orbit-3",
-  "orbit-4",
-  "orbit-5",
-  "orbit-6",
-  "orbit-7",
-  "orbit-8",
+  "avatar-1",
+  "avatar-2",
+  "avatar-3",
+  "avatar-4",
+  "avatar-5",
+  "avatar-6",
+  "avatar-7",
+  "avatar-8",
+  "avatar-9",
+  "avatar-10",
 ] as const;
 
-export type AvatarPreset = (typeof AVATAR_PRESETS)[number];
+/** Libellés dans l'ordre des PNG public/avatars/avatar-N.png. */
+export const AVATAR_PRESET_LABELS: Record<AvatarPresetId, string> = {
+  "avatar-1": "Étoile",
+  "avatar-2": "Cœur",
+  "avatar-3": "Soleil",
+  "avatar-4": "Lune",
+  "avatar-5": "Nuage",
+  "avatar-6": "Chat",
+  "avatar-7": "Robot",
+  "avatar-8": "Lapin",
+  "avatar-9": "Panda",
+  "avatar-10": "Fusée",
+};
+
+export type AvatarPresetId = (typeof AVATAR_PRESETS)[number];
+
+export type AvatarPreset = AvatarPresetId;
+
+/** Chemin public du PNG transparent d'un preset. */
+export function avatarPresetImage(preset: string): string | null {
+  return (AVATAR_PRESETS as readonly string[]).includes(preset)
+    ? "/avatars/" + preset + ".png"
+    : null;
+}
 
 const PSEUDO_PATTERN = /^[\p{L}\p{N} _-]+$/u;
 const CONTROL_CHARACTERS = /[\u0000-\u001f\u007f-\u009f\u2028\u2029]/u;

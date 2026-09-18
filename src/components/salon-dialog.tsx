@@ -286,8 +286,8 @@ function SalonGroupBody({
       </div>
 
       <div className="salon-slots">
-        <SalonSlot member={seat0?.pseudo ?? null} label={seat0?.id === room?.viewerId ? "Toi" : "Joueur 1"} preset={seat0?.avatarPreset ?? "orbit-1"} imageUrl={seat0 ? avatars[seat0.id] ?? null : null} />
-        <SalonSlot member={seat1?.pseudo ?? null} label={seat1?.id === room?.viewerId ? "Toi" : "Joueur 2"} preset={seat1?.avatarPreset ?? "orbit-1"} imageUrl={seat1 ? avatars[seat1.id] ?? null : null} />
+        <SalonSlot member={seat0?.pseudo ?? null} label={seat0?.id === room?.viewerId ? "Toi" : "Joueur 1"} preset={seat0?.avatarPreset ?? "avatar-1"} imageUrl={seat0 ? avatars[seat0.id] ?? null : null} />
+        <SalonSlot member={seat1?.pseudo ?? null} label={seat1?.id === room?.viewerId ? "Toi" : "Joueur 2"} preset={seat1?.avatarPreset ?? "avatar-1"} imageUrl={seat1 ? avatars[seat1.id] ?? null : null} />
       </div>
 
       {room && group.isHost && (

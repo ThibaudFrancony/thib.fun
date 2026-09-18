@@ -45,7 +45,7 @@ async function getAuthenticatedAccountInternal(): Promise<AuthenticatedAccount |
       displayName,
       effectiveName: typeof raw.effectiveName === "string" ? raw.effectiveName : (displayName ?? accountName ?? pseudo),
       needsOnboarding: typeof raw.needsOnboarding === "boolean" ? raw.needsOnboarding : false,
-      avatarPreset: typeof raw.avatarPreset === "string" ? raw.avatarPreset : "orbit-1",
+      avatarPreset: typeof raw.avatarPreset === "string" ? raw.avatarPreset : "avatar-1",
       avatarPath: typeof raw.avatarPath === "string" ? raw.avatarPath : null,
     },
   };

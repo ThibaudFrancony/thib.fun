@@ -9,11 +9,12 @@ describe("profil", () => {
     expect(normalizeProfilePseudo("pseudo\nincorrect")).toBeNull();
   });
 
-  it("produit une clé insensible à la casse et valide les huit presets", () => {
+  it("produit une clé insensible à la casse et valide les dix presets PNG", () => {
     expect(profilePseudoKey("  Zoé   42 ")).toBe("zoé 42");
-    expect(AVATAR_PRESETS).toHaveLength(8);
-    expect(isAvatarPreset("orbit-4")).toBe(true);
-    expect(isAvatarPreset("orbit-9")).toBe(false);
+    expect(AVATAR_PRESETS).toHaveLength(10);
+    expect(isAvatarPreset("avatar-4")).toBe(true);
+    expect(isAvatarPreset("orbit-4")).toBe(false);
+    expect(isAvatarPreset("avatar-11")).toBe(false);
     expect(isAvatarPreset(null)).toBe(false);
   });
 

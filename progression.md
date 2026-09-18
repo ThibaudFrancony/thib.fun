@@ -27,6 +27,14 @@ Ce fichier décrit la réalité du dépôt et non les seules capacités prévues
 - Contradiction : oui, avec l'ancien pseudo dérivé de l'e-mail et modifiable (`docs/02-database.md`, `docs/04-product-ui.md` mis à jour dans le même changement) ; aucune avec `AGENTS.md`.
 - Prochaine étape utile : appliquer la migration au distant (autorisation), recette à deux comptes (onboarding, upload, override, salons), puis étendre les photos aux bandeaux de partie et à l'historique.
 
+### 18/09/2026 — Redesign page Profil style gaming (sans scroll desktop)
+
+- Demande : redesign complet de `/profil` d'après capture cible (carte violet nuit, titre « C'est toi ! », photo centrale avec badge caméra, champ Nom unique, grille 5×2, CTA dégradé rose→violet), en réutilisant le background de la landing et sans toucher à la logique (auth, routes, APIs, sauvegarde). Contrainte absolue : aucun scroll sur desktop (1920×1080, 1440×900, 1366×768).
+- Réalisation (code présent, assets en attente) : `profile-editor.tsx` réécrit (mêmes endpoints `POST /profil/profile`, `POST/DELETE /profil/avatar`, upload auto au clic photo via input hidden, Nom = nom affiché, presets radio accessibles) ; `page.tsx` (fond `HomeHeroBackground` + `hero.png` réutilisé, header compact Jeux/Historique/avatar/Se déconnecter avec `ProfileButton`+`SignOutButton`, branches invité/onboarding conservées) ; 10 presets `avatar-1..avatar-10` (`profile-helpers.ts`, `Avatar` PNG, migration `20260918201033_profile_png_avatar_presets.sql` avec reprise `orbit-*` → `avatar-*`, non appliquée au distant) ; CSS `pf-*` (`globals.css`) en `100dvh`/`overflow:hidden`, tailles en `clamp()` sur `vh`, media `max-height:850/750px`, scroll réautorisé sous 700 px de large.
+- Vérifications : `typecheck`, `lint`, `test` (62 fichiers / 436 + 2 sentinelles), `next build --webpack` OK. Non vérifié : rendu visuel aux 3 résolutions (pas de session sans Docker ; daemon fermé), ni les 10 PNG (fournis en chat uniquement, absents du repo : chemins attendus `public/avatars/avatar-1.png` … `avatar-10.png` dans l'ordre Étoile, Cœur, Soleil, Lune, Nuage, Chat, Robot, Lapin, Panda, Fusée).
+- Contradiction : aucune avec `AGENTS.md` ; la grille 10 vs les 8 IDs `orbit-*` imposait la petite migration ci-dessus (décision documentée ici).
+- Prochaine étape utile : déposer les PNG, appliquer la migration distante, vérification visuelle (Docker opt-in : `supabase start`, fixtures, screenshots Playwright aux 3 résolutions) ou contrôle manuel.
+
 ### 18/09/2026 — Application distante de la migration Profil (historique vérifié)
 
 - Demande : appliquer la migration `20260918191811_profile_account_and_display_name.sql` en production.

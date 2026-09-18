@@ -16,8 +16,8 @@ function room(overrides: Partial<RoomViewWithMetadata> = {}): RoomViewWithMetada
     expiresAt: "2026-09-14T13:00:00.000Z",
     currentMatchId: null,
     members: [
-      { id: firstId, pseudo: "A", accountName: "A", displayName: null, avatarPreset: "orbit-1", avatarPath: null, isGuest: false, seat: 0, ready: false },
-      { id: secondId, pseudo: "B", accountName: "B", displayName: null, avatarPreset: "orbit-2", avatarPath: null, isGuest: false, seat: 1, ready: false },
+      { id: firstId, pseudo: "A", accountName: "A", displayName: null, avatarPreset: "avatar-1", avatarPath: null, isGuest: false, seat: 0, ready: false },
+      { id: secondId, pseudo: "B", accountName: "B", displayName: null, avatarPreset: "avatar-2", avatarPath: null, isGuest: false, seat: 1, ready: false },
     ],
     viewerId: firstId,
     ...overrides,

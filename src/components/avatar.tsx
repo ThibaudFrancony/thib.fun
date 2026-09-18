@@ -1,20 +1,5 @@
-import { AVATAR_PRESETS } from "@/app/profil/profile-helpers";
-
-const PRESET_STYLES: Record<string, string> = {
-  "orbit-1": "bg-[var(--green)] text-white",
-  "orbit-2": "bg-[var(--orange)] text-white",
-  "orbit-3": "bg-violet-600 text-white",
-  "orbit-4": "bg-sky-600 text-white",
-  "orbit-5": "bg-amber-400 text-[var(--ink)]",
-  "orbit-6": "bg-rose-400 text-white",
-  "orbit-7": "bg-cyan-600 text-white",
-  "orbit-8": "bg-red-600 text-white",
-};
-
-function presetStyle(preset: string): string {
-  if (Object.hasOwn(PRESET_STYLES, preset)) return PRESET_STYLES[preset];
-  return PRESET_STYLES[AVATAR_PRESETS[0]];
-}
+import Image from "next/image";
+import { avatarPresetImage } from "@/app/profil/profile-helpers";
 
 function initialOf(name: string): string {
   const trimmed = name.trim();
@@ -22,9 +7,9 @@ function initialOf(name: string): string {
 }
 
 /**
- * Rond d'avatar partagé (header, salons, parties, historique).
- * Affiche l'image privée quand `imageUrl` est fournie, sinon l'initiale du
- * nom effectif sur la couleur du preset. Jamais de chemin brut exposé.
+ * Rond d'avatar partagé (header, salons, parties, profil).
+ * Priorité : photo privée (`imageUrl`) > PNG du preset > initiale.
+ * Jamais de chemin brut exposé : `imageUrl` est une URL signée courte.
  */
 export function Avatar({
   name,
@@ -44,12 +29,20 @@ export function Avatar({
     // eslint-disable-next-line @next/next/no-img-element
     return <img src={imageUrl} alt={`Photo de ${name}`} width={size} height={size} style={style} className="shrink-0 rounded-full object-cover" />;
   }
+  const presetImage = avatarPresetImage(preset);
+  if (presetImage) {
+    return (
+      <span style={style} className="relative grid shrink-0 place-items-center overflow-hidden rounded-full bg-[#1d1040]">
+        <Image src={presetImage} alt={`Avatar de ${name}`} width={size} height={size} style={{ width: "88%", height: "88%", objectFit: "contain" }} />
+      </span>
+    );
+  }
   return (
     <span
       role="img"
       aria-label={name ? `Avatar de ${name}` : emptyLabel}
       style={style}
-      className={`grid shrink-0 place-items-center rounded-full font-black ${presetStyle(preset)}`}
+      className="grid shrink-0 place-items-center rounded-full bg-[#5a3fa8] font-black text-white"
     >
       {initialOf(name)}
     </span>

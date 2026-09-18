@@ -5,7 +5,7 @@ export const roomMemberViewSchema = z.object({
   pseudo: z.string(),
   accountName: z.string().nullable().default(null),
   displayName: z.string().nullable().default(null),
-  avatarPreset: z.string().default("orbit-1"),
+  avatarPreset: z.string().default("avatar-1"),
   avatarPath: z.string().nullable().default(null),
   isGuest: z.boolean().default(false),
   seat: z.union([z.literal(0), z.literal(1)]),
