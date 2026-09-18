@@ -85,4 +85,19 @@ on conflict (user_id) do update set role = excluded.role, status = excluded.stat
 
 execFileSync("supabase", ["db", "query", "--local", profilesSql], { stdio: "ignore", env: supabaseEnv });
 execFileSync("supabase", ["db", "query", "--local", membersSql], { stdio: "ignore", env: supabaseEnv });
+
+// Un salon d'accueil générique résiduel ferait basculer les pages de jeu en
+// mode groupe et casserait les recettes « créer / rejoindre ». Le fixture le
+// referme pour repartir d'un état propre.
+const userIds = users.map((user) => sqlLiteral(user.id)).join(", ");
+const closeLobbiesSql = `update private.rooms
+set status = 'closed', current_match_id = null, version = version + 1
+where status = 'waiting'
+  and game_slug is null
+  and exists (
+    select 1 from private.room_members rm
+    where rm.room_id = private.rooms.id and rm.user_id in (${userIds})
+  )`;
+execFileSync("supabase", ["db", "query", "--local", closeLobbiesSql], { stdio: "ignore", env: supabaseEnv });
+
 console.log(users.map((user) => `${user.pseudo}: ${user.email} (${user.id})`).join("\n"));

@@ -5,22 +5,17 @@ requireE2ECredentials(test);
 test.setTimeout(120_000);
 
 async function openSalon(page: Page) {
-  await page.getByRole("button", { name: "Salon" }).click();
+  await page.locator(".salon-trigger").click();
 }
 
 /** Un compte ne garde qu'un salon générique actif : on le libère avant le test. */
 async function resetLobby(page: Page) {
-  await openSalon(page);
-  const door = page.getByRole("button", { name: "Quitter le groupe" });
-  const hasLobby = await door.waitFor({ state: "visible", timeout: 6000 }).then(() => true).catch(() => false);
-  if (hasLobby) {
+  await expect(page.locator('.salon-anchor[data-salon-ready="true"]')).toBeVisible({ timeout: 15_000 });
+  if (await page.locator(".salon-chip").count()) {
     page.once("dialog", (dialog) => void dialog.accept());
-    await door.click();
-    await expect(page.getByRole("button", { name: "Salon" })).toBeVisible({ timeout: 10_000 });
-    return;
+    await page.locator(".salon-door").click();
+    await expect(page.locator(".salon-trigger")).toBeVisible({ timeout: 10_000 });
   }
-  await page.keyboard.press("Escape");
-  await expect(page.getByRole("button", { name: "Salon" })).toBeVisible({ timeout: 5_000 });
 }
 
 test("crée un salon depuis l'accueil, invite, détecte le groupe et lance un jeu", async ({ browser, page: alice }) => {
@@ -31,21 +26,26 @@ test("crée un salon depuis l'accueil, invite, détecte le groupe et lance un je
     await resetLobby(alice);
     await openSalon(alice);
     await alice.getByRole("button", { name: /Créer un salon/ }).click();
-    await expect(alice.locator(".salon-code")).toBeVisible({ timeout: 15_000 });
-    const code = (await alice.locator(".salon-code").textContent())?.trim() ?? "";
+    // Le bouton laisse place au badge de groupe : code + ronds + porte.
+    await expect(alice.locator(".salon-chip")).toBeVisible({ timeout: 15_000 });
+    const code = (await alice.locator(".salon-chip-code").textContent({ timeout: 10_000 }))?.trim() ?? "";
     expect(code).toMatch(/^[A-Z0-9]{6}$/);
+
+    // Ouvre la petite fenêtre : une place prise, une place vide.
+    await alice.locator(".salon-chip-main").click();
+    await expect(alice.locator(".salon-popover")).toBeVisible();
     await expect(alice.locator(".salon-slot[data-filled='true']")).toHaveCount(1);
     await expect(alice.locator(".salon-slot[data-filled='false']")).toHaveCount(1);
 
     await signIn(bob, bobEmail, "/");
     await resetLobby(bob);
     await openSalon(bob);
-    await bob.getByRole("button", { name: /Rejoindre/ }).first().click();
+    await bob.getByRole("button", { name: "Rejoindre" }).click();
     await bob.getByLabel("Code du salon").fill(code);
     await bob.getByRole("button", { name: "Rejoindre" }).click();
-    // L'invité voit le groupe sans le code d'invitation.
-    await expect(bob.locator(".salon-games")).toBeVisible({ timeout: 15_000 });
-    await expect(bob.locator(".salon-code")).toHaveCount(0);
+    // L'invité voit le badge sans le code d'invitation.
+    await expect(bob.locator(".salon-chip")).toBeVisible({ timeout: 15_000 });
+    await expect(bob.locator(".salon-chip-code")).toHaveCount(0);
 
     // La place vide de l'hôte se remplit en direct.
     await expect(alice.locator(".salon-slot[data-filled='true']")).toHaveCount(2, { timeout: 15_000 });
@@ -84,25 +84,27 @@ test("le bouton porte fait quitter le groupe et libère la place", async ({ brow
     await resetLobby(alice);
     await openSalon(alice);
     await alice.getByRole("button", { name: /Créer un salon/ }).click();
-    await expect(alice.locator(".salon-code")).toBeVisible({ timeout: 15_000 });
-    const code = (await alice.locator(".salon-code").textContent())?.trim() ?? "";
+    await expect(alice.locator(".salon-chip")).toBeVisible({ timeout: 15_000 });
+    const code = (await alice.locator(".salon-chip-code").textContent({ timeout: 10_000 }))?.trim() ?? "";
 
     await signIn(bob, bobEmail, "/");
     await resetLobby(bob);
     await openSalon(bob);
-    await bob.getByRole("button", { name: /Rejoindre/ }).first().click();
+    await bob.getByRole("button", { name: "Rejoindre" }).click();
     await bob.getByLabel("Code du salon").fill(code);
     await bob.getByRole("button", { name: "Rejoindre" }).click();
-    await expect(bob.locator(".salon-games")).toBeVisible({ timeout: 15_000 });
+    await expect(bob.locator(".salon-chip")).toBeVisible({ timeout: 15_000 });
 
     // L'invité quitte : la place se libère chez l'hôte.
-    await bob.getByRole("button", { name: "Quitter le groupe" }).click();
-    await expect(bob.getByRole("button", { name: "Salon" })).toBeVisible({ timeout: 15_000 });
+    await bob.locator(".salon-door").click();
+    await expect(bob.locator(".salon-trigger")).toBeVisible({ timeout: 15_000 });
+
+    await alice.locator(".salon-chip-main").click();
     await expect(alice.locator(".salon-slot[data-filled='true']")).toHaveCount(1, { timeout: 15_000 });
 
     // L'hôte ferme à son tour : plus de salon actif.
-    await alice.getByRole("button", { name: "Quitter le groupe" }).click();
-    await expect(alice.getByRole("button", { name: "Salon" })).toBeVisible({ timeout: 15_000 });
+    await alice.locator(".salon-door").click();
+    await expect(alice.locator(".salon-trigger")).toBeVisible({ timeout: 15_000 });
   } finally {
     await bobContext.close();
   }

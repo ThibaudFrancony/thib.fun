@@ -122,6 +122,9 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
 
 .home-hero > *:not(.home-hero-bg) { position: relative; z-index: 1; }
 
+/* Le header doit passer au-dessus du carrousel 3D pour que la fenêtre « Salon » reste cliquable. */
+.home-hero > .home-header { z-index: 3; }
+
 .home-header {
   display: flex;
   flex-wrap: wrap;
@@ -131,6 +134,7 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
   width: min(100% - 1.5rem, 1440px);
   margin: 0 auto;
   padding: clamp(0.75rem, 2vw, 1.4rem) clamp(0.5rem, 1.5vw, 1rem);
+  z-index: 2;
 }
 
 .home-brand {
@@ -977,7 +981,7 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
   .geo-hx-bg-image { object-position: 50% 42%; }
 }
 
-/* --- Salon d'accueil : bouton, modale façon Apple, groupe --- */
+/* --- Salon d'accueil : bouton, fenêtre ancrée, badge de groupe --- */
 
 .salon-trigger {
   border: 0;
@@ -986,51 +990,89 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
   cursor: pointer;
 }
 
-.salon-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 60;
-  display: grid;
-  place-items: center;
-  padding: 1.25rem;
-  background: rgba(10, 4, 24, 0.58);
-  backdrop-filter: blur(16px) saturate(140%);
-  animation: salonFade 180ms ease;
-}
+.salon-anchor { position: relative; display: inline-flex; }
 
-.salon-dialog {
-  position: relative;
-  width: min(100%, 30rem);
-  max-height: min(92vh, 44rem);
-  overflow: auto;
-  padding: 1.9rem;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 26px;
-  background: linear-gradient(155deg, rgba(50, 22, 96, 0.97), rgba(22, 10, 48, 0.99));
-  color: #fff;
-  box-shadow: 0 30px 80px rgba(8, 2, 20, 0.62), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  animation: salonPop 220ms cubic-bezier(0.2, 0.9, 0.3, 1.25);
-}
-
-.salon-dialog-wide { width: min(100%, 34rem); }
-
-.salon-close {
+.salon-popover {
   position: absolute;
-  top: 0.9rem;
-  right: 0.9rem;
-  display: grid;
-  place-items: center;
-  width: 2.25rem;
-  height: 2.25rem;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.06);
+  top: calc(100% + 0.55rem);
+  right: 0;
+  z-index: 80;
+  width: min(92vw, 24rem);
+  max-height: min(80vh, 38rem);
+  overflow: auto;
+  padding: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 20px;
+  background: linear-gradient(155deg, rgba(48, 22, 92, 0.99), rgba(24, 12, 50, 0.99));
+  color: #fff;
+  box-shadow: 0 22px 60px rgba(6, 2, 16, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  animation: salonPop 180ms cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+
+/* Badge inline qui remplace le bouton une fois le groupe formé. */
+.salon-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.2rem 0.3rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  background: rgba(20, 8, 55, 0.45);
+  backdrop-filter: blur(8px);
+}
+
+.salon-chip-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 40px;
+  padding: 0.15rem 0.5rem 0.15rem 0.2rem;
+  border: 0;
+  border-radius: 999px;
+  background: none;
   color: #fff;
   cursor: pointer;
-  transition: background-color 160ms ease, border-color 160ms ease;
 }
 
-.salon-close:hover { background: rgba(255, 255, 255, 0.16); }
+.salon-chip-main:hover { background: rgba(255, 255, 255, 0.08); }
+
+.salon-chip-avatars { display: inline-flex; }
+
+.salon-chip-avatar {
+  display: grid;
+  place-items: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff40c8, #8b5cf6);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 800;
+  box-shadow: 0 0 0 2px rgba(20, 8, 55, 0.8);
+}
+
+.salon-chip-avatar + .salon-chip-avatar { margin-left: -0.55rem; }
+.salon-chip-avatar:first-child { position: relative; z-index: 1; }
+.salon-chip-avatar[data-filled="false"] { background: rgba(255, 255, 255, 0.1); box-shadow: 0 0 0 2px rgba(20, 8, 55, 0.8), inset 0 0 0 1px rgba(255, 255, 255, 0.3); }
+
+.salon-chip-code { font-size: 0.82rem; font-weight: 800; letter-spacing: 0.16em; }
+
+.salon-door {
+  display: grid;
+  place-items: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  flex: none;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: #fff;
+  cursor: pointer;
+  transition: color 160ms ease, background-color 160ms ease, transform 160ms ease;
+}
+
+.salon-door:hover:not(:disabled) { transform: scale(1.05); background: rgba(255, 60, 90, 0.22); color: #ff7a9a; }
+.salon-door:disabled { opacity: 0.5; cursor: progress; }
 
 .salon-kicker {
   margin: 0;
@@ -1142,26 +1184,10 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
 .salon-button-ghost { border: 1px solid rgba(255, 255, 255, 0.22); background: rgba(255, 255, 255, 0.06); color: #fff; }
 .salon-button-ghost:hover:not(:disabled) { border-color: rgba(255, 255, 255, 0.42); background: rgba(255, 255, 255, 0.12); }
 
-.salon-group-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; padding-right: 2.4rem; }
+.salon-group-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+.salon-group-head .salon-title { font-size: clamp(1.25rem, 3.5vw, 1.6rem); }
 
-.salon-door {
-  display: grid;
-  place-items: center;
-  width: 2.9rem;
-  height: 2.9rem;
-  flex: none;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.06);
-  color: #fff;
-  cursor: pointer;
-  transition: color 160ms ease, border-color 160ms ease, background-color 160ms ease, transform 160ms ease;
-}
-
-.salon-door:hover:not(:disabled) { transform: translateY(-1px); border-color: rgba(255, 90, 120, 0.9); background: rgba(255, 60, 90, 0.18); color: #ff7a9a; }
-.salon-door:disabled { opacity: 0.5; cursor: progress; }
-
-.salon-slots { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin: 1.3rem 0 0.4rem; }
+.salon-slots { display: grid; grid-template-columns: 1fr; gap: 0.55rem; margin: 1rem 0 0.4rem; }
 
 .salon-slot {
   display: flex;
@@ -1231,6 +1257,21 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
 
 .group-room-banner { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
 
+.salon-link-danger {
+  margin-top: 0.9rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #ff8aa8;
+  font-size: 0.82rem;
+  font-weight: 750;
+  text-align: left;
+  cursor: pointer;
+  transition: color 160ms ease;
+}
+
+.salon-link-danger:hover { color: #ff5a7a; text-decoration: underline; }
+
 @keyframes salonFade {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -1239,6 +1280,16 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
 @keyframes salonPop {
   from { opacity: 0; transform: translateY(14px) scale(0.97); }
   to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (max-width: 639px) {
+  .salon-popover {
+    position: fixed;
+    top: 5.25rem;
+    left: 0.75rem;
+    right: 0.75rem;
+    width: auto;
+  }
 }
 
 @media (max-width: 520px) {

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { postJson } from "@/lib/client-request";
 import { useUserRealtime } from "@/lib/realtime";
 import type { RoomView } from "@/server/rooms/schemas";
 
@@ -12,6 +13,7 @@ export type GroupRoomState = {
   isHost: boolean;
   memberCount: number;
   refresh: () => Promise<RoomView | null>;
+  leave: () => Promise<boolean>;
 };
 
 type Keyed<T> = { roomId: string | null; value: T };
@@ -72,6 +74,23 @@ export function useGroupRoom(roomId: string | null, options: { redirectOnStart?:
     { enabled: Boolean(roomId) },
   );
 
+  const leave = useCallback(async (): Promise<boolean> => {
+    const id = roomIdRef.current;
+    if (!id) return true;
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const current = await refresh();
+      if (!current) return false;
+      const result = await postJson(`/salons/${id}/actions`, {
+        commandId: crypto.randomUUID(),
+        expectedVersion: current.version,
+        action: { type: "LEAVE" },
+      });
+      if (result.ok) return true;
+      if (result.status !== 409) return false;
+    }
+    return false;
+  }, [refresh]);
+
   const room = roomState.roomId === roomId ? roomState.value : null;
   const error = errorState.roomId === roomId ? errorState.value : null;
   const loading = loadingState.roomId === roomId ? loadingState.value : Boolean(roomId);
@@ -83,5 +102,6 @@ export function useGroupRoom(roomId: string | null, options: { redirectOnStart?:
     isHost: Boolean(room && room.hostId === room.viewerId),
     memberCount: room?.members.length ?? 0,
     refresh,
+    leave,
   };
 }

@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { postJson } from "@/lib/client-request";
 import { useGroupRoom } from "@/lib/group-room";
 
 /**
@@ -22,16 +21,9 @@ export function GroupRoomBanner({ roomId }: { roomId: string }) {
     setBusy(true);
     setError(null);
     try {
-      const result = await postJson<{ closed?: boolean }>(`/salons/${roomId}/actions`, {
-        commandId: crypto.randomUUID(),
-        expectedVersion: room.version,
-        action: { type: "LEAVE" },
-      });
-      if (!result.ok) {
-        setError(result.message);
-        return;
-      }
-      router.push("/");
+      const ok = await group.leave();
+      if (ok) router.push("/");
+      else setError("Impossible de quitter le groupe.");
     } finally {
       setBusy(false);
     }
