@@ -167,58 +167,88 @@ export type ChatRealtimeEvent =
   | { type: "friend" }
   | { type: "reconnected" };
 
+/** Abonnement testable indépendamment du rendu React. */
+export function subscribeChatRealtime(
+  supabase: NonNullable<ReturnType<typeof getBrowserSupabase>>,
+  userId: string,
+  onEvent: (event: ChatRealtimeEvent) => void,
+): () => void {
+  let cancelled = false;
+  let channel: ReturnType<typeof supabase.channel> | null = null;
+  let retryTimer: ReturnType<typeof setTimeout> | null = null;
+
+  function retry() {
+    if (cancelled || retryTimer !== null) return;
+    retryTimer = setTimeout(() => {
+      retryTimer = null;
+      void connect();
+    }, 3_000);
+  }
+
+  async function connect() {
+    if (channel) {
+      const previous = channel;
+      channel = null;
+      await supabase.removeChannel(previous);
+    }
+    try {
+      const { data, error } = await supabase.auth.getUser();
+      if (cancelled) return;
+      if (error || data.user?.id !== userId) {
+        retry();
+        return;
+      }
+      // getUser vérifie la session ; setAuth transmet explicitement le JWT
+      // courant à Realtime avant son contrôle d'accès au canal privé.
+      await supabase.realtime.setAuth();
+      if (cancelled) return;
+      const current = supabase
+        .channel(`chat:${userId}`, { config: { private: true } })
+        .on("broadcast", { event: "chat.updated" }, ({ payload }: { payload: unknown }) => {
+          if (cancelled || channel !== current) return;
+          const candidate = payload as { id?: unknown } | null;
+          if (!candidate || typeof candidate.id !== "string") return;
+          onEvent({ type: "chat", conversationId: candidate.id });
+        })
+        .on("broadcast", { event: "friend.updated" }, () => {
+          if (!cancelled && channel === current) onEvent({ type: "friend" });
+        });
+      channel = current;
+      current.subscribe((status: string) => {
+        if (cancelled || channel !== current) return;
+        if (status === "SUBSCRIBED") {
+          if (retryTimer !== null) clearTimeout(retryTimer);
+          retryTimer = null;
+          // Relire aussi au PREMIER abonnement : un message peut arriver
+          // entre le chargement initial et la connexion WebSocket.
+          onEvent({ type: "reconnected" });
+        } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+          retry();
+        }
+      });
+    } catch {
+      retry();
+    }
+  }
+
+  void connect();
+  return () => {
+    cancelled = true;
+    if (retryTimer !== null) clearTimeout(retryTimer);
+    if (channel) void supabase.removeChannel(channel);
+  };
+}
+
 export function useChatRealtime(userId: string | null, onEvent: (event: ChatRealtimeEvent) => void): void {
   const handlerRef = useRef(onEvent);
   useEffect(() => {
     handlerRef.current = onEvent;
   }, [onEvent]);
-
   useEffect(() => {
     if (!userId) return;
     const supabase = getBrowserSupabase();
     if (!supabase) return;
-    let cancelled = false;
-    let channel: ReturnType<typeof supabase.channel> | null = null;
-    let hasSubscribed = false;
-
-    void (async () => {
-      // Le canal est privé : la session doit être hydratée dans le client
-      // navigateur avant `subscribe`, sinon Realtime refuse l'abonnement et
-      // aucun `chat.updated` n'arrive (le polling de secours masque le bug).
-      try {
-        const { data } = await supabase.auth.getUser();
-        if (cancelled || !data.user) return;
-      } catch {
-        return;
-      }
-
-      channel = supabase
-        .channel(`chat:${userId}`, { config: { private: true } })
-        .on("broadcast", { event: "chat.updated" }, ({ payload }: { payload: unknown }) => {
-          if (cancelled) return;
-          const candidate = payload as { id?: unknown } | null;
-          if (!candidate || typeof candidate.id !== "string") return;
-          handlerRef.current({ type: "chat", conversationId: candidate.id });
-        })
-        .on("broadcast", { event: "friend.updated" }, () => {
-          if (cancelled) return;
-          handlerRef.current({ type: "friend" });
-        });
-      try {
-        await channel.subscribe((status: unknown) => {
-          if (cancelled || status !== "SUBSCRIBED") return;
-          if (hasSubscribed) handlerRef.current({ type: "reconnected" });
-          hasSubscribed = true;
-        });
-      } catch {
-        // Le polling de secours prend le relais.
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-      if (channel) void supabase.removeChannel(channel);
-    };
+    return subscribeChatRealtime(supabase, userId, (event) => handlerRef.current(event));
   }, [userId]);
 }
 

@@ -17,12 +17,12 @@ afterEach(() => {
 });
 
 describe("optimizeChatImage", () => {
-  it("convertit un outil de décodage indisponible en erreur stable", async () => {
+  it("distingue un outil de décodage indisponible d'une image invalide", async () => {
     vi.spyOn(console, "error").mockImplementation(() => undefined);
     imageOptimizerTools.mockImplementation(() => {
       throw new Error("Cannot find module 'sharp'");
     });
-    await expect(optimizeChatImage(Buffer.from("x"))).rejects.toThrow("IMAGE_INVALID");
+    await expect(optimizeChatImage(Buffer.from("x"))).rejects.toThrow("IMAGE_UNAVAILABLE");
   });
 
   it("refuse un type de contenu non autorisé", async () => {

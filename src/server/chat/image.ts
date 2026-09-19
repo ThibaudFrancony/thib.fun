@@ -22,12 +22,21 @@ export type OptimizedChatImage = {
  * mais le serveur ne fait jamais confiance au fichier reçu.
  */
 export async function optimizeChatImage(input: Buffer): Promise<OptimizedChatImage> {
+  // Une panne de chargement du décodeur est un problème serveur, pas un
+  // fichier invalide. Ne pas la masquer par IMAGE_INVALID.
+  let tools: ReturnType<typeof imageOptimizerTools>;
   try {
-    const { detectContentType, getSharp } = imageOptimizerTools();
+    tools = imageOptimizerTools();
+  } catch {
+    throw new Error("IMAGE_UNAVAILABLE");
+  }
+  if (input.byteLength > CHAT_IMAGE_MAX_INPUT_BYTES) throw new Error("IMAGE_TOO_LARGE");
+  try {
+    const { detectContentType, getSharp } = tools;
     const detected = await detectContentType(input);
     if (!detected || !ALLOWED_IMAGE_CONTENT_TYPES.has(detected)) throw new Error("IMAGE_INVALID");
 
-    const sharp = getSharp(1, false);
+    const sharp = getSharp();
     const metadata = await sharp(input, {
       limitInputPixels: CHAT_IMAGE_MAX_SOURCE_DIMENSION * CHAT_IMAGE_MAX_SOURCE_DIMENSION,
     }).metadata();

@@ -1,19 +1,21 @@
 import "server-only";
 
-import { createRequire } from "node:module";
-
-type ImageOptimizerTools = typeof import("next/dist/server/image-optimizer");
-
-const requireFromServer = createRequire(import.meta.url);
+import sharp from "sharp";
 
 /**
- * Le module Next expose `detectContentType` et `getSharp` depuis ses
- * dépendances serveur. Le require différé évite d'embarquer les binaires
- * natifs dans le bundle Webpack.
+ * Import statique : Next trace sharp et ses binaires dans les fonctions
+ * déployées. Un require construit dynamiquement les omettait du bundle.
+ * La signature ne remplace jamais le décodage/réencodage par sharp.
  */
-export function imageOptimizerTools(): Pick<ImageOptimizerTools, "detectContentType" | "getSharp"> {
-  const moduleName = ["next", "dist", "server", "image-optimizer"].join("/");
-  return requireFromServer(moduleName) as Pick<ImageOptimizerTools, "detectContentType" | "getSharp">;
+export function imageOptimizerTools() {
+  return { detectContentType, getSharp: () => sharp };
+}
+
+function detectContentType(input: Buffer): string | null {
+  if (input.subarray(0, 3).equals(Buffer.from([0xff, 0xd8, 0xff]))) return "image/jpeg";
+  if (input.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) return "image/png";
+  if (input.toString("ascii", 0, 4) === "RIFF" && input.toString("ascii", 8, 12) === "WEBP") return "image/webp";
+  return null;
 }
 
 export const ALLOWED_IMAGE_CONTENT_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);

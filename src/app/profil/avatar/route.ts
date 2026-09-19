@@ -80,7 +80,7 @@ export async function POST(request: Request) {
       return jsonError("INVALID_REQUEST", 400, "Le contenu réel de l'image ne correspond pas à son type.");
     }
 
-    const sharp = getSharp(1, false);
+    const sharp = getSharp();
     const metadata = await sharp(input, { limitInputPixels: MAX_DIMENSION * MAX_DIMENSION }).metadata();
     if (!metadata.width || !metadata.height || metadata.width > MAX_DIMENSION || metadata.height > MAX_DIMENSION) {
       return jsonError("INVALID_REQUEST", 400, "Les dimensions maximales sont de 4096 × 4096 pixels.");

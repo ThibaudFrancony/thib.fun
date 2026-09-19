@@ -56,6 +56,7 @@ export function ChatDock() {
   const refreshTimerRef = useRef<number | null>(null);
   const conversationTimersRef = useRef<Map<string, number>>(new Map());
   const inflightRef = useRef<Map<string, Promise<ChatConversationPayload>>>(new Map());
+  const pendingRefreshRef = useRef(new Set<string>());
   const prefetchedRef = useRef(false);
   const seenRef = useRef<{ general: number; friends: Map<string, number>; requests: number } | null>(null);
 
@@ -128,17 +129,27 @@ export function ChatDock() {
   const fetchConversationPage = useCallback(async (conversationId: string, options: { before?: number } = {}) => {
     const key = `${conversationId}:${options.before ?? "latest"}`;
     const inflight = inflightRef.current.get(key);
-    if (inflight) return inflight;
+    if (inflight) {
+      // Une invalidation pendant un GET doit provoquer une seconde lecture,
+      // car le snapshot déjà en vol peut précéder le nouveau message.
+      if (!options.before) pendingRefreshRef.current.add(key);
+      return inflight;
+    }
     const task = (async () => {
       try {
-        const payload = await fetchChatMessages(conversationId, { before: options.before, limit: CHAT_PAGE_SIZE });
-        setConversations((previous) => ({
-          ...previous,
-          [conversationId]: mergeConversationPage(previous[conversationId], payload, options),
-        }));
+        let payload: ChatConversationPayload;
+        do {
+          pendingRefreshRef.current.delete(key);
+          payload = await fetchChatMessages(conversationId, { before: options.before, limit: CHAT_PAGE_SIZE });
+          setConversations((previous) => ({
+            ...previous,
+            [conversationId]: mergeConversationPage(previous[conversationId], payload, options),
+          }));
+        } while (pendingRefreshRef.current.has(key));
         return payload;
       } finally {
         inflightRef.current.delete(key);
+        pendingRefreshRef.current.delete(key);
       }
     })();
     inflightRef.current.set(key, task);
@@ -494,11 +505,11 @@ export function ChatDock() {
     const ping = () => {
       if (document.visibilityState === "visible") void recordChatActivity().catch(() => undefined);
     };
-    const refreshActiveIfStale = () => {
+    const refreshActive = () => {
+      if (!openRef.current || document.hidden || viewRef.current.type === "friends") return;
       const conversationId = activeIdRef.current;
       const entry = conversationId ? cacheRef.current[conversationId] : null;
       if (!conversationId || !entry) return;
-      if (!isConversationStale(entry)) return;
       void fetchConversationPage(conversationId)
         .then(() => markActiveRead(conversationId))
         .catch(() => undefined);
@@ -508,23 +519,25 @@ export function ChatDock() {
     const pollTimer = window.setInterval(() => {
       if (document.visibilityState !== "visible") return;
       void refreshSummary();
-      // Filet de sécurité si un `chat.updated` est manqué : la conversation
-      // ouverte se revalide toute seule au lieu d'exiger un rechargement.
-      refreshActiveIfStale();
     }, 30_000);
+    // Secours borné si le WebSocket est coupé, seulement pour le fil visible.
+    const messagesTimer = window.setInterval(refreshActive, 5_000);
     const onVisible = () => {
       if (document.visibilityState !== "visible") return;
       ping();
       void refreshSummary();
-      refreshActiveIfStale();
+      refreshActive();
     };
     document.addEventListener("visibilitychange", onVisible);
     window.addEventListener("online", onVisible);
+    window.addEventListener("focus", onVisible);
     return () => {
       window.clearInterval(presenceTimer);
       window.clearInterval(pollTimer);
+      window.clearInterval(messagesTimer);
       document.removeEventListener("visibilitychange", onVisible);
       window.removeEventListener("online", onVisible);
+      window.removeEventListener("focus", onVisible);
     };
   }, [available, refreshSummary, fetchConversationPage, markActiveRead]);
 
@@ -567,7 +580,10 @@ export function ChatDock() {
     const next = !openRef.current;
     setOpen(next);
     if (!next) return;
-    if (activeIdRef.current && cacheRef.current[activeIdRef.current]) return;
+    if (activeIdRef.current && cacheRef.current[activeIdRef.current]) {
+      void activate(activeIdRef.current);
+      return;
+    }
     const activeView = viewRef.current;
     if (activeView.type === "direct") {
       const friend = summaryRef.current?.friends.find((entry) => entry.userId === activeView.friendId);
