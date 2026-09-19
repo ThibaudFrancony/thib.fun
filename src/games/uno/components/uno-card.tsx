@@ -46,11 +46,12 @@ type UnoCardCommonProps = {
   /** Met en avant la carte qui vient d'être piochée. */
   drawn?: boolean;
   className?: string;
+  style?: React.CSSProperties;
 };
 
 type UnoCardProps = UnoCardCommonProps & (
-  | { faceDown: true; card?: null; label?: string; onClick?: () => void }
-  | { faceDown?: false; card: UnoCardData; label?: string; onClick?: () => void }
+  | { faceDown: true; card?: null; label?: string; onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void }
+  | { faceDown?: false; card: UnoCardData; label?: string; onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void }
 );
 
 function UnoCardVisual({ card, faceDown }: { card?: UnoCardData | null; faceDown?: boolean }) {
@@ -74,7 +75,7 @@ function UnoCardVisual({ card, faceDown }: { card?: UnoCardData | null; faceDown
 }
 
 export function UnoCard(props: UnoCardProps) {
-  const { playable = false, disabled = false, shake = false, drawn = false, className = "", onClick, label } = props;
+  const { playable = false, disabled = false, shake = false, drawn = false, className = "", style, onClick, label } = props;
   const classes = [
     "uno-card",
     playable ? "uno-card--playable" : "",
@@ -88,13 +89,13 @@ export function UnoCard(props: UnoCardProps) {
 
   if (onClick) {
     return (
-      <button type="button" className={classes} aria-label={accessibleLabel} disabled={disabled} onClick={onClick}>
+      <button type="button" className={classes} style={style} aria-label={accessibleLabel} disabled={disabled} onClick={onClick}>
         <UnoCardVisual card={props.card} faceDown={props.faceDown} />
       </button>
     );
   }
   return (
-    <span role="img" aria-label={accessibleLabel} className={classes}>
+    <span role="img" aria-label={accessibleLabel} className={classes} style={style}>
       <UnoCardVisual card={props.card} faceDown={props.faceDown} />
     </span>
   );
