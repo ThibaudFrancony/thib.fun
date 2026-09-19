@@ -10,8 +10,8 @@ function readAuthForm(): string {
 describe("auth-form navigation post-authentification", () => {
   it("utilise une navigation complète du navigateur après succès, sans router RSC", () => {
     const source = readAuthForm();
-    expect(source).toContain('window.location.href = "/profil"');
     expect(source).toContain('window.location.href = safeNext(searchParams.get("next"))');
+    expect(source).not.toContain('window.location.href = "/profil"');
     expect(source).not.toContain("router.push");
     expect(source).not.toContain("router.refresh");
     expect(source).not.toContain("useRouter");

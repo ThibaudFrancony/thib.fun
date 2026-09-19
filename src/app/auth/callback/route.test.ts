@@ -25,7 +25,7 @@ describe("callback d'authentification", () => {
       "/connexion",
     ]) {
       const response = await GET(new NextRequest(`https://jeu.example/auth/callback?code=ok&next=${encodeURIComponent(value)}`));
-      expect(response.headers.get("location")).toBe("https://jeu.example/profil");
+      expect(response.headers.get("location")).toBe("https://jeu.example/");
     }
   });
 

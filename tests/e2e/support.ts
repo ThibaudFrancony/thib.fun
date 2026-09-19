@@ -29,6 +29,8 @@ export async function signIn(page: Page, email: string, nextPath?: string): Prom
   await page.getByRole("textbox", { name: "E-mail" }).fill(email);
   await page.getByRole("textbox", { name: "Mot de passe" }).fill(e2ePassword);
   await page.getByRole("button", { name: "Entrer à la table" }).click();
-  await page.waitForURL("**/profil");
+  // La connexion ramène à l'accueil (sauf `next` allowlisté) : les scénarios
+  // rejoignent ensuite leur page via `nextPath`.
+  await page.waitForURL(/\/$/);
   if (nextPath) await page.goto(nextPath);
 }

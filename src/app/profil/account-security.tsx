@@ -85,7 +85,7 @@ export function AccountSecurity({ email: initialEmail, authenticated, isGuest }:
       const result = await supabase.auth.resend({
         type: "signup",
         email: email.trim(),
-        options: { emailRedirectTo: `${window.location.origin}/auth/callback?next=%2Fprofil` },
+        options: { emailRedirectTo: `${window.location.origin}/auth/callback?next=%2F` },
       });
       if (result.error) {
         setError("Le message de confirmation n'a pas pu être renvoyé. Réessaie plus tard.");

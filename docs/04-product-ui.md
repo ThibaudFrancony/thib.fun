@@ -26,7 +26,7 @@ Base proposée : fond crème `#F7F7F2`, surfaces blanches, texte `#17211B`, seco
 | `/entrainement/syllabes` | membre | solo BombParty |
 | `/admin/invitations` | admin | créer/copier/révoquer liens, pas envoi automatique |
 
-Après connexion, conserver uniquement un `returnTo` relatif allowlisté pour reprendre un lien salon. Jamais une redirection externe libre. Un dépôt GitHub privé ne rend pas automatiquement le site privé : toutes les routes et données métier vérifient l'admission.
+Après connexion, conserver uniquement un `returnTo` relatif allowlisté pour reprendre un lien salon. Sans `returnTo` valide, la connexion/inscription e-mail, la confirmation e-mail et le renvoi de confirmation ramènent à l'accueil (`/`), jamais au profil. Jamais une redirection externe libre. Un dépôt GitHub privé ne rend pas automatiquement le site privé : toutes les routes et données métier vérifient l'admission.
 
 ## 3. Accueil et navigation
 

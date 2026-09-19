@@ -26,16 +26,16 @@ function isSafeRoute(pathname: string): boolean {
 }
 
 function safeNext(value: string | null, origin: string): string {
-  if (!value || value.length > 2048 || CONTROL_CHARACTERS.test(value) || value.includes("\\")) return "/profil";
+  if (!value || value.length > 2048 || CONTROL_CHARACTERS.test(value) || value.includes("\\")) return "/";
   const decoded = decodeNext(value);
-  if (!decoded || !decoded.startsWith("/") || decoded.startsWith("//") || CONTROL_CHARACTERS.test(decoded) || decoded.includes("\\")) return "/profil";
+  if (!decoded || !decoded.startsWith("/") || decoded.startsWith("//") || CONTROL_CHARACTERS.test(decoded) || decoded.includes("\\")) return "/";
 
   try {
     const resolved = new URL(decoded, origin);
-    if (resolved.origin !== new URL(origin).origin || resolved.username || resolved.password || !isSafeRoute(resolved.pathname)) return "/profil";
+    if (resolved.origin !== new URL(origin).origin || resolved.username || resolved.password || !isSafeRoute(resolved.pathname)) return "/";
     return `${resolved.pathname}${resolved.search}${resolved.hash}`;
   } catch {
-    return "/profil";
+    return "/";
   }
 }
 

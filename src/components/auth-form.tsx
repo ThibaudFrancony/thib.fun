@@ -111,7 +111,7 @@ function AuthFormFields({ initialMode }: { initialMode: "signIn" | "signUp" }) {
             email,
             password,
             options: {
-              emailRedirectTo: `${window.location.origin}/auth/callback?next=/profil`,
+              emailRedirectTo: `${window.location.origin}/auth/callback?next=/`,
             },
           });
       if (result.error) {
@@ -119,15 +119,15 @@ function AuthFormFields({ initialMode }: { initialMode: "signIn" | "signUp" }) {
       } else if (mode === "signUp") {
         if (result.data.session && await provisionAccount()) {
           // Full navigation lets SSR consume the auth cookies before rendering.
-          // eslint-disable-next-line @next/next/no-location-assign-relative-destination
-          window.location.href = "/profil";
+          // Sans `next` valide, on revient à l'accueil plutôt qu'au profil.
+          window.location.href = safeNext(searchParams.get("next"));
         } else if (!result.data.session) {
           setNotice("Compte créé. Vérifie ton e-mail pour activer ta session, puis reconnecte-toi.");
         }
       } else if (await provisionAccount()) {
         // Full navigation lets SSR consume the auth cookies before rendering.
-        // eslint-disable-next-line @next/next/no-location-assign-relative-destination
-        window.location.href = "/profil";
+        // Sans `next` valide, on revient à l'accueil plutôt qu'au profil.
+        window.location.href = safeNext(searchParams.get("next"));
       }
     } catch {
       setError("Connexion impossible pour le moment. Vérifie ta connexion puis réessaie.");

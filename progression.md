@@ -41,6 +41,16 @@ Ce fichier décrit la réalité du dépôt et non les seules capacités prévues
 - Limites : contrôle sur code uniquement, sans recette navigateur ; l'affichage reste en majuscules via CSS.
 - Contradiction : aucune avec `AGENTS.md`.
 
+### 19/09/2026 — Connexion : retour à l'accueil plutôt qu'au profil
+
+- Demande utilisateur : après login, revenir sur l'accueil plutôt que sur le profil.
+- Ancienne règle : la connexion/inscription e-mail redirigeait systématiquement vers `/profil` (changement produit précédent, rappelé dans l'audit D24), et le repli du callback `/auth/callback` était `/profil`.
+- Nouvelle règle : sans `next` allowlisté valide, la connexion/inscription e-mail, la confirmation e-mail (`next=/`), le renvoi de confirmation et le repli du callback ramènent à `/`. Un `next` relatif allowlisté (ex. lien salon) reste honoré côté client (`safeNext`, repli `/`) comme côté callback, conformément à `docs/04-product-ui.md` §2. Le flux invité est inchangé (il honorait déjà `next`, repli `/`).
+- Réalisation : `src/components/auth-form.tsx` (`window.location.href = safeNext(...)` en inscription et connexion, `emailRedirectTo ...?next=/`), `src/app/auth/callback/route.ts` (repli `/`), `src/app/profil/account-security.tsx` (renvoi `next=%2F`), `docs/04-product-ui.md` §2, E2E `support.ts` (attente d'accueil `/\/$/` puis `nextPath`) et `profil.spec.ts` (accueil puis `goto("/profil")`), tests Vitest `auth-form.test.ts` et `route.test.ts` réalignés.
+- Vérifications (sans Docker) : `pnpm typecheck`, `pnpm lint`, `pnpm test` (85 fichiers / 533 réussis + 2 sentinelles), `pnpm test:matrix` (11 pass, 5 not-run), `pnpm content:validate`, `pnpm docs:check`, `pnpm exec next build --webpack` propres (`○ /connexion` toujours statique).
+- Limites : sans recette navigateur ; E2E non rejoués (Docker opt-in, daemon fermé). La première connexion d'un compte permanent atterrit à l'accueil : le choix du pseudo se fait via la pastille « ! » du header vers `/profil`.
+- Contradiction : avec la décision produit précédente (retour `/profil`), remplacée ici à la demande explicite de l'utilisateur ; `AGENTS.md` ne fixait aucune destination et reste inchangé.
+
 ### 19/09/2026 — Connexion : fond accueil et formulaire simplifié
 
 - Demande utilisateur : reprendre le fond de l'accueil sur la page de connexion/inscription et la rendre beaucoup plus simple, juste les champs à remplir et valider.

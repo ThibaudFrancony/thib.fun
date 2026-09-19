@@ -16,16 +16,18 @@ async function signInForProfil(page: Page): Promise<void> {
   await page.getByRole("textbox", { name: "E-mail" }).fill(aliceEmail);
   await page.getByRole("textbox", { name: "Mot de passe" }).fill(e2ePassword);
   await page.getByRole("button", { name: "Entrer à la table" }).click();
+  // La connexion ramène à l'accueil : rejoindre ensuite le profil.
   // Le profil charge des assets (fond, avatars) qui peuvent retarder
   // l'événement load en dev : domcontentloaded suffit.
-  await page.waitForURL("**/profil", { waitUntil: "domcontentloaded" });
+  await page.waitForURL(/\/$/, { waitUntil: "domcontentloaded" });
+  await page.goto("/profil");
 }
 
 for (const viewport of VIEWPORTS) {
   test(`profil tient dans le viewport sans scroll en ${viewport.width}x${viewport.height}`, async ({ page }) => {
     await page.setViewportSize(viewport);
     await signInForProfil(page);
-    // signInForProfil atterrit déjà sur /profil : pas de seconde navigation.
+    // signInForProfil rejoint /profil après l'atterrissage à l'accueil.
     await expect(page).toHaveURL(/\/profil/);
     await expect(page.getByRole("heading", { name: /C.est toi/ })).toBeVisible();
     await expect(page.getByRole("radio")).toHaveCount(10);
