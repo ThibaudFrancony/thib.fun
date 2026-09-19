@@ -14,8 +14,8 @@ import { ProfilePublic } from "../profile-public";
 export const dynamic = "force-dynamic";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
-const GAME_OPTIONS = PUBLIC_GAMES.map(({ slug, displayName }) => ({ slug, displayName }));
-const GAME_LABELS = new Map(PUBLIC_GAMES.map(({ slug, displayName }) => [slug, displayName]));
+const GAME_OPTIONS = PUBLIC_GAMES.map(({ slug, cardName }) => ({ slug, displayName: cardName }));
+const GAME_LABELS = new Map(PUBLIC_GAMES.map(({ slug, cardName }) => [slug, cardName]));
 
 export default async function PublicProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const account = await getAuthenticatedAccount();

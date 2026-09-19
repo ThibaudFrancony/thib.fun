@@ -3,7 +3,7 @@ import { PUBLIC_GAMES } from "@/games/registry";
 import { historyOutcomeLabel, historyReasonLabel } from "./history-helpers";
 import type { HistoryDetail, HistoryRoundResult } from "./_data";
 
-const GAME_LABELS = new Map(PUBLIC_GAMES.map(({ slug, displayName }) => [slug, displayName]));
+const GAME_LABELS = new Map(PUBLIC_GAMES.map(({ slug, cardName }) => [slug, cardName]));
 
 function scoreLabel(detail: HistoryDetail): string {
   const { entry } = detail;

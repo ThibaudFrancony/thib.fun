@@ -12,7 +12,7 @@ import { ProfileHistory } from "./profile-history";
 
 export const dynamic = "force-dynamic";
 
-const GAME_OPTIONS = PUBLIC_GAMES.map(({ slug, displayName }) => ({ slug, displayName }));
+const GAME_OPTIONS = PUBLIC_GAMES.map(({ slug, cardName }) => ({ slug, displayName: cardName }));
 
 export default async function ProfilePage() {
   const account = await getAuthenticatedAccount();
