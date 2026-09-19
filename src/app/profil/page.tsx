@@ -11,13 +11,11 @@ export const dynamic = "force-dynamic";
 
 function ProfileHeader({
   name,
-  accountName,
   needsOnboarding,
   preset,
   hasAvatar,
 }: {
   name: string;
-  accountName: string | null;
   needsOnboarding: boolean;
   preset: string;
   hasAvatar: boolean;
@@ -39,7 +37,6 @@ function ProfileHeader({
         <Link className="pf-nav-link lb-keep" href="/leaderboard">Leaderboard</Link>
         <ProfileButton
           name={name}
-          accountName={accountName}
           needsOnboarding={needsOnboarding}
           preset={preset}
           hasAvatar={hasAvatar}
@@ -66,7 +63,6 @@ export default async function ProfilePage() {
         <HomeHeroBackground />
         <ProfileHeader
           name={account.member.effectiveName}
-          accountName={account.member.accountName}
           needsOnboarding
           preset={account.member.avatarPreset}
           hasAvatar={false}
@@ -83,7 +79,6 @@ export default async function ProfilePage() {
       <HomeHeroBackground />
       <ProfileHeader
         name={account.member.effectiveName}
-        accountName={account.member.accountName}
         needsOnboarding={false}
         preset={account.member.avatarPreset}
         hasAvatar={account.member.avatarPath !== null}

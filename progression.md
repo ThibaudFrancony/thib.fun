@@ -17,6 +17,13 @@ Ce fichier décrit la réalité du dépôt et non les seules capacités prévues
 
 **Diagnostic du 13 septembre : le code des neuf jeux est présent, mais leur disponibilité fonctionnelle n'est pas acquise.** L'[audit complet](docs/audit-code-2026-09-13.md) et le [plan pas à pas](docs/plan-correction-2026-09-13.md) identifient 29 défauts de code/produit et 6 observations d'infrastructure : blocages du worker, abandon/forfait, présence, finalisation, réseau, sécurité et parcours incomplets. L'étape 1 est appliquée au harnais de tests ; le contrat commun de l'étape 2 est intégré à `main` (`d885079`), le raccordement SQL de l'étape 3 est versionné dans `6130c99` et sa validation PostgreSQL isolée ainsi que sa concurrence à deux sessions sont désormais démontrées localement. L'inspection Supabase du 16 septembre rapporte 33 migrations distantes, alignées avec les fichiers locaux, mais elle reste strictement en lecture seule. Quatre parties actives (trois TTMC et une Géographie), dix jobs échus en attente et deux joueurs engagés dans plusieurs parties doivent être préservés en production. Aucun secret, traitement de donnée, migration distante, écriture Vault, déploiement ou opération de reprise n'a été effectué dans la présente session. Les observations datées ci-dessous restent historiques ; l'audit et le préflight Étape 10 prévalent pour les limitations actuelles.
 
+### 19/09/2026 — Avatar du header vers /profil en un clic
+
+- Demande utilisateur : cliquer sur sa photo dans le header ouvre aujourd'hui une petite fenêtre qu'il faut recliquer ; aller directement sur le profil au premier clic.
+- Réalisation : `src/components/profile-button.tsx` n'est plus un bouton à tiroir mais un `Link` vers `/profil` (avatar + pastille « ! » si onboarding conservés) ; suppression de l'état `open`, du panneau ancré « Gérer mon profil » et des écouteurs clic extérieur/Échap. La prop `accountName` (affichée seulement dans le panneau) est retirée de `ProfileButton` et des appels dans `src/components/site-header.tsx` et `src/app/profil/page.tsx`.
+- Vérifications (sans Docker) : `pnpm typecheck`, `pnpm lint` propres. Aucun changement de route, d'auth, de données ni des autres variantes du header.
+- Contradiction : aucune avec `AGENTS.md`.
+
 ### 19/09/2026 — Leaderboard : couronne derrière l'avatar et menu joueur
 
 - Demande utilisateur : la couronne doit passer **derrière** le rond de l'avatar du premier ; cliquer sur un joueur du podium ou du classement doit proposer « Profil » (consulter son profil) ou « Demander en ami ».
