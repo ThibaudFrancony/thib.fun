@@ -57,13 +57,15 @@ export const unoActionSchema = z.discriminatedUnion("type", [
     type: z.literal("PLAY_CARD"),
     cardId: z.string().min(1),
     chosenColor: unoColorSchema.optional(),
-    announceLastCard: z.boolean(),
+    /** Historique : accepté pour compatibilité mais ignoré (plus d'annonce obligatoire). */
+    announceLastCard: z.boolean().optional(),
   }).strict(),
   z.object({ type: z.literal("DRAW") }).strict(),
   z.object({
     type: z.literal("PLAY_DRAWN"),
     chosenColor: unoColorSchema.optional(),
-    announceLastCard: z.boolean(),
+    /** Historique : accepté pour compatibilité mais ignoré (plus d'annonce obligatoire). */
+    announceLastCard: z.boolean().optional(),
   }).strict(),
   z.object({ type: z.literal("KEEP_DRAWN") }).strict(),
   z.object({ type: z.literal("RESIGN") }).strict(),

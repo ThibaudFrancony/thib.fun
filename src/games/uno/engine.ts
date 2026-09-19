@@ -312,7 +312,6 @@ function playResult(
   actorSeat: Seat,
   card: UnoCard,
   chosenColor: UnoColor | undefined,
-  announceLastCard: boolean,
 ): UnoTransition {
   let next: UnoState = {
     ...state,
@@ -325,13 +324,6 @@ function playResult(
   const hand = removeCard(state.hands[actorSeat], card.id);
   next.hands[actorSeat] = hand;
   next = withCounter(next, actorSeat, { cardsPlayed: next.counters[actorSeat].cardsPlayed + 1 });
-
-  if (state.hands[actorSeat].length === 2 && hand.length === 1 && !announceLastCard) {
-    const penalty = drawCards(next, 2, ctx.entropy, 0);
-    next = addDrawCounters({ ...penalty.state, hands: [...penalty.state.hands] as [UnoCard[], UnoCard[]] }, actorSeat, penalty.cards.length, true);
-    next.hands[actorSeat] = [...hand, ...penalty.cards];
-    next = withCounter(next, actorSeat, { missedAnnouncements: next.counters[actorSeat].missedAnnouncements + 1 });
-  }
 
   let nextSeat: Seat = (1 - actorSeat) as Seat;
   let penaltyCount = 0;
@@ -370,14 +362,13 @@ function playCard(
   actorSeat: Seat,
   card: UnoCard,
   chosenColor: UnoColor | undefined,
-  announceLastCard: boolean,
 ): UnoTransition {
   if (!isUnoCardPlayable(card, state, actorSeat)) {
     if (card.symbol === "wild4") throw new UnoRuleError("WILD4_NOT_ALLOWED");
     throw new UnoRuleError("CARD_NOT_PLAYABLE");
   }
   assertChosenColor(card, chosenColor);
-  return playResult(ctx, state, config, actorSeat, card, chosenColor, announceLastCard);
+  return playResult(ctx, state, config, actorSeat, card, chosenColor);
 }
 
 function drawForTurn(ctx: UnoEngineContext, state: UnoState, config: UnoConfig, eventType: string): UnoTransition {
@@ -471,7 +462,7 @@ export function reduceUno(stateInput: unknown, actionInput: UnoAction, configInp
     case "PLAY_CARD": {
       if (state.phase !== "playing") throw new UnoRuleError("NOT_PLAYING");
       if (state.activeSeat !== actorSeat) throw new UnoRuleError("NOT_YOUR_TURN");
-      return playCard(ctx, state, config, actorSeat, cardFromHand(state, actorSeat, action.cardId), action.chosenColor, action.announceLastCard);
+      return playCard(ctx, state, config, actorSeat, cardFromHand(state, actorSeat, action.cardId), action.chosenColor);
     }
     case "DRAW": {
       if (state.phase !== "playing") throw new UnoRuleError("NOT_PLAYING");
@@ -482,7 +473,7 @@ export function reduceUno(stateInput: unknown, actionInput: UnoAction, configInp
       if (state.phase !== "after_draw") throw new UnoRuleError("NOT_AFTER_DRAW");
       if (state.activeSeat !== actorSeat || !state.drawnCardId) throw new UnoRuleError("NOT_YOUR_TURN");
       const card = cardFromHand(state, actorSeat, state.drawnCardId);
-      return playCard(ctx, state, config, actorSeat, card, action.chosenColor, action.announceLastCard);
+      return playCard(ctx, state, config, actorSeat, card, action.chosenColor);
     }
     case "KEEP_DRAWN": {
       if (state.phase !== "after_draw") throw new UnoRuleError("NOT_AFTER_DRAW");

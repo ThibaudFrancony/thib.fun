@@ -169,19 +169,20 @@ describe("UNO engine", () => {
     });
   });
 
-  it("applique l'annonce manquée avant l'effet de la carte", () => {
+  it("ne pénalise plus l'absence d'annonce de dernière carte", () => {
     const current = state({
       hands: [[card("red-5", "red", "5"), card("red-7", "red", "7")], [card("b-1", "blue", "9")]],
       discardPile: [card("top", "blue", "5")],
       activeColor: "blue",
       drawPile: [card("penalty-1", "green", "1"), card("penalty-2", "yellow", "2"), card("rest", "blue", "8")],
     });
-    const transition = reduceUno(current, { type: "PLAY_CARD", cardId: "red-5", announceLastCard: false }, DEFAULT_UNO_CONFIG, context());
-    expect(transition.state.hands[0]).toHaveLength(3);
-    expect(transition.state.counters[0].missedAnnouncements).toBe(1);
-    expect(transition.state.counters[0].penaltyCardsTaken).toBe(2);
-    expect(transition.state.counters[0].cardsDrawn).toBe(2);
+    const transition = reduceUno(current, { type: "PLAY_CARD", cardId: "red-5" }, DEFAULT_UNO_CONFIG, context());
+    expect(transition.state.hands[0]).toHaveLength(1);
+    expect(transition.state.counters[0].missedAnnouncements).toBe(0);
+    expect(transition.state.counters[0].penaltyCardsTaken).toBe(0);
+    expect(transition.state.counters[0].cardsDrawn).toBe(0);
     expect(transition.state.counters[0].cardsPlayed).toBe(1);
+    expect(transition.state.activeSeat).toBe(1);
   });
 
   it("applique un +2 final avant de calculer le score gagnant", () => {

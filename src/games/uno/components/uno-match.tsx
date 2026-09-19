@@ -88,7 +88,6 @@ export function isPendingPlayValid(pending: PendingPlay, view: UnoView): boolean
 
 export function UnoMatch({ matchId }: { matchId: string }) {
   const router = useRouter();
-  const [announceNext, setAnnounceNext] = useState(false);
   const [pendingPlay, setPendingPlay] = useState<PendingPlay | null>(null);
   const [shakeCardId, setShakeCardId] = useState<string | null>(null);
   const [flying, setFlying] = useState<FlyingCard | null>(null);
@@ -221,9 +220,7 @@ export function UnoMatch({ matchId }: { matchId: string }) {
   }, [drawPending, startFly]);
 
   async function send(action: UnoAction): Promise<MatchResponse | null> {
-    const next = await networkSend(action);
-    if (next) setAnnounceNext(false);
-    return next;
+    return networkSend(action);
   }
 
   function refuse(cardId: string) {
@@ -287,7 +284,6 @@ export function UnoMatch({ matchId }: { matchId: string }) {
   const view = match.view;
   const opponent = view.players[(1 - view.mySeat) as 0 | 1];
   const isMyTurn = view.activeSeat === view.mySeat && view.phase !== "finished";
-  const needsAnnouncement = view.hand.length === 2;
   const hiddenCardId = flyingCardId ?? optimisticDiscard?.id ?? null;
 
   function isPlayableCard(card: UnoCardData): boolean {
@@ -310,7 +306,7 @@ export function UnoMatch({ matchId }: { matchId: string }) {
         return;
       }
       flyToDiscard(card, source);
-      void send({ type: "PLAY_DRAWN", announceLastCard: announceNext }).then((next) => { if (!next) cancelVisual(); });
+      void send({ type: "PLAY_DRAWN" }).then((next) => { if (!next) cancelVisual(); });
       return;
     }
     if (!view.actions.canPlay || !view.playableCardIds.includes(card.id)) {
@@ -322,7 +318,7 @@ export function UnoMatch({ matchId }: { matchId: string }) {
       return;
     }
     flyToDiscard(card, source);
-    void send({ type: "PLAY_CARD", cardId: card.id, announceLastCard: announceNext }).then((next) => { if (!next) cancelVisual(); });
+    void send({ type: "PLAY_CARD", cardId: card.id }).then((next) => { if (!next) cancelVisual(); });
   }
 
   function drawCard(source: Rect | null) {
@@ -340,8 +336,8 @@ export function UnoMatch({ matchId }: { matchId: string }) {
       ? view.hand.find((candidate) => candidate.id === pendingPlay.cardId) ?? null
       : view.drawnCard;
     const action = pendingPlay.type === "PLAY_CARD"
-      ? { type: "PLAY_CARD" as const, cardId: pendingPlay.cardId, chosenColor: color, announceLastCard: announceNext }
-      : { type: "PLAY_DRAWN" as const, chosenColor: color, announceLastCard: announceNext };
+      ? { type: "PLAY_CARD" as const, cardId: pendingPlay.cardId, chosenColor: color }
+      : { type: "PLAY_DRAWN" as const, chosenColor: color };
     flyToDiscard(flyingCard, source);
     const next = await send(action);
     if (next) {
@@ -463,12 +459,6 @@ export function UnoMatch({ matchId }: { matchId: string }) {
                   </span>
                 )}
               </div>
-              {needsAnnouncement && view.phase === "playing" && isMyTurn && (
-                <label className="uno-announce">
-                  <input type="checkbox" checked={announceNext} onChange={(event) => setAnnounceNext(event.target.checked)} />
-                  Dernière carte ! <span>(pour la prochaine carte seulement)</span>
-                </label>
-              )}
             </section>
 
             <footer className="uno-footer">

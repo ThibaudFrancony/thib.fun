@@ -102,14 +102,14 @@ test("un double clic pendant l'envoi ne produit qu'une commande", async ({ page 
 test("une carte jouée reste sur la défausse pendant l'attente serveur puis revient en cas d'échec", async ({ page }) => {
   await openFixture(page, view([{ id: "red-5", color: "red", symbol: "5" }]));
   await page.route(`**/api/matches/${matchId}/commands`, async (route) => {
-    await new Promise((resolve) => setTimeout(resolve, 2_000));
+    await new Promise((resolve) => setTimeout(resolve, 5_000));
     await route.abort("failed");
   });
   const play = page.getByRole("button", { name: "5 · jouable" });
   await play.click();
   await expect(play).toBeHidden();
   await expect(page.locator(".uno-discard-optimistic")).toBeVisible();
-  await expect(play).toBeVisible({ timeout: 5_000 });
+  await expect(play).toBeVisible({ timeout: 8_000 });
   await expect(page.locator(".uno-discard-optimistic")).toHaveCount(0);
 });
 
@@ -152,6 +152,24 @@ test("Abandonner demande confirmation puis envoie RESIGN", async ({ page }) => {
   await page.getByRole("button", { name: "Abandonner" }).click();
   await expect.poll(() => actions.length).toBe(1);
   expect(actions[0]).toBe("RESIGN");
+});
+
+test("jouer une carte sans annonce envoie une commande sans announceLastCard", async ({ page }) => {
+  const twoCards = view([{ id: "red-5", color: "red", symbol: "5" }, { id: "red-7", color: "red", symbol: "7" }]);
+  await page.route(`**/api/matches/${matchId}`, async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(response(twoCards)) });
+  });
+  await page.goto(`/parties/${matchId}`);
+  await expect(page.getByRole("heading", { name: /2 cartes/ })).toBeVisible();
+  await expect(page.getByRole("checkbox")).toHaveCount(0);
+  let body: unknown = null;
+  await page.route(`**/api/matches/${matchId}/commands`, async (route) => {
+    body = route.request().postDataJSON();
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ matchId, version: 2, commandHash: "fixture" }) });
+  });
+  await page.getByRole("button", { name: "5 · jouable" }).click();
+  await expect.poll(() => body !== null).toBe(true);
+  expect(JSON.stringify(body)).not.toContain("announceLastCard");
 });
 
 test("la table UNO entretient la présence par heartbeat", async ({ page }) => {

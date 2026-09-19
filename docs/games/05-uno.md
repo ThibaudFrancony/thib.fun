@@ -18,11 +18,9 @@ Effets à deux : skip et reverse font rejouer leur auteur. Draw2 fait piocher de
 
 Wild/wild4 : couleur choisie dans la même commande que la carte, après dialogue local ; carte ne part pas avant confirmation. Pas de phase serveur bloquée en attente de choix couleur. Si dernière carte jouée est pénalité, appliquer la pioche adverse puis finaliser victoire. Skip/reverse finissent aussi immédiatement si main vide. Il n'y a pas de « dernier tour » adverse.
 
-## 3. Annonce dernière carte
+## 3. Annonce dernière carte — supprimée (19/09/2026)
 
-Pour éviter une course réseau injuste, variante explicite : quand une carte jouée fait passer la main de 2 à 1, afficher avant validation un bouton/checkbox « Dernière carte ! ». La commande PLAY inclut `announceLastCard:boolean`. Si false lors de ce passage, tirer automatiquement deux cartes de pénalité pour l'auteur immédiatement après son jeu, avant d'appliquer l'effet de la carte ; aucune fenêtre de dénonciation dépendant de la latence. Si l'auteur termine de 1 à 0, pas d'annonce exigée.
-
-On peut afficher un bouton permanent d'annonce qui arme ce booléen pour **la prochaine carte seulement**, reset après toute action/phase. Le serveur ne doit pas faire confiance à une annonce antérieure sans lien avec le PLAY courant. Cette adaptation est expliquée avant partie ; ne pas promettre la mécanique classique d'interpellation.
+La règle d'annonce est retirée du jeu : jouer son avant-dernière carte puis sa dernière carte ne demande aucune case à cocher, aucune annonce et n'entraîne aucune pioche de pénalité. La commande PLAY accepte encore `announceLastCard:boolean` par compatibilité (parties et clients en cours) mais le serveur l'ignore ; `missedAnnouncements` reste dans l'état et les métriques, toujours à 0. On joue simplement, sans mécanique d'interpellation.
 
 ## 4. Chrono et blocages
 
@@ -47,16 +45,16 @@ Vue : main propre complète IDs/symboles, nombre de cartes adverse uniquement, s
 
 ## 6. Commandes / résultat
 
-`PLAY_CARD {cardId,chosenColor?:Color,announceLastCard:boolean}` phase playing ; `DRAW {}` playing ; `PLAY_DRAWN {chosenColor?:Color,announceLastCard:boolean}` after_draw (ID déduit serveur) ; `KEEP_DRAWN {}` after_draw ; RESIGN/CLAIM_FORFEIT communs. Le serveur refuse chosenColor sur carte non wild, ID adverse, carte non détenue, wild4 illégal. Receipts rendent DRAW idempotent.
+`PLAY_CARD {cardId,chosenColor?:Color,announceLastCard?:boolean}` phase playing ; `DRAW {}` playing ; `PLAY_DRAWN {chosenColor?:Color,announceLastCard?:boolean}` after_draw (ID déduit serveur) ; `KEEP_DRAWN {}` after_draw ; RESIGN/CLAIM_FORFEIT communs. `announceLastCard` est optionnel et ignoré (compatibilité des parties en cours). Le serveur refuse chosenColor sur carte non wild, ID adverse, carte non détenue, wild4 illégal. Receipts rendent DRAW idempotent.
 
 Victoire main vide. Score gagnant = valeur des cartes restantes adverses (chiffres valeur faciale, skip/reverse/draw2=20, wild/wild4=50), perdant=0. En draw scores=0, metrics gardent valeurs mains restantes. Ce score informatif ne décide pas une victoire par limite de tours. Forfait : winner score 0 et reason explicite. Metrics `{cardsPlayed,cardsDrawn,penaltyCardsTaken,missedAnnouncements,turns,remainingCards}`. Round_results contient une seule manche finale. Stats victoires + compteurs, pas de classement financier ni ELO ; le classement général du site (19/09/2026) cumule seulement des points par partie.
 
 ## 7. UI
 
-Main en éventail léger desktop, rail horizontal défilant mobile avec sélection puis bouton Jouer. Carte jouable distinguée sans masquer les autres. Nombre adverse très visible ; pioche centrale clic explicite ; couleur active texte+symbole. Après tirage, afficher seulement Jouer cette carte / Garder. Choix wild : quatre grands boutons accessibles, annuler revient à la main sans mutation. Afficher l'annonce dernière carte à côté de la validation quand main=2.
+Main en éventail léger desktop, rail horizontal défilant mobile. Clic direct sur une carte jouable (aucun bouton Jouer) ; carte non jouable sans popup. Carte jouable distinguée sans masquer les autres. Nombre adverse discret ; pioche centrale cliquable ; couleur active texte+symbole. Après tirage, la carte piochée est surlignée et « Garder la carte » reste disponible. Choix wild : quatre grands boutons accessibles, annuler revient à la main sans mutation. Aucune case d'annonce.
 
 ## 8. Tests / exclusions
 
-Conservation 108 cartes, répartition initiale, sommet numérique. Tous effets à deux testés, wild4 selon couleur, tirage volontaire avec carte jouable, interdiction jouer autre carte après tirage, garde timeout, pénalité annonce et effet spécial combinés, dernière carte +2/+4, recyclage exact, blocage/300 tours, DRAW retry, main secrète et refresh after_draw. E2E partie finie avec deck fixture déterministe et vraie isolation des sessions.
+Conservation 108 cartes, répartition initiale, sommet numérique. Tous effets à deux testés, wild4 selon couleur, tirage volontaire avec carte jouable, interdiction jouer autre carte après tirage, garde timeout, absence de pénalité sans annonce, dernière carte +2/+4, recyclage exact, blocage/300 tours, DRAW retry, main secrète et refresh after_draw. E2E partie finie avec deck fixture déterministe et vraie isolation des sessions.
 
 Hors V1 : stacking, défis +4, règle 7–0, échange de mains, interception, élimination, équipes, règles personnalisées. Toute extension modifie rulesVersion, tests et aide avant partie.

@@ -2908,22 +2908,6 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
 
 .uno-hand .uno-card { flex: 0 1 auto; min-width: 2.3rem; }
 
-.uno-announce {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.45rem;
-  margin: 0.5rem auto 0;
-  width: fit-content;
-  color: #ffd7f0;
-  font-size: 0.78rem;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.uno-announce span { color: #c7b8e6; font-weight: 650; }
-.uno-announce input { width: 1.05rem; height: 1.05rem; accent-color: #ff5fa2; cursor: pointer; }
-
 /* --- Pied de page --- */
 
 .uno-footer {
