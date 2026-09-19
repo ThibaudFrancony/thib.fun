@@ -98,6 +98,14 @@ Les slugs techniques sont stables. Les noms d'affichage sont des propositions mo
 - Raison : Docker Desktop consomme beaucoup de RAM ; l'utilisateur veut garder le daemon fermé par défaut et ne l'ouvrir que pour une recette Docker explicitement demandée.
 - Vérification pré-push par défaut (sans Docker) : `pnpm test:matrix`, `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm content:validate`, `pnpm docs:check`, `pnpm exec next build --webpack`. Les suites Docker/pgTAP/E2E ne bloquent ni le commit ni le push ; leur absence est notée en limitation dans `progression.md`.
 
+### Dissolution automatique des salons inactifs (19 septembre 2026)
+
+- Demande utilisateur : dissoudre un salon après 1 h sans jouer à un jeu ; choix produit précisé dans la conversation : dissolution seulement si aucune partie n'a été lancée **et** qu'aucun joueur n'est présent depuis 1 h ; tous les salons en attente sont concernés, jamais une partie en cours.
+- Ancienne règle : `docs/02-database.md` fixait 24 h après dernière activité significative, avec fermeture paresseuse au heartbeat et aucun balayage.
+- Nouvelle règle : un salon `waiting` est fermé quand `greatest(rooms.updated_at, max(room_members.last_seen_at)) <= now() - interval '1 hour'`, par le balayage `private.dissolve_inactive_rooms()` planifié au cron toutes les 30 s et par `server_room_heartbeat` à la volée. Le heartbeat (présence) et la fin de partie (activité) remettent le délai à zéro ; la limite dure de 24 h (`expires_at`) reste un plafond.
+- Périmètre : migration `20260919121421_step13_room_dissolution.sql`, test pgTAP `supabase/tests/step13_room_dissolution.sql`, test unitaire `src/server/rooms/dissolution-rpc.test.ts`, messages du salon, `docs/02-database.md`. Aucun changement de client, de transport Realtime ni de contrat de partie.
+- Raison : éviter qu'un salon inoccupé reste « actif » jusqu'à 24 h et bloque la création/rejoint d'un nouveau salon, sans porter atteinte à une partie en cours ni à un salon réellement utilisé.
+
 ### Mise à jour proactive du suivi
 
 - Lire `AGENTS.md` et `progression.md` avant toute modification substantielle.

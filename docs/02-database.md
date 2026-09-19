@@ -39,7 +39,7 @@ Token aléatoire 32 octets URL-safe ; seul SHA-256 conservé. Les invitations pe
 
 `id uuid PK`, `code text UNIQUE` (6 caractères alphabet `ABCDEFGHJKLMNPQRSTUVWXYZ23456789`), `host_id uuid FK profiles`, `game_slug text FK public.games` (**nullable** : un salon d'accueil peut exister avant le choix du jeu), `config jsonb`, `status text CHECK IN ('waiting','playing','closed')`, `version bigint DEFAULT 0`, `current_match_id uuid?`, `created_at`, `updated_at`, `expires_at`.
 
-Code généré serveur avec retry sur collision. Durée d'un salon sans partie active : 24 h après dernière activité significative ; jamais fermer une partie active sur cette échéance. `current_match_id` FK ajoutée après création de matches pour résoudre le cycle. Ne pas réutiliser un code existant, même fermé. Changement jeu/config seulement en attente ; remet tous les ready à false.
+Code généré serveur avec retry sur collision. Dissolution d'un salon sans partie active : 1 h après la dernière activité significative **et** le dernier heartbeat d'un membre (`greatest(rooms.updated_at, max(room_members.last_seen_at)) <= now() - interval '1 hour'`), appliquée par le balayage `private.dissolve_inactive_rooms()` (cron 30 s) et par le heartbeat du salon ; jamais fermer une partie active (`status = 'playing'`) sur cette échéance. La limite dure de 24 h (`expires_at`) reste un plafond. `current_match_id` FK ajoutée après création de matches pour résoudre le cycle. Ne pas réutiliser un code existant, même fermé. Changement jeu/config seulement en attente ; remet tous les ready à false.
 
 ### `private.room_members`
 

@@ -264,7 +264,7 @@ export function RoomLobby({ roomId, roomManagementEnabled }: { roomId: string; r
         <div className="geo-panel geo-lobby-panel">
           <p className="geo-kicker geo-kicker-warm">Salon {gameDisplayName(room.gameSlug)}</p>
           <h1 className="geo-lobby-title">Salon fermé</h1>
-          <p className="geo-panel-note mt-3">Ce salon a expiré ou a été fermé par ses joueurs. Crée une nouvelle table pour rejouer.</p>
+          <p className="geo-panel-note mt-3">Ce salon a expiré, a été fermé par ses joueurs ou dissous après 1 h sans partie. Crée une nouvelle table pour rejouer.</p>
           <div className="mt-4 flex flex-wrap gap-2">
             <Link href={gameSetupHref(room.gameSlug)} className="geo-primary-button">Créer une nouvelle table</Link>
             {backToGames}
@@ -321,6 +321,7 @@ export function RoomLobby({ roomId, roomManagementEnabled }: { roomId: string; r
             <h1 className="geo-lobby-title">Code <span>{room.code}</span></h1>
             <p className="geo-panel-note">Partage ce code ou le lien du salon à ton partenaire.</p>
             {expiration && <p className="mt-2 text-sm font-bold text-[var(--muted)]">{expiration}</p>}
+            <p className="mt-2 text-sm font-bold text-[var(--muted)]">Le salon est dissous après 1 h sans partie et sans joueur présent.</p>
           </div>
           <div className="flex flex-wrap gap-2">
             <button type="button" onClick={() => void copyRoomCode()} className="geo-secondary-button geo-copy-button">Copier le code</button>
