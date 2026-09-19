@@ -176,8 +176,10 @@ Toutes les tables public : activer RLS, révoquer INSERT/UPDATE/DELETE de anon/a
 | profiles | `is_site_member()` ; champs publics seulement |
 | games | `is_site_member()` |
 | room_views, match_views | `is_site_member() AND viewer_id=auth.uid()` |
-| history_entries | même filtre viewer |
-| player_game_stats | `is_site_member()` ; stats agrégées de membres, jamais historique tiers |
+| history_entries | `is_site_member() AND viewer_id=auth.uid()` |
+| player_game_stats | `is_site_member()` ; agrégats lisibles par tout membre |
+
+Les RLS ci-dessus restent la barrière du Data API : un client ne lit jamais `history_entries` d'un autre joueur. Depuis la décision du 19/09/2026, le **serveur** expose volontairement l'historique complet d'un joueur sur `/profil/[id]` via le client `service_role` (même mécanisme admin que la lecture de son propre historique), après vérification de l'admission et refus des invités. Le détail d'une partie reste en revanche limité aux participants : `/historique/[id]` lit `history_entries` pour `viewer_id = auth.uid()`, donc un non-participant obtient un 404.
 
 `anon` ne lit aucune donnée métier. Les pages de connexion sont publiques, leur contenu vient du code statique. Les RPC serveur exposées dans public sont `SECURITY INVOKER` ou, pour le provisionnement interne strictement nécessaire, `SECURITY DEFINER` avec `search_path=''`, noms qualifiés, EXECUTE révoqué de PUBLIC/anon/authenticated et accordé au seul `service_role` effectif de la clé secrète serveur. Ce rôle reçoit USAGE privé et les droits nécessaires. Le serveur vérifie admission et acteur pour chaque opération ; le fait de posséder une clé serveur contourne RLS, donc aucun p_actor venant du body client.
 

@@ -1,18 +1,14 @@
 import "server-only";
 
-import { createAdminClient } from "@/server/supabase/admin";
 import {
   getHistory,
   getHistoryEntry,
   getMatchSnapshot,
-  getPairHistory,
   type HistoryEntry,
 } from "@/server/matches/repository";
-import { opponentPseudoFromPayload, toHistoryListItem, type HistoryListItem } from "./history-helpers";
+import { toHistoryListItem, viewerParticipates, type HistoryListItem, type ProfileHistoryListItem } from "./history-helpers";
 
-export const HISTORY_PAGE_SIZE = 20;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
-const HISTORY_OUTCOMES = new Set(["win", "loss", "draw", "cooperative", "abandoned"]);
 const HISTORY_REASONS = new Set([
   "normal",
   "round_limit",
@@ -29,6 +25,8 @@ const HISTORY_REASONS = new Set([
 ]);
 
 export type HistoryPage = { entries: HistoryListItem[]; nextCursor: string | null };
+
+export type ProfileHistoryPage = { entries: ProfileHistoryListItem[]; nextCursor: string | null };
 
 export type CompatibilityHistoryRound = {
   kind: "compatibilite";
@@ -78,35 +76,12 @@ export type HistoryDetail = {
   roundResultsAvailable: boolean;
 };
 
-export type PairAggregate = {
-  gameSlug: string;
-  played: number;
-  myWins: number;
-  opponentWins: number;
-  draws: number;
-  cooperative: number;
-  abandoned: number;
-  metrics: Record<string, unknown>;
-};
-
-export type PairHistoryPage = {
-  opponentId: string;
-  opponentPseudo: string;
-  stats: PairAggregate[];
-  entries: HistoryListItem[];
-  nextCursor: string | null;
-};
-
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
 function safeString(value: unknown, maximum = 240): string | null {
   return typeof value === "string" && value.length <= maximum ? value : null;
-}
-
-function safeNumber(value: unknown): number | null {
-  return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
 function safeInteger(value: unknown, minimum = 0): number | null {
@@ -122,49 +97,6 @@ function safeTuple(value: unknown): [number, number] | null {
   const first = safeInteger(value[0]);
   const second = safeInteger(value[1]);
   return first === null || second === null ? null : [first, second];
-}
-
-function safeMetrics(value: unknown, depth = 0): Record<string, unknown> {
-  if (!isRecord(value) || depth > 2) return {};
-  const result: Record<string, unknown> = {};
-  for (const [key, candidate] of Object.entries(value).slice(0, 32)) {
-    if (!/^[a-zA-Z0-9_.-]{1,80}$/u.test(key)) continue;
-    if (candidate === null || typeof candidate === "boolean" || typeof candidate === "string" && candidate.length <= 160 || typeof candidate === "number" && Number.isFinite(candidate)) {
-      result[key] = candidate;
-    } else if (Array.isArray(candidate) && candidate.length <= 20 && candidate.every((item) => typeof item === "number" && Number.isFinite(item))) {
-      result[key] = candidate;
-    } else if (isRecord(candidate)) {
-      result[key] = safeMetrics(candidate, depth + 1);
-    }
-  }
-  return result;
-}
-
-function mapHistoryRow(row: Record<string, unknown>): HistoryEntry | null {
-  const matchId = safeString(row.match_id, 80);
-  const opponentId = safeString(row.opponent_id, 80);
-  const gameSlug = safeString(row.game_slug, 80);
-  const startedAt = safeString(row.started_at, 80);
-  const endedAt = safeString(row.ended_at, 80);
-  const outcome = safeString(row.outcome, 30);
-  if (!matchId || !opponentId || !gameSlug || !startedAt || !endedAt || !outcome || !HISTORY_OUTCOMES.has(outcome)) return null;
-  const numeric = (value: unknown): number | null => value === null || value === undefined ? null : safeNumber(value);
-  return {
-    matchId,
-    opponentId,
-    gameSlug,
-    startedAt,
-    endedAt,
-    outcome: outcome as HistoryEntry["outcome"],
-    score: numeric(row.score),
-    opponentScore: numeric(row.opponent_score),
-    sharedScore: numeric(row.shared_score),
-    payload: isRecord(row.payload) ? row.payload : {},
-  };
-}
-
-function encodeHistoryCursor(entry: Pick<HistoryEntry, "endedAt" | "matchId">): string {
-  return Buffer.from(JSON.stringify({ endedAt: entry.endedAt, matchId: entry.matchId }), "utf8").toString("base64url");
 }
 
 export function decodeHistoryCursor(cursor: string | undefined): { endedAt: string; matchId: string } | null {
@@ -185,6 +117,22 @@ export function isValidHistoryCursor(cursor: string | undefined): boolean {
 export async function getHistoryPage(actorId: string, options: { cursor?: string; game?: string; outcome?: string } = {}): Promise<HistoryPage> {
   const page = await getHistory(actorId, options);
   return { entries: page.entries.map(toHistoryListItem), nextCursor: page.nextCursor };
+}
+
+/**
+ * Historique d'un autre membre : l'appelant précise qui regarde pour marquer
+ * les parties où il a réellement joué. Le détail d'une partie reste réservé
+ * aux participants côté page.
+ */
+export async function getProfileHistoryPage(viewerId: string, targetId: string, options: { cursor?: string; game?: string; outcome?: string } = {}): Promise<ProfileHistoryPage> {
+  const page = await getHistory(targetId, options);
+  return {
+    entries: page.entries.map((entry) => ({
+      ...toHistoryListItem(entry),
+      viewerIsParticipant: viewerId === targetId || viewerParticipates(entry, viewerId),
+    })),
+    nextCursor: page.nextCursor,
+  };
 }
 
 function compatibilityRound(value: unknown): CompatibilityHistoryRound | null {
@@ -278,65 +226,4 @@ export async function getHistoryDetail(actorId: string, matchId: string): Promis
   };
 }
 
-function pairAggregate(value: unknown, actorId: string, opponentId: string): PairAggregate | null {
-  if (!isRecord(value)) return null;
-  const gameSlug = safeString(value.game_slug, 80);
-  const playerLow = safeString(value.player_low, 80);
-  const playerHigh = safeString(value.player_high, 80);
-  const played = safeInteger(value.played);
-  const lowWins = safeInteger(value.low_wins);
-  const highWins = safeInteger(value.high_wins);
-  const draws = safeInteger(value.draws);
-  const cooperative = safeInteger(value.cooperative);
-  const abandoned = safeInteger(value.abandoned);
-  if (!gameSlug || !playerLow || !playerHigh || played === null || lowWins === null || highWins === null || draws === null || cooperative === null || abandoned === null) return null;
-  const actorIsLow = playerLow === actorId && playerHigh === opponentId;
-  const actorIsHigh = playerHigh === actorId && playerLow === opponentId;
-  if (!actorIsLow && !actorIsHigh) return null;
-  return {
-    gameSlug,
-    played,
-    myWins: actorIsLow ? lowWins : highWins,
-    opponentWins: actorIsLow ? highWins : lowWins,
-    draws,
-    cooperative,
-    abandoned,
-    metrics: safeMetrics(value.metrics),
-  };
-}
 
-function pairStats(value: unknown, actorId: string, opponentId: string): PairAggregate[] {
-  const rows = isRecord(value) && Array.isArray(value.games) ? value.games : value ? [value] : [];
-  return rows.flatMap((row) => {
-    const aggregate = pairAggregate(row, actorId, opponentId);
-    return aggregate ? [aggregate] : [];
-  });
-}
-
-export async function getPairHistoryPage(actorId: string, opponentId: string, options: { cursor?: string; game?: string } = {}): Promise<PairHistoryPage> {
-  const client = createAdminClient();
-  let query = client
-    .from("history_entries")
-    .select("match_id,opponent_id,game_slug,started_at,ended_at,outcome,score,opponent_score,shared_score,payload")
-    .eq("viewer_id", actorId)
-    .eq("opponent_id", opponentId)
-    .order("ended_at", { ascending: false })
-    .order("match_id", { ascending: false })
-    .limit(HISTORY_PAGE_SIZE + 1);
-  if (options.game) query = query.eq("game_slug", options.game);
-  const cursor = decodeHistoryCursor(options.cursor);
-  if (cursor) query = query.or(`ended_at.lt.${cursor.endedAt},and(ended_at.eq.${cursor.endedAt},match_id.lt.${cursor.matchId})`);
-  const response = await query;
-  if (response.error) throw new Error("HISTORY_UNAVAILABLE");
-  const rows = (response.data ?? []) as unknown as Record<string, unknown>[];
-  const rawEntries = rows.flatMap((row) => { const entry = mapHistoryRow(row); return entry ? [entry] : []; });
-  const entries = rawEntries.slice(0, HISTORY_PAGE_SIZE).map(toHistoryListItem);
-  const pair = await getPairHistory(actorId, opponentId, options.game);
-  return {
-    opponentId,
-    opponentPseudo: entries[0]?.opponentPseudo ?? (pair.entries[0] ? opponentPseudoFromPayload(pair.entries[0]) : "Partenaire"),
-    stats: pairStats(pair.stats, actorId, opponentId),
-    entries,
-    nextCursor: rows.length > HISTORY_PAGE_SIZE && entries.length > 0 ? encodeHistoryCursor(rawEntries[HISTORY_PAGE_SIZE - 1]!) : null,
-  };
-}

@@ -275,7 +275,7 @@ export function LeaderboardView({
                 </p>
               </div>
             </div>
-            <Link className="lb-menu-action" href={`/historique/duo/${selected.userId}`} onClick={closeMenu}>
+            <Link className="lb-menu-action" href={`/profil/${selected.userId}`} onClick={closeMenu}>
               Profil
             </Link>
             <button

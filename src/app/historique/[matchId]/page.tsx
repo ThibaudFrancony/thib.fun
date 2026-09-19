@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { AccountHeader } from "@/components/account-header";
+import { HomeHeroBackground } from "@/components/home-hero-background";
 import { SiteHeader } from "@/components/site-header";
 import { getAuthenticatedAccount } from "@/server/auth";
+import { avatarCacheVersion } from "@/server/avatar";
 import { getHistoryDetail } from "../_data";
 import { HistoryDetailView } from "../history-detail";
 
@@ -15,5 +18,16 @@ export default async function HistoryDetailPage({ params }: { params: Promise<{ 
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu.test(matchId)) notFound();
   const detail = await getHistoryDetail(account.member.id, matchId);
   if (!detail) notFound();
-  return <><SiteHeader /><HistoryDetailView detail={detail} /></>;
+  return (
+    <div className="pf-page pf-page--scroll">
+      <HomeHeroBackground />
+      <AccountHeader
+        name={account.member.effectiveName}
+        needsOnboarding={account.member.needsOnboarding}
+        preset={account.member.avatarPreset}
+        avatarVersion={avatarCacheVersion(account.member.avatarPath)}
+      />
+      <HistoryDetailView detail={detail} />
+    </div>
+  );
 }

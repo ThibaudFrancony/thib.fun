@@ -53,6 +53,16 @@ Ce fichier décrit la réalité du dépôt et non les seules capacités prévues
 - Vérifications (sans Docker) : `pnpm typecheck`, `pnpm lint` propres. Aucun changement de route, d'auth, de données ni des autres variantes du header.
 - Contradiction : aucune avec `AGENTS.md`.
 
+### 19/09/2026 — Profils publics et historique dans le profil
+
+- Demande utilisateur : supprimer la page liste `/historique` mais garder l'historique dans les profils, dans le style/DA actuels ; « mon profil à gauche et historique à droite » ; en visitant le profil de quelqu'un, arriver sur `/profil/[id]` qui affiche son profil en lecture seule et son historique complet.
+- Décisions précisées : route publique `/profil/[id]` en UUID ; historique complet d'un tiers, détail d'une partie réservé aux participants ; `/historique/duo/[playerId]` redirigé vers `/profil/[id]` ; `/historique` redirigé vers `/profil`.
+- Contradiction : oui avec `docs/04-product-ui.md` §4 (« pas ses parties avec un tiers », `/joueurs/[id]`) et `docs/02-database.md` §7 (`player_game_stats` « jamais historique tiers »). Traitée en décision projet dans `AGENTS.md` et les documents dépendants.
+- Réalisation : `/historique` (liste) et `history-browser`/`pair-history-browser`/`api/history/pair` supprimés ; redirection `/historique` → `/profil` (`next.config.ts`) et `/historique/duo/[id]` → `/profil/[id]` ; liens « Historique » retirés du header et « Profil » du chat/leaderboard pointé vers `/profil/[id]`. `src/app/profil/page.tsx` passe en deux colonnes (carte profil à gauche, `ProfileHistory` à droite) ; nouvelle page `src/app/profil/[id]/page.tsx` (profil public lecture seule + historique) ; `src/server/profiles/repository.ts` (`getPublicProfile` via `server_get_actor`, `getPlayerGameStats` via `player_game_stats`) ; `getProfileHistoryPage` dans `_data.ts` avec `viewerIsParticipant` déduit du payload ; route `GET /api/profiles/[id]/history` ; détail `/historique/[matchId]` re-skinné DA violette ; composants `AccountHeader`, `ProfilePublic`, `ProfileHistory` ; styles `.pf-layout`/`.pf-history*`/`.pf-public*`/`.pf-detail*`. Aucune migration.
+- Vérifications (sans Docker) : `pnpm typecheck`, `pnpm lint`, `pnpm test` (85 fichiers / 533 réussis + 2 sentinelles, dont nouveaux `history-helpers.test.ts` et `src/server/profiles/repository.test.ts`), `pnpm test:matrix`, `pnpm content:validate`, `pnpm docs:check`, `pnpm exec next build --webpack` (routes `/profil/[id]` et `/api/profiles/[id]/history` générées).
+- Limites : recette navigateur réelle à deux comptes (profil d'un tiers, avatar signé, pagination, refus invité, mobile) non rejouée sans Docker ; le détail d'une entrée non jouée apparaît non cliquable mais n'a pas été vérifié sur données réelles.
+- Contradiction : aucune autre avec `AGENTS.md`.
+
 ### 19/09/2026 — Leaderboard : couronne derrière l'avatar et menu joueur
 
 - Demande utilisateur : la couronne doit passer **derrière** le rond de l'avatar du premier ; cliquer sur un joueur du podium ou du classement doit proposer « Profil » (consulter son profil) ou « Demander en ami ».

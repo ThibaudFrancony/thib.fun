@@ -103,7 +103,7 @@ export function MessageItem({
       </div>
       {popoverOpen && interactive ? (
         <div className="chat-author-popover" role="menu" aria-label={`Actions pour ${message.authorName}`}>
-          <Link className="chat-popover-action" href={`/historique/duo/${message.authorId}`} role="menuitem">
+          <Link className="chat-popover-action" href={`/profil/${message.authorId}`} role="menuitem">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 8a7 7 0 0 1 14 0" /></svg>
             Profil
           </Link>

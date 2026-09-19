@@ -138,7 +138,7 @@ Choisir un seul espace de coordonnées et tester l'alignement clic/point/révél
 
 ### D16 — P1 — Certaines interruptions et coopérations sont affichées comme des défaites
 
-**Code.** [FinishedPanel Géographie](../src/games/geographie/components/geography-match.tsx), lignes 113–116, ne traite pas `abandoned`. [La page historique](../src/app/historique/page.tsx) ne traite pas `cooperative` et retombe sur « Défaite », avec deux scores individuels nuls rendus « — – — », au lieu du score partagé.
+**Code.** [FinishedPanel Géographie](../src/games/geographie/components/geography-match.tsx), lignes 113–116, ne traite pas `abandoned`. La page liste `/historique` visée à l'origine a été supprimée le 19/09/2026 au profit de [ProfileHistory](../src/app/profil/profile-history.tsx), qui affiche le libellé « Résultat commun » et le score partagé pour `cooperative` (le détail [history-detail](../src/app/historique/history-detail.tsx) traite aussi les cinq issues).
 
 Rendre le traitement des issues exhaustif, afficher la raison de fin et l'unité du score commun. Tester `win/loss/draw/cooperative/abandoned`, y compris 0 % coopératif et abandon en préparation.
 

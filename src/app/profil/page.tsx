@@ -1,52 +1,18 @@
 import Link from "next/link";
 import { HomeHeroBackground } from "@/components/home-hero-background";
-import { ProfileButton } from "@/components/profile-button";
-import { SignOutButton } from "@/components/sign-out-button";
 import { SiteHeader } from "@/components/site-header";
+import { PUBLIC_GAMES } from "@/games/registry";
 import { getAuthenticatedAccount } from "@/server/auth";
 import { avatarCacheVersion } from "@/server/avatar";
+import { getProfileHistoryPage } from "@/app/historique/_data";
+import { AccountHeader } from "@/components/account-header";
 import { OnboardingPseudo } from "./onboarding-pseudo";
 import { ProfileEditor } from "./profile-editor";
+import { ProfileHistory } from "./profile-history";
 
 export const dynamic = "force-dynamic";
 
-function ProfileHeader({
-  name,
-  needsOnboarding,
-  preset,
-  avatarVersion,
-}: {
-  name: string;
-  needsOnboarding: boolean;
-  preset: string;
-  avatarVersion: string | null;
-}) {
-  return (
-    <header className="pf-header">
-      <Link href="/" className="pf-brand" aria-label="Accueil tibo.fun">
-        <svg viewBox="0 0 32 32" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
-          <path d="M10 9h12c3 0 5 3 6 7l1 6c.5 4-3 6-5 3l-4-4h-8l-4 4c-2 3-5.5 1-5-3l1-6c1-4 3-7 6-7Z" />
-          <path d="M10 13v6m-3-3h6" />
-          <circle cx="22" cy="14" r="1.3" fill="currentColor" stroke="none" />
-          <circle cx="25" cy="18" r="1.3" fill="currentColor" stroke="none" />
-        </svg>
-        <span>tibo.fun</span>
-      </Link>
-      <nav className="pf-nav" aria-label="Navigation principale">
-        <Link className="pf-nav-link" href="/">Jeux</Link>
-        <Link className="pf-nav-link" href="/historique">Historique</Link>
-        <Link className="pf-nav-link lb-keep" href="/leaderboard">Leaderboard</Link>
-        <ProfileButton
-          name={name}
-          needsOnboarding={needsOnboarding}
-          preset={preset}
-          avatarVersion={avatarVersion}
-        />
-        <SignOutButton className="pf-logout" />
-      </nav>
-    </header>
-  );
-}
+const GAME_OPTIONS = PUBLIC_GAMES.map(({ slug, displayName }) => ({ slug, displayName }));
 
 export default async function ProfilePage() {
   const account = await getAuthenticatedAccount();
@@ -62,7 +28,7 @@ export default async function ProfilePage() {
     return (
       <div className="pf-page">
         <HomeHeroBackground />
-        <ProfileHeader
+        <AccountHeader
           name={account.member.effectiveName}
           needsOnboarding
           preset={account.member.avatarPreset}
@@ -75,22 +41,37 @@ export default async function ProfilePage() {
     );
   }
 
+  const history = await getProfileHistoryPage(account.member.id, account.member.id);
+
   return (
     <div className="pf-page">
       <HomeHeroBackground />
-      <ProfileHeader
-          name={account.member.effectiveName}
-          needsOnboarding={false}
-          preset={account.member.avatarPreset}
-          avatarVersion={avatarCacheVersion(account.member.avatarPath)}
-        />
-      <main className="pf-main">
-        <ProfileEditor
-          initialName={account.member.effectiveName}
-          avatarPreset={account.member.avatarPreset}
-          avatarVersion={avatarCacheVersion(account.member.avatarPath)}
-        />
-      </main>
+      <AccountHeader
+        name={account.member.effectiveName}
+        needsOnboarding={false}
+        preset={account.member.avatarPreset}
+        avatarVersion={avatarCacheVersion(account.member.avatarPath)}
+      />
+      <div className="pf-layout">
+        <div className="pf-col-profile">
+          <ProfileEditor
+            initialName={account.member.effectiveName}
+            avatarPreset={account.member.avatarPreset}
+            avatarVersion={avatarCacheVersion(account.member.avatarPath)}
+          />
+        </div>
+        <div className="pf-col-history">
+          <ProfileHistory
+            endpoint={`/api/profiles/${account.member.id}/history`}
+            initialEntries={history.entries}
+            initialNextCursor={history.nextCursor}
+            games={GAME_OPTIONS}
+            title="Mon historique"
+            subtitle="Tes parties terminées, filtrables par jeu et par issue."
+            emptyLabel="Aucune partie terminée pour le moment."
+          />
+        </div>
+      </div>
     </div>
   );
 }

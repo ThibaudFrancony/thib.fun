@@ -19,10 +19,9 @@ Base proposée : fond crème `#F7F7F2`, surfaces blanches, texte `#17211B`, seco
 | `/rejoindre/[code]` | membre | rejoint par POST après clic explicite, puis salon |
 | `/salons/[id]` | participant | attente et réglages |
 | `/parties/[id]` | participant | jeu ; fin intégrée au même écran |
-| `/profil` et `/joueurs/[id]` | membre | soi éditable, tiers public |
-| `/historique` | membre | ses parties et filtres |
+| `/profil` | membre | profil éditable à gauche, historique complet à droite |
+| `/profil/[id]` | membre | profil d'un tiers en lecture seule + son historique complet |
 | `/historique/[id]` | participant | détail résultat/manches |
-| `/duo/[id]` | membre concerné | moi contre cet utilisateur |
 | `/leaderboard` | membre (invités refusés) | podium top 3 et 100 premiers du classement général aux points |
 | `/entrainement/syllabes` | membre | solo BombParty |
 | `/admin/invitations` | admin | créer/copier/révoquer liens, pas envoi automatique |
@@ -31,7 +30,7 @@ Après connexion, conserver uniquement un `returnTo` relatif allowlisté pour re
 
 ## 3. Accueil et navigation
 
-Header : identité tibo.fun, navigation Jeux / Historique / Profil, avatar et déconnexion. Desktop : largeur max 1200 px, 3 cartes prioritaires dans un bloc « À jouer maintenant », puis grille des 6 autres. Mobile : une colonne, cartes compactes ; aucun carrousel obligatoire cachant les priorités.
+Header : identité tibo.fun, navigation Jeux / Leaderboard / Profil, avatar et déconnexion. L'entrée « Historique » de l'ancien header est supprimée : l'historique se consulte désormais dans le profil. La route `/historique` redirige vers `/profil`. Desktop : largeur max 1200 px, 3 cartes prioritaires dans un bloc « À jouer maintenant », puis grille des 6 autres. Mobile : une colonne, cartes compactes ; aucun carrousel obligatoire cachant les priorités.
 
 Le header porte un bouton **Salon** sur l'accueil **et sur les pages de jeu** : il ouvre une **petite fenêtre ancrée sous le bouton** (sans voile ni flou, fermeture Échap/clic extérieur) avec deux choix « Créer un salon » / « Rejoindre ». Créer ferme la fenêtre et **remplace le bouton par un badge de groupe inline** dans le header : le rond du joueur, la place vide qui se remplit en direct, le code d'invitation et un bouton porte (rouge au survol) pour quitter. Rejoindre demande uniquement le code, puis affiche le badge sans le code. Cliquer le badge rouvre la petite fenêtre avec le détail du groupe et, quand les deux joueurs sont présents, la grille des neuf jeux menant à la page normale du jeu en mode « groupe » : l'hôte règle les options puis clique « Jouer », l'invité attend et rejoint automatiquement la partie. Le salon est mémorisé côté serveur quel que soit le jeu déjà posé et relu en continu (montage, focus, 5 s, Realtime) : un membre ne perd plus son propre groupe en naviguant. Le parcours historique créer/rejoindre depuis une page de jeu reste disponible hors groupe.
 
@@ -43,7 +42,7 @@ Descriptions seed : Chute libre « Réponds juste pour éviter la chute. » ; À
 
 Compte e-mail/mot de passe Supabase Auth, inscription libre et confirmation e-mail si activée par l’environnement. À la création Auth, un profil minimal et l’admission membre sont provisionnés automatiquement côté serveur ; aucune invitation n’est requise. SMTP réel à configurer pour usage entre amis ; documenter reset/confirmation avant mise en service. Pas de pseudo comme identifiant de connexion. À la première connexion, le compte permanent choisit un pseudo unique — le nom de création — avec l'avertissement explicite qu'il ne pourra plus être changé ; les comptes créés avant cette règle conservent leur pseudo existant comme nom de création. Un nom affiché optionnel peut ensuite remplacer l'affichage partout (vide = nom de création affiché). Il est 2–24 caractères et unique sans distinction de casse, comme le nom de création. Presets d’avatar fournis (8 symboles/couleurs), possibilité d'upload JPEG/PNG/WebP <= 2 Mo, réencodé en WebP 256×256 après vérification dimensions <= 4096×4096. Images signées privées, affichage de secours en cas d'URL expirée. Le header porte un bouton Profil (rond photo ou initiale) avec pastille d'alerte tant que le pseudo n'est pas choisi ; la photo est réutilisée dans les salons, groupes et parties.
 
-Profil personnel : photo, nom affiché optionnel, nom de création figé (lecture seule), avatar de secours, parties terminées, victoires, défaites, égalités, parties coopératives ; section par jeu. Dénominateur taux de victoire = wins+losses+draws, hors coop/abandoned ; pas de pourcentage si zéro duel. Afficher séparément les interruptions. Profil d'autrui : ces agrégats, bouton « Notre historique », pas ses parties avec un tiers ni son e-mail.
+Profil personnel : photo, nom affiché optionnel, nom de création figé (lecture seule), avatar de secours, historique complet de ses parties (filtres jeu/issue, pagination) présenté à droite de la carte de profil. Dénominateur taux de victoire = wins+losses+draws, hors coop/abandoned ; pas de pourcentage si zéro duel. Afficher séparément les interruptions. Profil d'autrui (`/profil/[id]`) : avatar, nom et agrégats par jeu en lecture seule, plus **son historique complet** (adversaires variés). Le détail d'une partie (`/historique/[id]`) reste réservé aux participants : une entrée où le visiteur n'a pas joué n'est pas cliquable. Jamais son e-mail. La décision du 19 septembre 2026 remplace la règle « pas ses parties avec un tiers ».
 
 ## 5. Salon
 
@@ -65,7 +64,7 @@ Sélection locale modifiable avant validation, bouton désactivé pendant envoi,
 
 Écran fin : victoire/défaite/égalité ou score partagé, valeurs finales, détail des manches, adversaire, durée, raison si forfait/interruption ; boutons revanche, changer de jeu, historique. Un résultat coopératif ne montre jamais « Tu as perdu ».
 
-Historique paginé par curseur `(ended_at,match_id)`, 20 lignes/cartes par page. Filtres jeu, issue ; date affichée fuseau navigateur (Europe/Paris par défaut si absent). Détail : score et règles utilisées, réponses révélées/manches, pas cartes restées secrètes non prévues par la fiche. Duel : nombre de confrontations compétitives, victoires de chacun, égalités, sessions coopératives et meilleurs scores communs séparés ; filtre par jeu. Pseudo snapshot dans chaque partie et pseudo actuel dans le header du profil.
+Historique paginé par curseur `(ended_at,match_id)`, 20 lignes/cartes par page. Filtres jeu, issue ; date affichée fuseau navigateur (Europe/Paris par défaut si absent). L'historique vit dans le profil (`/profil` pour soi, `/profil/[id]` pour un tiers) en colonne droite de la carte, DA violette, chaque carte mène au détail si le visiteur a participé. Détail : score et règles utilisées, réponses révélées/manches, pas cartes restées secrètes non prévues par la fiche. Pseudo snapshot dans chaque partie et pseudo actuel dans le header du profil.
 
 ## 8. Accessibilité et responsive
 
@@ -86,7 +85,7 @@ Depuis le mode inscription, « Continuer en tant qu’invité » ouvre un dialog
 Décision produit : ajouter un chat de site et des amis, alors que le cadrage initial plaçait « messagerie » hors périmètre V1. Le vocal reste hors périmètre.
 
 - Une flèche discrète reste ancrée au bord droit de toutes les pages. Elle ouvre une barre latérale violet sombre conforme à la maquette fournie : onglets « Général » et « Amis » avec pastilles de non-lus, compteur de messages, compteur approximatif de membres en ligne (activité < 2 min).
-- Le chat général est lisible par tout membre actif, invités anonymes compris ; seuls les comptes permanents écrivent. Chaque message montre pseudo, heure (date dès que le message n'est plus du jour) et contenu ; les jours sont séparés (« Hier · 17 septembre »). Cliquer un pseudo propose « Profil » (historique du duo) et « Ajouter en ami » avec les états déjà ami, demande envoyée ou reçue.
+- Le chat général est lisible par tout membre actif, invités anonymes compris ; seuls les comptes permanents écrivent. Chaque message montre pseudo, heure (date dès que le message n'est plus du jour) et contenu ; les jours sont séparés (« Hier · 17 septembre »). Cliquer un pseudo propose « Profil » (page `/profil/[id]` du joueur) et « Ajouter en ami » avec les états déjà ami, demande envoyée ou reçue.
 - L'onglet Amis liste les demandes reçues (Accepter/Refuser), les demandes envoyées et « Mes amis » avec présence, aperçu et non-lus. Un ami ouvre une conversation privée texte et photo ; il peut être retiré depuis la liste. Une photo est jointe par import ou Ctrl+V, compressée dans le navigateur (1280 px, WebP ~150 Ko) puis re-vérifiée et réencodée côté serveur.
 - Notifications : pastilles de non-lus temps réel et son discret (WebAudio, coupable, débloqué au premier geste utilisateur). Accessibilité : `role="tablist"`, `role="log"`, Échap ferme les menus, focus visible, cibles ≥ 44 px, `prefers-reduced-motion` respecté.
 - Chargement : les 30 derniers messages du général et des conversations existantes sont préchargés dès l'ouverture du site et conservés en cache par conversation. Rouvrir un onglet ou revenir sur une conversation affiche le cache instantanément, sans requête bloquante ; le haut du scroll charge 30 messages plus anciens à la fois. Le temps réel ne rafraîchit en direct que la conversation visible ; les autres entrées sont marquées à revalider en arrière-plan à la prochaine ouverture. Une requête en cours pour une même page n'est jamais dupliquée.
@@ -104,9 +103,20 @@ Page `/admin`, réservée au compte Auth dont l'e-mail figure dans `private.admi
 
 Décision produit : ajouter un système de points inter-jeux et une page de classement, alors que le cadrage initial plaçait « classement mondial » hors périmètre V1.
 
-- Bouton **Leaderboard** dans le header, visible pour les comptes permanents connectés (les invités et les visiteurs ne le voient pas), placé entre le bouton **Salon** (accueil, pages de jeu et salon) et l'avatar de profil, et après **Historique** sur les pages qui n'ont pas de Salon (historique, entraînement, profil).
+- Bouton **Leaderboard** dans le header, visible pour les comptes permanents connectés (les invités et les visiteurs ne le voient pas), placé entre le bouton **Salon** (accueil, pages de jeu et salon) et l'avatar de profil.
 - Page `/leaderboard` : podium des trois premiers (or/argent/bronze, avatar, pseudo, points) puis liste des 100 premiers avec rang, avatar, pseudo, victoires/défaites/égalités et points. Le rang du joueur courant est mis en évidence s'il est dans le top 100, sinon une carte « Ton rang » rappelle sa position. Un compte sans point voit un message d'invitation à terminer une partie.
 - Barème : victoire +10, défaite +5, match nul +7, réussite coopérative +10, partie terminée sans vainqueur 0. Tous les jeux comptent ; le score interne d'un jeu n'est jamais mélangé au cumul. Les invités ne marquent pas de point et ne consultent pas le classement. Les parties déjà terminées sont recomptées avec ce barème.
 - Accessibilité et responsive : podium à trois colonnes jusqu'à 640 px puis versions compactes, cibles ≥ 44 px, pas de dépendance à la couleur seule (rang et points en texte).
-- Interaction (19/09/2026) : cliquer un joueur (carte du podium ou ligne du Top 100) ouvre un menu « Profil » (page duo `/historique/duo/[id]`) ou « Demander en ami » (`POST /api/friends/requests`, libellé et état repris du chat). Le joueur courant n'a pas de menu ; Échap ou un clic hors du menu le referme. La couronne du premier passe derrière le rond de son avatar.
+- Interaction (19/09/2026) : cliquer un joueur (carte du podium ou ligne du Top 100) ouvre un menu « Profil » (page `/profil/[id]`) ou « Demander en ami » (`POST /api/friends/requests`, libellé et état repris du chat). Le joueur courant n'a pas de menu ; Échap ou un clic hors du menu le referme. La couronne du premier passe derrière le rond de son avatar.
 - DA (19/09/2026) : refonte visuelle spatiale sombre. Fond spatial fixe (`cover`, `center`, `fixed`) avec overlay bleu nuit léger, header translucide flouté, titre gradient blanc→violet, podium 2/1/3 (couronne dorée au-dessus du premier, badges argent « 2 » et bronze « 3 » en chevauchement), panneau Top 100 sombre avec lignes or/argent/bronze. Seuls quatre assets fournis sont utilisés (`public/leaderboard/space-bg.png`, `crown.png`, `badge-2.png`, `badge-3.png`) ; les avatars viennent toujours des photos/presets réels du site. Aucun autre élément graphique n'est créé.
+
+## 13. Profils publics et historique — décision du 19 septembre 2026
+
+Décision produit : supprimer la page liste `/historique` et regrouper profil et historique, y compris pour le profil d'un tiers, alors que le cadrage initial prévoyait `/joueurs/[id]` et interdisait de montrer « ses parties avec un tiers ».
+
+- `/historique` n'existe plus en tant que page : la route redirige vers `/profil`. L'entrée « Historique » du header est retirée sur toutes les variantes.
+- `/profil` (compte permanent) affiche deux colonnes sur desktop : la carte de profil éditable à gauche, l'historique complet à droite (filtres jeu/issue, pagination, DA violette). Sur mobile les colonnes s'empilent.
+- `/profil/[id]` (UUID) affiche le profil d'un tiers en lecture seule (avatar, nom, agrégats par jeu) et **son historique complet**. Réservé aux comptes permanents ; les invités sont refusés. Visiter son propre identifiant redirige vers `/profil`.
+- L'ancienne page `/historique/duo/[id]` redirige vers `/profil/[id]` ; le menu « Profil » du chat et du leaderboard pointe désormais vers `/profil/[id]`.
+- Le détail d'une partie (`/historique/[id]`) reste réservé aux participants et est re-skinné dans la DA violette ; sur le profil d'un tiers, les entrées où le visiteur n'a pas joué ne sont pas cliquables.
+- Aucune migration : les agrégats `player_game_stats` sont déjà lisibles par tout membre et `history_entries` reste lu côté serveur.

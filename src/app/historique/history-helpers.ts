@@ -2,6 +2,25 @@ import type { HistoryEntry } from "@/server/matches/repository";
 
 export type HistoryListItem = Omit<HistoryEntry, "payload"> & { opponentPseudo: string };
 
+/** Entrée d'historique d'un tiers, avec l'indication « j'ai joué cette partie ». */
+export type ProfileHistoryListItem = HistoryListItem & { viewerIsParticipant: boolean };
+
+/**
+ * Le joueur courant a-t-il joué cette partie ? On regarde d'abord l'adversaire
+ * enregistré puis les joueurs du snapshot public. Un payload incomplet renvoie
+ * `false` : on préfère une carte non cliquable à un faux accès au détail.
+ */
+export function viewerParticipates(entry: Pick<HistoryEntry, "opponentId" | "payload">, viewerId: string): boolean {
+  if (entry.opponentId === viewerId) return true;
+  const players = entry.payload.players;
+  if (!Array.isArray(players)) return false;
+  return players.some((candidate) => {
+    if (typeof candidate !== "object" || candidate === null) return false;
+    const value = candidate as Record<string, unknown>;
+    return value.userId === viewerId || value.id === viewerId;
+  });
+}
+
 const CONTROL_CHARACTERS = /[\u0000-\u001f\u007f-\u009f\u2028\u2029]/u;
 
 export function opponentPseudoFromPayload(entry: Pick<HistoryEntry, "opponentId" | "payload">): string {
