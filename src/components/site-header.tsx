@@ -21,6 +21,7 @@ export async function SiteHeader({ variant = "default" }: { variant?: "default" 
         </Link>
         <nav className="home-auth-nav" aria-label="Accès au compte">
           <SalonLauncher connected={Boolean(account)} />
+          {account && !account.isGuest ? <Link href="/leaderboard" className="home-auth-link">Leaderboard</Link> : null}
           {account ? account.isGuest ? <><span className="home-auth-link" aria-label={`Invité ${account.member.pseudo}`}>Invité · {account.member.pseudo}</span><Link href="/connexion?mode=signUp" className="home-auth-link home-signup-link">Créer un compte</Link><SignOutButton className="home-auth-link" /></> : <><ProfileButton name={account.member.effectiveName} accountName={account.member.accountName} needsOnboarding={account.member.needsOnboarding} preset={account.member.avatarPreset} hasAvatar={account.member.avatarPath !== null} /><SignOutButton className="home-auth-link" /></> : <><Link href="/connexion" className="home-auth-link">Connexion</Link><Link href="/connexion?mode=signUp" className="home-auth-link home-signup-link">Inscription</Link></>}
         </nav>
       </header>
@@ -43,6 +44,7 @@ export async function SiteHeader({ variant = "default" }: { variant?: "default" 
           <Link className="geo-nav-link" href="/">Jeux</Link>
           <Link className="geo-nav-link" href="/historique">Historique</Link>
           <SalonLauncher connected={Boolean(account)} triggerClassName="geo-nav-link" />
+          {account && !account.isGuest ? <Link className="geo-nav-link" href="/leaderboard">Leaderboard</Link> : null}
           {account ? account.isGuest ? <><span className="geo-nav-link" aria-label={`Invité ${account.member.pseudo}`}>Invité · {account.member.pseudo}</span><Link className="geo-nav-link" href="/connexion?mode=signUp">Créer un compte</Link><SignOutButton className="geo-nav-link" /></> : <><ProfileButton name={account.member.effectiveName} accountName={account.member.accountName} needsOnboarding={account.member.needsOnboarding} preset={account.member.avatarPreset} hasAvatar={account.member.avatarPath !== null} /><SignOutButton className="geo-nav-link" /></> : <Link className="geo-nav-link" href="/connexion">Connexion</Link>}
         </nav>
       </header>
@@ -58,6 +60,9 @@ export async function SiteHeader({ variant = "default" }: { variant?: "default" 
       <nav className="flex items-center gap-2 text-sm font-semibold text-[var(--muted)]" aria-label="Navigation principale">
         <Link className="rounded-full px-3 py-2 hover:bg-white/70 hover:text-[var(--ink)]" href="/">Jeux</Link>
         <Link className="rounded-full px-3 py-2 hover:bg-white/70 hover:text-[var(--ink)]" href="/historique">Historique</Link>
+        {account && !account.isGuest ? (
+          <Link className="rounded-full px-3 py-2 hover:bg-white/70 hover:text-[var(--ink)]" href="/leaderboard">Leaderboard</Link>
+        ) : null}
         {account ? account.isGuest ? <><span className="rounded-full px-3 py-2 text-[var(--muted)]" aria-label={`Invité ${account.member.pseudo}`}>Invité · {account.member.pseudo}</span><Link className="rounded-full px-3 py-2 hover:bg-white/70 hover:text-[var(--ink)]" href="/connexion?mode=signUp">Créer un compte</Link><SignOutButton className="rounded-full px-3 py-2 hover:bg-white/70 hover:text-[var(--ink)]" /></> : <><ProfileButton name={account.member.effectiveName} accountName={account.member.accountName} needsOnboarding={account.member.needsOnboarding} preset={account.member.avatarPreset} hasAvatar={account.member.avatarPath !== null} /><SignOutButton className="rounded-full px-3 py-2 hover:bg-white/70 hover:text-[var(--ink)]" /></> : <Link className="rounded-full px-3 py-2 hover:bg-white/70 hover:text-[var(--ink)]" href="/connexion">Connexion</Link>}
       </nav>
     </header>

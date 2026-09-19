@@ -1610,7 +1610,7 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
   .pf-page { height: auto; min-height: 100dvh; overflow: visible; }
   .pf-main { padding: 8px 12px 24px; align-items: flex-start; }
   .pf-card { width: 100%; max-height: none; }
-  .pf-nav-link { display: none; }
+  .pf-nav-link:not(.lb-keep) { display: none; }
 }
 
 /* ---------------------------------------------------------------------------
@@ -3340,4 +3340,69 @@ button.uno-card:disabled { cursor: progress; opacity: 0.8; }
 
 @media (hover: none) {
   .uno-card--playable:active { transform: translateY(-8px); }
+}
+
+/* ---------------------------------------------------------------------------
+   Leaderboard /leaderboard — podium et top 100 (thème papier).
+--------------------------------------------------------------------------- */
+
+.lb-root { display: grid; gap: 2rem; margin-top: 2.5rem; }
+
+.lb-podium { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.9rem; align-items: stretch; }
+
+.lb-podium-slot {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 0.35rem;
+  padding: 1.4rem 0.75rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 1.5rem;
+  background: var(--card);
+  box-shadow: 0 12px 30px rgba(20, 33, 29, 0.06);
+  text-align: center;
+}
+
+.lb-podium-slot[data-place="1"] { padding-top: 2.1rem; border-color: #e9b949; box-shadow: 0 16px 34px rgba(233, 185, 73, 0.22); }
+.lb-podium-slot[data-place="2"] { border-color: #c4ccd6; }
+.lb-podium-slot[data-place="3"] { border-color: #d8a06b; }
+.lb-podium-avatar { display: grid; place-items: center; width: 84px; height: 84px; }
+.lb-podium-slot[data-place="1"] .lb-podium-avatar { width: 96px; height: 96px; }
+.lb-podium-empty { display: grid; place-items: center; width: 68px; height: 68px; border: 1px dashed var(--line); border-radius: 999px; color: var(--muted); font-size: 1.2rem; }
+.lb-podium-place { margin: 0; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: var(--orange); }
+.lb-podium-slot[data-place="1"] .lb-podium-place { color: #a97b05; }
+.lb-podium-name { margin: 0; font-weight: 800; overflow-wrap: anywhere; }
+.lb-podium-points { margin: 0; color: var(--muted); font-weight: 700; }
+
+.lb-list { border: 1px solid var(--line); border-radius: 1.5rem; background: var(--card); box-shadow: 0 12px 30px rgba(20, 33, 29, 0.06); overflow: hidden; }
+.lb-list-head { display: grid; gap: 0.15rem; padding: 1.1rem 1.25rem; border-bottom: 1px solid var(--line); }
+.lb-list-title { margin: 0; font-size: 1.1rem; font-weight: 900; }
+.lb-list-sub { margin: 0; font-size: 0.8rem; color: var(--muted); }
+.lb-empty { margin: 0; padding: 1.5rem 1.25rem; color: var(--muted); }
+.lb-rows { list-style: none; margin: 0; padding: 0; }
+.lb-row { display: grid; grid-template-columns: 2.4rem auto 1fr auto auto; align-items: center; gap: 0.75rem; padding: 0.65rem 1.25rem; border-top: 1px solid var(--line); }
+.lb-row:first-child { border-top: 0; }
+.lb-row[data-me="true"] { background: rgba(233, 185, 73, 0.14); }
+.lb-rank { font-variant-numeric: tabular-nums; font-weight: 800; color: var(--muted); }
+.lb-name { font-weight: 700; overflow-wrap: anywhere; }
+.lb-record { font-size: 0.8rem; color: var(--muted); }
+.lb-points { font-weight: 900; white-space: nowrap; }
+
+.lb-me { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; padding: 1rem 1.25rem; border: 1px solid #e9b949; border-radius: 1.25rem; background: rgba(233, 185, 73, 0.14); font-weight: 700; }
+.lb-me-label { text-transform: uppercase; letter-spacing: 0.14em; font-size: 0.72rem; color: var(--orange); }
+.lb-me-rank { font-size: 1.4rem; font-weight: 900; }
+.lb-me-record { color: var(--muted); font-size: 0.85rem; }
+.lb-me-empty { margin: 0; color: var(--muted); }
+
+@media (max-width: 640px) {
+  .lb-podium { gap: 0.5rem; }
+  .lb-podium-slot { padding: 1rem 0.4rem 0.8rem; border-radius: 1.1rem; }
+  .lb-podium-slot[data-place="1"] { padding-top: 1.4rem; }
+  .lb-record { display: none; }
+  .lb-row { grid-template-columns: 2rem auto 1fr auto; padding: 0.6rem 0.9rem; }
+  .lb-list-head { padding: 1rem; }
+}
+
+@media (forced-colors: active) {
+  .lb-podium-slot, .lb-list, .lb-me { border-color: CanvasText; }
 }

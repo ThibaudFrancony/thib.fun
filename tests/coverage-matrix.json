@@ -6,7 +6,7 @@
       "id": "unit-and-contracts",
       "label": "Unitaires et contrats serveur",
       "status": "pass",
-      "evidence": "Salon actif du 19/09 : 75 fichiers, 497 tests réussis et 2 sentinelles d'échec attendu, dont le test statique `src/server/rooms/active-room-rpc.test.ts` (server_get_active_room sans filtre de jeu, privilèges, header de jeu, découverte joker). S'y ajoutent le formatage du chat, les schémas zod du chat/amis (contrat `member` objet ou null), le cache par conversation (fusion de pages, hasMore, péremption), les schémas admin, le filtre des jeux masqués sur l'accueil et les gardes des routes admin (401/403/ok), et les routes résumé, demandes d'ami et envoi de message (multipart, upload, nettoyage). Les contrats existants restent exécutés. Ajout du 19/09 : `src/server/rooms/dissolution-rpc.test.ts` (2 tests) verrouille sans base la migration `20260919121421_step13_room_dissolution.sql` (prédicat 1 h, `for update skip locked`, cron 30 s, heartbeat) ; le pgTAP `supabase/tests/step13_room_dissolution.sql` (17 assertions) est écrit mais non exécuté, Docker fermé."
+      "evidence": "Salon actif du 19/09 : 82 fichiers, 522 tests réussis et 2 sentinelles d'échec attendu, dont le test statique `src/server/rooms/active-room-rpc.test.ts` (server_get_active_room sans filtre de jeu, privilèges, header de jeu, découverte joker). S'y ajoutent le formatage du chat, les schémas zod du chat/amis (contrat `member` objet ou null), le cache par conversation (fusion de pages, hasMore, péremption), les schémas admin, le filtre des jeux masqués sur l'accueil et les gardes des routes admin (401/403/ok), et les routes résumé, demandes d'ami et envoi de message (multipart, upload, nettoyage). Les contrats existants restent exécutés. Ajout du 19/09 : `src/server/rooms/dissolution-rpc.test.ts` (2 tests) verrouille sans base la migration `20260919121421_step13_room_dissolution.sql` (prédicat 1 h, `for update skip locked`, cron 30 s, heartbeat) ; `src/server/leaderboard/{schemas,repository}.test.ts` (6 tests) verrouillent le barème attendu, la validation zod et le mapping de `server_get_leaderboard` ; le pgTAP `supabase/tests/step13_room_dissolution.sql` (17 assertions) et `supabase/tests/leaderboard.sql` (31 assertions) sont écrits mais non exécutés, Docker fermé."
     },
     {
       "id": "admin-console-browser",
@@ -19,6 +19,12 @@
       "label": "Chat général, amis et conversations privées",
       "status": "not-run",
       "evidence": "Fonctionnalité codée et migration `20260918214832_chat_and_friends` appliquée au distant le 18/09 (push CLI vérifié, migration list alignée). Aucune recette navigateur à deux comptes réels n'a été exécutée : les suites Playwright/E2E exigent Docker et une autorisation explicite ; la barre latérale, les badges temps réel, le son, le collage Ctrl+V et la compression photo restent à valider sur session réelle. Le pgTAP `supabase/tests/chat_and_friends.sql` (34 assertions, dont la forme du membre de conversation) est écrit mais Docker n'a pas été ouvert."
+    },
+    {
+      "id": "leaderboard-browser",
+      "label": "Classement général /leaderboard",
+      "status": "not-run",
+      "evidence": "Fonctionnalité codée et migration `20260919171749_leaderboard_points` appliquée au distant le 19/09 (push CLI vérifié, migration list alignée). Aucune recette navigateur réelle n'a été exécutée : podium top 3, liste des 100 premiers, rang du joueur courant, refus invité et bouton header restent à valider à deux comptes. Le pgTAP `supabase/tests/leaderboard.sql` (31 assertions : barème, invité, idempotence, backfill, RPC) est écrit mais Docker n'a pas été ouvert."
     },
     {
       "id": "home-and-guest-browser",

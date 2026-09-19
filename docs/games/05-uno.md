@@ -49,7 +49,7 @@ Vue : main propre complète IDs/symboles, nombre de cartes adverse uniquement, s
 
 `PLAY_CARD {cardId,chosenColor?:Color,announceLastCard:boolean}` phase playing ; `DRAW {}` playing ; `PLAY_DRAWN {chosenColor?:Color,announceLastCard:boolean}` after_draw (ID déduit serveur) ; `KEEP_DRAWN {}` after_draw ; RESIGN/CLAIM_FORFEIT communs. Le serveur refuse chosenColor sur carte non wild, ID adverse, carte non détenue, wild4 illégal. Receipts rendent DRAW idempotent.
 
-Victoire main vide. Score gagnant = valeur des cartes restantes adverses (chiffres valeur faciale, skip/reverse/draw2=20, wild/wild4=50), perdant=0. En draw scores=0, metrics gardent valeurs mains restantes. Ce score informatif ne décide pas une victoire par limite de tours. Forfait : winner score 0 et reason explicite. Metrics `{cardsPlayed,cardsDrawn,penaltyCardsTaken,missedAnnouncements,turns,remainingCards}`. Round_results contient une seule manche finale. Stats victoires + compteurs, pas de classement financier ou classement ELO.
+Victoire main vide. Score gagnant = valeur des cartes restantes adverses (chiffres valeur faciale, skip/reverse/draw2=20, wild/wild4=50), perdant=0. En draw scores=0, metrics gardent valeurs mains restantes. Ce score informatif ne décide pas une victoire par limite de tours. Forfait : winner score 0 et reason explicite. Metrics `{cardsPlayed,cardsDrawn,penaltyCardsTaken,missedAnnouncements,turns,remainingCards}`. Round_results contient une seule manche finale. Stats victoires + compteurs, pas de classement financier ni ELO ; le classement général du site (19/09/2026) cumule seulement des points par partie.
 
 ## 7. UI
 

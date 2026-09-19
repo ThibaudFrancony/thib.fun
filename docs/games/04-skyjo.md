@@ -53,7 +53,7 @@ Projection : grille propre et adverse avec `{slot,revealed,value?}` ; **une cart
 
 `REVEAL_INITIAL {slots:[number,number]}` setup ; `TAKE_DRAW {}` choose_source ; `TAKE_DISCARD {}` choose_source ; `REPLACE {slot}` après source ; `DISCARD_AND_REVEAL {slot}` seulement resolve_draw et slot caché ; NEXT/RESIGN/CLAIM_FORFEIT communs. La phase replace_discard interdit de jeter la carte prise. Le payload n'inclut jamais valeur/id de carte choisie par client.
 
-Toutes données dans état privé commun ; aucun corpus nécessaire. Round summary : grilles finales après suppression, scores bruts/pénalité/cumulés, déclencheur, nombre de tours. player score = total cumulé ; metrics `{roundsPlayed,rawPointsSum,penalties,columnClears,automaticTurns}`. Records distincts short/full ; score le plus bas meilleur. Pas de classement de score mélangeant durées.
+Toutes données dans état privé commun ; aucun corpus nécessaire. Round summary : grilles finales après suppression, scores bruts/pénalité/cumulés, déclencheur, nombre de tours. player score = total cumulé ; metrics `{roundsPlayed,rawPointsSum,penalties,columnClears,automaticTurns}`. Records distincts short/full ; score le plus bas meilleur. Pas de classement mélangeant les scores de durées différentes ; le classement général du site (19/09/2026) cumule seulement des points par partie.
 
 ## 7. UI
 

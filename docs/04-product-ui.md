@@ -23,6 +23,7 @@ Base proposée : fond crème `#F7F7F2`, surfaces blanches, texte `#17211B`, seco
 | `/historique` | membre | ses parties et filtres |
 | `/historique/[id]` | participant | détail résultat/manches |
 | `/duo/[id]` | membre concerné | moi contre cet utilisateur |
+| `/leaderboard` | membre (invités refusés) | podium top 3 et 100 premiers du classement général aux points |
 | `/entrainement/syllabes` | membre | solo BombParty |
 | `/admin/invitations` | admin | créer/copier/révoquer liens, pas envoi automatique |
 
@@ -74,9 +75,9 @@ Carte Géographie et cadran longueur-onde ont navigation clavier décrite dans l
 
 ## 9. Hors périmètre UI
 
-Pas d'écran paiement, publicité, invitations e-mail envoyées par notre app, thème personnalisable, marché d'avatars ou classement mondial. Mode sombre après V1 seulement si demandé. Ne pas remplir l'interface de noms techniques Supabase/LLM/RPC : « Vérification de ta réponse » suffit.
+Pas d'écran paiement, publicité, invitations e-mail envoyées par notre app, thème personnalisable ou marché d'avatars. Mode sombre après V1 seulement si demandé. Ne pas remplir l'interface de noms techniques Supabase/LLM/RPC : « Vérification de ta réponse » suffit.
 
-Chat et amis ont été sortis du hors-périmètre le 18 septembre 2026 (voir §10) ; le vocal, lui, reste exclu.
+Chat et amis ont été sortis du hors-périmètre le 18 septembre 2026 (voir §10) et le classement inter-jeux le 19 septembre 2026 (voir §12) ; le vocal, lui, reste exclu.
 
 Depuis le mode inscription, « Continuer en tant qu’invité » ouvre un dialogue précisant que le pseudo et la progression ne seront pas sauvegardés. La session anonyme reçoit un pseudo aléatoire serveur et peut jouer dans les salons ; elle ne dispose pas d’historique, de statistiques ni de profil de compte permanent. La perte de la session navigateur est définitive pour cet invité.
 
@@ -98,3 +99,12 @@ Page `/admin`, réservée au compte Auth dont l'e-mail figure dans `private.admi
 - **Visibilité des jeux** : liste des neuf jeux avec un interrupteur Actif / Désactivé. Un jeu désactivé disparaît du carousel et de la liste de l'accueil, mais sa route reste accessible par URL directe. La bascule est persistée immédiatement et le retour visuel est optimiste (interrupteur désactivé pendant l'appel).
 - **Discussions** : vue type messagerie en lecture seule. Colonne de gauche séparant « Chat général » et « Messages privés » avec recherche par pseudo ; zone de droite affichant la conversation sélectionnée, les deux participants (pseudo et avatar), les messages, les photos (clic pour agrandir) et les dates. L'admin n'apparaît pas comme participant, ne peut pas écrire dans une conversation privée et aucune RPC d'envoi ne lui est exposée. Le fil utilise le même composant de messages que le chat du site, avec l'action « Ajouter en ami » désactivée.
 - Le rendu reprend la DA violet sombre du chat, avec des transitions discrètes et un repli responsive (liste au-dessus de la conversation sur mobile).
+
+## 12. Classement général — décision du 19 septembre 2026
+
+Décision produit : ajouter un système de points inter-jeux et une page de classement, alors que le cadrage initial plaçait « classement mondial » hors périmètre V1.
+
+- Bouton **Leaderboard** dans le header, visible pour les comptes permanents connectés (les invités et les visiteurs ne le voient pas), placé entre le bouton **Salon** (accueil, pages de jeu et salon) et l'avatar de profil, et après **Historique** sur les pages qui n'ont pas de Salon (historique, entraînement, profil).
+- Page `/leaderboard` : podium des trois premiers (or/argent/bronze, avatar, pseudo, points) puis liste des 100 premiers avec rang, avatar, pseudo, victoires/défaites/égalités et points. Le rang du joueur courant est mis en évidence s'il est dans le top 100, sinon une carte « Ton rang » rappelle sa position. Un compte sans point voit un message d'invitation à terminer une partie.
+- Barème : victoire +10, défaite +5, match nul +7, réussite coopérative +10, partie terminée sans vainqueur 0. Tous les jeux comptent ; le score interne d'un jeu n'est jamais mélangé au cumul. Les invités ne marquent pas de point et ne consultent pas le classement. Les parties déjà terminées sont recomptées avec ce barème.
+- Accessibilité et responsive : podium à trois colonnes jusqu'à 640 px puis versions compactes, cibles ≥ 44 px, pas de dépendance à la couleur seule (rang et points en texte), thème papier cohérent avec l'historique.

@@ -62,7 +62,7 @@ Chaque phase a nouvel UUID ; niveau choisi appartient à un seul tour. Une soumi
 
 Score individuel = position réelle finale. round summary : thème principal, pour chaque joueur niveau/question/réponse/verdict/méthode/points/somme après. Metrics : correct/incorrect/timeouts, moyenne niveau choisi = chosenLevelSum/answeredCount, réussite par niveau. Un tour void n'entre pas dans answeredCount ; timeout réponse oui. Conserver points gagnés, pas une moyenne de pourcentages par partie.
 
-Statistiques permanentes : compteurs communs, niveau maximal réussi, sommes de niveaux/tentatives, réussite globale. Comparer records uniquement même configuration/rulesVersion si score brut dépend de durée/cible. Aucun classement interjeux par points.
+Statistiques permanentes : compteurs communs, niveau maximal réussi, sommes de niveaux/tentatives, réussite globale. Comparer records uniquement même configuration/rulesVersion si score brut dépend de durée/cible. Le score interne reste propre à TTMC ; le classement général du site (19/09/2026) cumule uniquement des points par partie, jamais ces scores internes.
 
 ## 6. UI
 

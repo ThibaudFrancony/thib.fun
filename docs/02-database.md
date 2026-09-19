@@ -161,7 +161,11 @@ CHECK `played=wins+losses+draws+cooperative`. `abandoned` distinct, non inclus d
 
 `player_low uuid FK profiles`, `player_high uuid FK profiles`, `game_slug text`, `played integer`, `low_wins integer`, `high_wins integer`, `draws integer`, `cooperative integer`, `abandoned integer`, `metrics jsonb`, `updated_at`, PK `(player_low,player_high,game_slug)`, CHECK `player_low<player_high` et somme conforme à played.
 
-Tri UUID canonique, pas ordre de salon. API duo autorise uniquement si l'acteur est un des deux. Vue dérivée choisit correctement « tes victoires ». Index supplémentaire `(player_high,game_slug)` pour recherche. Aucun classement global V1.
+Tri UUID canonique, pas ordre de salon. API duo autorise uniquement si l'acteur est un des deux. Vue dérivée choisit correctement « tes victoires ». Index supplémentaire `(player_high,game_slug)` pour recherche.
+
+### `private.player_scores` (19/09/2026)
+
+`user_id uuid PK FK profiles`, `points integer`, `wins/losses/draws/cooperative integer`, `updated_at`, index `(points desc, wins desc, losses asc, updated_at asc, user_id)`. Cumul inter-jeux alimenté par `private.award_player_points()` (`SECURITY DEFINER`, trigger après insertion de `private.player_results`) : win +10, loss +5, draw +7, cooperative +10, abandoned 0. Les invités (`site_members.is_guest`) ne reçoivent aucune ligne. Le backfill des parties terminées est un recalcul complet idempotent (`private.rebuild_player_scores()`), aux mêmes règles ; le score interne d'un jeu reste défini par sa fiche et n'est jamais mélangé au cumul de points. `service_role` seul lit et écrit cette table.
 
 ## 7. Permissions exactes
 
@@ -223,6 +227,7 @@ Toutes les RPC `server_*` suivantes sont exécutables uniquement par rôle serve
 | `server_admin_list_conversations(actor)` | admin seul : général et toutes les conversations privées, participants, aperçu, compteurs |
 | `server_admin_get_conversation(actor, conversationId, beforeSeq, limit)` | admin seul : lecture paginée d'une conversation, participants inclus, aucune écriture |
 | `server_admin_invitation(actor, operation, arguments)` | admin vérifié en DB, création/révocation/listage sans exposer les hashes |
+| `server_get_leaderboard(actor, limit?)` | compte permanent actif seulement (invité refusé) ; top 100 classé (`points desc, wins desc, losses asc, updated_at asc, user_id`), rang du demandeur même au-delà, `me` null sans point |
 
 Ces RPC sont l'accès aux tables privées depuis le SDK Supabase : **ne pas utiliser `.schema('private')` via une Data API qui n'expose pas ce schéma**. Le repository serveur encapsule les RPC et ne retourne jamais leurs objets complets à un navigateur. Les lectures de projections publiques peuvent utiliser le client à session utilisateur, dont RLS assure le filtrage.
 
@@ -266,3 +271,14 @@ Migration `20260919093337_admin_console.sql`, additive.
 | `public.server_is_admin(actor)` | Lecture du statut admin pour la page ; `service_role` seul. |
 
 Les RPC `server_admin_*` revalident `private.is_admin_account(p_actor)` après vérification de session côté serveur : un membre normal reçoit `ADMIN_REQUIRED`, même en appelant directement l'API. La consultation des conversations privées ne crée aucune appartenance et n'expose aucune RPC d'envoi. Sécurité de déploiement : la colonne et les fonctions sont additives ; sans migration, la page admin redirige vers l'accueil et l'accueil reste complet.
+
+## 13. Classement général (19/09/2026)
+
+Migration `20260919171749_leaderboard_points.sql`, additive et immuable.
+
+| Objet | Rôle et contraintes |
+|---|---|
+| `private.player_scores` | Cumul de points par compte permanent : `points`, `wins`, `losses`, `draws`, `cooperative`, `updated_at` ; index de rang. Aucun invité. |
+| `private.award_player_points()` | `SECURITY DEFINER`, déclenché après chaque insertion de `private.player_results` (résultat définitif, écrit une seule fois par partie/joueur). Barème : win 10, loss 5, draw 7, cooperative 10, abandoned 0. |
+| `private.rebuild_player_scores()` | Recalcul complet idempotent (backfill des parties déjà terminées), même barème, invités exclus ; appelé par la migration. |
+| `public.server_get_leaderboard(actor, limit)` | `SECURITY INVOKER`, `service_role` seul ; compte permanent actif ; renvoie les 100 premiers (limite bornée 1–100) et le rang du demandeur. |

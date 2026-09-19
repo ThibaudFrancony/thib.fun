@@ -106,6 +106,14 @@ Les slugs techniques sont stables. Les noms d'affichage sont des propositions mo
 - Périmètre : migration `20260919121421_step13_room_dissolution.sql`, test pgTAP `supabase/tests/step13_room_dissolution.sql`, test unitaire `src/server/rooms/dissolution-rpc.test.ts`, messages du salon, `docs/02-database.md`. Aucun changement de client, de transport Realtime ni de contrat de partie.
 - Raison : éviter qu'un salon inoccupé reste « actif » jusqu'à 24 h et bloque la création/rejoint d'un nouveau salon, sans porter atteinte à une partie en cours ni à un salon réellement utilisé.
 
+### Classement général et points inter-jeux (19 septembre 2026)
+
+- Demande utilisateur : un leaderboard avec des points, sur n'importe quel jeu — victoire +10, défaite +5 — accessible par un bouton entre le salon et le profil, avec un podium top 3 et les 100 premiers en dessous. Choix précisés dans la conversation : match nul +7 chacun, réussite coopérative +10, partie sans vainqueur 0, backfill des parties déjà terminées, invités exclus, bouton sur toutes les pages, libellé « Leaderboard » et route `/leaderboard`.
+- Ancienne règle : `docs/02-database.md` (« Aucun classement global V1 »), `docs/04-product-ui.md` et `docs/README.md` plaçaient le classement hors périmètre V1, et trois fiches de jeu interdisaient un classement inter-jeux par points.
+- Nouvelle règle : les comptes permanents cumulent des points par partie terminée dans `private.player_scores` (victoire 10, défaite 5, nul 7, coopération 10, abandoned 0), alimentés par un trigger après insertion de `private.player_results` au moment exact de la finalisation, avec un backfill idempotent. La page `/leaderboard` (bouton header sur toutes les pages) affiche le podium des trois premiers et les 100 premiers ; la RPC `server_get_leaderboard` est réservée au rôle serveur et refuse les invités. Les scores internes des jeux restent séparés et ne sont jamais additionnés.
+- Périmètre : migration `20260919171749_leaderboard_points.sql`, page et composants `src/app/leaderboard/*`, `src/server/leaderboard/*`, `src/lib/leaderboard-types.ts`, bouton dans `src/components/site-header.tsx` et `src/app/profil/page.tsx`, styles `.lb-*`, tests pgTAP `supabase/tests/leaderboard.sql` et Vitest, `docs/02-database.md` §6/§8/§13, `docs/04-product-ui.md` §2/§9/§12, `docs/README.md`, fiches TTMC/Skyjo/UNO, `docs/07-implementation-status.md`. Aucun changement des moteurs ni des résultats existants.
+- Raison : donner une progression visible et amusante entre amis, sans mélanger les unités de score propres à chaque jeu et sans léser les parties coopératives, les égalités ou les interruptions.
+
 ### Mise à jour proactive du suivi
 
 - Lire `AGENTS.md` et `progression.md` avant toute modification substantielle.

@@ -36,6 +36,7 @@ function ProfileHeader({
       <nav className="pf-nav" aria-label="Navigation principale">
         <Link className="pf-nav-link" href="/">Jeux</Link>
         <Link className="pf-nav-link" href="/historique">Historique</Link>
+        <Link className="pf-nav-link lb-keep" href="/leaderboard">Leaderboard</Link>
         <ProfileButton
           name={name}
           accountName={accountName}
