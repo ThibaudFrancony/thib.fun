@@ -14,7 +14,7 @@ Le suivi opérationnel détaillé et maintenu après chaque changement se trouve
 | Neuf plans de jeux | Rédigés | Défauts de règles explicités dans les fiches |
 | DA visuelle | Base provisoire documentée | Validation sur écrans réels |
 | Accueil et sélection des jeux | Implémenté | Rail responsive des neuf jeux ; les 9 entrées sont `ready` et les parcours locaux passent |
-| Bootstrap Next/Vercel/GitHub | 🟡 Partiel | Workflow CI statique + Supabase local versionné ; variables Vercel et déploiement du HEAD à vérifier |
+| Bootstrap Next/Vercel/GitHub | 🟡 Partiel | Supabase local versionné ; CI automatique GitHub supprimée le 19/09/2026 (vérifications locales pré-push, recette Docker manuelle) ; variables Vercel et déploiement du HEAD à vérifier |
 | Supabase CLI/configuration | Projet lié, 36/36 migrations distantes | Worker inactif : Vault vide, configuration Vercel à compléter |
 | Salons/transactions/Realtime/jobs | 🟢 Local, 🟡 production | Lien partagé, sortie de salon fermé, reçu START et clôture `superseded` ajoutés et testés localement ; recette distante à faire |
 | Salon d'accueil (groupe) | 🟢 Local, migrations distantes vérifiées | Bouton Salon, popup créer/rejoindre, places en direct, détection du groupe et lancement depuis la page de jeu ; tests pgTAP/Vitest/E2E locaux |

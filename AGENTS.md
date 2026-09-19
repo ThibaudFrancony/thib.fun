@@ -94,9 +94,17 @@ Les slugs techniques sont stables. Les noms d'affichage sont des propositions mo
 - Demande utilisateur : ne jamais imposer Docker (Desktop / daemon, RAM) ; permettre le push sans tests Docker ; l'agent demande l'ouverture de Docker avant toute recette qui l'exige.
 - Ancienne règle : la CI `push`/`PR` incluait un job `PostgreSQL local et E2E obligatoires` (`supabase start`, `db reset`, pgTAP, Playwright) et les recettes locales/Docker étaient attendues avant push.
 - Nouvelle règle : Docker/Supabase local est strictement opt-in. Interdit sans autorisation explicite dans la tâche active : `docker *`, `supabase start/stop/status`, `supabase db reset/diff/lint`, `supabase test db --local`, `supabase migration list --local` contre daemon local, `pnpm test:db`, `pnpm test:e2e`, `pnpm test:step8`, `pnpm local:env`, `pnpm local:fixture` (ce dernier prépare la DB locale). Avant de les proposer, l'agent demande à l'utilisateur d'ouvrir Docker et attend sa confirmation ; en cas de refus ou sans réponse, il continue sans Docker et le note comme limite.
-- Périmètre : travail agent local, vérifications pré-push/commit, CI automatique (`ci.yml` sans Docker), recette manuelle (`docker-e2e.yml` en `workflow_dispatch` uniquement), `docs/06-delivery-testing.md`.
+- Périmètre : travail agent local, vérifications pré-push/commit, aucune CI automatique (workflow `ci.yml` supprimé le 19 septembre 2026), recette manuelle (`docker-e2e.yml` en `workflow_dispatch` uniquement), `docs/06-delivery-testing.md`.
 - Raison : Docker Desktop consomme beaucoup de RAM ; l'utilisateur veut garder le daemon fermé par défaut et ne l'ouvrir que pour une recette Docker explicitement demandée.
 - Vérification pré-push par défaut (sans Docker) : `pnpm test:matrix`, `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm content:validate`, `pnpm docs:check`, `pnpm exec next build --webpack`. Les suites Docker/pgTAP/E2E ne bloquent ni le commit ni le push ; leur absence est notée en limitation dans `progression.md`.
+
+### Suppression de la CI GitHub automatique (19 septembre 2026)
+
+- Demande utilisateur : supprimer entièrement le workflow GitHub « Vérifications », inutile puisque le déploiement Vercel fonctionne et que chaque push affichait une erreur GitHub.
+- Ancienne règle : `ci.yml` tournait automatiquement sur `push`/`PR` (`main`) avec 7 portillons (install, `test:matrix`, `typecheck`, `lint`, `test`, `content:validate`, `docs:check`, `build`), sans Docker.
+- Nouvelle règle : aucune CI automatique GitHub. Les vérifications restent manuelles/locales avant push (même liste de commandes, inchangée). Le workflow manuel `docker-e2e.yml` (`workflow_dispatch` uniquement) est conservé. Si une protection de branche exigeait le statut « Vérifications », la retirer dans les réglages GitHub pour ne pas bloquer les fusions.
+- Périmètre : suppression de `.github/workflows/ci.yml`, `docs/06-delivery-testing.md` §4/§5, `docs/07-implementation-status.md`, `progression.md`. Aucun changement de code, de contenu, de migration ni de déploiement Vercel.
+- Raison : le déploiement Vercel (`next build` seul) ne dépend pas de ce workflow ; son signal rouge systématique n'apportait aucune information utile et son entretien (dérive Node 20 runner / Node local, portillons redondants avec la vérification pré-push de l'agent) coûtait plus qu'il ne rapportait.
 
 ### Dissolution automatique des salons inactifs (19 septembre 2026)
 
