@@ -1,6 +1,6 @@
 begin;
 
-select plan(21);
+select plan(24);
 
 -- ---------------------------------------------------------------------------
 -- Structure, privilèges et contrôle base
@@ -86,6 +86,21 @@ values
 select ok(private.is_admin_account('00000000-0000-4000-8000-00000000d101'::uuid), 'Admin : l''e-mail autorisé est reconnu');
 select ok(not private.is_admin_account('00000000-0000-4000-8000-00000000d102'::uuid), 'Admin : un autre e-mail est refusé');
 select ok(public.server_is_admin('00000000-0000-4000-8000-00000000d101'::uuid), 'Admin : server_is_admin confirme le compte');
+
+select ok(
+  has_function_privilege('service_role', 'private.is_admin_account(uuid)', 'EXECUTE')
+    and not has_function_privilege('authenticated', 'private.is_admin_account(uuid)', 'EXECUTE')
+    and not has_function_privilege('anon', 'private.is_admin_account(uuid)', 'EXECUTE'),
+  'Admin : is_admin_account est exécutable par le seul rôle serveur'
+);
+
+-- Reproduction du chemin réel de l'application : les RPC admin sont
+-- SECURITY INVOKER et réservées à service_role. Sans le grant ci-dessus,
+-- cet appel échouait en 42501, mappé en ADMIN_REQUIRED côté application.
+set role service_role;
+select ok(public.server_is_admin('00000000-0000-4000-8000-00000000d101'::uuid), 'Admin : server_is_admin répond vrai via le rôle serveur');
+select ok(not public.server_is_admin('00000000-0000-4000-8000-00000000d102'::uuid), 'Admin : server_is_admin répond faux via le rôle serveur');
+reset role;
 
 -- ---------------------------------------------------------------------------
 -- Visibilité des jeux
