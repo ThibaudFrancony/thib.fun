@@ -105,16 +105,12 @@ export function HomeGameSelector({ games: initialGames }: { games: readonly Publ
   const stepRef = useRef(layoutFor(1200).step);
   const spinFrameRef = useRef<number | null>(null);
   const spinningRef = useRef(false);
-
-  // Annule le tirage en cours si la liste des jeux change ou au démontage.
+  const totalRef = useRef(total);
   useEffect(() => {
-    if (spinFrameRef.current !== null) {
-      cancelAnimationFrame(spinFrameRef.current);
-      spinFrameRef.current = null;
-    }
-    spinningRef.current = false;
-    setSpinning(false);
-  }, [total]);
+    totalRef.current = total;
+  });
+
+  // Annule le tirage au démontage.
   useEffect(() => () => {
     if (spinFrameRef.current !== null) cancelAnimationFrame(spinFrameRef.current);
   }, []);
@@ -152,7 +148,10 @@ export function HomeGameSelector({ games: initialGames }: { games: readonly Publ
   /** Tirage au hasard : plusieurs tours rapides puis ralenti marqué jusqu'à la cible. */
   const shuffle = useCallback(() => {
     if (spinningRef.current || total <= 1) return;
-    const target = Math.floor(Math.random() * total);
+    // Le tirage privilégie les jeux jouables ; repli sur toute la liste si aucun ne l'est.
+    const playableIndices = games.flatMap((game, index) => (playableRoute(game) ? [index] : []));
+    const pool = playableIndices.length > 0 ? playableIndices : games.map((_, index) => index);
+    const target = pool[Math.floor(Math.random() * pool.length)];
     if (typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
       goToIndex(target);
       return;
@@ -169,7 +168,16 @@ export function HomeGameSelector({ games: initialGames }: { games: readonly Publ
     setDragging(false);
     dragRef.current = null;
     const startTime = performance.now();
+    const spinTotal = total;
     const tick = (now: number) => {
+      if (totalRef.current !== spinTotal) {
+        // La liste des jeux a changé en cours de tirage : on s'arrête sur la carte la plus proche.
+        spinFrameRef.current = null;
+        spinningRef.current = false;
+        setSpinning(false);
+        setPosition((current) => Math.round(current));
+        return;
+      }
       const elapsed = Math.min(1, (now - startTime) / duration);
       // Ease-out quintique : départ rapide, arrivée très lente sur le jeu tiré.
       const eased = 1 - Math.pow(1 - elapsed, 5);
@@ -184,7 +192,7 @@ export function HomeGameSelector({ games: initialGames }: { games: readonly Publ
       }
     };
     spinFrameRef.current = requestAnimationFrame(tick);
-  }, [position, total, goToIndex]);
+  }, [position, total, games, goToIndex]);
 
   function onKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
@@ -242,6 +250,7 @@ export function HomeGameSelector({ games: initialGames }: { games: readonly Publ
   }
 
   function onSelectClick(index: number, offset: number) {
+    if (spinningRef.current) return;
     if (movedRef.current) {
       movedRef.current = false;
       return;
@@ -252,6 +261,7 @@ export function HomeGameSelector({ games: initialGames }: { games: readonly Publ
   }
 
   function onPlayClick(route: string | undefined) {
+    if (spinningRef.current) return;
     if (movedRef.current) {
       movedRef.current = false;
       return;
@@ -331,7 +341,7 @@ export function HomeGameSelector({ games: initialGames }: { games: readonly Publ
               pointerEvents: hiddenCard ? "none" : "auto",
             };
 
-            const showPlay = isActive && !hiddenCard && Boolean(route);
+            const showPlay = isActive && !hiddenCard && Boolean(route) && !spinning;
             return (
               <li key={game.slug} className="home-carousel-item">
                 <div
