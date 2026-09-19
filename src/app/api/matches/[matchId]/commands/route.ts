@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { geoConfigSchema } from "@/games/geographie/config";
 import { GEO_ENGINE_VERSION, GEO_RULES_VERSION, reduceGeo } from "@/games/geographie/engine";
-import { projectGeo } from "@/games/geographie/projection";
+import { geoAvatarPresetFromSnapshot, projectGeo } from "@/games/geographie/projection";
 import { geoActionSchema as actionSchema } from "@/games/geographie/types";
 import { trouNoirConfigSchema } from "@/games/trou-noir/config";
 import { reduceTrouNoir, TROU_NOIR_ENGINE_VERSION, TROU_NOIR_RULES_VERSION } from "@/games/trou-noir/engine";
@@ -66,7 +66,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ mat
   if (!body.success) return jsonError("INVALID_REQUEST", 400, "La commande de jeu est invalide.");
   try {
     const snapshot = await getMatchSnapshot(member.id, matchId);
-    const identities = snapshot.players.map((player) => ({ id: player.id, pseudo: player.pseudo })) as [{ id: string; pseudo: string }, { id: string; pseudo: string }];
+    const identities = snapshot.players.map((player) => ({ id: player.id, pseudo: player.pseudo, avatarPreset: geoAvatarPresetFromSnapshot(player.avatar) })) as [{ id: string; pseudo: string; avatarPreset: string }, { id: string; pseudo: string; avatarPreset: string }];
     const participants = [snapshot.players[0].id, snapshot.players[1].id] as const;
     const nextPhaseId = randomUUID();
     let response: Record<string, unknown>;

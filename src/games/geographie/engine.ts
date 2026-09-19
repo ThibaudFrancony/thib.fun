@@ -277,16 +277,19 @@ function applyPlacement(metrics: GeoMetrics, placement: GeoPlacement): GeoMetric
 }
 
 function finishTimeoutTurn(ctx: GeoEngineContext, state: GeoState, config: GeoConfig): GeoTransition {
-  const seat = activeSeat(state);
+  // Placements simultanés : une seule échéance partagée. À l'expiration,
+  // tous les sièges sans placement confirmé reçoivent 0 puis révélation.
+  // Compatible avec les parties en cours (turnInRound ignoré) : un état
+  // hérité avec un seul placement déjà enregistré révèle aussi aussitôt.
   const submitted: [boolean, boolean] = [...state.submitted] as [boolean, boolean];
-  submitted[seat] = true;
   const metrics: [GeoMetrics, GeoMetrics] = [...state.metrics] as [GeoMetrics, GeoMetrics];
-  metrics[seat] = applyMissed(metrics[seat]);
-  const timedOut: GeoState = { ...state, submitted, metrics };
-  if (state.turnInRound === 0) {
-    const next: GeoState = { ...timedOut, turnInRound: 1 };
-    return placingTransition(ctx, next, config, "PLACEMENT_TIMED_OUT");
+  for (const seat of [0, 1] as const) {
+    if (!submitted[seat]) {
+      submitted[seat] = true;
+      metrics[seat] = applyMissed(metrics[seat]);
+    }
   }
+  const timedOut: GeoState = { ...state, submitted, metrics };
   const reveal: GeoState = {
     ...timedOut,
     phase: "reveal",
@@ -445,7 +448,6 @@ export function reduceGeo(stateInput: unknown, action: GeoAction, configInput: u
     }
     case "PLACE_CITY": {
       if (state.phase !== "placing") throw new GeoRuleError("NOT_PLACING");
-      if (activeSeat(state) !== actorSeat) throw new GeoRuleError("NOT_YOUR_TURN");
       if (state.submitted[actorSeat]) throw new GeoRuleError("PLACEMENT_ALREADY_SUBMITTED");
       const target = cities.get(state.cityIds[state.round - 1] ?? "");
       if (!target) throw new GeoRuleError("CITY_NOT_IN_PACK");
@@ -471,8 +473,15 @@ export function reduceGeo(stateInput: unknown, action: GeoAction, configInput: u
       submitted[actorSeat] = true;
       metrics[actorSeat] = applyPlacement(metrics[actorSeat], placement);
       const next: GeoState = { ...state, placements, submitted, metrics };
-      if (state.turnInRound === 0) {
-        return placingTransition(ctx, { ...next, turnInRound: 1 }, config, "PLACEMENT_SUBMITTED");
+      if (!submitted[0] || !submitted[1]) {
+        // Premier placement simultané : on reste dans la même phase et la
+        // même échéance partagée, sans réarmer le chrono de l'adversaire.
+        return transition(ctx, next, {
+          phaseId: ctx.phaseId,
+          deadlineAt: ctx.currentDeadlineAt ?? iso(ctx.nowMs + config.turnSeconds * 1000),
+          deadlineKind: ctx.currentDeadlineKind ?? "turn_timeout",
+          eventType: "PLACEMENT_SUBMITTED",
+        });
       }
       const totals: [number, number] = [
         state.totals[0] + (placements[0]?.points ?? 0),

@@ -4,10 +4,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { GeographyMap } from "@/games/geographie/components/geography-map";
+import { Avatar } from "@/components/avatar";
 import type { GeoAction } from "@/games/geographie/types";
 import type { GeoPoint } from "@/games/geographie/scoring";
 import type { GeoView } from "@/games/geographie/types";
 import { parseMatchSnapshot, useResourceNetwork } from "@/lib/network-sync";
+import { useRoomAvatars } from "@/lib/room-avatars";
 
 type MatchResponse = { matchId: string; roomId: string; status: string; mode: string; version: number; phaseId: string; deadlineAt: string | null; deadlineKind: string | null; serverNow: string; view: GeoView };
 
@@ -56,6 +58,9 @@ export function GeographyMatch({ matchId }: { matchId: string }) {
     onSnapshotApplied,
   });
 
+  const memberIds = match ? match.view.players.map((player) => player.id) : [];
+  const avatars = useRoomAvatars(match?.roomId ?? null, memberIds);
+
   useEffect(() => {
     const clockTimer = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(clockTimer);
@@ -86,11 +91,65 @@ export function GeographyMatch({ matchId }: { matchId: string }) {
   if (!match) return <main className="geo-page geo-state-page"><div className="geo-panel geo-loading-panel">Chargement de la partie…</div></main>;
   const view = match.view;
   const me = view.players[view.mySeat];
-  const isMyTurn = me.active;
-  return <main className="geo-page geo-match-page"><div className="geo-content geo-match-content"><header className="geo-match-header"><button type="button" onClick={() => router.push(`/salons/${match.roomId}`)} className="geo-back-link">← Salon</button><div className="geo-match-heading"><p className="geo-kicker geo-kicker-accent">HexaPoint</p><p>Manche {Math.min(view.round, view.rounds)} / {view.rounds}</p></div><button type="button" onClick={() => void refresh()} className="geo-secondary-button geo-refresh-button">Actualiser</button></header><div className="geo-scoreboard">{view.players.map((player) => <div key={player.id} className="geo-score-card" data-self={player.seat === view.mySeat} data-active={player.active}><div className="geo-score-topline"><span className="geo-player-name">{player.pseudo}{player.seat === view.mySeat ? " · toi" : ""}</span><span className="geo-player-score">{player.score}</span></div><p className="geo-score-status">{player.active ? "À toi" : player.submitted ? "Placement reçu" : "En attente"}</p></div>)}</div><div aria-live="polite" aria-atomic="true" className="geo-status-bar" data-urgent={remaining !== null && remaining <= 10}><span>{phaseLabel(view, isMyTurn)}</span>{remaining !== null && <span className="geo-timer">{remaining}s</span>}</div>{view.phase === "select_cities" && <ChallengeSelection view={view} query={query} setQuery={setQuery} results={searchResults} selectedIds={selectedIds} toggle={(id) => { selectionDirtyRef.current = true; setSelectedIds((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]); }} labels={cityLabels} onSave={() => void send({ type: "SET_CITY_SELECTION", cityIds: selectedIds })} onConfirm={() => void confirmSelection()} busy={busy} />}{(view.phase === "placing" || view.phase === "reveal") && <div className="geo-game-layout"><div className="geo-map-column"><GeographyMap view={view} interactive={view.phase === "placing" && isMyTurn && !busy} pendingPoint={pendingPoint} onPendingPointChange={setPendingPoint} /><p className="geo-map-caption" aria-live="polite">{pendingPoint ? `${pendingPoint.latitude.toFixed(4)}, ${pendingPoint.longitude.toFixed(4)} · point local, pas encore envoyé` : "Aucun point confirmé"}</p></div><aside className="geo-panel geo-side-panel">{view.phase === "placing" && <PlacingPanel view={view} isMyTurn={isMyTurn} pendingPoint={pendingPoint} busy={busy} confirm={() => { if (pendingPoint) void send({ type: "PLACE_CITY", latitude: pendingPoint.latitude, longitude: pendingPoint.longitude }); }} />}{view.phase === "reveal" && <RevealPanel view={view} busy={busy} next={() => void send({ type: "NEXT" })} />}</aside></div>}{view.phase !== "finished" && <ForfeitControl busy={busy} resign={() => { if (window.confirm("Abandonner cette partie ?")) void send({ type: "RESIGN" }); }} />}{view.phase === "finished" && <FinishedPanel view={view} back={() => router.push(`/salons/${match.roomId}`)} />}{error && <p role="alert" className="geo-error">{error}</p>}</div></main>;
+  // Placements simultanés : actif tant que le joueur n'a pas validé.
+  const canPlace = view.phase === "placing" && !me.submitted;
+  return (
+    <main className="geo-page geo-match-page">
+      <div className="geo-content geo-match-content">
+        <header className="geo-match-header">
+          <button type="button" onClick={() => router.push(`/salons/${match.roomId}`)} className="geo-back-link">← Salon</button>
+          <div className="geo-match-heading"><p className="geo-kicker geo-kicker-accent">HexaPoint</p><p>Manche {Math.min(view.round, view.rounds)} / {view.rounds}</p></div>
+          <button type="button" onClick={() => void refresh()} className="geo-secondary-button geo-refresh-button">Actualiser</button>
+        </header>
+        <div className="geo-scoreboard">
+          {view.players.map((player) => (
+            <div key={player.id} className="geo-score-card" data-self={player.seat === view.mySeat} data-active={player.active}>
+              <div className="geo-score-topline">
+                <span className="geo-player-identity">
+                  <Avatar name={player.pseudo} preset={player.avatarPreset ?? "avatar-1"} imageUrl={avatars[player.id] ?? null} size={28} />
+                  <span className="geo-player-name">{player.pseudo}{player.seat === view.mySeat ? " · toi" : ""}</span>
+                </span>
+                <span className="geo-player-score">{player.score}</span>
+              </div>
+              <p className="geo-score-status">{player.submitted ? "Placement reçu" : view.phase === "placing" ? "En train de placer…" : "En attente"}</p>
+            </div>
+          ))}
+        </div>
+        <div aria-live="polite" aria-atomic="true" className="geo-status-bar" data-urgent={remaining !== null && remaining <= 10}>
+          <span>{phaseLabel(view, canPlace)}</span>{remaining !== null && <span className="geo-timer">{remaining}s</span>}
+        </div>
+        {view.phase === "select_cities" && <ChallengeSelection view={view} query={query} setQuery={setQuery} results={searchResults} selectedIds={selectedIds} toggle={(id) => { selectionDirtyRef.current = true; setSelectedIds((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]); }} labels={cityLabels} onSave={() => void send({ type: "SET_CITY_SELECTION", cityIds: selectedIds })} onConfirm={() => void confirmSelection()} busy={busy} />}
+        {(view.phase === "placing" || view.phase === "reveal") && (
+          <div className="geo-game-layout">
+            <div className="geo-map-column">
+              <GeographyMap view={view} interactive={canPlace && !busy} pendingPoint={pendingPoint} onPendingPointChange={setPendingPoint} avatars={avatars} />
+              <p className="geo-map-caption" aria-live="polite">{pendingPoint ? `${pendingPoint.latitude.toFixed(4)}, ${pendingPoint.longitude.toFixed(4)} · point local, pas encore envoyé` : "Aucun point confirmé"}</p>
+            </div>
+            <aside className="geo-panel geo-side-panel">
+              {view.phase === "placing" && <PlacingPanel view={view} canPlace={canPlace} pendingPoint={pendingPoint} busy={busy} confirm={() => { if (pendingPoint) void send({ type: "PLACE_CITY", latitude: pendingPoint.latitude, longitude: pendingPoint.longitude }); }} />}
+              {view.phase === "reveal" && <RevealPanel view={view} avatars={avatars} busy={busy} next={() => void send({ type: "NEXT" })} />}
+            </aside>
+          </div>
+        )}
+        {view.phase !== "finished" && <ForfeitControl busy={busy} resign={() => { if (window.confirm("Abandonner cette partie ?")) void send({ type: "RESIGN" }); }} />}
+        {view.phase === "finished" && <FinishedPanel view={view} back={() => router.push(`/salons/${match.roomId}`)} />}
+        {error && <p role="alert" className="geo-error">{error}</p>}
+      </div>
+    </main>
+  );
 }
 
-function phaseLabel(view: GeoView, isMyTurn: boolean): string { if (view.phase === "select_cities") return view.challenge?.myConfirmed ? "Ta sélection est verrouillée" : "Prépare tes villes"; if (view.phase === "placing") return isMyTurn ? "À toi de placer le point" : "Au tour de ton partenaire"; if (view.phase === "reveal") return "Résultats de la manche"; return "Partie terminée"; }
+function phaseLabel(view: GeoView, canPlace: boolean): string {
+  if (view.phase === "select_cities") return view.challenge?.myConfirmed ? "Ta sélection est verrouillée" : "Prépare tes villes";
+  if (view.phase === "placing") {
+    const me = view.players[view.mySeat];
+    if (me.submitted) return "Placement envoyé — en attente de ton partenaire";
+    if (canPlace) return "À toi de placer le point";
+    return "À toi de placer le point";
+  }
+  if (view.phase === "reveal") return "Résultats de la manche";
+  return "Partie terminée";
+}
 
 function ChallengeSelection({ view, query, setQuery, results, selectedIds, toggle, labels, onSave, onConfirm, busy }: { view: GeoView; query: string; setQuery: (value: string) => void; results: Array<{ id: string; name: string; departmentName: string }>; selectedIds: string[]; toggle: (id: string) => void; labels: Record<string, { id: string; name: string; departmentName: string }>; onSave: () => void; onConfirm: () => void; busy: boolean }) {
   const challenge = view.challenge;
@@ -99,12 +158,13 @@ function ChallengeSelection({ view, query, setQuery, results, selectedIds, toggl
   return <section className="geo-panel geo-challenge-panel"><div className="geo-panel-heading geo-challenge-heading"><div><p className="geo-kicker geo-kicker-accent">Mode défi</p><h2 className="geo-panel-title">Propose {challenge.required} ville{challenge.required > 1 ? "s" : ""}</h2></div><span className="geo-count-badge">{selectedIds.length} / {challenge.required}</span></div><p className="geo-panel-note">La liste de l'autre joueur reste invisible. Une ville déjà confirmée devra être remplacée.</p><input disabled={challenge.myConfirmed} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Rechercher une ville ou un département" className="geo-input" aria-label="Rechercher une ville" /><div className="geo-city-results">{results.map((city) => <button type="button" key={city.id} disabled={challenge.myConfirmed} onClick={() => toggle(city.id)} className="geo-city-option" data-selected={selectedIds.includes(city.id)}><span>{city.name}</span><small>{city.departmentName}</small></button>)}</div>{selectedCities.length > 0 && <div className="geo-selected-cities">{selectedCities.map((city) => <span key={city.id} className="geo-city-chip">{city.name} · {city.departmentName}</span>)}</div>}<div className="geo-form-actions"><button disabled={busy || challenge.myConfirmed || selectedIds.length !== challenge.required} onClick={onSave} className="geo-secondary-button">Enregistrer la liste</button><button disabled={busy || challenge.myConfirmed || selectedIds.length !== challenge.required} onClick={onConfirm} className="geo-primary-button">Confirmer</button></div></section>;
 }
 
-function PlacingPanel({ view, isMyTurn, pendingPoint, busy, confirm }: { view: GeoView; isMyTurn: boolean; pendingPoint: GeoPoint | null; busy: boolean; confirm: () => void }) {
-  return <div className="geo-side-content"><p className="geo-kicker geo-kicker-warm">Ville cible</p><h2 className="geo-target-title">{view.target?.name ?? "…"}</h2><p className="geo-target-department">{view.target?.departmentName}</p><p className="geo-panel-note geo-instruction">{isMyTurn ? "Place le point au meilleur endroit, puis confirme. Un simple clic ne valide jamais l'envoi." : "Ton partenaire prépare son placement. Ta position exacte restera cachée jusqu'à la révélation."}</p><button disabled={!isMyTurn || !pendingPoint || busy} onClick={confirm} className="geo-primary-button">{busy ? "Envoi…" : "Confirmer le placement"}</button></div>;
+function PlacingPanel({ view, canPlace, pendingPoint, busy, confirm }: { view: GeoView; canPlace: boolean; pendingPoint: GeoPoint | null; busy: boolean; confirm: () => void }) {
+  const submitted = view.players[view.mySeat].submitted;
+  return <div className="geo-side-content"><p className="geo-kicker geo-kicker-warm">Ville cible</p><h2 className="geo-target-title">{view.target?.name ?? "…"}</h2><p className="geo-target-department">{view.target?.departmentName}</p><p className="geo-panel-note geo-instruction">{submitted ? "Placement envoyé. En attente de la validation de ton partenaire pour révéler la manche." : "Place le point au meilleur endroit, puis confirme. Un simple clic ne valide jamais l'envoi. Vous jouez en même temps."}</p><button disabled={!canPlace || !pendingPoint || busy} onClick={confirm} className="geo-primary-button">{busy ? "Envoi…" : submitted ? "Placement envoyé" : "Confirmer le placement"}</button></div>;
 }
 
-function RevealPanel({ view, busy, next }: { view: GeoView; busy: boolean; next: () => void }) {
-  return <div className="geo-side-content"><p className="geo-kicker geo-kicker-warm">Révélation</p><h2 className="geo-panel-title">{view.lastRound?.target.name}</h2><p className="geo-target-department">{view.lastRound?.target.departmentName}</p><div className="geo-round-results">{view.players.map((player) => <div key={player.id} className="geo-round-result"><div><span>{player.pseudo}</span><small>{view.lastRound?.placements[player.seat] ? `${view.lastRound.placements[player.seat]?.distanceKm.toFixed(1)} km` : "Temps écoulé · 0 point"}</small></div><strong>{view.lastRound?.placements[player.seat]?.points ?? 0} pts</strong></div>)}</div><button disabled={busy} onClick={next} className="geo-primary-button">{busy ? "Actualisation…" : "Continuer"}</button></div>;
+function RevealPanel({ view, avatars, busy, next }: { view: GeoView; avatars: Record<string, string>; busy: boolean; next: () => void }) {
+  return <div className="geo-side-content"><p className="geo-kicker geo-kicker-warm">Révélation</p><h2 className="geo-panel-title">{view.lastRound?.target.name}</h2><p className="geo-target-department">{view.lastRound?.target.departmentName}</p><div className="geo-round-results">{view.players.map((player) => <div key={player.id} className="geo-round-result"><div className="geo-round-player"><Avatar name={player.pseudo} preset={player.avatarPreset ?? "avatar-1"} imageUrl={avatars[player.id] ?? null} size={28} /><div><span>{player.pseudo}</span><small>{view.lastRound?.placements[player.seat] ? `${view.lastRound.placements[player.seat]?.distanceKm.toFixed(1)} km` : "Temps écoulé · 0 point"}</small></div></div><strong>{view.lastRound?.placements[player.seat]?.points ?? 0} pts</strong></div>)}</div><button disabled={busy} onClick={next} className="geo-primary-button">{busy ? "Actualisation…" : "Continuer"}</button></div>;
 }
 
 function FinishedPanel({ view, back }: { view: GeoView; back: () => void }) {

@@ -5,12 +5,14 @@ import type { GeoJSON } from "geojson";
 import { invertGeoPoint, pathForGeojson, projectGeoPoint, type FranceGeometry, type MapSize, type MapViewport } from "@/games/geographie/map-projection";
 import type { GeoPoint } from "@/games/geographie/scoring";
 import type { GeoView } from "@/games/geographie/types";
+import { Avatar } from "@/components/avatar";
 
 type GeographyMapProps = {
   view: GeoView;
   interactive: boolean;
   pendingPoint: GeoPoint | null;
   onPendingPointChange: (point: GeoPoint | null) => void;
+  avatars?: Record<string, string>;
 };
 
 const INITIAL_VIEWPORT: MapViewport = { scale: 1, offsetX: 0, offsetY: 0 };
@@ -26,7 +28,7 @@ export function GeographyMapLoadError({ onRetry }: { onRetry: () => void }) {
   return <div role="alert" className="geo-map-error"><p>La carte n&apos;a pas pu être chargée.</p><button type="button" onClick={onRetry} className="geo-secondary-button">Réessayer</button></div>;
 }
 
-export function GeographyMap({ view, interactive, pendingPoint, onPendingPointChange }: GeographyMapProps) {
+export function GeographyMap({ view, interactive, pendingPoint, onPendingPointChange, avatars = {} }: GeographyMapProps) {
   const shellRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const [map, setMap] = useState<FranceGeometry | null>(null);
@@ -156,7 +158,27 @@ export function GeographyMap({ view, interactive, pendingPoint, onPendingPointCh
         {path && <path d={path} fill="#684c8d" stroke="#d2b3f1" strokeWidth={1.1 / viewport.scale} vectorEffect="non-scaling-stroke" />}
       </g>
       {keyboardCursor && <g transform={`translate(${keyboardCursor[0]} ${keyboardCursor[1]})`} pointerEvents="none" aria-hidden="true"><circle r="14" fill="none" stroke="#fff" strokeWidth="3" opacity="0.9" /><circle r="14" fill="none" stroke="#25133d" strokeWidth="1.5" strokeDasharray="3 3" /><path d="M0 -20 V20 M-20 0 H20" stroke="#25133d" strokeWidth="1.5" /></g>}
-      {view.players.map((player, index) => { const point = placementScreens[index]; const color = index === 0 ? "#f3b2d3" : "#b9f9df"; return point && (view.phase === "reveal" || view.phase === "finished") ? <g key={player.id} transform={`translate(${point[0]} ${point[1]})`}>{index === 0 ? <><circle r="10" fill={color} opacity="0.22" /><circle r="5" fill={color} stroke="#25133d" strokeWidth="2" /></> : <><rect x="-10" y="-10" width="20" height="20" rx="5" fill={color} opacity="0.22" /><rect x="-5" y="-5" width="10" height="10" rx="2" fill={color} stroke="#25133d" strokeWidth="2" /></>}<title>{player.pseudo}</title></g> : null; })}
+      {view.players.map((player, index) => {
+        const point = placementScreens[index];
+        if (!point) return null;
+        const showOwnPlacing = view.phase === "placing" && player.seat === view.mySeat;
+        const showReveal = view.phase === "reveal" || view.phase === "finished";
+        if (!showOwnPlacing && !showReveal) return null;
+        return (
+          <g key={player.id} transform={`translate(${point[0]} ${point[1]})`}>
+            <title>{player.pseudo}</title>
+            <circle r="6" fill="#25133d" stroke="#fff" strokeWidth="2" />
+            <foreignObject x="-52" y="-64" width="104" height="54" style={{ overflow: "visible" }} pointerEvents="none">
+              <div className="geo-guess-marker" data-self={player.seat === view.mySeat}>
+                <span className="geo-guess-avatar">
+                  <Avatar name={player.pseudo} preset={player.avatarPreset ?? "avatar-1"} imageUrl={avatars[player.id] ?? null} size={30} />
+                </span>
+                <span className="geo-guess-name">{player.pseudo}</span>
+              </div>
+            </foreignObject>
+          </g>
+        );
+      })}
       {targetScreen && <g transform={`translate(${targetScreen[0]} ${targetScreen[1]})`}><path d="M0 -12 L10 7 L0 3 L-10 7 Z" fill="#ffe49a" stroke="#25133d" strokeWidth="2" /><title>Ville cible</title></g>}
       {pendingScreen && interactive && <g transform={`translate(${pendingScreen[0]} ${pendingScreen[1]})`}><circle r="11" fill="#fff" stroke="#25133d" strokeWidth="2" strokeDasharray="3 3" /><circle r="3" fill="#25133d" /></g>}
     </svg>

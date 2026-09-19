@@ -11,8 +11,8 @@ type CommandBody = {
 };
 
 const players = [
-  { id: "alice", seat: 0 as const, pseudo: "Alice", active: true },
-  { id: "bob", seat: 1 as const, pseudo: "Bob", active: false },
+  { id: "alice", seat: 0 as const, pseudo: "Alice", avatarPreset: "avatar-1", active: true },
+  { id: "bob", seat: 1 as const, pseudo: "Bob", avatarPreset: "avatar-2", active: false },
 ];
 
 function matchResponse(gameSlug: string, view: object) {

@@ -88,6 +88,7 @@ export type GeoViewPlayer = {
   id: string;
   seat: 0 | 1;
   pseudo: string;
+  avatarPreset: string;
   score: number;
   submitted: boolean;
   active: boolean;

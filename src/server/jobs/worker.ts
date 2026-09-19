@@ -4,7 +4,7 @@ import { randomUUID, timingSafeEqual } from "node:crypto";
 import { z } from "zod";
 import { GEO_ENGINE_VERSION, GEO_RULES_VERSION, onGeoAbsence, onGeoDeadline, shouldAbandonForAbsence } from "@/games/geographie/engine";
 import { geoConfigSchema } from "@/games/geographie/config";
-import { projectGeo } from "@/games/geographie/projection";
+import { geoAvatarPresetFromSnapshot, projectGeo } from "@/games/geographie/projection";
 import { getInternalJobSecret } from "@/server/config";
 import { entropyValues, hashCommand } from "@/server/hash";
 import { loadGeoContent } from "@/server/geo/content";
@@ -318,7 +318,7 @@ async function processGeographyJob(job: WorkerJob, context: JobContext): Promise
   const content = await loadGeoContent();
   const players = orderedPlayers(context.players);
   const participants = [players[0].id, players[1].id] as const;
-  const identities = players.map((player) => ({ id: player.id, pseudo: player.pseudo })) as [{ id: string; pseudo: string }, { id: string; pseudo: string }];
+  const identities = players.map((player) => ({ id: player.id, pseudo: player.pseudo, avatarPreset: geoAvatarPresetFromSnapshot(player.avatar) })) as [{ id: string; pseudo: string; avatarPreset: string }, { id: string; pseudo: string; avatarPreset: string }];
   const transition = onGeoDeadline(context.state, context.jobKind, config, {
     nowMs: Date.parse(context.serverNow),
     actorId: null,
@@ -377,7 +377,7 @@ async function processAbsenceJob(job: WorkerJob, context: JobContext): Promise<R
   const config = geoConfigSchema.parse(context.config);
   const content = await loadGeoContent();
   const participants = [players[0].id, players[1].id] as const;
-  const identities = players.map((player) => ({ id: player.id, pseudo: player.pseudo })) as [{ id: string; pseudo: string }, { id: string; pseudo: string }];
+  const identities = players.map((player) => ({ id: player.id, pseudo: player.pseudo, avatarPreset: geoAvatarPresetFromSnapshot(player.avatar) })) as [{ id: string; pseudo: string; avatarPreset: string }, { id: string; pseudo: string; avatarPreset: string }];
   const absenceNowMs = Date.parse(context.serverNow);
   const transition = onGeoAbsence(context.state, config, {
     nowMs: absenceNowMs,

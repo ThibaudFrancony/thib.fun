@@ -65,7 +65,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ roo
     const participants = [room.members[0].id, room.members[1].id] as const;
     const matchId = randomUUID();
     const phaseId = randomUUID();
-    const identities = room.members.map((item) => ({ id: item.id, pseudo: item.pseudo })) as [{ id: string; pseudo: string }, { id: string; pseudo: string }];
+    const identities = room.members.map((item) => ({ id: item.id, pseudo: item.pseudo, avatarPreset: item.avatarPreset ?? "avatar-1" })) as [{ id: string; pseudo: string; avatarPreset: string }, { id: string; pseudo: string; avatarPreset: string }];
     let result: Record<string, unknown>;
     if (room.gameSlug === "geographie") {
       const config = geoConfigSchema.parse(room.config);

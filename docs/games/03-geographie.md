@@ -4,7 +4,7 @@ Slug `geographie`, P0, compétitif à deux, 8–15 min. Premier jeu recommandé 
 
 ## 1. Règles et configuration
 
-France métropolitaine et Corse en V1. Une ville par manche, deux placements successifs. Le second ne voit ni proposition ni distance ni score du premier avant sa propre validation. Révéler les deux seulement à la fin de la manche ; le premier joueur change à chaque manche. Le plus grand total de points gagne. Égalité si totaux égaux, sans utiliser subrepticement la distance pour départager.
+France métropolitaine et Corse en V1. Une ville par manche, deux placements simultanés : chacun place et valide sans attendre l'autre, dans l'ordre qu'il veut. Personne ne voit ni proposition ni distance ni score adverse avant la révélation commune ; le premier qui valide attend simplement la validation adverse. Révéler les deux seulement quand les deux ont validé (ou à l'expiration de l'échéance partagée). Le plus grand total de points gagne. Égalité si totaux égaux, sans utiliser subrepticement la distance pour départager.
 
 Config : `{rounds:10, turnSeconds:60, difficulty:'easy', selection:'random'}`. Options rounds 5/10/15, turnSeconds 30/60/90, difficulty easy/medium/hard, selection random/challenge. Noms UI : grandes villes/villes moyennes/toutes les communes du pack. Aucun DOM avec noms de villes de référence autour du pointeur.
 
@@ -46,31 +46,32 @@ type State = {
 };
 ```
 
-`select_cities` a 180 s de préparation ; timeout conserve les listes confirmées et remplit les autres slots par tirage autorisé sans doublon (les brouillons valides sont conservés quand possible), puis démarre. `firstSeat` est constant ; actif placing = `(firstSeat + round - 1 + turnInRound) % 2`, round commence à 1. `placing` : actif, 60 s par défaut. Premier placement enregistré en privé ; projection adverse révèle seulement submitted=true. Après second, passer reveal 8 s, calculer points de la manche pour les deux et créditer ensemble. NEXT des deux avance plus tôt. Totaux précédents restent identiques durant les deux placements pour ne pas révéler l'erreur du premier.
+`select_cities` a 180 s de préparation ; timeout conserve les listes confirmées et remplit les autres slots par tirage autorisé sans doublon (les brouillons valides sont conservés quand possible), puis démarre. `firstSeat` est constant (composition du mode challenge, tirage initial) ; round commence à 1. `placing` : les deux sièges sont actifs simultanément pendant 60 s par défaut (échéance partagée unique). `turnInRound` est conservé dans l'état pour compatibilité mais ignoré : le premier `PLACE_CITY` reste dans la même phase et la même échéance sans réarmer le chrono adverse, le second fait passer en reveal 8 s, calcule les points de la manche pour les deux et crédite ensemble. Chaque placement est enregistré en privé ; la projection adverse ne révèle que submitted=true. NEXT des deux avance plus tôt. Totaux précédents restent identiques durant les deux placements pour ne pas révéler l'erreur de l'autre.
 
-Projection placing : label ville/département, manche/totaux avant manche, actif, propre placement confirmé visible pour son auteur seulement. Reveal : cible vraie, deux points, lignes vers cible, distances, points et nouveaux totaux. Planning des villes futures caché. Le sélectionneur voit sa propre liste de challenge pendant préparation, pas celle adverse.
+Projection placing : label ville/département, manche/totaux avant manche, actif pour chaque siège non encore validé, propre placement confirmé visible pour son auteur seulement (marqueur avatar + pseudo de l'auteur). Chaque joueur de la vue porte `avatarPreset` (preset public, photo signée chargée côté client via les avatars du salon). Reveal : cible vraie, deux placements avec photo de profil + pseudo au-dessus de chaque guess (plus de pointeur de couleur anonyme), distances, points et nouveaux totaux. Planning des villes futures caché. Le sélectionneur voit sa propre liste de challenge pendant préparation, pas celle adverse.
 
 ## 5. API spécifique et stockage
 
-`SEARCH_CITIES` est un GET `/api/games/geographie/cities?q=&difficulty=` renvoyant max 20 ID/labels sans coordonnées, membre seulement. `SET_CITY_SELECTION {cityIds:string[]}` en préparation pour sa liste exacte (remplaçable jusqu'à confirmation) ; `CONFIRM_CITY_SELECTION {}` verrouille liste ; `PLACE_CITY {latitude:number,longitude:number}` actif, une fois ; `NEXT`, `RESIGN`, `CLAIM_FORFEIT` communs. Les listes confirmées peuvent être invalidées par doublon global : ne révéler que « Une ville est déjà retenue, choisis-en une autre », sans l'ensemble adverse ; résolution déterministe premier commit conserve son choix.
+`SEARCH_CITIES` est un GET `/api/games/geographie/cities?q=&difficulty=` renvoyant max 20 ID/labels sans coordonnées, membre seulement. `SET_CITY_SELECTION {cityIds:string[]}` en préparation pour sa liste exacte (remplaçable jusqu'à confirmation) ; `CONFIRM_CITY_SELECTION {}` verrouille liste ; `PLACE_CITY {latitude:number,longitude:number}` chaque siège, une fois par manche, ordre libre (double validation = `PLACEMENT_ALREADY_SUBMITTED`) ; `NEXT`, `RESIGN`, `CLAIM_FORFEIT` communs. Les listes confirmées peuvent être invalidées par doublon global : ne révéler que « Une ville est déjà retenue, choisis-en une autre », sans l'ensemble adverse ; résolution déterministe premier commit conserve son choix.
 
 Tables communes + pack geography. Round summary : cityId/nom/département/coordonnées révélées, placements/points/distances de chaque joueur. player score = points totaux ; metrics `{distanceSumKm,validPlacements,missedPlacements,bestDistanceKm}`. Stats séparées par selection/difficulty/rounds/rulesVersion pour records, compteurs victoire généraux par jeu.
 
 ## 6. UI / clavier
 
-Carte prend la zone principale, aucune confirmation par simple clic. Afficher nom demandé et département pour homonymes. Zoom molette/pinch, boutons +/− et recentrer, déplacement tactile distinct du tap par seuil 8 px. Clavier : focus carte, flèches déplacent curseur de 5 pixels d'écran, Shift de 20, Entrée pose le point ; bouton Confirmer accessible ensuite. Instructions annoncées, lon/lat du curseur disponibles en texte accessible sans position cible. Résultat couleurs + formes différentes pour A/B/cible.
+Carte prend la zone principale, aucune confirmation par simple clic. Afficher nom demandé et département pour homonymes. Zoom molette/pinch, boutons +/− et recentrer, déplacement tactile distinct du tap par seuil 8 px. Clavier : focus carte, flèches déplacent curseur de 5 pixels d'écran, Shift de 20, Entrée pose le point ; bouton Confirmer accessible ensuite. Instructions annoncées, lon/lat du curseur disponibles en texte accessible sans position cible. Après validation, le joueur voit son propre marqueur et l'état « Placement envoyé — en attente de ton partenaire ». Résultat : photo de profil + pseudo au-dessus de chaque guess (le plus proche se lit directement à la distance de la cible), distances/points dans le panneau ; le point exact reste matérialisé au sol.
 
 ## 7. Tests et critères
 
 - Haversine zéro, Paris–Lyon ordre de grandeur, cas longitude/latitude inversées, NaN/Infinity et bbox refusés.
 - Score exact exemples 0/5/105/205/505 ; affichage arrondi sans modifier calcul.
 - Pointeur -> inversion -> reprojection à < 1 pixel, après resize/zoom/pan ; test Corse.
-- A valide : B ne reçoit ni point/distance/score de A ; après B, révélation et crédit unique.
-- Timeout A, B joue quand même, A reçoit 0 ; double timeout donne manche 0/0.
-- Alternance des premiers et égalité finale correcte.
+- A valide : B ne reçoit ni point/distance/score de A (seulement submitted=true) ; après la seconde validation, révélation et crédit unique, quel que soit l'ordre.
+- Premier placement : même phaseId et même échéance conservés, pas de nouveau chrono ; second placement : reveal.
+- Timeout de l'échéance partagée : tout siège sans placement reçoit 0 et distance null, révélation immédiate (0/0 si aucun placement).
+- Ordre libre et égalité finale correcte.
 - Challenge : homonymes distingués, doublon simultané, timeout préparation, listes cachées ; pas de coordonnées dans recherche.
 - E2E partie 5 manches, refresh après premier placement, fin/historique/duo ; mobile placement sans scroll parasite.
 
 ## 8. Exclusions et construction
 
-Construire carte/corpus/import, moteur pur de score, projections secrètes, partie random complète, puis challenge. Les deux modes font partie du périmètre décrit mais random peut être la première tranche. Pas de Street View, pays étrangers, adresses, suivi GPS du joueur, carte avec labels, chronomètre partagé entre les deux tours.
+Construire carte/corpus/import, moteur pur de score, projections secrètes, partie random complète, puis challenge. Les deux modes font partie du périmètre décrit mais random peut être la première tranche. Pas de Street View, pays étrangers, adresses, suivi GPS du joueur, carte avec labels. Chronomètre unique partagé par manche (une seule échéance `turn_timeout` pour les deux placements simultanés).

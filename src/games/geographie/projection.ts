@@ -2,7 +2,15 @@ import type { Seat } from "@/games/contracts";
 import { challengeSelectionLength, type GeoConfig } from "@/games/geographie/config";
 import type { GeoContent, GeoPlacement, GeoState, GeoView, GeoViewPlayer, ResultView } from "@/games/geographie/types";
 
-type PlayerIdentity = { id: string; pseudo: string };
+type PlayerIdentity = { id: string; pseudo: string; avatarPreset?: string };
+
+export function geoAvatarPresetFromSnapshot(snapshotAvatar: unknown): string {
+  if (snapshotAvatar !== null && typeof snapshotAvatar === "object") {
+    const preset = (snapshotAvatar as Record<string, unknown>).preset;
+    if (typeof preset === "string" && preset.length > 0) return preset;
+  }
+  return "avatar-1";
+}
 
 function seatOf(viewerId: string, participants: readonly [string, string]): Seat {
   const seat = participants.indexOf(viewerId);
@@ -22,7 +30,8 @@ function playerView(
   viewerSeat: Seat,
   reveal: boolean,
 ): GeoViewPlayer {
-  const active = state.phase === "placing" && ((state.firstSeat + state.round - 1 + state.turnInRound) % 2 === seat);
+  // Placements simultanés : chaque siège reste actif tant qu'il n'a pas validé.
+  const active = state.phase === "placing" && !state.submitted[seat];
   const canSeePlacement = reveal || seat === viewerSeat;
   const placement = canSeePlacement && state.placements[seat]
     ? { latitude: state.placements[seat].latitude, longitude: state.placements[seat].longitude }
@@ -31,6 +40,7 @@ function playerView(
     id: identity.id,
     seat,
     pseudo: identity.pseudo,
+    avatarPreset: identity.avatarPreset ?? "avatar-1",
     score: state.totals[seat],
     submitted: state.submitted[seat],
     active,

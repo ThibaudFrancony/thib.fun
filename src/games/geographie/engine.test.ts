@@ -90,21 +90,58 @@ describe("Géographie engine", () => {
     expect(done.state.totals).toEqual(b.state.totals);
   });
 
-  it("alterne le premier joueur à chaque manche", () => {
+  it("autorise les placements simultanés dans n'importe quel ordre", () => {
+    const config = { ...DEFAULT_GEO_CONFIG, rounds: 5 as const };
     const initial = stateForRandom();
+    const view = projectGeo(initial, config, content, "user-a", participants, [
+      { id: "user-a", pseudo: "Alice" },
+      { id: "user-b", pseudo: "Bob" },
+    ]);
+    expect(view.players[0].active).toBe(true);
+    expect(view.players[1].active).toBe(true);
+    // Le second siège peut valider en premier, sans NOT_YOUR_TURN.
+    const bFirst = reduceGeo(initial, { type: "PLACE_CITY", latitude: 45.764, longitude: 4.8357 }, config, context({ actorId: "user-b" }));
+    expect(bFirst.state.phase).toBe("placing");
+    expect(bFirst.state.submitted).toEqual([false, true]);
+    expect(bFirst.phaseId).toBe(context().phaseId);
+    const both = reduceGeo(bFirst.state, { type: "PLACE_CITY", latitude: 48.8566, longitude: 2.3522 }, config, context({ phaseId: bFirst.phaseId, nextPhaseId: "00000000-0000-4000-8000-000000000003" }));
+    expect(both.state.phase).toBe("reveal");
+    expect(both.state.submitted).toEqual([true, true]);
     expect(geoActiveSeat(initial)).toBe(initial.firstSeat);
-    const afterFirst = { ...initial, round: 2, turnInRound: 0 };
-    expect(geoActiveSeat(afterFirst)).toBe((1 - initial.firstSeat) as 0 | 1);
   });
 
   it("donne zéro point et une distance nulle au timeout", () => {
-    const config = { ...DEFAULT_GEO_CONFIG, rounds: 5, turnSeconds: 30 };
+    const config = { ...DEFAULT_GEO_CONFIG, rounds: 5 as const, turnSeconds: 30 as const };
     const initial = stateForRandom();
     const timed = onGeoDeadline(initial, "turn_timeout", config, context({ nextPhaseId: "00000000-0000-4000-8000-000000000006" }));
-    expect(timed.state.submitted[initial.firstSeat]).toBe(true);
-    expect(timed.state.placements[initial.firstSeat]).toBeNull();
-    expect(timed.state.metrics[initial.firstSeat].missedPlacements).toBe(1);
-    expect(timed.state.phase).toBe("placing");
+    expect(timed.state.submitted).toEqual([true, true]);
+    expect(timed.state.placements[0]).toBeNull();
+    expect(timed.state.placements[1]).toBeNull();
+    expect(timed.state.metrics[0].missedPlacements).toBe(1);
+    expect(timed.state.metrics[1].missedPlacements).toBe(1);
+    expect(timed.state.phase).toBe("reveal");
+  });
+
+  it("révèle après timeout quand un seul placement manque", () => {
+    const config = { ...DEFAULT_GEO_CONFIG, rounds: 5 };
+    const initial = stateForRandom();
+    const placed = reduceGeo(initial, { type: "PLACE_CITY", latitude: 48.8566, longitude: 2.3522 }, config, context());
+    const timed = onGeoDeadline(placed.state, "turn_timeout", config, context({ phaseId: placed.phaseId, nextPhaseId: "00000000-0000-4000-8000-000000000006" }));
+    expect(timed.state.phase).toBe("reveal");
+    expect(timed.state.submitted).toEqual([true, true]);
+    expect(timed.state.placements[0]).not.toBeNull();
+    expect(timed.state.placements[1]).toBeNull();
+    expect(timed.roundRecords).toHaveLength(1);
+  });
+
+  it("expose le preset d'avatar de chaque joueur dans la projection", () => {
+    const config = { ...DEFAULT_GEO_CONFIG, rounds: 5 as const };
+    const view = projectGeo(stateForRandom(), config, content, "user-a", participants, [
+      { id: "user-a", pseudo: "Alice", avatarPreset: "avatar-3" },
+      { id: "user-b", pseudo: "Bob", avatarPreset: "avatar-7" },
+    ]);
+    expect(view.players[0].avatarPreset).toBe("avatar-3");
+    expect(view.players[1].avatarPreset).toBe("avatar-7");
   });
 
   it("refuse une coordonnée hors de la bbox", () => {
