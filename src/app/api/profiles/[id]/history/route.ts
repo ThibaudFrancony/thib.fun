@@ -27,7 +27,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   if (!parsed.success) return jsonError("INVALID_REQUEST", 400, "Le filtre d'historique est invalide.");
   if (!isValidHistoryCursor(parsed.data.cursor)) return jsonError("INVALID_REQUEST", 400, "Le curseur d'historique est invalide.");
   try {
-    return jsonOk(await getProfileHistoryPage(account.member.id, id, parsed.data));
+    return jsonOk(await getProfileHistoryPage(id, parsed.data));
   } catch (error) {
     return mapServerError(error);
   }

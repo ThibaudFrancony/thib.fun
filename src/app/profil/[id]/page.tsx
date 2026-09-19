@@ -32,7 +32,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
 
   const [profile, history] = await Promise.all([
     getPublicProfile(id),
-    getProfileHistoryPage(account.member.id, id),
+    getProfileHistoryPage(id),
   ]);
   if (!profile) notFound();
   const stats = await getPlayerGameStats(id).catch(() => []);
@@ -57,7 +57,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
             initialNextCursor={history.nextCursor}
             games={GAME_OPTIONS}
             title={`Historique de ${profile.name}`}
-            subtitle="Toutes ses parties terminées ; le détail reste réservé aux participants."
+            subtitle="Toutes ses parties terminées."
             emptyLabel="Aucune partie terminée pour le moment."
           />
         </div>

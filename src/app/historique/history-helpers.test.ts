@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { historyAccess, historyOutcomeLabel, opponentPseudoFromPayload, toHistoryListItem, viewerParticipates } from "@/app/historique/history-helpers";
+import { historyAccess, historyOutcomeLabel, opponentPseudoFromPayload, toHistoryListItem } from "@/app/historique/history-helpers";
 import type { HistoryEntry } from "@/server/matches/repository";
 
 const entry: HistoryEntry = {
@@ -28,14 +28,5 @@ describe("accès et résumé de l'historique", () => {
     expect(item.opponentPseudo).toBe("Ada");
     expect("payload" in item).toBe(false);
     expect(historyOutcomeLabel(item.outcome)).toBe("Résultat commun");
-  });
-
-  it("reconnaît un participant via l'adversaire ou le snapshot", () => {
-    expect(viewerParticipates(entry, "00000000-0000-4000-8000-000000000002")).toBe(true);
-    expect(viewerParticipates(entry, "00000000-0000-4000-8000-000000000009")).toBe(false);
-    const withViewer: HistoryEntry = { ...entry, payload: { players: [{ userId: "00000000-0000-4000-8000-000000000009", pseudo: "Léo" }] } };
-    expect(viewerParticipates(withViewer, "00000000-0000-4000-8000-000000000009")).toBe(true);
-    const incomplete: HistoryEntry = { ...entry, payload: {} };
-    expect(viewerParticipates(incomplete, "00000000-0000-4000-8000-000000000009")).toBe(false);
   });
 });

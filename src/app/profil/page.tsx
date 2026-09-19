@@ -41,7 +41,7 @@ export default async function ProfilePage() {
     );
   }
 
-  const history = await getProfileHistoryPage(account.member.id, account.member.id);
+  const history = await getProfileHistoryPage(account.member.id);
 
   return (
     <div className="pf-page">

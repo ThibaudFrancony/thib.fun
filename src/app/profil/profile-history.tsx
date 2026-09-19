@@ -1,20 +1,19 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { historyOutcomeLabel, type ProfileHistoryListItem } from "@/app/historique/history-helpers";
+import { historyOutcomeLabel, type HistoryListItem } from "@/app/historique/history-helpers";
 
 type GameOption = { slug: string; displayName: string };
 type Outcome = "" | "win" | "loss" | "draw" | "cooperative" | "abandoned";
-type HistoryResponse = { entries?: ProfileHistoryListItem[]; nextCursor?: string | null; error?: { message?: string } };
+type HistoryResponse = { entries?: HistoryListItem[]; nextCursor?: string | null; error?: { message?: string } };
 
-function scoreLabel(entry: ProfileHistoryListItem): string {
+function scoreLabel(entry: HistoryListItem): string {
   if (entry.outcome === "cooperative") return `Score commun : ${entry.sharedScore ?? "—"}`;
   if (entry.outcome === "abandoned") return entry.score === null && entry.opponentScore === null ? "Aucun gagnant" : `${entry.score ?? "—"} – ${entry.opponentScore ?? "—"}`;
   return `${entry.score ?? "—"} – ${entry.opponentScore ?? "—"}`;
 }
 
-function outcomeTone(outcome: ProfileHistoryListItem["outcome"]): string {
+function outcomeTone(outcome: HistoryListItem["outcome"]): string {
   if (outcome === "loss") return "loss";
   if (outcome === "abandoned") return "abandoned";
   if (outcome === "draw") return "draw";
@@ -32,7 +31,7 @@ export function ProfileHistory({
   emptyLabel,
 }: {
   endpoint: string;
-  initialEntries: ProfileHistoryListItem[];
+  initialEntries: HistoryListItem[];
   initialNextCursor: string | null;
   games: readonly GameOption[];
   title: string;
@@ -122,28 +121,21 @@ export function ProfileHistory({
         <ul className="pf-history-list">
           {entries.map((entry) => {
             const gameLabel = games.find((item) => item.slug === entry.gameSlug)?.displayName ?? entry.gameSlug;
-            const body = (
-              <>
-                <span className="pf-history-card-top">
-                  <span>
-                    <span className="pf-history-game">{gameLabel}</span>
-                    <span className="pf-history-vs">Face à {entry.opponentPseudo}</span>
-                  </span>
-                  <span className="pf-history-badge" data-tone={outcomeTone(entry.outcome)}>{historyOutcomeLabel(entry.outcome)}</span>
-                </span>
-                <span className="pf-history-meta">
-                  <time dateTime={entry.endedAt}>{new Date(entry.endedAt).toLocaleDateString("fr-FR", { dateStyle: "medium" })}</time>
-                  <span className="pf-history-score">{scoreLabel(entry)}</span>
-                </span>
-              </>
-            );
             return (
               <li key={entry.matchId}>
-                {entry.viewerIsParticipant ? (
-                  <Link href={`/historique/${entry.matchId}`} className="pf-history-card">{body}</Link>
-                ) : (
-                  <span className="pf-history-card" data-static="true">{body}<span className="pf-history-locked">Tu n&apos;as pas joué cette partie</span></span>
-                )}
+                <div className="pf-history-card">
+                  <span className="pf-history-card-top">
+                    <span>
+                      <span className="pf-history-game">{gameLabel}</span>
+                      <span className="pf-history-vs">Face à {entry.opponentPseudo}</span>
+                    </span>
+                    <span className="pf-history-badge" data-tone={outcomeTone(entry.outcome)}>{historyOutcomeLabel(entry.outcome)}</span>
+                  </span>
+                  <span className="pf-history-meta">
+                    <time dateTime={entry.endedAt}>{new Date(entry.endedAt).toLocaleDateString("fr-FR", { dateStyle: "medium" })}</time>
+                    <span className="pf-history-score">{scoreLabel(entry)}</span>
+                  </span>
+                </div>
               </li>
             );
           })}

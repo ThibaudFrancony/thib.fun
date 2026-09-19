@@ -21,7 +21,6 @@ Base proposée : fond crème `#F7F7F2`, surfaces blanches, texte `#17211B`, seco
 | `/parties/[id]` | participant | jeu ; fin intégrée au même écran |
 | `/profil` | membre | profil éditable à gauche, historique complet à droite |
 | `/profil/[id]` | membre | profil d'un tiers en lecture seule + son historique complet |
-| `/historique/[id]` | participant | détail résultat/manches |
 | `/leaderboard` | membre (invités refusés) | podium top 3 et 100 premiers du classement général aux points |
 | `/entrainement/syllabes` | membre | solo BombParty |
 | `/admin/invitations` | admin | créer/copier/révoquer liens, pas envoi automatique |
@@ -42,7 +41,7 @@ Descriptions seed : Chute libre « Réponds juste pour éviter la chute. » ; À
 
 Compte e-mail/mot de passe Supabase Auth, inscription libre et confirmation e-mail si activée par l’environnement. À la création Auth, un profil minimal et l’admission membre sont provisionnés automatiquement côté serveur ; aucune invitation n’est requise. SMTP réel à configurer pour usage entre amis ; documenter reset/confirmation avant mise en service. Pas de pseudo comme identifiant de connexion. À la première connexion, le compte permanent choisit un pseudo unique — le nom de création — avec l'avertissement explicite qu'il ne pourra plus être changé ; les comptes créés avant cette règle conservent leur pseudo existant comme nom de création. Un nom affiché optionnel peut ensuite remplacer l'affichage partout (vide = nom de création affiché). Il est 2–24 caractères et unique sans distinction de casse, comme le nom de création. Presets d’avatar fournis (8 symboles/couleurs), possibilité d'upload JPEG/PNG/WebP <= 2 Mo, réencodé en WebP 256×256 après vérification dimensions <= 4096×4096. Images signées privées, affichage de secours en cas d'URL expirée. Le header porte un bouton Profil (rond photo ou initiale) avec pastille d'alerte tant que le pseudo n'est pas choisi ; la photo est réutilisée dans les salons, groupes et parties.
 
-Profil personnel : photo, nom affiché optionnel, nom de création figé (lecture seule), avatar de secours, historique complet de ses parties (filtres jeu/issue, pagination) présenté à droite de la carte de profil. Dénominateur taux de victoire = wins+losses+draws, hors coop/abandoned ; pas de pourcentage si zéro duel. Afficher séparément les interruptions. Profil d'autrui (`/profil/[id]`) : avatar, nom et agrégats par jeu en lecture seule, plus **son historique complet** (adversaires variés). Le détail d'une partie (`/historique/[id]`) reste réservé aux participants : une entrée où le visiteur n'a pas joué n'est pas cliquable. Jamais son e-mail. La décision du 19 septembre 2026 remplace la règle « pas ses parties avec un tiers ».
+Profil personnel : photo, nom affiché optionnel, nom de création figé (lecture seule), avatar de secours, historique complet de ses parties (filtres jeu/issue, pagination) présenté à droite de la carte de profil. Dénominateur taux de victoire = wins+losses+draws, hors coop/abandoned ; pas de pourcentage si zéro duel. Afficher séparément les interruptions. Profil d'autrui (`/profil/[id]`) : avatar, nom et agrégats par jeu en lecture seule, plus **son historique complet** (adversaires variés). L'historique est une prévisualisation uniquement : aucune carte n'est cliquable et il n'existe aucune page de détail de partie. Jamais son e-mail. La décision du 19 septembre 2026 remplace la règle « pas ses parties avec un tiers ».
 
 ## 5. Salon
 
@@ -64,7 +63,7 @@ Sélection locale modifiable avant validation, bouton désactivé pendant envoi,
 
 Écran fin : victoire/défaite/égalité ou score partagé, valeurs finales, détail des manches, adversaire, durée, raison si forfait/interruption ; boutons revanche, changer de jeu, historique. Un résultat coopératif ne montre jamais « Tu as perdu ».
 
-Historique paginé par curseur `(ended_at,match_id)`, 20 lignes/cartes par page. Filtres jeu, issue ; date affichée fuseau navigateur (Europe/Paris par défaut si absent). L'historique vit dans le profil (`/profil` pour soi, `/profil/[id]` pour un tiers) en colonne droite de la carte, DA violette, chaque carte mène au détail si le visiteur a participé. Détail : score et règles utilisées, réponses révélées/manches, pas cartes restées secrètes non prévues par la fiche. Pseudo snapshot dans chaque partie et pseudo actuel dans le header du profil.
+Historique paginé par curseur `(ended_at,match_id)`, 20 lignes/cartes par page. Filtres jeu, issue ; date affichée fuseau navigateur (Europe/Paris par défaut si absent). L'historique vit dans le profil (`/profil` pour soi, `/profil/[id]` pour un tiers) en colonne droite de la carte, DA violette, en prévisualisation uniquement : aucune carte n'est cliquable, aucune page de détail n'existe. Chaque carte affiche jeu, adversaire, issue, date et score. Pseudo snapshot dans chaque partie et pseudo actuel dans le header du profil.
 
 ## 8. Accessibilité et responsive
 
@@ -118,5 +117,5 @@ Décision produit : supprimer la page liste `/historique` et regrouper profil et
 - `/profil` (compte permanent) affiche deux colonnes sur desktop : la carte de profil éditable à gauche, l'historique complet à droite (filtres jeu/issue, pagination, DA violette). Sur mobile les colonnes s'empilent.
 - `/profil/[id]` (UUID) affiche le profil d'un tiers en lecture seule (avatar, nom, agrégats par jeu) et **son historique complet**. Réservé aux comptes permanents ; les invités sont refusés. Visiter son propre identifiant redirige vers `/profil`.
 - L'ancienne page `/historique/duo/[id]` redirige vers `/profil/[id]` ; le menu « Profil » du chat et du leaderboard pointe désormais vers `/profil/[id]`.
-- Le détail d'une partie (`/historique/[id]`) reste réservé aux participants et est re-skinné dans la DA violette ; sur le profil d'un tiers, les entrées où le visiteur n'a pas joué ne sont pas cliquables.
+- Depuis le 19 septembre 2026, le détail d'une partie n'existe plus : les routes `/historique/[id]` (page et API), le composant de détail et les liens depuis les cartes d'historique sont supprimés. L'historique reste une prévisualisation non cliquable dans le profil.
 - Aucune migration : les agrégats `player_game_stats` sont déjà lisibles par tout membre et `history_entries` reste lu côté serveur.

@@ -409,17 +409,6 @@ export async function getHistory(actorId: string, options: { cursor?: string; ga
   return { entries, nextCursor: rows.length > 20 && entries.length > 0 ? encodeHistoryCursor(entries[entries.length - 1]) : null };
 }
 
-export async function getHistoryEntry(actorId: string, matchId: string): Promise<HistoryEntry | null> {
-  const response = await createAdminClient()
-    .from("history_entries")
-    .select("match_id,opponent_id,game_slug,started_at,ended_at,outcome,score,opponent_score,shared_score,payload")
-    .eq("viewer_id", actorId)
-    .eq("match_id", matchId)
-    .maybeSingle();
-  if (response.error) throw new Error("HISTORY_UNAVAILABLE");
-  return response.data ? mapHistoryEntry(response.data as unknown as Record<string, unknown>) : null;
-}
-
 export async function getPairHistory(actorId: string, opponentId: string, game?: string): Promise<PairHistory> {
   const response = await createAdminClient().rpc("server_get_pair_history", {
     p_actor: actorId,
