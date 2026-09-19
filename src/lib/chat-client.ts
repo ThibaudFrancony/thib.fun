@@ -322,12 +322,29 @@ function readBooleanPreference(key: string, fallback: boolean): boolean {
   }
 }
 
+function readSessionBooleanPreference(key: string, fallback: boolean): boolean {
+  if (typeof window === "undefined") return fallback;
+  try {
+    // Migration : l'ancienne préférence persistait en localStorage et gardait
+    // le chat fermé d'une visite à l'autre ; on la supprime pour rouvrir le
+    // chat à chaque nouvelle visite.
+    window.localStorage.removeItem(key);
+    const value = window.sessionStorage.getItem(key);
+    return value === null ? fallback : value === "true";
+  } catch {
+    return fallback;
+  }
+}
+
 export function usePersistentChatOpen(): [boolean, (value: boolean) => void] {
-  const [open, setOpenState] = useState(() => readBooleanPreference(CHAT_OPEN_PREFERENCE_KEY, false));
+  // Ouvert par défaut à l'arrivée sur le site ; une fermeture manuelle n'est
+  // conservée que pour l'onglet courant (sessionStorage) afin de ne pas
+  // rouvrir automatiquement, et le chat se rouvre à la prochaine visite.
+  const [open, setOpenState] = useState(() => readSessionBooleanPreference(CHAT_OPEN_PREFERENCE_KEY, true));
   const setOpen = useCallback((value: boolean) => {
     setOpenState(value);
     try {
-      window.localStorage.setItem(CHAT_OPEN_PREFERENCE_KEY, value ? "true" : "false");
+      window.sessionStorage.setItem(CHAT_OPEN_PREFERENCE_KEY, value ? "true" : "false");
     } catch {
       // Stockage indisponible : l'état reste en mémoire.
     }

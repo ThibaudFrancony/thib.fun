@@ -58,6 +58,7 @@ export function ChatDock() {
   const inflightRef = useRef<Map<string, Promise<ChatConversationPayload>>>(new Map());
   const pendingRefreshRef = useRef(new Set<string>());
   const prefetchedRef = useRef(false);
+  const didAutoOpenRef = useRef(false);
   const seenRef = useRef<{ general: number; friends: Map<string, number>; requests: number } | null>(null);
 
   useEffect(() => {
@@ -452,6 +453,16 @@ export function ChatDock() {
       cancelled = true;
     };
   }, [available, fetchConversationPage]);
+
+  // Le chat s'ouvre par défaut à l'arrivée sur le site : on branche la
+  // conversation générale dès que le résumé est prêt, une seule fois par
+  // montage. Une fermeture manuelle n'est jamais rouverte automatiquement.
+  useEffect(() => {
+    if (!available || !open || didAutoOpenRef.current) return;
+    if (!summaryRef.current) return;
+    didAutoOpenRef.current = true;
+    void openGeneral();
+  }, [available, open, openGeneral]);
 
   useChatRealtime(summary?.viewer.id ?? null, (event) => {
     if (refreshTimerRef.current !== null) window.clearTimeout(refreshTimerRef.current);
