@@ -251,7 +251,6 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
   border: 0;
   border-radius: 1.35rem;
   background: transparent;
-  cursor: grab;
   transform-style: preserve-3d;
   transform-origin: center center;
   backface-visibility: hidden;
@@ -259,8 +258,24 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
   will-change: transform, opacity, filter;
 }
 
-.home-carousel[data-dragging="true"] .home-game-card { transition: none; cursor: grabbing; }
-.home-game-card:focus-visible { outline-offset: 6px; }
+.home-carousel[data-dragging="true"] .home-game-card { transition: none; }
+.home-carousel[data-dragging="true"] .home-card-select { cursor: grabbing; }
+
+.home-card-select {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  cursor: grab;
+  overflow: hidden;
+}
+
+.home-card-select:focus-visible { outline: 3px solid #fff; outline-offset: 6px; }
 
 .home-card-image { object-fit: contain; border-radius: inherit; pointer-events: none; user-select: none; }
 
@@ -287,17 +302,38 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
   place-items: center;
   width: clamp(54px, 5vw, 70px);
   height: clamp(54px, 5vw, 70px);
+  padding: 0;
+  border: 0;
   border-radius: 50%;
   color: #fff;
   background: linear-gradient(135deg, #ff5fa2, #ff3d7f);
   box-shadow: 0 14px 34px #ff3d7f66, inset 0 1px 0 #ffffff59, 0 0 0 6px #ffffff1f;
   opacity: 0;
   transform: translate(-50%, -50%) scale(0.8);
-  transition: opacity 300ms ease, transform 300ms cubic-bezier(0.22, 0.68, 0.24, 1);
+  transition: opacity 300ms ease, transform 300ms cubic-bezier(0.22, 0.68, 0.24, 1), background 200ms ease, box-shadow 200ms ease;
   pointer-events: none;
+  visibility: hidden;
 }
 
-.home-game-card[data-active="true"] .home-card-play { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+.home-game-card[data-active="true"] .home-card-play[data-playable="true"] {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+  visibility: visible;
+}
+
+button.home-card-play[data-playable="true"] { cursor: pointer; pointer-events: auto; }
+
+/* La surbrillance ne se déclenche qu'au survol/focus du bouton lui-même, jamais au survol de la carte. */
+button.home-card-play[data-playable="true"]:hover,
+button.home-card-play[data-playable="true"]:focus-visible {
+  transform: translate(-50%, -50%) scale(1.14);
+  background: linear-gradient(135deg, #ff7ab3, #ff2f78);
+  box-shadow: 0 18px 46px #ff3d7fcc, inset 0 1px 0 #ffffff73, 0 0 0 8px #ffffff2e, 0 0 34px #ff5fa280;
+}
+
+button.home-card-play[data-playable="true"]:active { transform: translate(-50%, -50%) scale(0.94); }
+
+button.home-card-play[data-playable="true"]:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
 
 .home-carousel-controls {
   display: flex;
@@ -366,6 +402,7 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
 
 @media (prefers-reduced-motion: reduce) {
   .home-game-card,
+  .home-card-select,
   .home-card-play,
   .home-carousel-arrow,
   .home-carousel-dot { transition: none; }

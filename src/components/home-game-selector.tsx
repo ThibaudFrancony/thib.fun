@@ -138,19 +138,22 @@ export function HomeGameSelector({ games }: { games: readonly PublicGame[] }) {
     window.addEventListener("pointercancel", dragHandlersRef.current.up);
   }
 
-  function onCardClick(index: number, offset: number) {
+  function onSelectClick(index: number, offset: number) {
     if (movedRef.current) {
       movedRef.current = false;
       return;
     }
-    if (Math.abs(offset) < 0.5) {
-      const game = games[index];
-      if (!game) return;
-      const route = playableRoute(game);
-      if (route) router.push(route);
+    // Seul le bouton play lance la partie ; cliquer ailleurs recentre.
+    if (Math.abs(offset) < 0.5) return;
+    goToIndex(index);
+  }
+
+  function onPlayClick(route: string | undefined) {
+    if (movedRef.current) {
+      movedRef.current = false;
       return;
     }
-    goToIndex(index);
+    if (route) router.push(route);
   }
 
   if (!activeGame) {
@@ -224,37 +227,55 @@ export function HomeGameSelector({ games }: { games: readonly PublicGame[] }) {
               pointerEvents: hiddenCard ? "none" : "auto",
             };
 
+            const showPlay = isActive && !hiddenCard && Boolean(route);
             return (
               <li key={game.slug} className="home-carousel-item">
-                <button
-                  type="button"
+                <div
                   className="home-game-card"
                   style={style}
                   data-active={isActive}
-                  aria-current={isActive}
-                  aria-hidden={hiddenCard}
-                  tabIndex={hiddenCard ? -1 : 0}
-                  aria-label={isActive && route ? `Jouer à ${game.cardName}` : route ? `Voir ${game.cardName}` : `${game.cardName}, bientôt disponible`}
-                  onClick={() => onCardClick(index, offset)}
+                  aria-hidden={hiddenCard || undefined}
                 >
-                  {extension ? (
-                    <Image
-                      src={`/home/cards/${game.slug}.${extension}`}
-                      alt=""
-                      fill
-                      sizes="(max-width: 640px) 45vw, (max-width: 1024px) 26vw, 20vw"
-                      className="home-card-image"
-                      draggable={false}
-                      loading={isActive ? "eager" : "lazy"}
-                      onError={() => setImageAttempt((current) => ({ ...current, [game.slug]: (current[game.slug] ?? 0) + 1 }))}
-                    />
+                  <button
+                    type="button"
+                    className="home-card-select"
+                    tabIndex={hiddenCard ? -1 : 0}
+                    aria-hidden={hiddenCard || undefined}
+                    aria-current={isActive}
+                    aria-label={route ? `Voir ${game.cardName}` : `${game.cardName}, bientôt disponible`}
+                    onClick={() => onSelectClick(index, offset)}
+                  >
+                    {extension ? (
+                      <Image
+                        src={`/home/cards/${game.slug}.${extension}`}
+                        alt=""
+                        fill
+                        sizes="(max-width: 640px) 45vw, (max-width: 1024px) 26vw, 20vw"
+                        className="home-card-image"
+                        draggable={false}
+                        loading={isActive ? "eager" : "lazy"}
+                        onError={() => setImageAttempt((current) => ({ ...current, [game.slug]: (current[game.slug] ?? 0) + 1 }))}
+                      />
+                    ) : (
+                      <span className="home-card-fallback" aria-hidden="true">{game.cardName}</span>
+                    )}
+                  </button>
+                  {showPlay && route ? (
+                    <button
+                      type="button"
+                      className="home-card-play"
+                      data-playable="true"
+                      aria-label={`Jouer à ${game.cardName}`}
+                      onClick={() => onPlayClick(route)}
+                    >
+                      <PlayIcon />
+                    </button>
                   ) : (
-                    <span className="home-card-fallback" aria-hidden="true">{game.cardName}</span>
+                    <span className="home-card-play" data-playable="false" aria-hidden="true">
+                      <PlayIcon />
+                    </span>
                   )}
-                  <span className="home-card-play" aria-hidden="true">
-                    <PlayIcon />
-                  </span>
-                </button>
+                </div>
               </li>
             );
           })}

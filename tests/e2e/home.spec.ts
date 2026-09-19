@@ -33,7 +33,7 @@ test("présente les neuf jeux dans un carrousel 3D et navigue vers les jeux impl
   const viewport = page.locator(".home-carousel-viewport");
   const box = await viewport.boundingBox();
   if (!box) throw new Error("Vignette du carrousel introuvable");
-  const activeLabel = () => page.locator('.home-game-card[data-active="true"]').getAttribute("aria-label");
+  const activeLabel = () => page.locator('button.home-card-play[data-playable="true"]').getAttribute("aria-label");
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await page.mouse.down();
   await page.mouse.move(box.x + box.width / 2 - 340, box.y + box.height / 2, { steps: 14 });
@@ -41,7 +41,7 @@ test("présente les neuf jeux dans un carrousel 3D et navigue vers les jeux impl
   await expect.poll(activeLabel).not.toBe("Jouer à Compatibilité");
   await settle();
 
-  // Clic sur la carte centrale : lance le jeu sélectionné.
+  // Clic sur le bouton play de la carte centrale : lance le jeu sélectionné.
   await page.getByRole("button", { name: "Afficher Géographie" }).click();
   await expect(page.getByRole("button", { name: "Jouer à Géographie" })).toBeVisible();
   await settle();

@@ -17,6 +17,32 @@ Ce fichier décrit la réalité du dépôt et non les seules capacités prévues
 
 **Diagnostic du 13 septembre : le code des neuf jeux est présent, mais leur disponibilité fonctionnelle n'est pas acquise.** L'[audit complet](docs/audit-code-2026-09-13.md) et le [plan pas à pas](docs/plan-correction-2026-09-13.md) identifient 29 défauts de code/produit et 6 observations d'infrastructure : blocages du worker, abandon/forfait, présence, finalisation, réseau, sécurité et parcours incomplets. L'étape 1 est appliquée au harnais de tests ; le contrat commun de l'étape 2 est intégré à `main` (`d885079`), le raccordement SQL de l'étape 3 est versionné dans `6130c99` et sa validation PostgreSQL isolée ainsi que sa concurrence à deux sessions sont désormais démontrées localement. L'inspection Supabase du 16 septembre rapporte 33 migrations distantes, alignées avec les fichiers locaux, mais elle reste strictement en lecture seule. Quatre parties actives (trois TTMC et une Géographie), dix jobs échus en attente et deux joueurs engagés dans plusieurs parties doivent être préservés en production. Aucun secret, traitement de donnée, migration distante, écriture Vault, déploiement ou opération de reprise n'a été effectué dans la présente session. Les observations datées ci-dessous restent historiques ; l'audit et le préflight Étape 10 prévalent pour les limitations actuelles.
 
+### 19/09/2026 — Historique : nouveaux noms de jeux (UNO, Géographie, etc.)
+
+- Demande utilisateur : dans l'historique, enlever les anciens noms et afficher les nouveaux (Dernière carte → UNO, HexaPoint → Géographie, etc.).
+- Réalisation : `src/app/profil/page.tsx`, `src/app/profil/[id]/page.tsx` et `src/app/historique/history-detail.tsx` utilisent désormais `cardName` du registre (`Trou noir`, `TTMC`, `Géographie`, `Skyjo`, `UNO`, `BombParty`, `Bataille navale`, `Compatibilité`, `Longueur d'onde`) pour le filtre, les cartes et le détail d'historique, ainsi que les stats par jeu du profil public. Aucun changement de slug, de moteur, de contrat ni de migration ; salons et accueil inchangés.
+- Vérifications (sans Docker) : `pnpm typecheck`, `pnpm lint`, vitest ciblé (`history-helpers`, `profile-helpers`, `profiles/repository`) propres.
+- Limites : contrôle sur code uniquement, sans recette navigateur ; l'affichage reste en majuscules via CSS.
+- Contradiction : aucune avec `AGENTS.md`.
+
+### 19/09/2026 — Connexion : fond accueil et formulaire simplifié
+
+- Demande utilisateur : reprendre le fond de l'accueil sur la page de connexion/inscription et la rendre beaucoup plus simple, juste les champs à remplir et valider.
+- Réalisation : `src/app/connexion/page.tsx` utilise désormais `home-page` + `HomeHeroBackground` + `SiteHeaderCached variant="home"` avec un `main.auth-main` centré ; la colonne marketing (« La table est privée », « Retrouve ton partenaire de jeu », « Retour aux jeux ») est supprimée. `src/components/auth-form.tsx` garde toute la logique (modes `signIn`/`signUp` via `?mode=`, `safeNext`, garde d'hydratation, `window.location`, invité anonyme) mais n'affiche plus que l'onglet, E-mail, Mot de passe et le bouton de validation ; l'accès invité reste un simple lien texte avec le même libellé « Continuer en tant qu'invité ». Nouveaux styles `.auth-*` (verre sombre, mêmes codes que l'accueil) dans `src/app/globals.css`, page toujours `force-static` (`○ /connexion` au build).
+- Vérifications (sans Docker) : `pnpm typecheck`, `pnpm lint`, `pnpm test` (85 fichiers / 533 réussis + 2 sentinelles), `pnpm test:matrix` (11 pass, 5 not-run), `pnpm content:validate`, `pnpm docs:check`, `pnpm exec next build --webpack` propres.
+- Limites : contrôle sur code uniquement, sans recette navigateur ; E2E invité non rejoué (Docker opt-in, daemon fermé).
+- Contradiction : aucune avec `AGENTS.md`.
+
+### 19/09/2026 — Accueil : vrai bouton play cliquable avec surbrillance au survol
+
+- Demande utilisateur : pouvoir cliquer sur le bouton play des cartes de la page d'accueil ; au survol du bouton (et pas de la carte), il doit se mettre en surbrillance pour confirmer le clic — aujourd'hui on clique sans retour visuel.
+- Cause confirmée : la carte entière était un seul `<button class="home-game-card">` et le pastille play un `<span>` décoratif en `pointer-events: none`, sans état hover/focus propre ; le clic sur la carte active naviguait sans feedback.
+- Réalisation : `src/components/home-game-selector.tsx` sépare les rôles — la carte devient un `div.home-game-card` contenant un `button.home-card-select` (recentre la carte latérale, `Voir X`) et, uniquement sur la carte active jouable, un vrai `button.home-card-play` (`Jouer à X`) qui seul navigue ; plus de `<button>` imbriqué, drag/seuil 6 px et clavier inchangés, cartes `coming_soon` sans pastille play. `src/app/globals.css` : pastille play cliquable (`cursor: pointer`, `pointer-events: auto` sur le bouton uniquement), surbrillance `scale(1.14)` + dégradé éclairci + halo renforcé déclenchée uniquement par `button.home-card-play:hover/focus-visible` (le survol de la carte ne fait que le lift existant), `:active scale(0.94)`, `focus-visible` contourné, `prefers-reduced-motion` étendu. `tests/e2e/home.spec.ts` : le sondage post-drag lit désormais le `aria-label` du `button.home-card-play[data-playable="true"]` (la carte n'est plus un bouton).
+- Vérifications (sans Docker) : `pnpm typecheck`, `pnpm lint`, `pnpm test` (85 fichiers / 533 réussis + 2 sentinelles), `pnpm test:matrix` (11 pass, 5 not-run), `pnpm content:validate`, `pnpm docs:check`, `pnpm exec next build --webpack` propres (routes `/` et `/jeux/*` statiques).
+- Limites : contrôle sur code uniquement, sans recette navigateur (Docker opt-in, daemon fermé ; suite E2E Playwright non rejouée) ; le clic sur la carte active hors pastille ne lance plus le jeu (recentrage seul) — comportement voulu pour un clic explicite.
+- Contradiction : aucune avec `AGENTS.md`. Chantier voisin non commité laissé intact (restyle connexion/profil : `connexion/page.tsx`, `profil/*`, `auth-form.tsx`, `history-detail.tsx` et bloc `.auth-*` de `globals.css`).
+- Prochaine étape utile : recette Docker à deux sessions (survol/clic pastille desktop + tactile mobile) puis Playwright `home.spec.ts`.
+
 ### 19/09/2026 — Profil public : tuile Coop/interrompues retirée
 
 - Demande utilisateur : ne pas afficher la stat des parties interrompues quand on regarde le profil des autres (capture : tuile « COOP / INTERROMPUES » à 0 sur `/profil/[id]`).
