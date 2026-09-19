@@ -1,9 +1,12 @@
 import { HomeGameSelector } from "@/components/home-game-selector";
 import { HomeHeroBackground } from "@/components/home-hero-background";
-import { SiteHeader } from "@/components/site-header";
+import { SiteHeaderCached } from "@/components/site-header-cached";
 import { getVisibleGames } from "@/server/games/visibility";
 
-export const dynamic = "force-dynamic";
+// Coquille d'accueil mise en cache (régénérée au plus toutes les heures) :
+// `getVisibleGames` ne lit que la table publique `games` via le rôle serveur,
+// sans cookie. La partie compte du header est un îlot client (`SiteHeaderAuth`).
+export const revalidate = 3600;
 
 export default async function HomePage() {
   const games = await getVisibleGames();
@@ -13,7 +16,7 @@ export default async function HomePage() {
       <a className="home-skip-link" href="#home-games">Aller aux jeux</a>
       <div className="home-hero">
         <HomeHeroBackground />
-        <SiteHeader variant="home" />
+        <SiteHeaderCached variant="home" />
         <main id="home-games" className="home-main">
           <div className="home-hero-copy">
             <h1 className="home-hero-title">

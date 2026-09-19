@@ -1,11 +1,15 @@
 import Link from "next/link";
-import { SiteHeader } from "@/components/site-header";
+import { SiteHeaderCached } from "@/components/site-header-cached";
 import { TrainingSyllabes } from "@/games/bombparty/components/training-syllabes";
+
+// Page statique : l'entraînement charge le dictionnaire côté client au fil de
+// la frappe, le compte est lu par l'îlot `SiteHeaderAuth`.
+export const dynamic = "force-static";
 
 export default function TrainingSyllabesPage() {
   return (
     <main className="min-h-screen">
-      <SiteHeader />
+      <SiteHeaderCached />
       <div className="mx-auto max-w-3xl px-5 pb-16 pt-8 sm:px-8">
         <Link href="/jeux/bombparty" className="text-sm font-bold text-[var(--muted)] hover:text-[var(--ink)]">← Syllabe Express</Link>
         <p className="mt-8 text-sm font-bold uppercase tracking-[0.16em] text-[#6d28d9]">Entraînement solo</p>

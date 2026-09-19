@@ -15,7 +15,10 @@ export const metadata: Metadata = {
   description: "Une table privée de jeux à deux, en français.",
 };
 
-export const dynamic = "force-dynamic";
+// Pas de `force-dynamic` ici : il désactiverait le cache de route pour tout
+// le site. Les pages privées déclarent leur propre `force-dynamic` ; les
+// coquilles publiques (`/`, `/jeux/*`, `/connexion`, `/entrainement`) sont
+// statiques et lisent la session via l'îlot client `SiteHeaderAuth`.
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (

@@ -1,18 +1,21 @@
 import Image from "next/image";
 import Link from "next/link";
-import { SiteHeader } from "@/components/site-header";
+import { SiteHeaderCached } from "@/components/site-header-cached";
 import { GameRoomAside } from "@/components/game-room-aside";
-import { getActiveRoomForViewer } from "@/server/lobbies";
 import { GeographySetup, RoomJoin } from "@/games/geographie/components/geography-setup";
 
-export default async function GeographySetupPage() {
-  const group = await getActiveRoomForViewer();
+// Page vitrine mise en cache (régénérée au plus toutes les heures) : aucun
+// appel serveur au rendu. Le salon actif est détecté côté client par
+// `GameRoomAside` (`useActiveGroupRoom`), le compte par l'îlot `SiteHeaderAuth`.
+export const revalidate = 3600;
+
+export default function GeographySetupPage() {
   return (
     <main className="geo-page geo-hexapoint">
       <div className="geo-hx-bg" aria-hidden="true">
         <Image src="/geographie/background.png" alt="" fill priority sizes="100vw" className="geo-hx-bg-image" />
       </div>
-      <SiteHeader variant="geo" />
+      <SiteHeaderCached variant="geo" />
       <div className="geo-hx-content">
         <Link href="/" className="geo-hx-back">← Tous les jeux</Link>
         <div className="geo-hx-layout">
@@ -33,8 +36,8 @@ export default async function GeographySetupPage() {
             </div>
           </section>
           <div className="geo-hx-actions">
-            <GeographySetup groupRoomId={group?.roomId} />
-            <GameRoomAside groupRoomId={group?.roomId} fallback={<RoomJoin />} />
+            <GeographySetup />
+            <GameRoomAside fallback={<RoomJoin />} />
           </div>
         </div>
       </div>
