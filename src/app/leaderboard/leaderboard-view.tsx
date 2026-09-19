@@ -1,6 +1,20 @@
+"use client";
+
 import Image from "next/image";
+import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
 import { Avatar } from "@/components/avatar";
+import { postJson } from "@/lib/client-request";
 import type { LeaderboardEntry, LeaderboardMe } from "@/lib/leaderboard-types";
+
+type Relation = "none" | "outgoing" | "incoming" | "friends";
+
+const RELATION_LABEL: Record<Relation, string> = {
+  none: "Demander en ami",
+  outgoing: "Demande envoyée",
+  incoming: "Demande reçue",
+  friends: "Déjà ami",
+};
 
 function formatPoints(points: number): string {
   return `${points} pt${points > 1 ? "s" : ""}`;
@@ -16,10 +30,31 @@ const PODIUM_ASSETS: Record<1 | 2 | 3, { src: string; className: string }> = {
   3: { src: "/leaderboard/badge-3.png", className: "lb-badge" },
 };
 
-function PodiumCard({ entry, place }: { entry: LeaderboardEntry | null; place: 1 | 2 | 3 }) {
+function PodiumCard({
+  entry,
+  place,
+  onSelect,
+  isSelf,
+}: {
+  entry: LeaderboardEntry | null;
+  place: 1 | 2 | 3;
+  onSelect: (entry: LeaderboardEntry) => void;
+  isSelf: boolean;
+}) {
   const asset = PODIUM_ASSETS[place];
+  const interactive = Boolean(entry) && !isSelf;
+
   return (
     <article className="lb-card" data-place={place} data-empty={entry ? undefined : "true"}>
+      {interactive && entry ? (
+        <button
+          type="button"
+          className="lb-card-hit"
+          aria-haspopup="dialog"
+          aria-label={`Actions pour ${entry.name}`}
+          onClick={() => onSelect(entry)}
+        />
+      ) : null}
       {entry ? (
         <Image
           className={asset.className}
@@ -46,6 +81,12 @@ function PodiumCard({ entry, place }: { entry: LeaderboardEntry | null; place: 1
   );
 }
 
+type SummaryRelations = {
+  friends?: { userId: string }[];
+  incomingRequests?: { userId: string }[];
+  outgoingRequests?: { userId: string }[];
+};
+
 export function LeaderboardView({
   entries,
   me,
@@ -55,14 +96,89 @@ export function LeaderboardView({
   me: LeaderboardMe | null;
   viewerId: string;
 }) {
+  const [relations, setRelations] = useState<Record<string, Relation>>({});
+  const [selected, setSelected] = useState<LeaderboardEntry | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [feedback, setFeedback] = useState<string | null>(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void fetch("/api/chat/summary", { cache: "no-store", signal: controller.signal })
+      .then(async (response) => (response.ok ? ((await response.json()) as SummaryRelations) : null))
+      .then((data) => {
+        if (!data) return;
+        const next: Record<string, Relation> = {};
+        for (const friend of data.friends ?? []) next[friend.userId] = "friends";
+        for (const request of data.outgoingRequests ?? []) next[request.userId] = "outgoing";
+        for (const request of data.incomingRequests ?? []) next[request.userId] = next[request.userId] ?? "incoming";
+        setRelations(next);
+      })
+      .catch(() => undefined);
+    return () => controller.abort();
+  }, []);
+
+  const openMenu = useCallback(
+    (entry: LeaderboardEntry) => {
+      if (entry.userId === viewerId) return;
+      setSelected(entry);
+      setFeedback(null);
+    },
+    [viewerId],
+  );
+
+  const closeMenu = useCallback(() => {
+    setSelected(null);
+    setFeedback(null);
+  }, []);
+
+  useEffect(() => {
+    if (!selected) return;
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") closeMenu();
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [selected, closeMenu]);
+
+  async function requestFriend() {
+    if (!selected || busy) return;
+    setBusy(true);
+    const result = await postJson<{ direction?: string }>("/api/friends/requests", {
+      requestId: crypto.randomUUID(),
+      targetId: selected.userId,
+    });
+    setBusy(false);
+    if (result.ok) {
+      const direction = result.data.direction;
+      const mapped: Relation = direction === "incoming" ? "incoming" : direction === "friends" ? "friends" : "outgoing";
+      setRelations((current) => ({ ...current, [selected.userId]: mapped }));
+      setFeedback(
+        direction === "incoming"
+          ? "Cette personne t'a déjà envoyé une demande : accepte-la dans le chat, onglet Amis."
+          : direction === "friends"
+            ? "Vous êtes déjà amis."
+            : "Demande d'ami envoyée.",
+      );
+    } else {
+      setFeedback(result.message);
+    }
+  }
+
   const podium = [2, 1, 3] as const;
   const meVisible = me ? entries.some((entry) => entry.userId === viewerId) : false;
+  const relation: Relation = selected ? relations[selected.userId] ?? "none" : "none";
 
   return (
     <div className="lb-root">
       <section className="lb-podium" aria-label="Podium des trois premiers">
         {podium.map((place) => (
-          <PodiumCard key={place} place={place} entry={entries[place - 1] ?? null} />
+          <PodiumCard
+            key={place}
+            place={place}
+            entry={entries[place - 1] ?? null}
+            onSelect={openMenu}
+            isSelf={entries[place - 1]?.userId === viewerId}
+          />
         ))}
       </section>
 
@@ -85,23 +201,44 @@ export function LeaderboardView({
                 </tr>
               </thead>
               <tbody>
-                {entries.map((entry) => (
-                  <tr
-                    key={entry.userId}
-                    data-me={entry.userId === viewerId}
-                    data-rank={entry.rank <= 3 ? entry.rank : undefined}
-                  >
-                    <td className="lb-cell-rank">{entry.rank}</td>
-                    <td>
-                      <span className="lb-cell-player">
-                        <Avatar name={entry.name} preset={entry.avatarPreset} imageUrl={entry.avatarUrl} size={34} />
-                        <span className="lb-cell-name">{entry.name}</span>
-                      </span>
-                    </td>
-                    <td className="lb-cell-record lb-col-record">{formatRecord(entry)}</td>
-                    <td className="lb-cell-points">{entry.points} pts</td>
-                  </tr>
-                ))}
+                {entries.map((entry) => {
+                  const isSelf = entry.userId === viewerId;
+                  return (
+                    <tr
+                      key={entry.userId}
+                      className="lb-row"
+                      data-me={isSelf}
+                      data-rank={entry.rank <= 3 ? entry.rank : undefined}
+                      data-interactive={!isSelf}
+                      onClick={isSelf ? undefined : () => openMenu(entry)}
+                    >
+                      <td className="lb-cell-rank">{entry.rank}</td>
+                      <td>
+                        <span className="lb-cell-player">
+                          <Avatar name={entry.name} preset={entry.avatarPreset} imageUrl={entry.avatarUrl} size={34} />
+                          {isSelf ? (
+                            <span className="lb-cell-name">{entry.name}</span>
+                          ) : (
+                            <button
+                              type="button"
+                              className="lb-cell-name lb-cell-name-button"
+                              aria-haspopup="dialog"
+                              aria-label={`Actions pour ${entry.name}`}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                openMenu(entry);
+                              }}
+                            >
+                              {entry.name}
+                            </button>
+                          )}
+                        </span>
+                      </td>
+                      <td className="lb-cell-record lb-col-record">{formatRecord(entry)}</td>
+                      <td className="lb-cell-points">{entry.points} pts</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -118,6 +255,47 @@ export function LeaderboardView({
       ) : null}
       {!me && entries.length > 0 ? (
         <p className="lb-me-empty">Tu n&apos;as pas encore de point : termine une partie classée pour entrer au classement.</p>
+      ) : null}
+
+      {selected ? (
+        <div className="lb-menu-backdrop" onClick={closeMenu}>
+          <div
+            className="lb-menu"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Actions pour ${selected.name}`}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="lb-menu-head">
+              <Avatar name={selected.name} preset={selected.avatarPreset} imageUrl={selected.avatarUrl} size={52} />
+              <div className="lb-menu-copy">
+                <p className="lb-menu-name">{selected.name}</p>
+                <p className="lb-menu-sub">
+                  {formatPoints(selected.points)} · {formatRecord(selected)}
+                </p>
+              </div>
+            </div>
+            <Link className="lb-menu-action" href={`/historique/duo/${selected.userId}`} onClick={closeMenu}>
+              Profil
+            </Link>
+            <button
+              type="button"
+              className="lb-menu-action"
+              disabled={busy || relation !== "none"}
+              onClick={() => void requestFriend()}
+            >
+              {busy ? "Envoi…" : RELATION_LABEL[relation]}
+            </button>
+            {feedback ? (
+              <p className="lb-menu-feedback" role="status">
+                {feedback}
+              </p>
+            ) : null}
+            <button type="button" className="lb-menu-close" onClick={closeMenu}>
+              Fermer
+            </button>
+          </div>
+        </div>
       ) : null}
     </div>
   );

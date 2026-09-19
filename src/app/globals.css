@@ -3575,7 +3575,7 @@ button.uno-card:disabled { cursor: progress; opacity: 0.8; }
   position: absolute;
   top: -3.2rem;
   left: 50%;
-  z-index: 2;
+  z-index: 0;
   width: clamp(5.6rem, 16vw, 7.8rem);
   height: auto;
   transform: translateX(-50%);
@@ -3598,6 +3598,7 @@ button.uno-card:disabled { cursor: progress; opacity: 0.8; }
 
 .lb-card-avatar {
   position: relative;
+  z-index: 1;
   display: grid;
   place-items: center;
   width: clamp(4.4rem, 12vw, 6rem);
@@ -3830,3 +3831,96 @@ button.uno-card:disabled { cursor: progress; opacity: 0.8; }
 /* Le fond spatial doit aussi couvrir le canevas (overscroll, zones hors .lb-page). */
 html:has(.lb-page),
 body:has(.lb-page) { background: #0b0620; }
+
+/* --- Interactions joueur (podium, classement, menu) ---------------------- */
+
+.lb-card-hit {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border: 0;
+  padding: 0;
+  border-radius: inherit;
+  background: transparent;
+  cursor: pointer;
+}
+
+.lb-card-hit:focus-visible { outline: 3px solid var(--yellow); outline-offset: 3px; }
+
+.lb-row[data-interactive="true"] { cursor: pointer; }
+
+.lb-cell-name-button {
+  border: 0;
+  padding: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 0.4rem;
+  transition: color 200ms ease;
+}
+
+.lb-cell-name-button:hover { color: #d8a4ff; text-decoration: underline; }
+.lb-cell-name-button:focus-visible { outline: 3px solid var(--yellow); outline-offset: 2px; }
+
+.lb-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+  background: rgba(4, 2, 16, 0.66);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.lb-menu {
+  display: grid;
+  gap: 0.5rem;
+  width: min(100%, 22rem);
+  padding: 1.25rem;
+  border: 1px solid rgba(148, 130, 255, 0.35);
+  border-radius: 1.4rem;
+  background: linear-gradient(180deg, rgba(30, 21, 72, 0.98), rgba(12, 8, 34, 0.98));
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.lb-menu-head { display: flex; align-items: center; gap: 0.85rem; }
+.lb-menu-copy { min-width: 0; }
+.lb-menu-name { margin: 0; color: #fff; font-weight: 800; overflow-wrap: anywhere; }
+.lb-menu-sub { margin: 0.1rem 0 0; color: rgba(206, 200, 235, 0.72); font-size: 0.82rem; }
+
+.lb-menu-action {
+  display: inline-flex;
+  min-height: 46px;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1rem;
+  border: 1px solid rgba(148, 130, 255, 0.3);
+  border-radius: 999px;
+  background: rgba(124, 58, 237, 0.18);
+  color: #fff;
+  font-weight: 700;
+  text-align: center;
+  transition: background 200ms ease, filter 200ms ease;
+}
+
+.lb-menu-action:hover:not(:disabled) { background: rgba(124, 58, 237, 0.32); }
+.lb-menu-action:disabled { opacity: 0.6; cursor: default; }
+
+.lb-menu-feedback { margin: 0; color: #fde68a; font-size: 0.82rem; line-height: 1.5; }
+
+.lb-menu-close {
+  min-height: 44px;
+  border: 0;
+  background: transparent;
+  color: rgba(214, 208, 255, 0.75);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.lb-menu-close:hover { color: #fff; }
