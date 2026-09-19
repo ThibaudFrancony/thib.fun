@@ -10,10 +10,31 @@ import { useEffect, useLayoutEffect } from "react";
  * sans requête réseau ni clignotement de l'ancienne image.
  */
 const PREFIX = "tibofun.avatar.";
-const MAX_ENTRIES = 50;
+const MAX_ENTRIES = 120;
 const MAX_DATA_URL_LENGTH = 1024 * 1024;
 
 type Entry = { dataUrl: string; at: number };
+
+/**
+ * Clé stable d'une image signée Supabase : le chemin de l'objet dans le bucket
+ * (`avatars/<membre>/<fichier>.webp`), sans le jeton qui expire. Elle change
+ * dès que la photo est remplacée (nouveau fichier), donc un joueur qui modifie
+ * sa photo voit la nouvelle version, tandis qu'une photo inchangée reste servie
+ * depuis le cache sans requête. `null` pour les URL non concernées.
+ */
+export function avatarUrlCacheKey(url: string | null | undefined): string | null {
+  if (!url || url.startsWith("data:") || url.startsWith("blob:")) return null;
+  try {
+    const marker = "/object/sign/";
+    const pathname = new URL(url).pathname;
+    const index = pathname.indexOf(marker);
+    if (index === -1) return null;
+    const path = pathname.slice(index + marker.length);
+    return path.startsWith("avatars/") ? path : null;
+  } catch {
+    return null;
+  }
+}
 
 export function readCachedAvatar(version: string | null | undefined): string | null {
   if (!version || typeof window === "undefined") return null;

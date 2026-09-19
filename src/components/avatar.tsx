@@ -1,8 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { avatarPresetImage } from "@/app/profil/profile-helpers";
+import { avatarUrlCacheKey, cacheAvatar, readCachedAvatar, useIsomorphicLayoutEffect } from "@/lib/avatar-cache";
 
 function initialOf(name: string): string {
   const trimmed = name.trim();
@@ -13,6 +14,9 @@ function initialOf(name: string): string {
  * Rond d'avatar partagé (header, salons, parties, profil).
  * Priorité : photo privée (`imageUrl`) > PNG du preset > initiale.
  * Jamais de chemin brut exposé : `imageUrl` est une URL signée courte.
+ * La photo signée est mise en cache navigateur (clé = chemin du fichier) dès le
+ * premier affichage : les revues suivantes sont instantanées, et un joueur qui
+ * change de photo obtient une nouvelle clé donc la nouvelle image.
  * Un PNG manquant retombe sur l'initiale au lieu d'une icône cassée.
  */
 export function Avatar({
@@ -29,10 +33,25 @@ export function Avatar({
   emptyLabel?: string;
 }) {
   const [broken, setBroken] = useState(false);
+  const [cachedUrl, setCachedUrl] = useState<string | null>(null);
+  const cacheKey = avatarUrlCacheKey(imageUrl);
+
+  useIsomorphicLayoutEffect(() => {
+    setCachedUrl(readCachedAvatar(cacheKey));
+  }, [cacheKey, imageUrl]);
+
+  useEffect(() => {
+    if (!imageUrl || !cacheKey || readCachedAvatar(cacheKey)) return;
+    const controller = new AbortController();
+    void cacheAvatar(cacheKey, imageUrl, controller.signal);
+    return () => controller.abort();
+  }, [imageUrl, cacheKey]);
+
   const style = { width: size, height: size, fontSize: Math.max(14, Math.round(size * 0.42)) };
-  if (imageUrl) {
+  const resolvedUrl = cachedUrl ?? imageUrl;
+  if (resolvedUrl) {
     // eslint-disable-next-line @next/next/no-img-element
-    return <img src={imageUrl} alt={`Photo de ${name}`} width={size} height={size} style={style} className="shrink-0 rounded-full object-cover" />;
+    return <img src={resolvedUrl} alt={`Photo de ${name}`} width={size} height={size} style={style} className="shrink-0 rounded-full object-cover" />;
   }
   const presetImage = broken ? null : avatarPresetImage(preset);
   if (presetImage) {
