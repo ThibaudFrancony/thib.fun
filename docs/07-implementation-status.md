@@ -28,7 +28,7 @@ Le suivi opérationnel détaillé et maintenu après chaque changement se trouve
 | Bataille navale | Implémenté | Moteur, projection, API/worker, UI, migration distante vérifiée ; E2E à finaliser |
 | BombParty + entraînement | Implémenté | Pack inchangé ; E2E et mesure de latence à finaliser |
 | Skyjo | Implémenté | Moteur, projection, API/worker, UI ; E2E à finaliser |
-| UNO | Implémenté | Moteur, projection, API/worker ; UI refondue en DA spatiale le 19/09 (assets `public/uno/`, composant `UnoCard`) ; E2E à finaliser |
+| UNO | Implémenté | Moteur, projection, API/worker ; UI refondue en DA spatiale le 19/09 (assets `public/uno/`, composant `UnoCard`) ; cumul +2/+4 entre eux sans mélange depuis les règles `uno-2` (19/09, attente/riposte/prise, victoire immédiate sur dernière carte de pénalité) ; E2E à finaliser |
 | Compatibilité | Implémenté | Moteur, contenu 160 questions, API/worker, UI ; E2E à finaliser |
 | Longueur d'onde | Implémenté | Moteur, projection, pack 80 axes, API/worker, UI ; E2E à finaliser |
 

@@ -6,13 +6,14 @@ import {
   type UnoCard,
   type UnoColor,
   type UnoCounters,
+  type UnoPendingPenalty,
   type UnoState,
   unoActionSchema,
   unoStateSchema,
 } from "@/games/uno/types";
 
-export const UNO_RULES_VERSION = "uno-1";
-export const UNO_ENGINE_VERSION = "uno-engine-1";
+export const UNO_RULES_VERSION = "uno-2";
+export const UNO_ENGINE_VERSION = "uno-engine-2";
 
 export class UnoRuleError extends Error {
   readonly code: string;
@@ -128,7 +129,16 @@ function hasActiveColor(hand: readonly UnoCard[], activeColor: UnoColor): boolea
   return hand.some((card) => card.color === activeColor);
 }
 
-export function isUnoCardPlayable(card: UnoCard, state: Pick<UnoState, "activeColor" | "discardPile" | "hands">, seat?: Seat): boolean {
+/** Pénalité en attente normalisée (`null` pour les états `uno-1` sans le champ). */
+function pendingOf(state: Pick<UnoState, "pendingPenalty">): UnoPendingPenalty | null {
+  return state.pendingPenalty ?? null;
+}
+
+export function isUnoCardPlayable(card: UnoCard, state: Pick<UnoState, "activeColor" | "discardPile" | "hands" | "pendingPenalty">, seat?: Seat): boolean {
+  const pending = pendingOf(state);
+  // En pleine attente, seul le même symbole contre (+2 sur +2, +4 sur +4),
+  // quelle que soit la couleur et sans restriction de main pour le +4.
+  if (pending) return card.symbol === pending.symbol;
   const top = state.discardPile[state.discardPile.length - 1];
   if (!top) return false;
   if (card.symbol === "wild") return true;
@@ -266,6 +276,7 @@ function finishedState(state: UnoState, result: ResultSpec): UnoState {
     ...state,
     phase: "finished",
     drawnCardId: null,
+    pendingPenalty: null,
     finishedOutcome: result.outcome === "win" ? "win" : result.outcome === "draw" ? "draw" : "abandoned",
     finishedReason: result.reason,
     winnerId: result.winnerId,
@@ -326,16 +337,23 @@ function playResult(
   next = withCounter(next, actorSeat, { cardsPlayed: next.counters[actorSeat].cardsPlayed + 1 });
 
   let nextSeat: Seat = (1 - actorSeat) as Seat;
-  let penaltyCount = 0;
+  let stacked = false;
   if (card.symbol === "skip" || card.symbol === "reverse") {
     nextSeat = actorSeat;
   } else if (card.symbol === "draw2" || card.symbol === "wild4") {
-    penaltyCount = card.symbol === "draw2" ? 2 : 4;
-    const penalty = drawCards(next, penaltyCount, ctx.entropy, 0);
-    const opponent = (1 - actorSeat) as Seat;
-    next = addDrawCounters({ ...penalty.state, hands: [...penalty.state.hands] as [UnoCard[], UnoCard[]] }, opponent, penalty.cards.length, true);
-    next.hands[opponent] = [...next.hands[opponent], ...penalty.cards];
-    nextSeat = actorSeat;
+    const step = card.symbol === "draw2" ? 2 : 4;
+    if (hand.length === 0) {
+      // Victoire immédiate : la pénalité s'applique pour le score, sans riposte possible.
+      const penalty = drawCards(next, step, ctx.entropy, 0);
+      const opponent = (1 - actorSeat) as Seat;
+      next = addDrawCounters({ ...penalty.state, hands: [...penalty.state.hands] as [UnoCard[], UnoCard[]] }, opponent, penalty.cards.length, true);
+      next.hands[opponent] = [...next.hands[opponent], ...penalty.cards];
+      next = { ...next, pendingPenalty: null };
+    } else {
+      // Cumul : l'attente grandit et la main passe à l'adversaire (contre ou prise).
+      next = { ...next, pendingPenalty: { symbol: card.symbol, count: (pendingOf(state)?.count ?? 0) + step } };
+      stacked = true;
+    }
   }
   if (next.hands[actorSeat].length === 0) {
     const completedCounters: [UnoCounters, UnoCounters] = [...next.counters] as [UnoCounters, UnoCounters];
@@ -352,7 +370,10 @@ function playResult(
       eventPayload: { actorId: ctx.actorId, cardId: card.id },
     });
   }
-  return completeTurn(ctx, next, config, nextSeat, 0, penaltyCount > 0 ? "PENALTY_APPLIED" : "CARD_PLAYED");
+  if (stacked) {
+    return completeTurn(ctx, next, config, nextSeat, 0, pendingOf(state) ? "PENALTY_STACKED" : "PENALTY_STARTED");
+  }
+  return completeTurn(ctx, next, config, nextSeat, 0, "CARD_PLAYED");
 }
 
 function playCard(
@@ -363,6 +384,13 @@ function playCard(
   card: UnoCard,
   chosenColor: UnoColor | undefined,
 ): UnoTransition {
+  const pending = pendingOf(state);
+  if (pending) {
+    // En pleine attente, seule la carte du même symbole est admise (pas de mélange +2/+4).
+    if (card.symbol !== pending.symbol) throw new UnoRuleError("CARD_NOT_PLAYABLE");
+    assertChosenColor(card, chosenColor);
+    return playResult(ctx, state, config, actorSeat, card, chosenColor);
+  }
   if (!isUnoCardPlayable(card, state, actorSeat)) {
     if (card.symbol === "wild4") throw new UnoRuleError("WILD4_NOT_ALLOWED");
     throw new UnoRuleError("CARD_NOT_PLAYABLE");
@@ -373,6 +401,16 @@ function playCard(
 
 function drawForTurn(ctx: UnoEngineContext, state: UnoState, config: UnoConfig, eventType: string): UnoTransition {
   const actorSeat = state.activeSeat;
+  const pending = pendingOf(state);
+  if (pending) {
+    // Prendre le cumul : pioche tout, l'attente s'annule et l'auteur rejoue.
+    const taken = drawCards(state, pending.count, ctx.entropy, 0);
+    let next = taken.state;
+    next = addDrawCounters({ ...next, hands: [...next.hands] as [UnoCard[], UnoCard[]] }, actorSeat, taken.cards.length, true);
+    next.hands[actorSeat] = [...next.hands[actorSeat], ...taken.cards];
+    next = { ...next, pendingPenalty: null };
+    return completeTurn(ctx, next, config, (1 - actorSeat) as Seat, 0, "PENALTY_APPLIED");
+  }
   const drawn = drawCards(state, 1, ctx.entropy, 0);
   let next = drawn.state;
   next = addDrawCounters({ ...next, hands: [...next.hands] as [UnoCard[], UnoCard[]] }, actorSeat, drawn.cards.length);
@@ -436,6 +474,7 @@ function initialState(config: UnoRuntimeConfig, ctx: UnoEngineContext): UnoState
     discardPile: [top],
     activeColor: top.color,
     drawnCardId: null,
+    pendingPenalty: null,
     turns: 0,
     blockedTurns: 0,
     counters: [counters(), counters()],
@@ -494,6 +533,14 @@ export function onUnoDeadline(stateInput: unknown, kind: string, configInput: un
     return completeTurn(ctx, state, config, (1 - state.activeSeat) as Seat, 0, "DRAW_TIMEOUT_KEPT");
   }
   if (state.phase === "playing") {
+    const pending = pendingOf(state);
+    if (pending) {
+      // Timeout face à une attente : le joueur prend tout le cumul, l'auteur rejoue.
+      const taken = drawCards(state, pending.count, ctx.entropy, 0);
+      const next = addDrawCounters({ ...taken.state, hands: [...taken.state.hands] as [UnoCard[], UnoCard[]] }, state.activeSeat, taken.cards.length, true);
+      if (taken.cards.length > 0) next.hands[state.activeSeat] = [...next.hands[state.activeSeat], ...taken.cards];
+      return completeTurn(ctx, { ...next, pendingPenalty: null }, config, (1 - state.activeSeat) as Seat, 0, "PENALTY_TIMEOUT");
+    }
     const drawn = drawCards(state, 1, ctx.entropy, 0);
     const next = addDrawCounters({ ...drawn.state, hands: [...drawn.state.hands] as [UnoCard[], UnoCard[]] }, state.activeSeat, drawn.cards.length);
     if (drawn.cards[0]) next.hands[state.activeSeat] = [...next.hands[state.activeSeat], drawn.cards[0]];

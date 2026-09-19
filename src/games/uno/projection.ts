@@ -54,6 +54,8 @@ export function projectUno(
       : [];
   const topCard = state.discardPile[state.discardPile.length - 1];
   if (!topCard) throw new Error("EMPTY_DISCARD");
+  // Pendant une pénalité en attente, isUnoCardPlayable restreint déjà aux
+  // cartes du symbole attendu ; `canDraw` signifie alors « prendre le cumul ».
   const players: [UnoPlayerView, UnoPlayerView] = [
     playerView(identities[0], 0, state),
     playerView(identities[1], 1, state),
@@ -88,6 +90,7 @@ export function projectUno(
     opponentHand: state.phase === "finished" ? state.hands[(1 - viewerSeat) as Seat] : null,
     drawnCard,
     playableCardIds,
+    pendingPenalty: state.pendingPenalty ?? null,
     players,
     turns: state.turns,
     counters: state.counters[viewerSeat],

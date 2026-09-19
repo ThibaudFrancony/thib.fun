@@ -108,11 +108,22 @@ describe("UNO engine", () => {
     const current = state({ hands: [[card("wild4", null, "wild4"), card("red-8", "red", "8")], [card("b-1", "blue", "9")]] });
     expect(() => reduceUno(current, { type: "PLAY_CARD", cardId: "wild4", chosenColor: "blue", announceLastCard: true }, DEFAULT_UNO_CONFIG, context())).toThrowError("WILD4_NOT_ALLOWED");
 
-    const allowed = { ...current, hands: [[card("wild4", null, "wild4"), card("blue-8", "blue", "8")], current.hands[1]] as [UnoCard[], UnoCard[]] };
+    const allowed = {
+      ...current,
+      hands: [[card("wild4", null, "wild4"), card("blue-8", "blue", "8")], current.hands[1]] as [UnoCard[], UnoCard[]],
+      drawPile: [card("p-1", "red", "1"), card("p-2", "blue", "2"), card("p-3", "green", "3"), card("p-4", "yellow", "4")],
+    };
     const transition = reduceUno(allowed, { type: "PLAY_CARD", cardId: "wild4", chosenColor: "green", announceLastCard: true }, DEFAULT_UNO_CONFIG, context());
     expect(transition.state.activeColor).toBe("green");
-    expect(transition.state.hands[1]).toHaveLength(4);
-    expect(transition.state.activeSeat).toBe(0);
+    // Le +4 crée une attente au lieu de faire piocher aussitôt : Bob prend 4 et Alice rejoue.
+    expect(transition.state.pendingPenalty).toEqual({ symbol: "wild4", count: 4 });
+    expect(transition.state.hands[1]).toHaveLength(1);
+    expect(transition.state.activeSeat).toBe(1);
+    const taken = reduceUno(transition.state, { type: "DRAW" }, DEFAULT_UNO_CONFIG, context("bob"));
+    expect(taken.state.pendingPenalty).toBeNull();
+    expect(taken.state.hands[1]).toHaveLength(5);
+    expect(taken.state.counters[1].penaltyCardsTaken).toBe(4);
+    expect(taken.state.activeSeat).toBe(0);
   });
 
   it("applique skip et reverse à deux joueurs, et passe après un joker", () => {
@@ -137,9 +148,15 @@ describe("UNO engine", () => {
       drawPile: [card("penalty-1", "yellow", "1"), card("penalty-2", "green", "2"), card("rest", "blue", "8")],
     });
     const drawTwoTransition = reduceUno(drawTwo, { type: "PLAY_CARD", cardId: "draw-two", announceLastCard: true }, DEFAULT_UNO_CONFIG, context());
-    expect(drawTwoTransition.state.hands[1]).toHaveLength(3);
-    expect(drawTwoTransition.state.counters[1].penaltyCardsTaken).toBe(2);
-    expect(drawTwoTransition.state.activeSeat).toBe(0);
+    // Le +2 crée une attente : Bob prend 2 via DRAW et Alice rejoue.
+    expect(drawTwoTransition.state.pendingPenalty).toEqual({ symbol: "draw2", count: 2 });
+    expect(drawTwoTransition.state.hands[1]).toHaveLength(1);
+    expect(drawTwoTransition.state.activeSeat).toBe(1);
+    const drawTwoTaken = reduceUno(drawTwoTransition.state, { type: "DRAW" }, DEFAULT_UNO_CONFIG, context("bob"));
+    expect(drawTwoTaken.state.pendingPenalty).toBeNull();
+    expect(drawTwoTaken.state.hands[1]).toHaveLength(3);
+    expect(drawTwoTaken.state.counters[1].penaltyCardsTaken).toBe(2);
+    expect(drawTwoTaken.state.activeSeat).toBe(0);
   });
 
   it("ne permet après DRAW que de jouer la carte nouvellement tirée", () => {
@@ -183,6 +200,122 @@ describe("UNO engine", () => {
     expect(transition.state.counters[0].cardsDrawn).toBe(0);
     expect(transition.state.counters[0].cardsPlayed).toBe(1);
     expect(transition.state.activeSeat).toBe(1);
+  });
+
+  it("cumule les +2 : 2 puis 4 puis 6 avant la prise", () => {
+    const start = state({
+      hands: [
+        [card("a-2a", "red", "draw2"), card("a-2b", "green", "draw2"), card("a-spare", "yellow", "1")],
+        [card("b-2", "blue", "draw2"), card("b-spare", "yellow", "9")],
+      ],
+      drawPile: [
+        card("p-1", "red", "1"), card("p-2", "blue", "2"), card("p-3", "green", "3"),
+        card("p-4", "yellow", "4"), card("p-5", "red", "5"), card("p-6", "blue", "6"),
+        card("p-7", "green", "7"),
+      ],
+    });
+    const first = reduceUno(start, { type: "PLAY_CARD", cardId: "a-2a" }, DEFAULT_UNO_CONFIG, context());
+    expect(first.state.pendingPenalty).toEqual({ symbol: "draw2", count: 2 });
+    expect(first.state.activeSeat).toBe(1);
+    expect(first.state.activeColor).toBe("red");
+
+    // Un +2 d'une autre couleur contre quand même.
+    const second = reduceUno(first.state, { type: "PLAY_CARD", cardId: "b-2" }, DEFAULT_UNO_CONFIG, context("bob"));
+    expect(second.state.pendingPenalty).toEqual({ symbol: "draw2", count: 4 });
+    expect(second.state.activeSeat).toBe(0);
+    expect(second.state.activeColor).toBe("blue");
+
+    // Une carte normale ne peut pas répondre à l'attente.
+    expect(() => reduceUno(second.state, { type: "PLAY_CARD", cardId: "a-spare" }, DEFAULT_UNO_CONFIG, context())).toThrowError("CARD_NOT_PLAYABLE");
+
+    const third = reduceUno(second.state, { type: "PLAY_CARD", cardId: "a-2b" }, DEFAULT_UNO_CONFIG, context());
+    expect(third.state.pendingPenalty).toEqual({ symbol: "draw2", count: 6 });
+    expect(third.state.activeSeat).toBe(1);
+
+    // Bob prend 6 : l'attente s'annule et Alice rejoue.
+    const taken = reduceUno(third.state, { type: "DRAW" }, DEFAULT_UNO_CONFIG, context("bob"));
+    expect(taken.state.pendingPenalty).toBeNull();
+    expect(taken.state.hands[1]).toHaveLength(7);
+    expect(taken.state.counters[1].penaltyCardsTaken).toBe(6);
+    expect(taken.state.counters[1].cardsDrawn).toBe(6);
+    expect(taken.state.activeSeat).toBe(0);
+  });
+
+  it("prendre un +2 sans contrer fait rejouer l'auteur, sans mélange +2/+4", () => {
+    const start = state({
+      hands: [
+        [card("a-2", "red", "draw2"), card("a-spare", "green", "8")],
+        [card("b-4", null, "wild4"), card("b-spare", "yellow", "1")],
+      ],
+      drawPile: [card("p-1", "red", "1"), card("p-2", "blue", "2"), card("p-3", "green", "3")],
+    });
+    const stacked = reduceUno(start, { type: "PLAY_CARD", cardId: "a-2" }, DEFAULT_UNO_CONFIG, context());
+    expect(stacked.state.pendingPenalty).toEqual({ symbol: "draw2", count: 2 });
+    // Un +4 ne répond pas à un +2.
+    expect(() => reduceUno(stacked.state, { type: "PLAY_CARD", cardId: "b-4", chosenColor: "green" }, DEFAULT_UNO_CONFIG, context("bob"))).toThrowError("CARD_NOT_PLAYABLE");
+    const taken = reduceUno(stacked.state, { type: "DRAW" }, DEFAULT_UNO_CONFIG, context("bob"));
+    expect(taken.state.pendingPenalty).toBeNull();
+    expect(taken.state.hands[1]).toHaveLength(4);
+    expect(taken.state.counters[1].penaltyCardsTaken).toBe(2);
+    expect(taken.state.activeSeat).toBe(0);
+  });
+
+  it("cumule les +4 : 4 puis 8, sans restriction de couleur en riposte", () => {
+    const start = state({
+      activeColor: "red",
+      hands: [
+        [card("a-4", null, "wild4"), card("a-spare", "blue", "8")],
+        [card("b-4", null, "wild4"), card("b-green", "green", "3")],
+      ],
+      drawPile: [
+        card("p-1", "red", "1"), card("p-2", "blue", "2"), card("p-3", "green", "3"),
+        card("p-4", "yellow", "4"), card("p-5", "red", "5"), card("p-6", "blue", "6"),
+        card("p-7", "green", "7"), card("p-8", "yellow", "8"),
+      ],
+    });
+    const first = reduceUno(start, { type: "PLAY_CARD", cardId: "a-4", chosenColor: "green" }, DEFAULT_UNO_CONFIG, context());
+    expect(first.state.pendingPenalty).toEqual({ symbol: "wild4", count: 4 });
+    expect(first.state.activeColor).toBe("green");
+    expect(first.state.activeSeat).toBe(1);
+    // Sans couleur choisie, la riposte +4 est refusée.
+    expect(() => reduceUno(first.state, { type: "PLAY_CARD", cardId: "b-4" }, DEFAULT_UNO_CONFIG, context("bob"))).toThrowError("WILD_COLOR_REQUIRED");
+    // Bob détient du vert (couleur active) : interdit en temps normal, admis en riposte.
+    const second = reduceUno(first.state, { type: "PLAY_CARD", cardId: "b-4", chosenColor: "yellow" }, DEFAULT_UNO_CONFIG, context("bob"));
+    expect(second.state.pendingPenalty).toEqual({ symbol: "wild4", count: 8 });
+    expect(second.state.activeColor).toBe("yellow");
+    expect(second.state.activeSeat).toBe(0);
+    const taken = reduceUno(second.state, { type: "DRAW" }, DEFAULT_UNO_CONFIG, context());
+    expect(taken.state.pendingPenalty).toBeNull();
+    expect(taken.state.hands[0]).toHaveLength(9);
+    expect(taken.state.counters[0].penaltyCardsTaken).toBe(8);
+    expect(taken.state.activeSeat).toBe(1);
+  });
+
+  it("au timeout face à une attente, le joueur prend tout le cumul", () => {
+    const pending = state({
+      activeSeat: 1,
+      hands: [[card("a-spare", "green", "8")], [card("b-spare", "yellow", "1")]],
+      pendingPenalty: { symbol: "draw2", count: 4 },
+      drawPile: [card("p-1", "red", "1"), card("p-2", "blue", "2"), card("p-3", "green", "3"), card("p-4", "yellow", "4")],
+    });
+    const transition = onUnoDeadline(pending, "turn_timeout", DEFAULT_UNO_CONFIG, context(null));
+    expect(transition.state.pendingPenalty).toBeNull();
+    expect(transition.state.hands[1]).toHaveLength(5);
+    expect(transition.state.counters[1].penaltyCardsTaken).toBe(4);
+    expect(transition.state.activeSeat).toBe(0);
+  });
+
+  it("jouer le +2 pioché crée une attente au lieu de passer", () => {
+    const start = state({
+      hands: [[card("blue-9", "blue", "9")], [card("b-1", "blue", "1")]],
+      drawPile: [card("draw-2", "red", "draw2")],
+    });
+    const drawn = reduceUno(start, { type: "DRAW" }, DEFAULT_UNO_CONFIG, context());
+    expect(drawn.state.phase).toBe("after_draw");
+    const stacked = reduceUno(drawn.state, { type: "PLAY_DRAWN" }, DEFAULT_UNO_CONFIG, context());
+    expect(stacked.state.pendingPenalty).toEqual({ symbol: "draw2", count: 2 });
+    expect(stacked.state.phase).toBe("playing");
+    expect(stacked.state.activeSeat).toBe(1);
   });
 
   it("applique un +2 final avant de calculer le score gagnant", () => {

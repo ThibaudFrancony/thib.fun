@@ -33,6 +33,13 @@ export const unoCountersSchema = z.object({
 
 export type UnoCounters = z.infer<typeof unoCountersSchema>;
 
+export const unoPendingPenaltySchema = z.object({
+  symbol: z.enum(["draw2", "wild4"]),
+  count: z.number().int().min(2),
+});
+
+export type UnoPendingPenalty = z.infer<typeof unoPendingPenaltySchema>;
+
 export const unoStateSchema = z.object({
   schemaVersion: z.literal(1),
   phase: z.enum(["playing", "after_draw", "finished"]),
@@ -42,6 +49,8 @@ export const unoStateSchema = z.object({
   discardPile: z.array(unoCardSchema).min(1),
   activeColor: unoColorSchema,
   drawnCardId: z.string().nullable(),
+  /** Cumul de pénalité en attente (règles uno-2). Absent = aucune attente (parties uno-1). */
+  pendingPenalty: unoPendingPenaltySchema.nullable().optional(),
   turns: z.number().int().min(0).max(300),
   blockedTurns: z.number().int().min(0).max(2),
   counters: z.tuple([unoCountersSchema, unoCountersSchema]),
@@ -98,6 +107,7 @@ export type UnoView = {
   opponentHand: UnoCardView[] | null;
   drawnCard: UnoCardView | null;
   playableCardIds: string[];
+  pendingPenalty: UnoPendingPenalty | null;
   players: [UnoPlayerView, UnoPlayerView];
   turns: number;
   counters: UnoCounters;

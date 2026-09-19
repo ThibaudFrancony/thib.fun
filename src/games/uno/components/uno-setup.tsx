@@ -42,7 +42,7 @@ export function UnoSetup({ groupRoomId }: { groupRoomId?: string } = {}) {
         </select>
       </div>
       <p className="geo-panel-note">
-        108 cartes, 7 cartes chacun, pas de cumul de pénalités. Le +4 n&apos;est jouable que si tu n&apos;as aucune carte de la couleur active.
+        108 cartes, 7 cartes chacun, +2 et +4 cumulables entre eux (sans mélange). Le +4 n&apos;est jouable que si tu n&apos;as aucune carte de la couleur active, sauf pour contrer un +4.
       </p>
       {error && <p role="alert" className="geo-error">{error}</p>}
       {inGroup ? <GroupLaunchControls gameSlug="uno" config={config} group={group} /> : <button disabled={busy} onClick={() => void createRoom()} className="geo-primary-button">{busy ? "Création…" : "Créer le salon UNO"}</button>}

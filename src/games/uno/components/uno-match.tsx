@@ -284,6 +284,8 @@ export function UnoMatch({ matchId }: { matchId: string }) {
   const view = match.view;
   const opponent = view.players[(1 - view.mySeat) as 0 | 1];
   const isMyTurn = view.activeSeat === view.mySeat && view.phase !== "finished";
+  const pending = view.pendingPenalty ?? null;
+  const pendingCounter = pending?.symbol === "draw2" ? "+2" : "+4";
   const hiddenCardId = flyingCardId ?? optimisticDiscard?.id ?? null;
 
   function isPlayableCard(card: UnoCardData): boolean {
@@ -394,11 +396,11 @@ export function UnoMatch({ matchId }: { matchId: string }) {
             <section className="uno-table" aria-label="Table de jeu UNO">
               <div className="uno-pile">
                 <p className="uno-pile-label">Pioche</p>
-                <button type="button" className="uno-draw" aria-label="Piocher une carte" disabled={!view.actions.canDraw || busy} onClick={(event) => drawCard(toRect(event.currentTarget.getBoundingClientRect()))}>
+                <button type="button" className="uno-draw" aria-label={pending ? `Prendre ${pending.count} cartes` : "Piocher une carte"} disabled={!view.actions.canDraw || busy} onClick={(event) => drawCard(toRect(event.currentTarget.getBoundingClientRect()))}>
                   <UnoCard faceDown />
                 </button>
                 <p className="uno-pile-count">{view.drawPileCount} cartes dans la pioche</p>
-                <p className="uno-pile-action">{view.actions.canDraw ? "Piocher une carte" : "Patiente…"}</p>
+                <p className="uno-pile-action">{pending ? `Prendre ${pending.count}` : view.actions.canDraw ? "Piocher une carte" : "Patiente…"}</p>
               </div>
               <div className="uno-pile uno-pile--discard">
                 <p className="uno-pile-label">Défausse</p>
@@ -415,6 +417,11 @@ export function UnoMatch({ matchId }: { matchId: string }) {
                   {colorNames[view.activeColor]} active
                 </p>
               </div>
+              {pending && (
+                <p className="uno-penalty-banner" role="status">
+                  {`+${pending.count} à prendre ou à contrer avec un ${pendingCounter}`}
+                </p>
+              )}
             </section>
 
             <section className="uno-hand-panel" data-turn={isMyTurn} aria-label="Ta main">

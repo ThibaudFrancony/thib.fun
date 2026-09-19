@@ -3150,6 +3150,8 @@ a.pf-history-card:hover { transform: translateY(-2px); border-color: rgba(200, 1
 .uno-pile-count { margin: 0.4rem 0 0; color: #fff; font-size: 0.8rem; font-weight: 800; font-variant-numeric: tabular-nums; }
 .uno-pile-action { margin: 0; color: #c7b8e6; font-size: 0.68rem; font-weight: 700; }
 
+.uno-penalty-banner { flex-basis: 100%; margin: 0.55rem 0 0; color: #ffe49a; font-size: 0.82rem; font-weight: 800; text-align: center; letter-spacing: 0.02em; text-shadow: 0 0 14px rgba(255, 200, 90, 0.4); }
+
 .uno-pile--discard { min-width: 10.5rem; justify-content: flex-start; }
 
 .uno-active-color { display: inline-flex; align-items: center; gap: 0.4rem; margin: 0.5rem 0 0; color: #ffe49a; font-size: 0.78rem; font-weight: 800; }

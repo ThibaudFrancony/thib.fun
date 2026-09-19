@@ -20,6 +20,7 @@ function viewFor(seat: 0 | 1, overrides: Partial<UnoView> = {}): UnoView {
     opponentHand: null,
     drawnCard: null,
     playableCardIds: [wild.id],
+    pendingPenalty: null,
     players: [
       { id: "alice", seat: 0, pseudo: "Alice", cardCount: seat === 0 ? 1 : 3, score: 0, active: seat === 0 },
       { id: "bob", seat: 1, pseudo: "Bob", cardCount: seat === 1 ? 1 : 3, score: 0, active: seat === 1 },

@@ -36,25 +36,28 @@ type State = {
  schemaVersion:1; phase:'playing'|'after_draw'|'finished';
  activeSeat:0|1; hands:[Card[],Card[]]; drawPile:Card[]; discardPile:Card[];
  activeColor:Color; drawnCardId:string|null;
+ pendingPenalty:{symbol:'draw2'|'wild4'; count:number}|null;
  turns:number; blockedTurns:number;
  counters:[PlayerCounters,PlayerCounters];
 };
 ```
 
-Vue : main propre complète IDs/symboles, nombre de cartes adverse uniquement, sommet défausse, couleur active, taille pioche, actions et IDs jouables calculés serveur. Pas de liste des cartes adverses même dans attributs/accessibilité. À la fin, révéler main restante adverse pour expliquer les points ; ordre restant pioche toujours caché. Révélation de main post-fin ne justifie pas de l'envoyer pendant le jeu.
+`pendingPenalty` est `null` hors cumul ; sinon il porte le symbole attendu pour le contre et le total de cartes à prendre. Les états `uno-1` sans ce champ se lisent comme `null` (compatibilité des parties en cours).
+
+Vue : main propre complète IDs/symboles, nombre de cartes adverse uniquement, sommet défausse, couleur active, taille pioche, pénalité en attente (symbole + total, sans révéler la main adverse), actions et IDs jouables calculés serveur. Pendant une attente, seuls les IDs du symbole attendu sont jouables et `canDraw` signifie « prendre le cumul ». Pas de liste des cartes adverses même dans attributs/accessibilité. À la fin, révéler main restante adverse pour expliquer les points ; ordre restant pioche toujours caché. Révélation de main post-fin ne justifie pas de l'envoyer pendant le jeu.
 
 ## 6. Commandes / résultat
 
-`PLAY_CARD {cardId,chosenColor?:Color,announceLastCard?:boolean}` phase playing ; `DRAW {}` playing ; `PLAY_DRAWN {chosenColor?:Color,announceLastCard?:boolean}` after_draw (ID déduit serveur) ; `KEEP_DRAWN {}` after_draw ; RESIGN/CLAIM_FORFEIT communs. `announceLastCard` est optionnel et ignoré (compatibilité des parties en cours). Le serveur refuse chosenColor sur carte non wild, ID adverse, carte non détenue, wild4 illégal. Receipts rendent DRAW idempotent.
+`PLAY_CARD {cardId,chosenColor?:Color,announceLastCard?:boolean}` phase playing ; `DRAW {}` playing (pioche une carte, ou tout le cumul s'il y a une pénalité en attente) ; `PLAY_DRAWN {chosenColor?:Color,announceLastCard?:boolean}` after_draw (ID déduit serveur ; jouer ainsi un +2/+4 crée une pénalité en attente) ; `KEEP_DRAWN {}` after_draw ; RESIGN/CLAIM_FORFEIT communs. `announceLastCard` est optionnel et ignoré (compatibilité des parties en cours). Le serveur refuse chosenColor sur carte non wild, ID adverse, carte non détenue, wild4 illégal (hors riposte, où tout +4 est admis mais la couleur choisie reste exigée), toute carte d'un autre symbole que celui attendu pendant une attente, et le mélange +2/+4. Receipts rendent DRAW idempotent.
 
 Victoire main vide. Score gagnant = valeur des cartes restantes adverses (chiffres valeur faciale, skip/reverse/draw2=20, wild/wild4=50), perdant=0. En draw scores=0, metrics gardent valeurs mains restantes. Ce score informatif ne décide pas une victoire par limite de tours. Forfait : winner score 0 et reason explicite. Metrics `{cardsPlayed,cardsDrawn,penaltyCardsTaken,missedAnnouncements,turns,remainingCards}`. Round_results contient une seule manche finale. Stats victoires + compteurs, pas de classement financier ni ELO ; le classement général du site (19/09/2026) cumule seulement des points par partie.
 
 ## 7. UI
 
-Main en éventail léger desktop, rail horizontal défilant mobile. Clic direct sur une carte jouable (aucun bouton Jouer) ; carte non jouable sans popup. Carte jouable distinguée sans masquer les autres. Nombre adverse discret ; pioche centrale cliquable ; couleur active texte+symbole. Après tirage, la carte piochée est surlignée et « Garder la carte » reste disponible. Choix wild : quatre grands boutons accessibles, annuler revient à la main sans mutation. Aucune case d'annonce.
+Main en éventail léger desktop, rail horizontal défilant mobile. Clic direct sur une carte jouable (aucun bouton Jouer) ; carte non jouable sans popup. Carte jouable distinguée sans masquer les autres. Nombre adverse discret ; pioche centrale cliquable (libellée « Prendre N » pendant une attente) ; couleur active texte+symbole. Un bandeau annonce la pénalité en attente (« +N à prendre ou à contrer avec un +2/+4 »). Après tirage, la carte piochée est surlignée et « Garder la carte » reste disponible. Choix wild : quatre grands boutons accessibles, annuler revient à la main sans mutation. Aucune case d'annonce.
 
 ## 8. Tests / exclusions
 
-Conservation 108 cartes, répartition initiale, sommet numérique. Tous effets à deux testés, wild4 selon couleur, tirage volontaire avec carte jouable, interdiction jouer autre carte après tirage, garde timeout, absence de pénalité sans annonce, dernière carte +2/+4, recyclage exact, blocage/300 tours, DRAW retry, main secrète et refresh after_draw. E2E partie finie avec deck fixture déterministe et vraie isolation des sessions.
+Conservation 108 cartes, répartition initiale, sommet numérique. Tous effets à deux testés, wild4 selon couleur, cumul +2 (2→4→6 puis prise, refus des autres cartes, prise à chaque palier, timeout qui prend), cumul +4 (4→8, sans restriction de couleur en riposte, couleur choisie exigée), non-mélange +2/+4, victoire immédiate sur dernière carte de pénalité, tirage volontaire avec carte jouable, interdiction jouer autre carte après tirage, garde timeout, absence de pénalité sans annonce, recyclage exact, blocage/300 tours, DRAW retry, main secrète et refresh after_draw. E2E partie finie avec deck fixture déterministe et vraie isolation des sessions.
 
-Hors V1 : stacking, défis +4, règle 7–0, échange de mains, interception, élimination, équipes, règles personnalisées. Toute extension modifie rulesVersion, tests et aide avant partie.
+Hors V1 : défis +4, règle 7–0, échange de mains, interception, élimination, équipes, règles personnalisées. Toute extension modifie rulesVersion, tests et aide avant partie.

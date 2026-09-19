@@ -29,6 +29,7 @@ function view(hand: UnoView["hand"]): UnoView {
     opponentHand: null,
     drawnCard: null,
     playableCardIds: hand.map((card) => card.id),
+    pendingPenalty: null,
     players,
     turns: 0,
     counters,
@@ -170,6 +171,30 @@ test("jouer une carte sans annonce envoie une commande sans announceLastCard", a
   await page.getByRole("button", { name: "5 · jouable" }).click();
   await expect.poll(() => body !== null).toBe(true);
   expect(JSON.stringify(body)).not.toContain("announceLastCard");
+});
+
+test("une pénalité en attente propose de prendre le cumul", async ({ page }) => {
+  const pending = view([
+    { id: "blue-draw2", color: "blue", symbol: "draw2" },
+    { id: "red-5", color: "red", symbol: "5" },
+  ]);
+  pending.pendingPenalty = { symbol: "draw2", count: 4 };
+  pending.playableCardIds = ["blue-draw2"];
+  await page.route(`**/api/matches/${matchId}`, async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(response(pending)) });
+  });
+  await page.goto(`/parties/${matchId}`);
+  await expect(page.getByRole("heading", { name: /2 cartes/ })).toBeVisible();
+  await expect(page.getByText("+4 à prendre ou à contrer avec un +2")).toBeVisible();
+  const actions: string[] = [];
+  await page.route(`**/api/matches/${matchId}/commands`, async (route) => {
+    const body = route.request().postDataJSON() as { action?: { type?: string } };
+    if (body.action?.type) actions.push(body.action.type);
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ matchId, version: 2, commandHash: "fixture" }) });
+  });
+  await page.getByRole("button", { name: "Prendre 4 cartes" }).click();
+  await expect.poll(() => actions.length).toBe(1);
+  expect(actions[0]).toBe("DRAW");
 });
 
 test("la table UNO entretient la présence par heartbeat", async ({ page }) => {
