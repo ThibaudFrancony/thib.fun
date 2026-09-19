@@ -99,6 +99,20 @@ test("un double clic pendant l'envoi ne produit qu'une commande", async ({ page 
   await expect(play).toBeEnabled();
 });
 
+test("une carte jouée reste sur la défausse pendant l'attente serveur puis revient en cas d'échec", async ({ page }) => {
+  await openFixture(page, view([{ id: "red-5", color: "red", symbol: "5" }]));
+  await page.route(`**/api/matches/${matchId}/commands`, async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 2_000));
+    await route.abort("failed");
+  });
+  const play = page.getByRole("button", { name: "5 · jouable" });
+  await play.click();
+  await expect(play).toBeHidden();
+  await expect(page.locator(".uno-discard-optimistic")).toBeVisible();
+  await expect(play).toBeVisible({ timeout: 5_000 });
+  await expect(page.locator(".uno-discard-optimistic")).toHaveCount(0);
+});
+
 test("un clic sur la pioche envoie une commande DRAW", async ({ page }) => {
   await openFixture(page, view([{ id: "red-5", color: "red", symbol: "5" }]));
   const actions: string[] = [];

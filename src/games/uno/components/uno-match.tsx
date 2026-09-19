@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import type { UnoAction, UnoCard as UnoCardData, UnoColor, UnoView } from "@/games/uno/types";
@@ -24,6 +24,8 @@ type FlyingCard = {
   rotate: number;
   scale: number;
   duration: number;
+  /** Après l'atterrissage : `discard` garde la carte sur la défausse, `hand` révèle la place de la carte piochée. */
+  settle: "discard" | "hand" | null;
 };
 
 const FLY_DURATION = 520;
@@ -91,14 +93,20 @@ export function UnoMatch({ matchId }: { matchId: string }) {
   const [shakeCardId, setShakeCardId] = useState<string | null>(null);
   const [flying, setFlying] = useState<FlyingCard | null>(null);
   const [flyingCardId, setFlyingCardId] = useState<string | null>(null);
+  const [optimisticDiscard, setOptimisticDiscard] = useState<UnoCardData | null>(null);
+  const [drawPending, setDrawPending] = useState(false);
+  const [drawLanded, setDrawLanded] = useState(false);
   const [now, setNow] = useState(0);
   const focusReturnRef = useRef<HTMLElement | null>(null);
   const shakeTimerRef = useRef<number | null>(null);
   const flyTimerRef = useRef<number | null>(null);
   const flyKeyRef = useRef(0);
   const flySourceRef = useRef<Rect | null>(null);
+  const pendingDrawSourceRef = useRef<Rect | null>(null);
+  const handIdsRef = useRef<Set<string>>(new Set());
   const handRef = useRef<HTMLDivElement | null>(null);
   const discardRef = useRef<HTMLDivElement | null>(null);
+  const placeholderRef = useRef<HTMLSpanElement | null>(null);
 
   const restoreDialogFocus = useCallback(() => {
     const target = focusReturnRef.current;
@@ -116,6 +124,15 @@ export function UnoMatch({ matchId }: { matchId: string }) {
 
   const onSnapshotApplied = useCallback((next: MatchResponse) => {
     if (pendingPlay && !isPendingPlayValid(pendingPlay, next.view)) closeColorDialog();
+    setOptimisticDiscard((current) => {
+      if (!current) return null;
+      return next.view.hand.some((card) => card.id === current.id) ? current : null;
+    });
+    const drawConfirmed = next.view.phase === "finished" || next.view.drawnCard !== null;
+    if (drawConfirmed) {
+      setDrawPending(false);
+      setDrawLanded(false);
+    }
   }, [closeColorDialog, pendingPlay]);
 
   const {
@@ -145,10 +162,63 @@ export function UnoMatch({ matchId }: { matchId: string }) {
     return () => window.clearInterval(clockTimer);
   }, []);
 
+  useEffect(() => {
+    handIdsRef.current = new Set(match ? match.view.hand.map((card) => card.id) : []);
+  });
+
   useEffect(() => () => {
     if (shakeTimerRef.current !== null) window.clearTimeout(shakeTimerRef.current);
     if (flyTimerRef.current !== null) window.clearTimeout(flyTimerRef.current);
   }, []);
+
+  /**
+   * Fait voler une copie visuelle de la carte vers la défausse (ou du haut
+   * de la pioche vers la main) pendant l'aller-retour serveur. Pure
+   * décoration : l'état officiel reste la projection serveur. À
+   * l'atterrissage, `settle: "discard"` laisse la carte affichée sur la
+   * défausse tant que le serveur n'a pas confirmé.
+   */
+  const startFly = useCallback((card: UnoCardData | null, source: Rect, target: Rect | null, rotate: number, settle: "discard" | "hand" | null) => {
+    if (!target || typeof window === "undefined") return;
+    const dx = target.left + target.width / 2 - (source.left + source.width / 2);
+    const dy = target.top + target.height / 2 - (source.top + source.height / 2);
+    flyKeyRef.current += 1;
+    const flight: FlyingCard = {
+      key: flyKeyRef.current,
+      card,
+      left: source.left,
+      top: source.top,
+      width: source.width,
+      height: source.height,
+      dx,
+      dy,
+      rotate,
+      scale: Math.max(0.6, Math.min(1.1, target.width / Math.max(source.width, 1))),
+      duration: FLY_DURATION,
+      settle,
+    };
+    setFlying(flight);
+    setFlyingCardId(card?.id ?? null);
+    if (flyTimerRef.current !== null) window.clearTimeout(flyTimerRef.current);
+    flyTimerRef.current = window.setTimeout(() => {
+      if (flight.settle === "discard" && flight.card && handIdsRef.current.has(flight.card.id)) {
+        setOptimisticDiscard(flight.card);
+      }
+      if (flight.settle === "hand") setDrawLanded(true);
+      setFlying(null);
+      setFlyingCardId(null);
+      flyTimerRef.current = null;
+    }, FLY_DURATION + 40);
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!drawPending) return;
+    const placeholder = placeholderRef.current;
+    const source = pendingDrawSourceRef.current;
+    pendingDrawSourceRef.current = null;
+    if (!placeholder || !source) return;
+    startFly(null, source, toRect(placeholder.getBoundingClientRect()), -10, "hand");
+  }, [drawPending, startFly]);
 
   async function send(action: UnoAction): Promise<MatchResponse | null> {
     const next = await networkSend(action);
@@ -165,42 +235,23 @@ export function UnoMatch({ matchId }: { matchId: string }) {
     }, 420);
   }
 
-  /**
-   * Fait voler une copie visuelle de la carte vers la défausse (ou du haut
-   * de la pioche vers la main) pendant l'aller-retour serveur. Pure
-   * décoration : l'état officiel reste la projection serveur.
-   */
-  function startFly(card: UnoCardData | null, source: Rect, target: Rect | null, rotate: number) {
-    if (!target || typeof window === "undefined") return;
-    const dx = target.left + target.width / 2 - (source.left + source.width / 2);
-    const dy = target.top + target.height / 2 - (source.top + source.height / 2);
-    flyKeyRef.current += 1;
-    setFlying({
-      key: flyKeyRef.current,
-      card,
-      left: source.left,
-      top: source.top,
-      width: source.width,
-      height: source.height,
-      dx,
-      dy,
-      rotate,
-      scale: Math.max(0.6, Math.min(1.1, target.width / Math.max(source.width, 1))),
-      duration: FLY_DURATION,
-    });
-    setFlyingCardId(card?.id ?? null);
-    if (flyTimerRef.current !== null) window.clearTimeout(flyTimerRef.current);
-    flyTimerRef.current = window.setTimeout(() => {
-      setFlying(null);
-      setFlyingCardId(null);
+  /** Annule toutes les décorations en attente (échec réseau confirmé). */
+  function cancelVisual() {
+    if (flyTimerRef.current !== null) {
+      window.clearTimeout(flyTimerRef.current);
       flyTimerRef.current = null;
-    }, FLY_DURATION + 80);
+    }
+    setFlying(null);
+    setFlyingCardId(null);
+    setOptimisticDiscard(null);
+    setDrawPending(false);
+    setDrawLanded(false);
   }
 
   function flyToDiscard(card: UnoCardData | null, source: Rect | null) {
     if (!source) return;
     const target = discardRef.current ? toRect(discardRef.current.getBoundingClientRect()) : null;
-    startFly(card, source, target, 14);
+    startFly(card, source, target, 14, "discard");
   }
 
   function openColorDialog(next: PendingPlay, source: Rect | null) {
@@ -237,6 +288,7 @@ export function UnoMatch({ matchId }: { matchId: string }) {
   const opponent = view.players[(1 - view.mySeat) as 0 | 1];
   const isMyTurn = view.activeSeat === view.mySeat && view.phase !== "finished";
   const needsAnnouncement = view.hand.length === 2;
+  const hiddenCardId = flyingCardId ?? optimisticDiscard?.id ?? null;
 
   function isPlayableCard(card: UnoCardData): boolean {
     if (!match) return false;
@@ -258,7 +310,7 @@ export function UnoMatch({ matchId }: { matchId: string }) {
         return;
       }
       flyToDiscard(card, source);
-      void send({ type: "PLAY_DRAWN", announceLastCard: announceNext });
+      void send({ type: "PLAY_DRAWN", announceLastCard: announceNext }).then((next) => { if (!next) cancelVisual(); });
       return;
     }
     if (!view.actions.canPlay || !view.playableCardIds.includes(card.id)) {
@@ -270,23 +322,15 @@ export function UnoMatch({ matchId }: { matchId: string }) {
       return;
     }
     flyToDiscard(card, source);
-    void send({ type: "PLAY_CARD", cardId: card.id, announceLastCard: announceNext });
+    void send({ type: "PLAY_CARD", cardId: card.id, announceLastCard: announceNext }).then((next) => { if (!next) cancelVisual(); });
   }
 
   function drawCard(source: Rect | null) {
     if (busy || !view.actions.canDraw) return;
-    const hand = handRef.current ? toRect(handRef.current.getBoundingClientRect()) : null;
-    const from = source ?? hand;
-    if (from && hand) {
-      const target: Rect = {
-        left: hand.left + hand.width * 0.5,
-        top: hand.top + hand.height * 0.45,
-        width: from.width,
-        height: from.height,
-      };
-      startFly(null, from, target, -10);
-    }
-    void send({ type: "DRAW" });
+    pendingDrawSourceRef.current = source;
+    setDrawLanded(false);
+    setDrawPending(true);
+    void send({ type: "DRAW" }).then((next) => { if (!next) cancelVisual(); });
   }
 
   async function chooseColor(color: UnoColor) {
@@ -299,9 +343,13 @@ export function UnoMatch({ matchId }: { matchId: string }) {
       ? { type: "PLAY_CARD" as const, cardId: pendingPlay.cardId, chosenColor: color, announceLastCard: announceNext }
       : { type: "PLAY_DRAWN" as const, chosenColor: color, announceLastCard: announceNext };
     flyToDiscard(flyingCard, source);
-    flySourceRef.current = null;
     const next = await send(action);
-    if (next) closeColorDialog();
+    if (next) {
+      flySourceRef.current = null;
+      closeColorDialog();
+    } else {
+      cancelVisual();
+    }
   }
 
   return (
@@ -360,6 +408,11 @@ export function UnoMatch({ matchId }: { matchId: string }) {
                 <p className="uno-pile-label">Défausse</p>
                 <div ref={discardRef} className="uno-discard-slot">
                   <UnoCard key={view.topCard.id} card={view.topCard} label={`Défausse : ${cardLabel(view.topCard)}`} className="uno-card--land" />
+                  {optimisticDiscard && (
+                    <span className="uno-discard-optimistic" aria-hidden="true">
+                      <UnoCard card={optimisticDiscard} />
+                    </span>
+                  )}
                 </div>
                 <p className="uno-active-color">
                   <span className="uno-color-dot" style={{ backgroundColor: colorSwatches[view.activeColor] }} aria-hidden="true" />
@@ -399,11 +452,16 @@ export function UnoMatch({ matchId }: { matchId: string }) {
                     drawn={view.phase === "after_draw" && view.drawnCard?.id === card.id}
                     shake={shakeCardId === card.id}
                     disabled={busy}
-                    className={flyingCardId === card.id ? "uno-card--flying" : undefined}
+                    className={hiddenCardId === card.id ? "uno-card--flying" : undefined}
                     style={handCardStyle(index, view.hand.length)}
                     onClick={(event) => playCard(card, toRect(event.currentTarget.getBoundingClientRect()))}
                   />
                 ))}
+                {drawPending && (
+                  <span ref={placeholderRef} className="uno-hand-placeholder" data-visible={drawLanded} aria-hidden="true">
+                    <UnoCard faceDown />
+                  </span>
+                )}
               </div>
               {needsAnnouncement && view.phase === "playing" && isMyTurn && (
                 <label className="uno-announce">

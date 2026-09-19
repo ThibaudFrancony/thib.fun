@@ -3102,7 +3102,26 @@ button.uno-card:disabled { cursor: progress; opacity: 0.8; }
 
 /* --- Animations de jeu : pioche, défausse, carte volante --- */
 
-.uno-discard-slot { line-height: 0; }
+.uno-discard-slot { position: relative; line-height: 0; }
+
+.uno-discard-optimistic { position: absolute; inset: 0; display: block; }
+
+.uno-discard-optimistic .uno-card { width: 100%; height: 100%; }
+
+.uno-hand-placeholder {
+  display: block;
+  flex: 0 1 auto;
+  width: var(--uno-card-w, 5rem);
+  min-width: 2.3rem;
+  line-height: 0;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity 140ms ease, transform 140ms ease;
+}
+
+.uno-hand-placeholder[data-visible="true"] { opacity: 1; transform: none; }
+
+.uno-hand-placeholder .uno-card { width: 100%; }
 
 .uno-pile--discard .uno-card--land { animation: unoCardLand 360ms cubic-bezier(0.2, 0.85, 0.3, 1.2) both; }
 
@@ -3280,6 +3299,7 @@ button.uno-card:disabled { cursor: progress; opacity: 0.8; }
   .uno-card--shake { animation: none; }
   .uno-flying { display: none; }
   .uno-hand .uno-card--flying { visibility: visible; }
+  .uno-hand-placeholder { opacity: 1; transform: none; transition: none; }
   .uno-hand .uno-card,
   .uno-finish-cards .uno-card,
   .uno-pile--discard .uno-card--land,
