@@ -176,17 +176,17 @@ function AuthFormFields({ initialMode }: { initialMode: "signIn" | "signUp" }) {
   const callbackError = searchParams.get("error") === "confirmation";
 
   return (
-    <form data-auth-hydrated={hydrated} onSubmit={submit} className="rounded-[1.5rem] border border-[var(--line)] bg-[var(--card)] p-6 shadow-[0_12px_30px_rgba(20,33,29,0.06)]">
-      <div className="mb-6 flex rounded-full bg-[var(--paper-deep)] p-1 text-sm font-bold"><button type="button" aria-pressed={mode === "signIn"} onClick={() => setMode("signIn")} className={`min-h-11 flex-1 rounded-full px-3 py-2 ${mode === "signIn" ? "bg-white shadow-sm" : "text-[var(--muted)]"}`}>Se connecter</button><button type="button" aria-pressed={mode === "signUp"} onClick={() => setMode("signUp")} className={`min-h-11 flex-1 rounded-full px-3 py-2 ${mode === "signUp" ? "bg-white shadow-sm" : "text-[var(--muted)]"}`}>Créer un compte</button></div>
-      <label className="block text-sm font-bold" htmlFor="email">E-mail</label>
-      <input id="email" required type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} className="mt-2 w-full rounded-xl border border-[var(--line)] bg-white px-4 py-3 outline-none focus:border-[var(--green)]" />
-      <label className="mt-4 block text-sm font-bold" htmlFor="password">Mot de passe</label>
-      <input id="password" required minLength={8} type="password" autoComplete={mode === "signIn" ? "current-password" : "new-password"} value={password} onChange={(event) => setPassword(event.target.value)} className="mt-2 w-full rounded-xl border border-[var(--line)] bg-white px-4 py-3 outline-none focus:border-[var(--green)]" />
-      {callbackError && <p role="alert" className="mt-4 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">Le lien de confirmation est invalide ou expiré. Demande un nouvel e-mail puis réessaie.</p>}
-      {error && <p role="alert" className="mt-4 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
-      {notice && <p role="status" className="mt-4 rounded-xl bg-[var(--green)]/10 px-3 py-2 text-sm text-[var(--green-dark)]">{notice}</p>}
-      <button disabled={busy || !hydrated} className="mt-6 w-full rounded-full bg-[var(--green)] px-4 py-3 font-bold text-white hover:bg-[var(--green-dark)]">{busy ? "Un instant…" : mode === "signIn" ? "Entrer à la table" : "Créer le compte"}</button>
-      {mode === "signUp" && <div className="mt-6 border-t border-[var(--line)] pt-5 text-center"><p className="text-sm text-[var(--muted)]">Tu veux simplement jouer&nbsp;?</p><button type="button" disabled={busy || !hydrated} onClick={() => setGuestWarningOpen(true)} className="mt-3 min-h-11 rounded-full border border-[var(--green)] px-4 py-3 text-sm font-bold text-[var(--green)] hover:bg-[var(--green)]/10">Continuer en tant qu&apos;invité</button></div>}
+    <form data-auth-hydrated={hydrated} onSubmit={submit} className="auth-card">
+      <div className="auth-tabs"><button type="button" aria-pressed={mode === "signIn"} onClick={() => setMode("signIn")} className="auth-tab" data-active={mode === "signIn"}>Se connecter</button><button type="button" aria-pressed={mode === "signUp"} onClick={() => setMode("signUp")} className="auth-tab" data-active={mode === "signUp"}>Créer un compte</button></div>
+      <label className="auth-label" htmlFor="email">E-mail</label>
+      <input id="email" required type="email" autoComplete="email" placeholder="ton@email.fr" value={email} onChange={(event) => setEmail(event.target.value)} className="auth-input" />
+      <label className="auth-label" htmlFor="password">Mot de passe</label>
+      <input id="password" required minLength={8} type="password" autoComplete={mode === "signIn" ? "current-password" : "new-password"} placeholder="8 caractères minimum" value={password} onChange={(event) => setPassword(event.target.value)} className="auth-input" />
+      {callbackError && <p role="alert" className="auth-error">Le lien de confirmation est invalide ou expiré. Demande un nouvel e-mail puis réessaie.</p>}
+      {error && <p role="alert" className="auth-error">{error}</p>}
+      {notice && <p role="status" className="auth-notice">{notice}</p>}
+      <button disabled={busy || !hydrated} className="auth-submit">{busy ? "Un instant…" : mode === "signIn" ? "Entrer à la table" : "Créer le compte"}</button>
+      {mode === "signUp" && <div className="auth-guest"><button type="button" disabled={busy || !hydrated} onClick={() => setGuestWarningOpen(true)} className="auth-guest-button">Continuer en tant qu&apos;invité</button></div>}
       {guestWarningOpen && <GuestWarningDialog busy={busy} onCancel={closeGuestWarning} onConfirm={() => void continueAsGuest()} />}
     </form>
   );

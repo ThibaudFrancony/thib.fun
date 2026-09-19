@@ -17,11 +17,19 @@ Ce fichier décrit la réalité du dépôt et non les seules capacités prévues
 
 **Diagnostic du 13 septembre : le code des neuf jeux est présent, mais leur disponibilité fonctionnelle n'est pas acquise.** L'[audit complet](docs/audit-code-2026-09-13.md) et le [plan pas à pas](docs/plan-correction-2026-09-13.md) identifient 29 défauts de code/produit et 6 observations d'infrastructure : blocages du worker, abandon/forfait, présence, finalisation, réseau, sécurité et parcours incomplets. L'étape 1 est appliquée au harnais de tests ; le contrat commun de l'étape 2 est intégré à `main` (`d885079`), le raccordement SQL de l'étape 3 est versionné dans `6130c99` et sa validation PostgreSQL isolée ainsi que sa concurrence à deux sessions sont désormais démontrées localement. L'inspection Supabase du 16 septembre rapporte 33 migrations distantes, alignées avec les fichiers locaux, mais elle reste strictement en lecture seule. Quatre parties actives (trois TTMC et une Géographie), dix jobs échus en attente et deux joueurs engagés dans plusieurs parties doivent être préservés en production. Aucun secret, traitement de donnée, migration distante, écriture Vault, déploiement ou opération de reprise n'a été effectué dans la présente session. Les observations datées ci-dessous restent historiques ; l'audit et le préflight Étape 10 prévalent pour les limitations actuelles.
 
+### 19/09/2026 — Profil : aucun avatar présélectionné avec une photo personnalisée
+
+- Demande utilisateur : quand une photo de profil personnalisée est active, aucun avatar par défaut ne doit apparaître sélectionné en bas, pour pouvoir revenir aux avatars par défaut.
+- Réalisation : `src/app/profil/profile-editor.tsx` — tant que `avatarVersion` est présent (la photo custom a priorité à l'affichage), aucun radio de la grille n'est coché (`selected = !hasCustomPhoto && avatarPreset === preset`) ; un hint explique que la photo personnalisée est active. Cliquer un avatar supprime la photo côté serveur (`DELETE /profil/avatar`) pour que le choix par défaut soit effectif, puis la sélection s'affiche ; radios désactivés pendant `busy`/`uploadBusy`. Aucun changement de route, de contrat, de migration ni de serveur.
+- Vérifications (sans Docker) : `pnpm typecheck`, `pnpm lint`, `pnpm test` (85 fichiers / 533 réussis + 2 sentinelles), `pnpm test:matrix`, `pnpm content:validate`, `pnpm docs:check`, `pnpm exec next build --webpack` propres.
+- Limites : contrôle sur code uniquement, sans recette navigateur ; en cas d'échec du DELETE, la grille reste sans sélection et l'erreur est affichée (nouvel essai en cliquant à nouveau).
+- Contradiction : aucune avec `AGENTS.md`.
+
 ### 19/09/2026 — Historique : nouveaux noms de jeux (UNO, Géographie, etc.)
 
 - Demande utilisateur : dans l'historique, enlever les anciens noms et afficher les nouveaux (Dernière carte → UNO, HexaPoint → Géographie, etc.).
 - Réalisation : `src/app/profil/page.tsx`, `src/app/profil/[id]/page.tsx` et `src/app/historique/history-detail.tsx` utilisent désormais `cardName` du registre (`Trou noir`, `TTMC`, `Géographie`, `Skyjo`, `UNO`, `BombParty`, `Bataille navale`, `Compatibilité`, `Longueur d'onde`) pour le filtre, les cartes et le détail d'historique, ainsi que les stats par jeu du profil public. Aucun changement de slug, de moteur, de contrat ni de migration ; salons et accueil inchangés.
-- Vérifications (sans Docker) : `pnpm typecheck`, `pnpm lint`, vitest ciblé (`history-helpers`, `profile-helpers`, `profiles/repository`) propres.
+- Vérifications (sans Docker) : `pnpm typecheck`, `pnpm lint`, `pnpm test` (85 fichiers / 533 réussis + 2 sentinelles), `pnpm content:validate`, `pnpm docs:check`, `pnpm exec next build --webpack` propres (routes `/profil` et `/profil/[id]` générées).
 - Limites : contrôle sur code uniquement, sans recette navigateur ; l'affichage reste en majuscules via CSS.
 - Contradiction : aucune avec `AGENTS.md`.
 
