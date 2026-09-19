@@ -17,6 +17,15 @@ Ce fichier décrit la réalité du dépôt et non les seules capacités prévues
 
 **Diagnostic du 13 septembre : le code des neuf jeux est présent, mais leur disponibilité fonctionnelle n'est pas acquise.** L'[audit complet](docs/audit-code-2026-09-13.md) et le [plan pas à pas](docs/plan-correction-2026-09-13.md) identifient 29 défauts de code/produit et 6 observations d'infrastructure : blocages du worker, abandon/forfait, présence, finalisation, réseau, sécurité et parcours incomplets. L'étape 1 est appliquée au harnais de tests ; le contrat commun de l'étape 2 est intégré à `main` (`d885079`), le raccordement SQL de l'étape 3 est versionné dans `6130c99` et sa validation PostgreSQL isolée ainsi que sa concurrence à deux sessions sont désormais démontrées localement. L'inspection Supabase du 16 septembre rapporte 33 migrations distantes, alignées avec les fichiers locaux, mais elle reste strictement en lecture seule. Quatre parties actives (trois TTMC et une Géographie), dix jobs échus en attente et deux joueurs engagés dans plusieurs parties doivent être préservés en production. Aucun secret, traitement de donnée, migration distante, écriture Vault, déploiement ou opération de reprise n'a été effectué dans la présente session. Les observations datées ci-dessous restent historiques ; l'audit et le préflight Étape 10 prévalent pour les limitations actuelles.
 
+### 19/09/2026 — Leaderboard : points alignés sous le titre « Points »
+
+- Demande utilisateur : aligner les valeurs de points sous le titre « POINTS » du tableau Top 100 (sur la capture, l'en-tête est décalé par rapport aux « 35 pts »).
+- Cause confirmée : `.lb-table th` (`src/app/globals.css`) impose `text-align: left` avec une spécificité supérieure à `.lb-cell-points`, donc l'en-tête restait à gauche alors que les cellules de points sont à droite.
+- Réalisation : ajout de `.lb-table th.lb-cell-points { text-align: right; }` dans `src/app/globals.css` (une ligne). Aucun changement de composant, de route, de contrat ni de migration.
+- Vérifications (sans Docker) : `pnpm lint` et `pnpm typecheck` propres sur `main` incluant le changement.
+- Limites : contrôle sur la capture fournie uniquement ; aucune recette à deux sessions (sans objet pour un alignement CSS).
+- Contradiction : aucune avec `AGENTS.md`.
+
 ### 19/09/2026 — Cache navigateur des photos des autres joueurs
 
 - Demande utilisateur : mettre aussi en cache les photos de profil des autres joueurs, avec une réserve explicite — voir quand même les changements de photo ; sinon ne rien changer.
