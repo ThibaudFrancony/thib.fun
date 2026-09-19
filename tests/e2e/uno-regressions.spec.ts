@@ -69,7 +69,6 @@ async function openFixture(page: Page, currentView: UnoView, getVersion: () => n
 test("le dialogue de joker survit à une actualisation de projection", async ({ page }) => {
   await openFixture(page, view([{ id: "wild", color: null, symbol: "wild" }]));
   await page.getByRole("button", { name: "Joker · jouable" }).click();
-  await page.getByRole("button", { name: "Jouer la carte sélectionnée" }).click();
   const dialog = page.getByRole("dialog", { name: "Choisis la couleur" });
   await expect(dialog).toBeVisible();
   await page.waitForTimeout(2_700);
@@ -80,9 +79,8 @@ test("une panne réseau réactive les commandes UNO", async ({ page }) => {
   await openFixture(page, view([{ id: "red-5", color: "red", symbol: "5" }]));
   await page.route(`**/api/matches/${matchId}/commands`, async (route) => route.abort("failed"));
   await page.getByRole("button", { name: "5 · jouable" }).click();
-  await page.getByRole("button", { name: "Jouer la carte sélectionnée" }).click();
   await page.waitForTimeout(500);
-  await expect(page.getByRole("button", { name: "Piocher", exact: true })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "5 · jouable" })).toBeEnabled();
 });
 
 test("un double clic pendant l'envoi ne produit qu'une commande", async ({ page }) => {
@@ -92,14 +90,54 @@ test("un double clic pendant l'envoi ne produit qu'une commande", async ({ page 
     commandCount += 1;
     await route.abort("failed");
   });
-  await page.getByRole("button", { name: "5 · jouable" }).click();
-  const play = page.getByRole("button", { name: "Jouer la carte sélectionnée" });
+  const play = page.getByRole("button", { name: "5 · jouable" });
   await play.evaluate((element) => {
     element.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     element.dispatchEvent(new MouseEvent("click", { bubbles: true }));
   });
   await expect.poll(() => commandCount).toBe(1);
   await expect(play).toBeEnabled();
+});
+
+test("un clic sur la pioche envoie une commande DRAW", async ({ page }) => {
+  await openFixture(page, view([{ id: "red-5", color: "red", symbol: "5" }]));
+  const actions: string[] = [];
+  await page.route(`**/api/matches/${matchId}/commands`, async (route) => {
+    const body = route.request().postDataJSON() as { action?: { type?: string } };
+    if (body.action?.type) actions.push(body.action.type);
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ matchId, version: 2, commandHash: "fixture" }) });
+  });
+  await page.getByRole("button", { name: "Piocher une carte" }).click();
+  await expect.poll(() => actions.length).toBe(1);
+  expect(actions[0]).toBe("DRAW");
+});
+
+test("un clic sur une carte non jouable ne produit aucune commande", async ({ page }) => {
+  const blocked = view([{ id: "blue-2", color: "blue", symbol: "2" }]);
+  await openFixture(page, { ...blocked, playableCardIds: [], actions: { ...blocked.actions, canPlay: false } });
+  let commandCount = 0;
+  await page.route(`**/api/matches/${matchId}/commands`, async (route) => {
+    commandCount += 1;
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ matchId, version: 2, commandHash: "fixture" }) });
+  });
+  await page.getByRole("button", { name: "2", exact: true }).click();
+  await page.waitForTimeout(500);
+  expect(commandCount).toBe(0);
+  await expect(page.getByRole("button", { name: "2", exact: true })).toBeVisible();
+});
+
+test("Abandonner demande confirmation puis envoie RESIGN", async ({ page }) => {
+  await openFixture(page, view([{ id: "red-5", color: "red", symbol: "5" }]));
+  const actions: string[] = [];
+  await page.route(`**/api/matches/${matchId}/commands`, async (route) => {
+    const body = route.request().postDataJSON() as { action?: { type?: string } };
+    if (body.action?.type) actions.push(body.action.type);
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ matchId, version: 2, commandHash: "fixture" }) });
+  });
+  page.on("dialog", (dialog) => { void dialog.accept(); });
+  await page.getByRole("button", { name: "Abandonner" }).click();
+  await expect.poll(() => actions.length).toBe(1);
+  expect(actions[0]).toBe("RESIGN");
 });
 
 test("la table UNO entretient la présence par heartbeat", async ({ page }) => {
@@ -128,10 +166,10 @@ test("une réponse perdue conserve le même identifiant de commande au nouvel es
     }
     await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ matchId, version: 2, commandHash: "fixture" }) });
   });
-  await page.getByRole("button", { name: "5 · jouable" }).click();
-  await page.getByRole("button", { name: "Jouer la carte sélectionnée" }).click();
-  await expect(page.getByRole("button", { name: "Jouer la carte sélectionnée" })).toBeEnabled();
-  await page.getByRole("button", { name: "Jouer la carte sélectionnée" }).click();
+  const play = page.getByRole("button", { name: "5 · jouable" });
+  await play.click();
+  await expect.poll(() => commandIds.length).toBe(1);
+  await play.click();
   await expect.poll(() => commandIds.length).toBe(2);
   expect(commandIds[0]).toBe(commandIds[1]);
 });
@@ -157,7 +195,7 @@ test("deux onglets relisent chacun la projection sans partager une intention loc
   const second = await context.newPage();
   await openFixture(page, view([{ id: "red-5", color: "red", symbol: "5" }]));
   await openFixture(second, view([{ id: "red-5", color: "red", symbol: "5" }]));
-  await expect(second.getByRole("button", { name: "Piocher", exact: true })).toBeEnabled();
-  await expect(page.getByRole("button", { name: "Piocher", exact: true })).toBeEnabled();
+  await expect(second.getByRole("button", { name: "Piocher une carte" })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "Piocher une carte" })).toBeEnabled();
   await second.close();
 });

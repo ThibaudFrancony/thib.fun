@@ -2607,3 +2607,618 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
   .admin-conv-list { max-height: 40dvh; }
   .admin-conv-view { min-height: 55dvh; }
 }
+
+/* ==========================================================================
+   UNO — table de jeu spatiale (DA tibo.fun).
+   Le fond réutilise /home/hero.png comme la landing page.
+   ========================================================================== */
+
+.uno-page {
+  position: relative;
+  min-height: 100svh;
+  min-height: 100dvh;
+  overflow-x: clip;
+  color: #fff;
+  color-scheme: dark;
+  background: #0a0620;
+}
+
+.uno-bg { position: absolute; inset: 0; z-index: 0; overflow: hidden; background: radial-gradient(circle at 50% 30%, #3a1a5e, #100819 78%); }
+
+.uno-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(10, 4, 28, 0.74) 0%, rgba(10, 4, 28, 0.4) 32%, rgba(10, 4, 28, 0.55) 62%, rgba(10, 4, 28, 0.86) 100%);
+}
+
+.uno-bg-image { object-fit: cover; object-position: center 32%; opacity: 0.85; }
+
+.uno-page :focus-visible { outline: 3px solid #f2dcff; outline-offset: 3px; }
+
+.uno-shell {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.5rem, 1.6vh, 1.05rem);
+  width: min(100% - 2rem, 1180px);
+  min-height: 100svh;
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: clamp(0.65rem, 1.8vh, 1.15rem) 0 clamp(0.55rem, 1.4vh, 1rem);
+}
+
+.uno-shell--state { justify-content: center; align-items: center; }
+
+.uno-state-card {
+  width: min(100%, 30rem);
+  padding: 1.4rem 1.6rem;
+  border: 1px solid rgba(190, 110, 255, 0.4);
+  border-radius: 20px;
+  background: linear-gradient(145deg, rgba(50, 20, 105, 0.62), rgba(20, 8, 60, 0.78));
+  color: #e6dcff;
+  text-align: center;
+  backdrop-filter: blur(14px);
+}
+
+.uno-state-card--error { border-color: rgba(255, 120, 170, 0.5); color: #ffd7e6; }
+
+/* --- En-tête --- */
+
+.uno-header {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.uno-back {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  min-height: 42px;
+  padding: 0.45rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  background: rgba(20, 8, 55, 0.4);
+  color: #e6dcff;
+  font-size: 0.85rem;
+  font-weight: 750;
+  text-decoration: none;
+  backdrop-filter: blur(8px);
+  transition: border-color 180ms ease, background-color 180ms ease, color 180ms ease;
+}
+
+.uno-back:hover { border-color: rgba(255, 255, 255, 0.5); background: rgba(60, 30, 120, 0.5); color: #fff; }
+
+.uno-heading { min-width: 0; text-align: center; }
+
+.uno-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  color: #fff;
+  font-family: var(--font-display), "Trebuchet MS", system-ui, sans-serif;
+  font-size: clamp(1.05rem, 1.6vw, 1.35rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  text-shadow: 0 0 18px rgba(255, 95, 162, 0.65), 0 2px 10px rgba(10, 4, 24, 0.8);
+}
+
+.uno-brand svg { color: #f2a6d6; filter: drop-shadow(0 0 6px rgba(255, 95, 162, 0.8)); }
+
+.uno-kicker {
+  margin: 0.2rem 0 0;
+  color: #ff8ad4;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  text-shadow: 0 0 12px rgba(255, 64, 200, 0.55);
+}
+
+.uno-round { margin: 0.1rem 0 0; color: #f0e9ff; font-size: 0.8rem; font-weight: 800; }
+
+.uno-header-spacer { justify-self: end; }
+
+/* --- Main de l'adversaire --- */
+
+.uno-opponent {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem 0.9rem;
+  min-height: 4.5rem;
+}
+
+.uno-opponent-hand { display: flex; align-items: center; justify-content: center; --uno-card-w: clamp(1.7rem, 3.2vw, 2.9rem); }
+
+.uno-opponent-hand .uno-card + .uno-card { margin-left: calc(-1 * var(--uno-card-w) * 0.52); }
+
+.uno-opponent[data-active="true"] .uno-opponent-hand { filter: drop-shadow(0 0 16px rgba(255, 90, 180, 0.5)); }
+
+.uno-opponent-info { display: inline-flex; align-items: center; gap: 0.55rem; }
+
+.uno-opponent-avatar {
+  display: grid;
+  place-items: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff5fa2, #8b5cf6);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 850;
+  box-shadow: 0 0 18px rgba(255, 95, 162, 0.35);
+}
+
+.uno-opponent-text { display: grid; line-height: 1.15; }
+.uno-opponent-text strong { max-width: 12rem; overflow: hidden; font-size: 0.88rem; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+.uno-opponent-text small { color: #c7b8e6; font-size: 0.68rem; font-weight: 700; }
+
+.uno-count-badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 2rem;
+  height: 2rem;
+  padding-inline: 0.4rem;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 0.6rem;
+  background: rgba(20, 8, 55, 0.55);
+  color: #fff;
+  font-size: 1rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 850;
+}
+
+.uno-turn-hint { margin: 0; color: #ffe49a; font-size: 0.78rem; font-weight: 800; letter-spacing: 0.02em; text-shadow: 0 0 14px rgba(255, 200, 90, 0.35); }
+
+.uno-turn-hint--opponent { flex-basis: 100%; min-height: 1.1rem; text-align: center; }
+
+/* --- Table : pioche + défausse --- */
+
+.uno-table {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  justify-content: center;
+  gap: clamp(0.8rem, 3.5vw, 3rem);
+  margin-top: auto;
+}
+
+.uno-pile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  padding: clamp(0.7rem, 1.8vh, 1.05rem) clamp(0.9rem, 2.4vw, 1.6rem);
+  border: 1px solid rgba(150, 110, 255, 0.5);
+  border-radius: 1.5rem;
+  background: linear-gradient(160deg, rgba(46, 22, 92, 0.66), rgba(16, 8, 42, 0.8));
+  box-shadow: 0 0 42px rgba(120, 60, 255, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(14px);
+  --uno-card-w: clamp(4rem, 7.6vw, 6rem);
+}
+
+.uno-pile-label {
+  margin: 0 0 0.25rem;
+  color: #cbb8f5;
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.uno-draw {
+  padding: 0;
+  border: 0;
+  background: none;
+  line-height: 0;
+  transition: transform 200ms cubic-bezier(0.22, 0.68, 0.24, 1), filter 200ms ease;
+}
+
+.uno-draw:not(:disabled) { cursor: pointer; }
+
+.uno-draw:not(:disabled):hover { transform: translateY(-6px); }
+
+.uno-draw:not(:disabled):hover .uno-card { filter: drop-shadow(0 0 20px rgba(255, 95, 200, 0.55)) drop-shadow(0 12px 18px rgba(5, 2, 18, 0.6)); }
+
+.uno-draw:disabled { cursor: not-allowed; opacity: 0.65; }
+
+.uno-pile-count { margin: 0.4rem 0 0; color: #fff; font-size: 0.8rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.uno-pile-action { margin: 0; color: #c7b8e6; font-size: 0.68rem; font-weight: 700; }
+
+.uno-pile--discard { min-width: 10.5rem; justify-content: flex-start; }
+
+.uno-active-color { display: inline-flex; align-items: center; gap: 0.4rem; margin: 0.5rem 0 0; color: #ffe49a; font-size: 0.78rem; font-weight: 800; }
+
+.uno-color-dot { width: 0.7rem; height: 0.7rem; border-radius: 50%; box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.35), 0 0 12px currentColor; }
+
+/* --- Ma main --- */
+
+.uno-hand-panel {
+  margin-top: auto;
+  padding: clamp(0.7rem, 1.9vh, 1.15rem) clamp(0.8rem, 2vw, 1.4rem) clamp(0.8rem, 2vh, 1.25rem);
+  border: 1px solid rgba(190, 110, 255, 0.55);
+  border-radius: 1.8rem;
+  background: linear-gradient(160deg, rgba(52, 24, 104, 0.68), rgba(18, 9, 46, 0.82));
+  box-shadow: 0 0 52px rgba(150, 60, 255, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(16px);
+  transition: box-shadow 240ms ease, border-color 240ms ease;
+}
+
+.uno-hand-panel[data-turn="true"] {
+  border-color: rgba(216, 160, 255, 0.9);
+  box-shadow: 0 0 0 1px rgba(216, 160, 255, 0.35), 0 0 56px rgba(160, 80, 255, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  animation: unoPulse 2.4s ease-in-out infinite;
+}
+
+@keyframes unoPulse {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(216, 160, 255, 0.3), 0 0 40px rgba(160, 80, 255, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.12); }
+  50% { box-shadow: 0 0 0 1px rgba(216, 160, 255, 0.45), 0 0 64px rgba(160, 80, 255, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.16); }
+}
+
+.uno-hand-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 0.4rem 1rem; }
+
+.uno-hand-title {
+  margin: 0;
+  color: #cbb8f5;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.uno-hand-count { margin: 0.35rem 0 0; color: #fff; font-size: clamp(1.35rem, 2.4vw, 1.7rem); font-weight: 850; letter-spacing: -0.03em; }
+
+.uno-drawn-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 0.5rem; }
+.uno-drawn-actions p { margin: 0; color: #ffe49a; font-size: 0.76rem; font-weight: 750; }
+
+.uno-drawn-actions button {
+  min-height: 38px;
+  padding: 0.4rem 0.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 800;
+  transition: border-color 160ms ease, background-color 160ms ease;
+}
+
+.uno-drawn-actions button:hover:not(:disabled) { border-color: rgba(255, 255, 255, 0.55); background: rgba(255, 255, 255, 0.16); }
+
+.uno-hand {
+  display: flex;
+  align-items: flex-end;
+  justify-content: safe center;
+  gap: clamp(0.3rem, 0.9vw, 0.7rem);
+  margin-top: clamp(0.5rem, 1.4vh, 0.9rem);
+  padding: 2.1rem 0.15rem 0.35rem;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+  --uno-card-w: clamp(3.1rem, min(7.4vw, 12vh), 6.1rem);
+}
+
+.uno-hand .uno-card { flex: 0 1 auto; min-width: 2.3rem; }
+
+.uno-announce {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  margin: 0.5rem auto 0;
+  width: fit-content;
+  color: #ffd7f0;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.uno-announce span { color: #c7b8e6; font-weight: 650; }
+.uno-announce input { width: 1.05rem; height: 1.05rem; accent-color: #ff5fa2; cursor: pointer; }
+
+/* --- Pied de page --- */
+
+.uno-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem 1rem;
+  padding: 0.15rem 0.35rem 0;
+  color: #c7b8e6;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.uno-resign {
+  min-height: 40px;
+  padding: 0.45rem 1.15rem;
+  border: 1px solid rgba(255, 120, 200, 0.5);
+  border-radius: 999px;
+  background: rgba(255, 64, 200, 0.08);
+  color: #ffd7f0;
+  font-size: 0.8rem;
+  font-weight: 800;
+  transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease;
+}
+
+.uno-resign:hover:not(:disabled) { border-color: rgba(255, 120, 200, 0.9); background: rgba(255, 64, 200, 0.2); color: #fff; }
+
+.uno-error {
+  margin: 0;
+  padding: 0.6rem 0.85rem;
+  border: 1px solid rgba(255, 120, 170, 0.4);
+  border-radius: 12px;
+  background: rgba(120, 20, 60, 0.4);
+  color: #ffd7e6;
+  font-size: 0.82rem;
+  font-weight: 650;
+}
+
+/* --- Cartes UNO --- */
+
+.uno-card {
+  position: relative;
+  display: block;
+  flex: none;
+  width: var(--uno-card-w, 5rem);
+  aspect-ratio: 0.7;
+  padding: 0;
+  border: 0;
+  border-radius: 7%;
+  background: none;
+  color: #fff;
+  line-height: 1;
+  container-type: inline-size;
+  transition: transform 200ms cubic-bezier(0.22, 0.68, 0.24, 1), filter 200ms ease, opacity 200ms ease;
+}
+
+.uno-card-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  pointer-events: none;
+  user-select: none;
+  filter: drop-shadow(0 10px 16px rgba(4, 2, 14, 0.6));
+}
+
+button.uno-card { cursor: pointer; }
+
+button.uno-card:disabled { cursor: progress; opacity: 0.8; }
+
+.uno-card-corner {
+  position: absolute;
+  z-index: 1;
+  color: #fff;
+  font-family: var(--font-display), "Trebuchet MS", system-ui, sans-serif;
+  font-size: 0.95rem;
+  font-size: 15cqw;
+  font-weight: 700;
+  line-height: 1;
+  text-shadow: 0 0.05em 0.1em rgba(10, 4, 24, 0.5);
+  pointer-events: none;
+}
+
+.uno-card-corner--top { top: 17.5%; left: 20.5%; transform: translate(-50%, -50%); }
+.uno-card-corner--bottom { right: 20%; bottom: 16.5%; transform: translate(50%, 50%); }
+
+.uno-card-center {
+  position: absolute;
+  top: 53%;
+  left: 50%;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15em;
+  width: 74%;
+  color: #fff;
+  text-align: center;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.uno-card-center-main {
+  font-family: var(--font-display), "Trebuchet MS", system-ui, sans-serif;
+  font-size: 2.4rem;
+  font-size: 44cqw;
+  font-weight: 700;
+  line-height: 0.95;
+  text-shadow: 0 0.045em 0.09em rgba(10, 4, 24, 0.55);
+}
+
+.uno-card-center-label {
+  font-family: var(--font-display), "Trebuchet MS", system-ui, sans-serif;
+  font-size: 0.8rem;
+  font-size: 14cqw;
+  font-weight: 600;
+  line-height: 1.02;
+  text-shadow: 0 0.06em 0.12em rgba(10, 4, 24, 0.6);
+}
+
+.uno-card--playable { cursor: pointer; }
+
+.uno-card--playable .uno-card-art { filter: drop-shadow(0 0 12px rgba(140, 210, 255, 0.4)) drop-shadow(0 10px 16px rgba(4, 2, 14, 0.6)); }
+
+@media (hover: hover) {
+  .uno-card--playable:hover { transform: translateY(-14px); }
+  .uno-card--playable:hover .uno-card-art { filter: drop-shadow(0 0 20px rgba(255, 120, 220, 0.55)) drop-shadow(0 16px 22px rgba(4, 2, 14, 0.65)); }
+}
+
+.uno-hand .uno-card:not(.uno-card--playable) { filter: brightness(0.78) saturate(0.85); }
+
+.uno-hand .uno-card:not(.uno-card--playable):hover { filter: brightness(0.9) saturate(0.95); }
+
+.uno-card--drawn { transform: translateY(-10px); }
+
+.uno-card--drawn .uno-card-art { filter: drop-shadow(0 0 16px rgba(255, 150, 230, 0.75)) drop-shadow(0 12px 18px rgba(4, 2, 14, 0.6)); }
+
+.uno-card--drawn::after {
+  content: "piochée";
+  position: absolute;
+  top: -0.3rem;
+  left: 50%;
+  z-index: 2;
+  padding: 0.15rem 0.5rem;
+  border: 1px solid rgba(255, 150, 230, 0.7);
+  border-radius: 999px;
+  background: rgba(30, 8, 46, 0.92);
+  color: #ffd7f0;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  transform: translate(-50%, -100%);
+}
+
+@keyframes unoShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+.uno-card--shake { animation: unoShake 340ms ease; }
+
+/* --- Dialogue du joker --- */
+
+.uno-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+  background: rgba(8, 3, 20, 0.68);
+  backdrop-filter: blur(6px);
+}
+
+.uno-dialog {
+  width: min(100%, 26rem);
+  padding: 1.5rem;
+  border: 1px solid rgba(190, 110, 255, 0.55);
+  border-radius: 1.5rem;
+  background: linear-gradient(155deg, rgba(52, 24, 104, 0.98), rgba(20, 9, 48, 0.98));
+  box-shadow: 0 0 60px rgba(150, 60, 255, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.uno-dialog-title { margin: 0.4rem 0 0; color: #fff; font-size: 1.7rem; font-weight: 850; letter-spacing: -0.03em; }
+
+.uno-dialog-colors { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.6rem; margin-top: 1.1rem; }
+
+.uno-dialog-colors button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 56px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.07);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 800;
+  transition: border-color 160ms ease, background-color 160ms ease, transform 160ms ease;
+}
+
+.uno-dialog-colors button:hover { border-color: rgba(255, 255, 255, 0.6); background: rgba(255, 255, 255, 0.14); transform: translateY(-1px); }
+
+.uno-dialog-cancel {
+  width: 100%;
+  min-height: 46px;
+  margin-top: 0.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  background: transparent;
+  color: #e6dcff;
+  font-weight: 800;
+}
+
+.uno-dialog-cancel:hover { border-color: rgba(255, 255, 255, 0.45); color: #fff; }
+
+/* --- Résultats --- */
+
+.uno-finish {
+  margin: auto;
+  width: min(100%, 46rem);
+  padding: clamp(1.2rem, 3vh, 2rem);
+  border: 1px solid rgba(190, 110, 255, 0.45);
+  border-radius: 1.8rem;
+  background: linear-gradient(160deg, rgba(50, 22, 100, 0.72), rgba(18, 9, 46, 0.85));
+  box-shadow: 0 0 60px rgba(150, 60, 255, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.09);
+  text-align: center;
+  backdrop-filter: blur(16px);
+}
+
+.uno-finish-title { margin: 0.5rem 0 0; color: #fff; font-family: var(--font-display), "Trebuchet MS", system-ui, sans-serif; font-size: clamp(2.6rem, 8vw, 4.5rem); font-weight: 700; letter-spacing: -0.05em; line-height: 0.95; text-shadow: 0 0 30px rgba(255, 95, 162, 0.4); }
+
+.uno-finish-scores { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.7rem; max-width: 30rem; margin: 1.6rem auto 0; }
+
+.uno-finish-scores > div { padding: 0.9rem; border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 1rem; background: rgba(255, 255, 255, 0.06); }
+.uno-finish-scores p { margin: 0; overflow-wrap: anywhere; color: #e6dcff; font-size: 0.8rem; font-weight: 800; }
+.uno-finish-scores strong { display: block; margin-top: 0.2rem; color: #baffdd; font-size: 2.1rem; font-variant-numeric: tabular-nums; font-weight: 850; letter-spacing: -0.05em; }
+.uno-finish-scores span { color: #c7b8e6; font-size: 0.68rem; }
+
+.uno-finish-reveal { margin-top: 1.5rem; }
+.uno-finish-reveal > p { margin: 0; color: #e6dcff; font-size: 0.86rem; font-weight: 800; }
+.uno-finish-cards { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; margin-top: 0.8rem; --uno-card-w: clamp(2.5rem, 5vw, 3.6rem); }
+
+.uno-primary {
+  min-height: 48px;
+  margin-top: 1.7rem;
+  padding: 0.65rem 1.4rem;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #baffdd, #89f4dd);
+  color: #06251d;
+  font-size: 0.95rem;
+  font-weight: 800;
+  transition: transform 160ms ease, filter 160ms ease;
+}
+
+.uno-primary:hover { transform: translateY(-1px); filter: brightness(1.05); }
+
+@media (prefers-reduced-motion: reduce) {
+  .uno-card, .uno-card-art, .uno-draw, .uno-hand-panel { transition: none; }
+  .uno-hand-panel[data-turn="true"] { animation: none; }
+  .uno-card--shake { animation: none; }
+}
+
+@media (min-width: 1024px) {
+  .uno-shell { height: 100dvh; max-height: 100dvh; overflow: hidden; }
+}
+
+@media (max-width: 639px) {
+  .uno-shell { width: min(100% - 1.25rem, 1180px); gap: 0.5rem; }
+  .uno-header { grid-template-columns: auto 1fr; }
+  .uno-header-spacer { display: none; }
+  .uno-heading { text-align: right; }
+  .uno-brand { font-size: 1rem; }
+  .uno-round { font-size: 0.72rem; }
+  .uno-opponent { gap: 0.4rem 0.6rem; }
+  .uno-opponent-text strong { max-width: 8rem; }
+  .uno-table { gap: 0.6rem; }
+  .uno-pile { padding: 0.6rem 0.75rem; border-radius: 1.2rem; --uno-card-w: clamp(3.5rem, 21vw, 4.6rem); }
+  .uno-pile--discard { min-width: 0; }
+  .uno-hand-panel { border-radius: 1.4rem; }
+  .uno-hand { --uno-card-w: clamp(2.9rem, 14vw, 4.4rem); justify-content: flex-start; }
+  .uno-footer { justify-content: center; }
+  .uno-footer > span { flex-basis: 100%; text-align: center; }
+}
+
+@media (forced-colors: active) {
+  .uno-card, .uno-pile, .uno-hand-panel, .uno-back, .uno-resign { border-color: CanvasText; }
+  .uno-page :focus-visible { outline-color: Highlight; }
+}
+
+@media (hover: none) {
+  .uno-card--playable:active { transform: translateY(-8px); }
+}
