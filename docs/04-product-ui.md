@@ -51,7 +51,7 @@ Depuis un salon d'accueil générique ou un salon d'attente déjà associé à u
 
 Chaque joueur a « Je suis prêt ». Hôte a « Lancer » seulement si deux prêts et corpus disponible ; le serveur répète ces contrôles. Règles adaptées résumées avant start, avec accès aux détails. Hôte non arbitre : questions, tours et corrections sont automatiques.
 
-Si salon plein, code invalide, fermé, expiré ou partie déjà démarrée par d'autres : messages distincts quand cela ne révèle pas de données privées. Un participant existant revient à sa partie. Quitter en attente ne compte aucune partie. Revanche retourne au salon avec mêmes options et prêt=false. Changer de jeu après fin garde les participants et crée un nouveau match au start.
+Si salon plein, code invalide, fermé, expiré ou partie déjà démarrée par d'autres : messages distincts quand cela ne révèle pas de données privées. Un participant existant revient à sa partie. Quitter en attente ne compte aucune partie. À la fin d'une partie, le bouton « Rejouer » ramène directement à la page du jeu des mêmes participants pour relancer ; le salon d'attente reste accessible par le lien « Salon » du header. Changer de jeu après fin garde les participants et crée un nouveau match au start.
 
 ## 6. Cadre commun de partie
 
@@ -61,7 +61,7 @@ Sélection locale modifiable avant validation, bouton désactivé pendant envoi,
 
 ## 7. Résultats et historique
 
-Écran fin : victoire/défaite/égalité ou score partagé, valeurs finales, détail des manches, adversaire, durée, raison si forfait/interruption ; boutons revanche, changer de jeu, historique. Un résultat coopératif ne montre jamais « Tu as perdu ».
+Écran fin : victoire/défaite/égalité ou score partagé, valeurs finales, détail des manches, adversaire, durée, raison si forfait/interruption ; bouton « Rejouer » ramenant à la page du jeu pour une nouvelle partie. Le salon d'attente reste accessible par le lien « Salon » du header. Un résultat coopératif ne montre jamais « Tu as perdu ».
 
 Historique paginé par curseur `(ended_at,match_id)`, 20 lignes/cartes par page. Filtres jeu, issue ; date affichée fuseau navigateur (Europe/Paris par défaut si absent). L'historique vit dans le profil (`/profil` pour soi, `/profil/[id]` pour un tiers) en colonne droite de la carte, DA violette, en prévisualisation uniquement : aucune carte n'est cliquable, aucune page de détail n'existe. Chaque carte affiche jeu, adversaire, issue, date et score. Pseudo snapshot dans chaque partie et pseudo actuel dans le header du profil.
 
