@@ -63,6 +63,17 @@ export function useUserRealtime(
       }
       const userId = result.data.user?.id;
       if (cancelled || !userId) return;
+      // getUser vérifie la session ; setAuth transmet explicitement le JWT
+      // courant à Realtime avant son contrôle d'accès au canal privé.
+      // Sans cela, la sonde voit auth.uid() NULL et rejette l'abonnement
+      // ("Unauthorized ... user:<uid>").
+      try {
+        await supabase.realtime.setAuth();
+      } catch {
+        if (!cancelled) optionsRef.current.onStatusChange?.("CHANNEL_ERROR");
+        return;
+      }
+      if (cancelled) return;
       channel = supabase
         .channel(`user:${userId}`, { config: { private: true } })
         .on("broadcast", { event: "room.updated" }, ({ payload }: { payload: unknown }) => {
