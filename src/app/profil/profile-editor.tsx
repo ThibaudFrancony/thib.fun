@@ -57,6 +57,7 @@ export function ProfileEditor({
 
   const effectiveAvatarUrl = avatarVersion ? avatarUrl : null;
   const presetImage = presetBroken ? null : avatarPresetImage(avatarPreset);
+  const hasCustomPhoto = avatarVersion != null;
 
   function messageFrom(data: ApiPayload | null, fallback: string): string {
     return data?.error?.message ?? fallback;
@@ -147,6 +148,15 @@ export function ProfileEditor({
     }
   }
 
+  function selectPreset(preset: AvatarPreset) {
+    if (busy || uploadBusy) return;
+    setAvatarPreset(preset);
+    setPresetBroken(false);
+    // La photo personnalisée a priorité sur les presets : la remplacer par un
+    // avatar par défaut supprime la photo côté serveur pour que le choix soit effectif.
+    if (avatarVersion) void removeAvatar();
+  }
+
   return (
     <form onSubmit={saveProfile} className="pf-card" aria-label="Mon profil">
       <p className="pf-kicker">Mon profil</p>
@@ -230,9 +240,15 @@ export function ProfileEditor({
 
       <fieldset className="pf-avatars" style={{ border: 0, margin: 0, padding: 0 }}>
         <legend className="pf-label">Choisis un avatar</legend>
+        {hasCustomPhoto && (
+          <p className="pf-hint" style={{ marginBottom: 8 }}>
+            Photo personnalisée active : aucun avatar sélectionné. Clique un avatar pour revenir aux avatars par défaut.
+          </p>
+        )}
         <div className="pf-grid" role="radiogroup" aria-label="Choisis un avatar">
           {AVATAR_PRESETS.map((preset) => {
-            const selected = avatarPreset === preset;
+            // Avec une photo personnalisée, aucun preset n'est actif (la photo a priorité).
+            const selected = !hasCustomPhoto && avatarPreset === preset;
             const image = presetBroken ? null : avatarPresetImage(preset);
             return (
               <label key={preset} className="pf-avatar-option" data-selected={selected} title={AVATAR_PRESET_LABELS[preset]}>
@@ -241,10 +257,8 @@ export function ProfileEditor({
                   name="avatar-preset"
                   value={preset}
                   checked={selected}
-                  onChange={() => {
-                    setAvatarPreset(preset);
-                    setPresetBroken(false);
-                  }}
+                  onChange={() => selectPreset(preset)}
+                  disabled={busy || uploadBusy}
                   className="sr-only"
                   aria-label={AVATAR_PRESET_LABELS[preset]}
                 />
