@@ -4360,3 +4360,32 @@ body:has(.auth-page) { background: #100819; }
 @media (forced-colors: active) {
   .auth-card, .auth-input { border-color: CanvasText; }
 }
+
+/* --- Loader global sombre : même nuit violet/bleu que l'accueil/profil --- */
+
+.app-loading {
+  min-height: 100svh;
+  min-height: 100dvh;
+  color: #fffaff;
+  color-scheme: dark;
+  background:
+    radial-gradient(circle at 50% 24%, #3a1a5e66, transparent 60%),
+    linear-gradient(180deg, #180d29, #100819);
+}
+
+.app-loading-kicker {
+  margin: 0;
+  color: #c8a9f4;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+}
+
+/* Le fond sombre doit aussi couvrir le canevas (overscroll, zones hors main). */
+html:has(.app-loading),
+body:has(.app-loading) { background: #100819; }
+
+/* Même nuit pour le canevas du profil (le loader pf-page l'utilise aussi). */
+html:has(.pf-page),
+body:has(.pf-page) { background: #100819; }
