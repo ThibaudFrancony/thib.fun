@@ -17,6 +17,14 @@ Ce fichier décrit la réalité du dépôt et non les seules capacités prévues
 
 **Diagnostic du 13 septembre : le code des neuf jeux est présent, mais leur disponibilité fonctionnelle n'est pas acquise.** L'[audit complet](docs/audit-code-2026-09-13.md) et le [plan pas à pas](docs/plan-correction-2026-09-13.md) identifient 29 défauts de code/produit et 6 observations d'infrastructure : blocages du worker, abandon/forfait, présence, finalisation, réseau, sécurité et parcours incomplets. L'étape 1 est appliquée au harnais de tests ; le contrat commun de l'étape 2 est intégré à `main` (`d885079`), le raccordement SQL de l'étape 3 est versionné dans `6130c99` et sa validation PostgreSQL isolée ainsi que sa concurrence à deux sessions sont désormais démontrées localement. L'inspection Supabase du 16 septembre rapporte 33 migrations distantes, alignées avec les fichiers locaux, mais elle reste strictement en lecture seule. Quatre parties actives (trois TTMC et une Géographie), dix jobs échus en attente et deux joueurs engagés dans plusieurs parties doivent être préservés en production. Aucun secret, traitement de donnée, migration distante, écriture Vault, déploiement ou opération de reprise n'a été effectué dans la présente session. Les observations datées ci-dessous restent historiques ; l'audit et le préflight Étape 10 prévalent pour les limitations actuelles.
 
+### 19/09/2026 — Leaderboard : suppression de la phrase de sous-titre
+
+- Demande utilisateur : « Tous les jeux confondus : chaque partie terminée rapporte des points aux comptes permanents. Les égalités et les réussites coopératives comptent aussi. » — enlever complètement cette phrase du leaderboard.
+- Réalisation : suppression du bloc `<p className="lb-subtitle">` dans `src/app/leaderboard/page.tsx` (l'en-tête garde eyebrow + titre) ; suppression du bloc CSS `.lb-subtitle` devenu inutilisé dans `src/app/globals.css`. Aucun changement de barème, de RPC ni de route.
+- Vérifications (sans Docker) : `pnpm typecheck` propre ; `pnpm lint` propre ; `pnpm test` (87 fichiers / 545 réussis + 2 sentinelles) ; `pnpm test:matrix` (11 pass, 5 not-run) ; `pnpm content:validate` propre ; `pnpm docs:check` propre (25 fichiers) ; `pnpm exec next build --webpack` propre (route `/leaderboard` toujours listée). `grep` : plus aucune occurrence de `lb-subtitle` ni de « Tous les jeux confondus » dans le dépôt.
+- Limites : recette visuelle navigateur non rejouée (Docker opt-in) ; E2E/pgTAP non exécutés.
+- Contradiction : aucune avec `AGENTS.md`.
+
 ### 19/09/2026 — Suppression du détail des parties (prévisualisation seule)
 
 - Demande utilisateur : dans les profils, on peut cliquer pour voir un détail des parties — enlever ça complètement, garder uniquement la prévisualisation visible sur l'interface profil, pas de page détail.

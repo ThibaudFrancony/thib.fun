@@ -48,10 +48,6 @@ export default async function LeaderboardPage() {
         <header className="lb-heading">
           <p className="lb-eyebrow">Classement général</p>
           <h1 className="lb-title">Leaderboard</h1>
-          <p className="lb-subtitle">
-            Tous les jeux confondus : chaque partie terminée rapporte des points aux comptes permanents. Les égalités et
-            les réussites coopératives comptent aussi.
-          </p>
         </header>
         {leaderboard ? (
           <LeaderboardView entries={leaderboard.entries} me={leaderboard.me} viewerId={account.member.id} />
