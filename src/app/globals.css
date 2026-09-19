@@ -3658,18 +3658,7 @@ button.uno-card:disabled { cursor: progress; opacity: 0.8; }
   letter-spacing: -0.02em;
 }
 
-.lb-brand-mark {
-  display: grid;
-  place-items: center;
-  width: 2.3rem;
-  height: 2.3rem;
-  border-radius: 0.9rem;
-  color: #fff;
-  font-size: 1.15rem;
-  font-weight: 900;
-  background: linear-gradient(135deg, #7c3aed, #ec4899 58%, #f59e0b);
-  box-shadow: 0 0 18px rgba(168, 85, 247, 0.55);
-}
+.lb-brand svg { flex-shrink: 0; color: var(--home-accent-strong); }
 
 .lb-nav {
   display: flex;

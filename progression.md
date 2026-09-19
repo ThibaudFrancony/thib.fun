@@ -17,6 +17,15 @@ Ce fichier décrit la réalité du dépôt et non les seules capacités prévues
 
 **Diagnostic du 13 septembre : le code des neuf jeux est présent, mais leur disponibilité fonctionnelle n'est pas acquise.** L'[audit complet](docs/audit-code-2026-09-13.md) et le [plan pas à pas](docs/plan-correction-2026-09-13.md) identifient 29 défauts de code/produit et 6 observations d'infrastructure : blocages du worker, abandon/forfait, présence, finalisation, réseau, sécurité et parcours incomplets. L'étape 1 est appliquée au harnais de tests ; le contrat commun de l'étape 2 est intégré à `main` (`d885079`), le raccordement SQL de l'étape 3 est versionné dans `6130c99` et sa validation PostgreSQL isolée ainsi que sa concurrence à deux sessions sont désormais démontrées localement. L'inspection Supabase du 16 septembre rapporte 33 migrations distantes, alignées avec les fichiers locaux, mais elle reste strictement en lecture seule. Quatre parties actives (trois TTMC et une Géographie), dix jobs échus en attente et deux joueurs engagés dans plusieurs parties doivent être préservés en production. Aucun secret, traitement de donnée, migration distante, écriture Vault, déploiement ou opération de reprise n'a été effectué dans la présente session. Les observations datées ci-dessous restent historiques ; l'audit et le préflight Étape 10 prévalent pour les limitations actuelles.
 
+### 19/09/2026 — UNO : carte fantôme après une pioche auto-passée
+
+- Demande utilisateur : deux captures montrent des artefacts dans la main (« ça nous arrive quand on pioche une carte ») — une carte face cachée posée en travers d'une carte réelle, parfois avec un espace vide et une carte isolée.
+- Cause confirmée : `src/games/uno/components/uno-match.tsx` ne retirait le décor de pioche que si `view.drawnCard !== null`. Or quand la carte piochée est non jouable, `completeTurn` (`src/games/uno/engine.ts:313`) remet `drawnCardId` à `null`, la phase à `playing` et passe la main : `drawConfirmed` restait faux, `drawPending`/`drawLanded` restaient à `true` et le placeholder face cachée (`.uno-hand-placeholder`) restait affiché indéfiniment. S'y ajoutait un doublon transitoire : le vol de pioche n'était pas annulé quand le serveur confirmait avant la fin du vol.
+- Résolution : suivi d'une taille de main de référence (`drawBaselineRef`) et détection de résolution côté serveur (`phase finished`, siège actif différent, ou main agrandie) ; nouvelle `clearDrawVisual` qui retire placeholder, carte volante et minuteur dès la résolution ; indicateur `drawFlightRef` pour n'annuler que le vol de pioche (pas un vol de défausse) ; réinitialisation des refs dans `cancelVisual`.
+- Vérifications (sans Docker) : `pnpm typecheck` propre ; `pnpm exec eslint` propre sur `uno-match.tsx` et le test E2E ; `pnpm exec vitest run src/games/uno` (30/30) ; `pnpm test` (87 fichiers / 545 réussis + 2 sentinelles). Nouveau test E2E `tests/e2e/uno-regressions.spec.ts` « une pioche auto-passée ne laisse pas de carte fantôme dans la main » (écrit, non exécuté — Docker/Playwright opt-in).
+- Limites : recette navigateur à deux comptes et E2E Playwright non exécutés (Docker opt-in, daemon fermé) ; aucune modification de moteur, de projection, de transport ni de migration.
+- Contradiction : aucune avec `AGENTS.md`.
+
 ### 19/09/2026 — Leaderboard : suppression de la phrase de sous-titre
 
 - Demande utilisateur : « Tous les jeux confondus : chaque partie terminée rapporte des points aux comptes permanents. Les égalités et les réussites coopératives comptent aussi. » — enlever complètement cette phrase du leaderboard.
@@ -30,6 +39,14 @@ Ce fichier décrit la réalité du dépôt et non les seules capacités prévues
 - Demande utilisateur : « 10 points par victoire, 5 par défaite, 7 par match nul, 10 par réussite coopérative. » — supprimer ça aussi.
 - Réalisation : suppression du bloc `<p className="lb-panel-sub">` dans `src/app/leaderboard/leaderboard-view.tsx` (l'en-tête `lb-panel-head` garde le titre « Top 100 ») ; suppression de la règle CSS `.lb-panel-sub` devenue inutilisée dans `src/app/globals.css`. Aucun changement de barème, de RPC, de route ni de calcul de points.
 - Vérifications (sans Docker) : `pnpm typecheck` propre ; `pnpm lint` propre ; `grep` : plus aucune occurrence de `lb-panel-sub` ni de « 10 points par victoire » dans le dépôt.
+- Limites : recette visuelle navigateur non rejouée (Docker opt-in) ; suites complètes non rejouées pour ce changement purement présentationnel.
+- Contradiction : aucune avec `AGENTS.md`.
+
+### 19/09/2026 — Leaderboard : logo d'en-tête aligné sur l'accueil
+
+- Demande utilisateur : le logo en haut à gauche du leaderboard doit être semblable au site de base, en reprenant celui de l'accueil.
+- Réalisation : variante `space` de `src/components/site-header.tsx` — le bloc `<span className="lb-brand-mark">t</span>` est remplacé par la même icône SVG que la variante `home` (mêmes tracés, 32×32) ; `src/app/globals.css` — règle `.lb-brand-mark` supprimée, ajout de `.lb-brand svg { flex-shrink: 0; color: var(--home-accent-strong); }`. Aucun changement de navigation, de route ni de barème.
+- Vérifications (sans Docker) : `pnpm typecheck` propre ; `pnpm lint` propre ; `grep` : plus aucune occurrence de `lb-brand-mark`.
 - Limites : recette visuelle navigateur non rejouée (Docker opt-in) ; suites complètes non rejouées pour ce changement purement présentationnel.
 - Contradiction : aucune avec `AGENTS.md`.
 
@@ -776,6 +793,13 @@ Ne pas y inventer de risques théoriques. Si la cause n'est pas confirmée, l'in
 - Résolution : calcul du point cible à partir de `hand.top + hand.height * 0.45` ; compteur `flyKeyRef` incrémenté à la place de `Date.now()`.
 - Vérification : `pnpm typecheck` et `pnpm lint` propres, puis suites complètes et E2E UNO 10/10 desktop et mobile.
 - Complément : la première capture mobile montrait les cartes inclinées légèrement rognées en bas — padding de `.uno-hand` porté à `2.1rem 0.6rem 0.7rem`, revérifié en capture.
+
+### 19/09/2026 — UNO : carte fantôme dans la main après une pioche non jouable
+
+- Problème : signalé par captures utilisateur — après une pioche, une carte face cachée s'incruste en travers de la main, avec parfois un espace vide et une carte isolée.
+- Cause confirmée : `uno-match.tsx` ne fermait le décor de pioche que sur `drawnCard !== null` ; une pioche non jouable est auto-passée (`completeTurn`, `engine.ts:313`, `drawnCardId: null`), donc le placeholder `.uno-hand-placeholder` restait affiché indéfiniment. Le vol de pioche n'était pas non plus annulé à la confirmation serveur (doublon transitoire).
+- Résolution : résolution détectée par `phase finished` / changement de siège actif / main agrandie (`drawBaselineRef`), `clearDrawVisual` retire placeholder + carte volante + minuteur, `drawFlightRef` distingue le vol de pioche du vol de défausse.
+- Vérification : `pnpm typecheck`, `pnpm exec eslint`, `pnpm exec vitest run src/games/uno` (30/30) et `pnpm test` (545 réussis + 2 sentinelles) propres ; test E2E de non-régression ajouté mais non exécuté (Docker opt-in).
 
 ## Points à savoir pour les prochains développements
 

@@ -55,7 +55,12 @@ export async function SiteHeader({ variant = "default" }: { variant?: "default" 
     return (
       <header className="lb-header">
         <Link href="/" className="lb-brand" aria-label="Accueil tibo.fun">
-          <span className="lb-brand-mark" aria-hidden="true">t</span>
+          <svg viewBox="0 0 32 32" width="32" height="32" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+            <path d="M10 9h12c3 0 5 3 6 7l1 6c.5 4-3 6-5 3l-4-4h-8l-4 4c-2 3-5.5 1-5-3l1-6c1-4 3-7 6-7Z" />
+            <path d="M10 13v6m-3-3h6" />
+            <circle cx="22" cy="14" r="1.3" fill="currentColor" stroke="none" />
+            <circle cx="25" cy="18" r="1.3" fill="currentColor" stroke="none" />
+          </svg>
           <span>tibo.fun</span>
         </Link>
         <nav className="lb-nav" aria-label="Navigation principale">

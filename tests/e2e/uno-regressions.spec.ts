@@ -127,6 +127,38 @@ test("un clic sur la pioche envoie une commande DRAW", async ({ page }) => {
   expect(actions[0]).toBe("DRAW");
 });
 
+test("une pioche auto-passée ne laisse pas de carte fantôme dans la main", async ({ page }) => {
+  const before = view([{ id: "red-5", color: "red", symbol: "5" }]);
+  const after: UnoView = {
+    ...before,
+    hand: [...before.hand, { id: "blue-9", color: "blue", symbol: "9" }],
+    activeSeat: 1,
+    playableCardIds: [],
+    actions: { ...before.actions, canDraw: false, canPlay: false },
+    players: [
+      { ...players[0], active: false },
+      { ...players[1], active: true },
+    ],
+  };
+  let version = 1;
+  await page.route(`**/api/matches/${matchId}`, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(response(version === 1 ? before : after, version)),
+    });
+  });
+  await page.route(`**/api/matches/${matchId}/commands`, async (route) => {
+    version = 2;
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ matchId, version: 2, commandHash: "fixture" }) });
+  });
+  await page.goto(`/parties/${matchId}`);
+  await expect(page.getByRole("button", { name: "Piocher une carte" })).toBeEnabled();
+  await page.getByRole("button", { name: "Piocher une carte" }).click();
+  await expect(page.getByRole("heading", { name: /2 cartes/ })).toBeVisible();
+  await expect(page.locator(".uno-hand-placeholder")).toHaveCount(0);
+});
+
 test("un clic sur une carte non jouable ne produit aucune commande", async ({ page }) => {
   const blocked = view([{ id: "blue-2", color: "blue", symbol: "2" }]);
   await openFixture(page, { ...blocked, playableCardIds: [], actions: { ...blocked.actions, canPlay: false } });
