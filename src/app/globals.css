@@ -2282,3 +2282,328 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
   .chat-lightbox { animation: none !important; }
   .chat-spinner { animation-duration: 1.5s; }
 }
+
+/* ---------------------------------------------------------------------------
+   Administration — /admin (réservé au compte autorisé, contrôlé serveur/base).
+--------------------------------------------------------------------------- */
+
+.admin-page {
+  --admin-bg: #160a29;
+  --admin-bg-deep: #0f0620;
+  --admin-card: #241243;
+  --admin-line: #ffffff1f;
+  --admin-line-strong: #ffffff33;
+  --admin-text: #fffaff;
+  --admin-muted: #cbb7e6;
+  --admin-faint: #9f89bd;
+  --admin-pink: #ff4fa3;
+  --admin-green: #4ade80;
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  color: var(--admin-text);
+  background:
+    radial-gradient(circle at 85% -10%, rgba(139, 92, 246, 0.3), transparent 45%),
+    linear-gradient(180deg, var(--admin-bg), var(--admin-bg-deep));
+}
+
+.admin-page :focus-visible { outline: 3px solid #f2dcff; outline-offset: 3px; }
+
+.admin-header {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
+  padding: 0.9rem clamp(1rem, 4vw, 2.5rem);
+  border-bottom: 1px solid var(--admin-line);
+  background: rgba(14, 6, 28, 0.85);
+  backdrop-filter: blur(12px);
+}
+
+.admin-back {
+  color: var(--admin-muted);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: color 160ms ease;
+}
+
+.admin-back:hover { color: var(--admin-text); }
+
+.admin-brand { display: flex; align-items: center; gap: 0.7rem; margin-right: auto; }
+.admin-brand-mark {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 13px;
+  background: linear-gradient(135deg, #ff3fa4, #a855f7);
+  color: #fff;
+  font-size: 1.15rem;
+  font-weight: 900;
+  box-shadow: 0 8px 22px rgba(255, 63, 164, 0.32);
+}
+.admin-brand h1 { margin: 0; font-size: 1.05rem; font-weight: 800; }
+.admin-brand p { margin: 0; color: var(--admin-faint); font-size: 0.74rem; font-weight: 600; }
+
+.admin-tabs {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.22rem;
+  border: 1px solid var(--admin-line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.admin-tabs button {
+  min-height: 34px;
+  padding: 0.35rem 1rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--admin-muted);
+  font-size: 0.84rem;
+  font-weight: 700;
+  transition: background 200ms ease, color 200ms ease, transform 160ms ease, box-shadow 200ms ease;
+}
+
+.admin-tabs button:hover { color: var(--admin-text); background: rgba(255, 255, 255, 0.07); }
+.admin-tabs button:active { transform: scale(0.97); }
+.admin-tabs button[data-active="true"] {
+  background: linear-gradient(135deg, #6d28d9, #a855f7);
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(124, 58, 237, 0.42);
+}
+
+.admin-banner {
+  margin: 0.75rem clamp(1rem, 4vw, 2.5rem) 0;
+  padding: 0.6rem 0.85rem;
+  border-radius: 12px;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.admin-banner-ok { background: rgba(74, 222, 128, 0.14); color: #b6f7cd; }
+.admin-banner-error { background: rgba(255, 79, 163, 0.16); color: #ffc2dd; }
+
+.admin-main {
+  flex: 1;
+  width: min(72rem, 100%);
+  margin: 0 auto;
+  padding: clamp(1rem, 3vw, 2rem) clamp(1rem, 4vw, 2.5rem) 3rem;
+}
+
+.admin-panel {
+  border: 1px solid var(--admin-line);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.035);
+  box-shadow: 0 24px 60px rgba(6, 2, 16, 0.35);
+}
+
+.admin-panel-head { padding: 1.1rem 1.25rem 0.6rem; }
+.admin-panel-head h2 { margin: 0; font-size: 1.15rem; font-weight: 800; }
+.admin-panel-head p { margin: 0.3rem 0 0; color: var(--admin-faint); font-size: 0.82rem; }
+
+.admin-game-list { display: grid; gap: 0.5rem; margin: 0; padding: 0.6rem 0.9rem 1rem; list-style: none; }
+
+.admin-game {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--admin-line);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.admin-game-copy { flex: 1; min-width: 0; }
+.admin-game-name { display: flex; align-items: baseline; gap: 0.5rem; margin: 0; font-size: 0.95rem; font-weight: 800; }
+.admin-game-display { color: var(--admin-faint); font-size: 0.76rem; font-weight: 600; }
+.admin-game-slug { margin: 0.15rem 0 0; color: var(--admin-faint); font-size: 0.72rem; font-weight: 600; }
+
+.admin-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.3rem 0.6rem 0.3rem 0.3rem;
+  border: 1px solid var(--admin-line-strong);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--admin-muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  transition: background 180ms ease, color 180ms ease, transform 160ms ease;
+}
+
+.admin-switch:active:not(:disabled) { transform: scale(0.97); }
+.admin-switch:disabled { opacity: 0.55; }
+.admin-switch[data-on="true"] { color: #c9ffdd; border-color: rgba(74, 222, 128, 0.5); background: rgba(74, 222, 128, 0.12); }
+
+.admin-switch-track {
+  position: relative;
+  width: 42px;
+  height: 24px;
+  border-radius: 999px;
+  background: #503a72;
+  transition: background 220ms ease;
+}
+
+.admin-switch[data-on="true"] .admin-switch-track { background: linear-gradient(135deg, #34d399, #22c55e); }
+
+.admin-switch-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.admin-switch[data-on="true"] .admin-switch-knob { transform: translateX(18px); }
+
+.admin-main-chat {
+  display: grid;
+  grid-template-columns: minmax(15rem, 20rem) minmax(0, 1fr);
+  gap: 1rem;
+  align-items: stretch;
+  height: calc(100dvh - 5.5rem);
+  padding-bottom: 1.5rem;
+}
+
+.admin-conv-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  min-height: 0;
+  padding: 0.85rem;
+  border: 1px solid var(--admin-line);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.035);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.admin-search {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--admin-line);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.admin-search svg { width: 16px; height: 16px; fill: none; stroke: var(--admin-faint); stroke-width: 1.9; stroke-linecap: round; }
+.admin-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--admin-text);
+  font-size: 0.84rem;
+}
+.admin-search input::placeholder { color: var(--admin-faint); }
+.admin-search input:focus { outline: none; }
+
+.admin-conv-group { display: grid; gap: 0.4rem; }
+.admin-conv-group h3 {
+  margin: 0;
+  padding: 0 0.2rem;
+  color: var(--admin-muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+}
+.admin-conv-group ul { display: grid; gap: 0.3rem; margin: 0; padding: 0; list-style: none; }
+
+.admin-conv {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  padding: 0.5rem 0.55rem;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  color: inherit;
+  text-align: left;
+  transition: background 180ms ease, border-color 180ms ease, transform 160ms ease;
+}
+
+.admin-conv:hover { background: rgba(255, 255, 255, 0.07); }
+.admin-conv:active { transform: scale(0.99); }
+.admin-conv[data-active="true"] { border-color: rgba(168, 85, 247, 0.6); background: rgba(124, 58, 237, 0.18); }
+
+.admin-conv-globe {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  background: rgba(139, 92, 246, 0.2);
+  color: #cbb6ff;
+}
+.admin-conv-globe svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.6; }
+
+.admin-conv-avatars { display: inline-flex; flex-shrink: 0; }
+.admin-conv-avatars .chat-avatar + .chat-avatar { margin-left: -9px; }
+
+.admin-conv-copy { display: grid; flex: 1; gap: 0.1rem; min-width: 0; }
+.admin-conv-title { display: flex; align-items: center; gap: 0.4rem; overflow: hidden; font-size: 0.83rem; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+.admin-conv-title em {
+  padding: 0.05rem 0.35rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.09);
+  color: var(--admin-faint);
+  font-size: 0.6rem;
+  font-style: normal;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.admin-conv-preview { overflow: hidden; color: var(--admin-faint); font-size: 0.72rem; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.admin-conv-meta { flex-shrink: 0; color: var(--admin-faint); font-size: 0.66rem; font-weight: 600; }
+
+.admin-conv-view {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border: 1px solid var(--admin-line);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.035);
+  overflow: hidden;
+}
+
+.admin-conv-head {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 0.65rem;
+  padding: 0.75rem 0.9rem;
+  border-bottom: 1px solid var(--admin-line);
+}
+.admin-conv-head-copy { display: grid; gap: 0.1rem; min-width: 0; }
+.admin-conv-head-title { margin: 0; overflow: hidden; font-size: 0.95rem; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+.admin-conv-head-sub { margin: 0; color: var(--admin-faint); font-size: 0.74rem; font-weight: 600; }
+
+.admin-conv-view .chat-messages { padding-top: 0.7rem; }
+.admin-empty { margin: 0; padding: 1.2rem; color: var(--admin-faint); font-size: 0.84rem; text-align: center; }
+
+.admin-main-chat .admin-banner { margin: 0.7rem 0.9rem; }
+
+@media (max-width: 860px) {
+  .admin-main-chat {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+  .admin-conv-list { max-height: 40dvh; }
+  .admin-conv-view { min-height: 55dvh; }
+}

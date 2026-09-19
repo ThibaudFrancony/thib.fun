@@ -18,6 +18,7 @@ export function MessageItem({
   viewerId,
   relation,
   friendBusy,
+  readOnly = false,
   onAddFriend,
   onOpenImage,
 }: {
@@ -25,13 +26,14 @@ export function MessageItem({
   viewerId: string;
   relation: ChatRelation;
   friendBusy: boolean;
+  readOnly?: boolean;
   onAddFriend: (userId: string) => void;
   onOpenImage: (url: string) => void;
 }) {
   const own = message.authorId === viewerId;
   const [popoverOpen, setPopoverOpen] = useState(false);
   const rootRef = useRef<HTMLElement | null>(null);
-  const interactive = !own && !message.authorIsGuest;
+  const interactive = !own && !message.authorIsGuest && !readOnly;
 
   useEffect(() => {
     if (!popoverOpen) return;

@@ -10,6 +10,7 @@ export function MessageList({
   viewerId,
   relationFor,
   friendBusy,
+  readOnly = false,
   onAddFriend,
   hasMore,
   loadingOlder,
@@ -21,6 +22,7 @@ export function MessageList({
   viewerId: string;
   relationFor: (userId: string) => ChatRelation;
   friendBusy: boolean;
+  readOnly?: boolean;
   onAddFriend: (userId: string) => void;
   hasMore: boolean;
   loadingOlder: boolean;
@@ -105,6 +107,7 @@ export function MessageList({
               viewerId={viewerId}
               relation={relationFor(message.authorId)}
               friendBusy={friendBusy}
+              readOnly={readOnly}
               onAddFriend={onAddFriend}
               onOpenImage={setLightbox}
             />

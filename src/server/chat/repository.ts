@@ -1,7 +1,7 @@
 import "server-only";
 
-import type { SupabaseClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/server/supabase/admin";
+import { signStoragePaths } from "@/server/storage/signed-urls";
 import {
   chatMessagesRpcSchema,
   chatSummaryRpcSchema,
@@ -22,8 +22,6 @@ import type {
   ChatSummary,
   ChatViewer,
 } from "@/lib/chat-types";
-
-export const CHAT_SIGNED_URL_SECONDS = 5 * 60;
 
 const AVATARS_BUCKET = "avatars";
 const CHAT_IMAGES_BUCKET = "chat-images";
@@ -55,22 +53,6 @@ function rpcData<T>(response: { data: unknown; error: { message: string } | null
   return parsed;
 }
 
-async function signPaths(
-  admin: SupabaseClient,
-  bucket: string,
-  paths: readonly (string | null | undefined)[],
-): Promise<Map<string, string>> {
-  const unique = [...new Set(paths.filter((path): path is string => Boolean(path)))];
-  const urls = new Map<string, string>();
-  if (unique.length === 0) return urls;
-  const { data, error } = await admin.storage.from(bucket).createSignedUrls(unique, CHAT_SIGNED_URL_SECONDS);
-  if (error || !data) return urls;
-  for (const entry of data) {
-    if (entry.path && entry.signedUrl) urls.set(entry.path, entry.signedUrl);
-  }
-  return urls;
-}
-
 function mapPreview(
   preview: { id: string; seq: number; authorId: string; body: string | null; imagePath: string | null; createdAt: string } | null | undefined,
   imageUrls: Map<string, string>,
@@ -94,12 +76,12 @@ export async function getChatSummary(viewer: ChatViewer): Promise<ChatSummary> {
     return parsed.success ? parsed.data : null;
   });
 
-  const avatarUrls = await signPaths(admin, AVATARS_BUCKET, [
+  const avatarUrls = await signStoragePaths(admin, AVATARS_BUCKET, [
     ...data.friends.map((friend) => friend.avatarPath),
     ...data.incomingRequests.map((request) => request.avatarPath),
     ...data.outgoingRequests.map((request) => request.avatarPath),
   ]);
-  const imageUrls = await signPaths(admin, CHAT_IMAGES_BUCKET, [
+  const imageUrls = await signStoragePaths(admin, CHAT_IMAGES_BUCKET, [
     ...data.friends.map((friend) => friend.lastMessage?.imagePath ?? null),
     data.general.lastMessage?.imagePath ?? null,
   ]);
@@ -156,11 +138,11 @@ export async function getChatMessages(
     return parsed.success ? parsed.data : null;
   });
 
-  const avatarUrls = await signPaths(admin, AVATARS_BUCKET, [
+  const avatarUrls = await signStoragePaths(admin, AVATARS_BUCKET, [
     ...data.messages.map((message) => message.authorAvatarPath),
     data.conversation.member?.avatarPath ?? null,
   ]);
-  const imageUrls = await signPaths(admin, CHAT_IMAGES_BUCKET, data.messages.map((message) => message.imagePath));
+  const imageUrls = await signStoragePaths(admin, CHAT_IMAGES_BUCKET, data.messages.map((message) => message.imagePath));
 
   return {
     conversation: {
@@ -226,7 +208,7 @@ export async function sendChatMessage(
     // Requête rejouée : l'image fraîchement téléversée est orpheline.
     await admin.storage.from(CHAT_IMAGES_BUCKET).remove([args.imagePath]).catch(() => undefined);
   }
-  const imageUrls = await signPaths(admin, CHAT_IMAGES_BUCKET, [data.imagePath]);
+  const imageUrls = await signStoragePaths(admin, CHAT_IMAGES_BUCKET, [data.imagePath]);
   return {
     id: data.id,
     seq: data.seq,

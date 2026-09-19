@@ -55,6 +55,9 @@ type MatchCommand = {
 | POST `/friends/requests` | requestId, targetId | permanent actif, pas soi-même, cible permanente ; idempotent par paire |
 | POST `/friends/requests/:id/respond` | requestId, accept | destinataire seul d'une demande en attente |
 | POST `/friends/:id/remove` | requestId | retire une amitié acceptée ; la conversation privée n'est plus accessible |
+| GET `/admin/conversations` | — | admin seul : général et conversations privées (participants, aperçu, compteurs) |
+| GET `/admin/conversations/:id/messages` | before?, limit? | admin seul : lecture paginée, lecture seule, aucune écriture possible |
+| POST `/admin/games/:slug/visibility` | requestId, visible | admin seul : masque ou réaffiche un jeu sur l'accueil ; idempotent |
 | POST `/admin/invitations` | maxUses?, email?, expiresInDays? | admin seul, lien affiché ; aucun message envoyé automatiquement |
 | GET `/admin/invitations` | cursor? | admin seul, état/expiration/utilisations, jamais tokens/hashes |
 | DELETE `/admin/invitations/:id` | — | admin seul, révoque une invitation, pas les comptes déjà admis |
@@ -63,6 +66,8 @@ type MatchCommand = {
 Limites : corps JSON navigateur 8 Ko, corps worker 16 Ko ; réponse libre 240 caractères ; indice 120 ; profil 24. Les transferts serveur de contenu/état vers RPC ne sont pas soumis à cette limite navigateur. Limitation persistante (table privée `rate_limits` documentée dans SQL) : join 10/min/utilisateur et 30/min/IP hashée, create 5/min/utilisateur, commandes 120/min/utilisateur avec plafond 10/s, quiz 10/min/utilisateur, suggestions 30/min/utilisateur, avatar 5/h. Le chat applique 30 messages/min/utilisateur en SQL et un plafond photo de 4 Mo en entrée (WebP 1280 px / ≤ 400 Ko après réencodage serveur). Nettoyage quotidien des fenêtres expirées. Les jobs internes ont secret et taille de batch, pas de quota utilisateur. Invites admin : expiresInDays 1..30 défaut 7, maxUses 1..10 défaut 1.
 
 Commandes salon : `SET_READY {ready:boolean}`, `SET_CONFIG {gameSlug,config}` hôte seul, `PREPARE_MATCH` hôte seul depuis un salon d'accueil (pose le jeu/la configuration et arme les deux prêts), `START {}` hôte et deux prêts, `LEAVE {}`, `REMATCH {}` hôte après fin. REMATCH garde participants/config et demande de nouveau ready ; crée une nouvelle partie seulement au START. Hôte ne voit aucun secret supplémentaire.
+
+Administration : `/admin` redirige vers l'accueil si la session est absente ou si l'e-mail du compte n'est pas dans `private.admin_accounts`. Les routes `/api/admin/*` refusent `401` sans session et `403 ADMIN_REQUIRED` pour un membre normal, avant toute lecture ; les RPC `server_admin_*` refont le même contrôle en base.
 
 ## 3. Snapshot commun
 

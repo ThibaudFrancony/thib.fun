@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent as ReactPointerEvent } from "react";
-import { PUBLIC_GAMES, type PublicGame } from "@/games/registry";
+import type { PublicGame } from "@/games/registry";
 
 const PLAYABLE_ROUTES: Readonly<Partial<Record<string, string>>> = {
   geographie: "/jeux/geographie",
@@ -25,8 +25,6 @@ function playableRoute(game: PublicGame): string | undefined {
   return game.availability === "coming_soon" ? undefined : PLAYABLE_ROUTES[game.slug];
 }
 
-const INITIAL_INDEX = Math.max(0, PUBLIC_GAMES.findIndex((game) => game.slug === "geographie"));
-
 /** Position relative à la carte active, en boucle continue (accepte un index flottant). */
 export function wrappedOffset(index: number, active: number, total: number): number {
   let distance = index - active;
@@ -44,10 +42,10 @@ function layoutFor(width: number): { card: number; step: number } {
   return { card: 128, step: 118 };
 }
 
-export function HomeGameSelector() {
+export function HomeGameSelector({ games }: { games: readonly PublicGame[] }) {
   const router = useRouter();
-  const total = PUBLIC_GAMES.length;
-  const [position, setPosition] = useState(INITIAL_INDEX);
+  const total = games.length;
+  const [position, setPosition] = useState(() => Math.max(0, games.findIndex((game) => game.slug === "geographie")));
   const [dragging, setDragging] = useState(false);
   const [width, setWidth] = useState(1200);
   const [imageAttempt, setImageAttempt] = useState<Record<string, number>>({});
@@ -71,9 +69,9 @@ export function HomeGameSelector() {
   }, []);
 
   const { card, step } = layoutFor(width);
-  const roundedActive = ((Math.round(position) % total) + total) % total;
-  const activeGame = PUBLIC_GAMES[roundedActive];
-  const activeRoute = playableRoute(activeGame);
+  const roundedActive = total > 0 ? ((Math.round(position) % total) + total) % total : 0;
+  const activeGame = games[roundedActive] ?? null;
+  const activeRoute = activeGame ? playableRoute(activeGame) : undefined;
 
   const goBy = useCallback((delta: number) => {
     setPosition((current) => Math.round(current) + delta);
@@ -146,11 +144,24 @@ export function HomeGameSelector() {
       return;
     }
     if (Math.abs(offset) < 0.5) {
-      const route = playableRoute(PUBLIC_GAMES[index]);
+      const game = games[index];
+      if (!game) return;
+      const route = playableRoute(game);
       if (route) router.push(route);
       return;
     }
     goToIndex(index);
+  }
+
+  if (!activeGame) {
+    return (
+      <section className="home-carousel home-carousel-empty" role="region" aria-label="Les jeux à deux">
+        <p className="home-carousel-caption">
+          <strong>Aucun jeu disponible pour le moment</strong>
+          <span>Reviens un peu plus tard.</span>
+        </p>
+      </section>
+    );
   }
 
   return (
@@ -158,7 +169,7 @@ export function HomeGameSelector() {
       className="home-carousel"
       role="region"
       aria-roledescription="carrousel"
-      aria-label="Les neuf jeux à deux"
+      aria-label="Les jeux à deux"
       tabIndex={0}
       data-dragging={dragging}
       onKeyDown={onKeyDown}
@@ -169,7 +180,7 @@ export function HomeGameSelector() {
         onPointerDown={onPointerDown}
       >
         <ul className="home-carousel-track">
-          {PUBLIC_GAMES.map((game, index) => {
+          {games.map((game, index) => {
             const offset = wrappedOffset(index, position, total);
             const clamped = Math.max(-(MAX_VISIBLE + 0.6), Math.min(MAX_VISIBLE + 0.6, offset));
             const distance = Math.abs(clamped);
@@ -255,7 +266,7 @@ export function HomeGameSelector() {
           <ArrowIcon direction="left" />
         </button>
         <ul className="home-carousel-dots">
-          {PUBLIC_GAMES.map((game, index) => (
+          {games.map((game, index) => (
             <li key={game.slug}>
               <button
                 type="button"

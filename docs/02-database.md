@@ -49,9 +49,9 @@ Unicité des sièges impose deux membres maximum. Création/join/start sous verr
 
 ### `public.games`
 
-`slug text PK`, `display_name text`, `description text`, `priority smallint`, `kind text CHECK IN ('competitive','cooperative')`, `availability text CHECK IN ('coming_soon','beta','ready')`, `rules_version text`, `created_at`.
+`slug text PK`, `display_name text`, `description text`, `priority smallint`, `kind text CHECK IN ('competitive','cooperative')`, `availability text CHECK IN ('coming_soon','beta','ready')`, `visible boolean DEFAULT true` (18/09/2026), `rules_version text`, `created_at`.
 
-Seed des neuf slugs du AGENTS. Métadonnées du registre TS vérifiées contre cette table en CI ; ne pas autoriser le client à modifier la disponibilité. Les catégories coopératives comprennent compatibilité et longueur-onde.
+Seed des neuf slugs du AGENTS. Métadonnées du registre TS vérifiées contre cette table en CI ; ne pas autoriser le client à modifier la disponibilité. `visible = false` masque la carte de l'accueil sans bloquer la route du jeu ; seul l'admin peut la changer via RPC serveur. Les catégories coopératives comprennent compatibilité et longueur-onde.
 
 ### `private.matches`
 
@@ -216,6 +216,11 @@ Toutes les RPC `server_*` suivantes sont exécutables uniquement par rôle serve
 | `server_get_chat_messages(actor, conversationId, beforeSeq, limit)` | page de 1..100 messages, accès vérifié, ordre `seq` |
 | `server_mark_chat_read(actor, conversationId, lastReadSeq)` | marqueur de lecture monotone par conversation |
 | `server_record_activity(actor)` | heartbeat de présence approximative (fenêtre 2 min, purge 30 jours) |
+| `server_is_admin(actor)` | vrai si l'e-mail du compte Auth figure dans `private.admin_accounts` |
+| `server_admin_list_games(actor)` | admin seul : `slug`, `visible`, `availability` de tous les jeux |
+| `server_admin_set_game_visibility(actor, requestId, slug, visible)` | admin seul, idempotent : bascule `public.games.visible` |
+| `server_admin_list_conversations(actor)` | admin seul : général et toutes les conversations privées, participants, aperçu, compteurs |
+| `server_admin_get_conversation(actor, conversationId, beforeSeq, limit)` | admin seul : lecture paginée d'une conversation, participants inclus, aucune écriture |
 | `server_admin_invitation(actor, operation, arguments)` | admin vérifié en DB, création/révocation/listage sans exposer les hashes |
 
 Ces RPC sont l'accès aux tables privées depuis le SDK Supabase : **ne pas utiliser `.schema('private')` via une Data API qui n'expose pas ce schéma**. Le repository serveur encapsule les RPC et ne retourne jamais leurs objets complets à un navigateur. Les lectures de projections publiques peuvent utiliser le client à session utilisateur, dont RLS assure le filtrage.
@@ -247,3 +252,16 @@ Migration `20260918214832_chat_and_friends.sql`, additive et immuable.
 | `private.user_activity` | Dernière activité par membre, purge au-delà de 30 jours ; en ligne = activité < 2 minutes. |
 
 Toutes ces tables sont dans `private`, sans droit `anon`/`authenticated` ; `service_role` reçoit des grants explicites. Le chat général est lisible par tout membre actif (invités compris) ; l'écriture exige un compte permanent. Une conversation directe n'est accessible qu'entre amis acceptés. Les triggers Broadcast sont `SECURITY DEFINER`, `search_path=''`, et n'envoient que `{id, version}`.
+
+## 12. Administration (18/09/2026)
+
+Migration `20260919093337_admin_console.sql`, additive.
+
+| Objet | Rôle et contraintes |
+|---|---|
+| `public.games.visible` | `boolean not null default true` ; masque la carte d'accueil, ne bloque pas la route. `UPDATE` accordé au seul `service_role`. |
+| `private.admin_accounts` | Liste blanche `email text PK` en minuscules, semée avec `thfrancony@gmail.com`. Modifiable en base sans redéploiement. |
+| `private.is_admin_account(userId)` | `SECURITY DEFINER`, compare `auth.users.email` (source Auth, jamais un champ client) à la liste blanche. Accès révoqué à `anon`/`authenticated`. |
+| `public.server_is_admin(actor)` | Lecture du statut admin pour la page ; `service_role` seul. |
+
+Les RPC `server_admin_*` revalident `private.is_admin_account(p_actor)` après vérification de session côté serveur : un membre normal reçoit `ADMIN_REQUIRED`, même en appelant directement l'API. La consultation des conversations privées ne crée aucune appartenance et n'expose aucune RPC d'envoi. Sécurité de déploiement : la colonne et les fonctions sont additives ; sans migration, la page admin redirige vers l'accueil et l'accueil reste complet.

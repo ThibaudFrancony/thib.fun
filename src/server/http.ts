@@ -146,6 +146,8 @@ const PUBLIC_ERROR_DEFINITIONS: Readonly<Record<string, PublicErrorDefinition>> 
   IMAGE_INVALID: { status: 400, message: "Cette image est invalide ou illisible." },
   IMAGE_TOO_LARGE: { status: 413, message: "La photo ne doit pas dépasser 4 Mo." },
   IMAGE_UNAVAILABLE: { status: 503, message: "La photo n'a pas pu être enregistrée. Réessaie." },
+  ADMIN_REQUIRED: { status: 403, message: "Accès réservé à l'administration." },
+  GAME_NOT_FOUND: { status: 404, message: "Ce jeu est introuvable." },
 };
 
 const NO_STORE = "private, no-store";
