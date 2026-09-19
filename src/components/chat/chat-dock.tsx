@@ -448,6 +448,17 @@ export function ChatDock() {
       refreshTimerRef.current = null;
       void refreshSummary();
     }, 250);
+    if (event.type === "reconnected") {
+      // Une coupure Realtime a pu perdre des événements : on relit la
+      // conversation ouverte en plus du résumé.
+      const conversationId = activeIdRef.current;
+      if (conversationId && cacheRef.current[conversationId]) {
+        void fetchConversationPage(conversationId)
+          .then(() => markActiveRead(conversationId))
+          .catch(() => undefined);
+      }
+      return;
+    }
     if (event.type !== "chat") return;
     const conversationId = event.conversationId;
     const entry = cacheRef.current[conversationId];
@@ -495,7 +506,11 @@ export function ChatDock() {
     ping();
     const presenceTimer = window.setInterval(ping, 60_000);
     const pollTimer = window.setInterval(() => {
-      if (document.visibilityState === "visible") void refreshSummary();
+      if (document.visibilityState !== "visible") return;
+      void refreshSummary();
+      // Filet de sécurité si un `chat.updated` est manqué : la conversation
+      // ouverte se revalide toute seule au lieu d'exiger un rechargement.
+      refreshActiveIfStale();
     }, 30_000);
     const onVisible = () => {
       if (document.visibilityState !== "visible") return;

@@ -44,6 +44,17 @@ export async function recordChatActivity(): Promise<void> {
   await fetch("/api/chat/presence", { method: "POST" });
 }
 
+function extractError(data: unknown): { code: string | null; message: string } {
+  if (data && typeof data === "object" && "error" in data && data.error && typeof data.error === "object") {
+    const error = data.error as { code?: unknown; message?: unknown };
+    return {
+      code: typeof error.code === "string" ? error.code : null,
+      message: typeof error.message === "string" && error.message.trim() ? error.message : "Le message n'a pas pu être envoyé.",
+    };
+  }
+  return { code: null, message: "Le message n'a pas pu être envoyé." };
+}
+
 export async function sendChatMessageRequest(
   conversationId: string,
   args: { requestId: string; body: string | null; file: File | null },
@@ -58,11 +69,16 @@ export async function sendChatMessageRequest(
   });
   const data: unknown = await response.json().catch(() => null);
   if (!response.ok) {
-    const message =
-      data && typeof data === "object" && "error" in data && data.error && typeof data.error === "object" && "message" in data.error && typeof data.error.message === "string"
-        ? data.error.message
-        : "Le message n'a pas pu être envoyé.";
-    throw new Error(message);
+    const failure = extractError(data);
+    if (response.status >= 500) {
+      // Un 500 inattendu est traçable côté serveur par ce diagnostic.
+      console.error("Envoi de message refusé", {
+        conversationId,
+        code: failure.code,
+        diagnosticId: response.headers.get("x-diagnostic-id"),
+      });
+    }
+    throw new Error(failure.message);
   }
   if (!data || typeof data !== "object" || !("message" in data)) throw new Error("Le message n'a pas pu être envoyé.");
   return (data as { message: ChatSentMessage }).message;
@@ -146,7 +162,10 @@ export async function optimizeChatImage(file: File): Promise<File> {
   }
 }
 
-export type ChatRealtimeEvent = { type: "chat"; conversationId: string } | { type: "friend" };
+export type ChatRealtimeEvent =
+  | { type: "chat"; conversationId: string }
+  | { type: "friend" }
+  | { type: "reconnected" };
 
 export function useChatRealtime(userId: string | null, onEvent: (event: ChatRealtimeEvent) => void): void {
   const handlerRef = useRef(onEvent);
@@ -160,8 +179,19 @@ export function useChatRealtime(userId: string | null, onEvent: (event: ChatReal
     if (!supabase) return;
     let cancelled = false;
     let channel: ReturnType<typeof supabase.channel> | null = null;
+    let hasSubscribed = false;
 
     void (async () => {
+      // Le canal est privé : la session doit être hydratée dans le client
+      // navigateur avant `subscribe`, sinon Realtime refuse l'abonnement et
+      // aucun `chat.updated` n'arrive (le polling de secours masque le bug).
+      try {
+        const { data } = await supabase.auth.getUser();
+        if (cancelled || !data.user) return;
+      } catch {
+        return;
+      }
+
       channel = supabase
         .channel(`chat:${userId}`, { config: { private: true } })
         .on("broadcast", { event: "chat.updated" }, ({ payload }: { payload: unknown }) => {
@@ -175,7 +205,11 @@ export function useChatRealtime(userId: string | null, onEvent: (event: ChatReal
           handlerRef.current({ type: "friend" });
         });
       try {
-        await channel.subscribe();
+        await channel.subscribe((status: unknown) => {
+          if (cancelled || status !== "SUBSCRIBED") return;
+          if (hasSubscribed) handlerRef.current({ type: "reconnected" });
+          hasSubscribed = true;
+        });
       } catch {
         // Le polling de secours prend le relais.
       }
