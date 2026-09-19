@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Avatar } from "@/components/avatar";
 import type { LeaderboardEntry, LeaderboardMe } from "@/lib/leaderboard-types";
 
@@ -9,22 +10,39 @@ function formatRecord(entry: { wins: number; losses: number; draws: number }): s
   return `${entry.wins} V · ${entry.losses} D · ${entry.draws} N`;
 }
 
-function PodiumSlot({ entry, place }: { entry: LeaderboardEntry | null; place: 1 | 2 | 3 }) {
+const PODIUM_ASSETS: Record<1 | 2 | 3, { src: string; className: string }> = {
+  1: { src: "/leaderboard/crown.png", className: "lb-crown" },
+  2: { src: "/leaderboard/badge-2.png", className: "lb-badge" },
+  3: { src: "/leaderboard/badge-3.png", className: "lb-badge" },
+};
+
+function PodiumCard({ entry, place }: { entry: LeaderboardEntry | null; place: 1 | 2 | 3 }) {
+  const asset = PODIUM_ASSETS[place];
   return (
-    <div className="lb-podium-slot" data-place={place}>
-      <div className="lb-podium-avatar">
+    <article className="lb-card" data-place={place} data-empty={entry ? undefined : "true"}>
+      {entry ? (
+        <Image
+          className={asset.className}
+          src={asset.src}
+          alt=""
+          aria-hidden="true"
+          width={1254}
+          height={1254}
+          priority={place === 1}
+        />
+      ) : null}
+      <div className="lb-card-avatar">
         {entry ? (
-          <Avatar name={entry.name} preset={entry.avatarPreset} imageUrl={entry.avatarUrl} size={place === 1 ? 84 : 68} />
+          <Avatar name={entry.name} preset={entry.avatarPreset} imageUrl={entry.avatarUrl} size={place === 1 ? 96 : 72} />
         ) : (
-          <span className="lb-podium-empty" aria-hidden="true">
-            —
-          </span>
+          <span className="lb-card-avatar-empty" aria-hidden="true">—</span>
         )}
       </div>
-      <p className="lb-podium-place">{place === 1 ? "1er" : `${place}e`}</p>
-      <p className="lb-podium-name">{entry?.name ?? "En attente"}</p>
-      <p className="lb-podium-points">{entry ? formatPoints(entry.points) : "—"}</p>
-    </div>
+      <p className="lb-card-place">{place === 1 ? "1ER" : `${place}E`}</p>
+      <p className="lb-card-name">{entry?.name ?? "En attente"}</p>
+      <p className="lb-card-points">{entry ? formatPoints(entry.points) : "—"}</p>
+      {entry ? <p className="lb-card-record">{formatRecord(entry)}</p> : null}
+    </article>
   );
 }
 
@@ -38,38 +56,55 @@ export function LeaderboardView({
   viewerId: string;
 }) {
   const podium = [2, 1, 3] as const;
-  const rest = entries.slice(3);
   const meVisible = me ? entries.some((entry) => entry.userId === viewerId) : false;
 
   return (
     <div className="lb-root">
       <section className="lb-podium" aria-label="Podium des trois premiers">
         {podium.map((place) => (
-          <PodiumSlot key={place} place={place} entry={entries[place - 1] ?? null} />
+          <PodiumCard key={place} place={place} entry={entries[place - 1] ?? null} />
         ))}
       </section>
 
-      <section className="lb-list" aria-label="Classement des cent premiers joueurs">
-        <div className="lb-list-head">
-          <h2 className="lb-list-title">Top 100</h2>
-          <p className="lb-list-sub">10 points par victoire, 5 par défaite, 7 par match nul, 10 par réussite coopérative.</p>
-        </div>
+      <section className="lb-panel" aria-label="Classement des cent premiers joueurs">
+        <header className="lb-panel-head">
+          <h2 className="lb-panel-title">Top 100</h2>
+          <p className="lb-panel-sub">10 points par victoire, 5 par défaite, 7 par match nul, 10 par réussite coopérative.</p>
+        </header>
         {entries.length === 0 ? (
           <p className="lb-empty">Aucun point marqué pour le moment. Joue une partie pour ouvrir le classement !</p>
-        ) : rest.length > 0 ? (
-          <ol className="lb-rows">
-            {rest.map((entry) => (
-              <li key={entry.userId} className="lb-row" data-me={entry.userId === viewerId}>
-                <span className="lb-rank">{entry.rank}</span>
-                <Avatar name={entry.name} preset={entry.avatarPreset} imageUrl={entry.avatarUrl} size={34} />
-                <span className="lb-name">{entry.name}</span>
-                <span className="lb-record">{formatRecord(entry)}</span>
-                <span className="lb-points">{formatPoints(entry.points)}</span>
-              </li>
-            ))}
-          </ol>
         ) : (
-          <p className="lb-empty">Le podium occupe les trois premières places. Reviens quand d&apos;autres joueurs marquent des points !</p>
+          <div className="lb-table-wrap">
+            <table className="lb-table">
+              <thead>
+                <tr>
+                  <th scope="col" className="lb-cell-rank">#</th>
+                  <th scope="col">Joueur</th>
+                  <th scope="col" className="lb-col-record">Bilan</th>
+                  <th scope="col" className="lb-cell-points">Points</th>
+                </tr>
+              </thead>
+              <tbody>
+                {entries.map((entry) => (
+                  <tr
+                    key={entry.userId}
+                    data-me={entry.userId === viewerId}
+                    data-rank={entry.rank <= 3 ? entry.rank : undefined}
+                  >
+                    <td className="lb-cell-rank">{entry.rank}</td>
+                    <td>
+                      <span className="lb-cell-player">
+                        <Avatar name={entry.name} preset={entry.avatarPreset} imageUrl={entry.avatarUrl} size={34} />
+                        <span className="lb-cell-name">{entry.name}</span>
+                      </span>
+                    </td>
+                    <td className="lb-cell-record lb-col-record">{formatRecord(entry)}</td>
+                    <td className="lb-cell-points">{entry.points} pts</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
 

@@ -4,7 +4,7 @@ import { SignOutButton } from "@/components/sign-out-button";
 import { ProfileButton } from "@/components/profile-button";
 import { SalonLauncher } from "@/components/salon-dialog";
 
-export async function SiteHeader({ variant = "default" }: { variant?: "default" | "home" | "geo" }) {
+export async function SiteHeader({ variant = "default" }: { variant?: "default" | "home" | "geo" | "space" }) {
   const account = await getAuthenticatedAccount();
 
   if (variant === "home") {
@@ -46,6 +46,44 @@ export async function SiteHeader({ variant = "default" }: { variant?: "default" 
           <SalonLauncher connected={Boolean(account)} triggerClassName="geo-nav-link" />
           {account && !account.isGuest ? <Link className="geo-nav-link" href="/leaderboard">Leaderboard</Link> : null}
           {account ? account.isGuest ? <><span className="geo-nav-link" aria-label={`Invité ${account.member.pseudo}`}>Invité · {account.member.pseudo}</span><Link className="geo-nav-link" href="/connexion?mode=signUp">Créer un compte</Link><SignOutButton className="geo-nav-link" /></> : <><ProfileButton name={account.member.effectiveName} accountName={account.member.accountName} needsOnboarding={account.member.needsOnboarding} preset={account.member.avatarPreset} hasAvatar={account.member.avatarPath !== null} /><SignOutButton className="geo-nav-link" /></> : <Link className="geo-nav-link" href="/connexion">Connexion</Link>}
+        </nav>
+      </header>
+    );
+  }
+
+  if (variant === "space") {
+    return (
+      <header className="lb-header">
+        <Link href="/" className="lb-brand" aria-label="Accueil tibo.fun">
+          <span className="lb-brand-mark" aria-hidden="true">t</span>
+          <span>tibo.fun</span>
+        </Link>
+        <nav className="lb-nav" aria-label="Navigation principale">
+          <Link className="lb-nav-link" href="/">Jeux</Link>
+          <Link className="lb-nav-link" href="/historique">Historique</Link>
+          <Link className="lb-nav-link lb-nav-link--active" href="/leaderboard" aria-current="page">Leaderboard</Link>
+          {account ? (
+            account.isGuest ? (
+              <>
+                <span className="lb-nav-link lb-nav-guest" aria-label={`Invité ${account.member.pseudo}`}>Invité · {account.member.pseudo}</span>
+                <Link className="lb-nav-link" href="/connexion?mode=signUp">Créer un compte</Link>
+                <SignOutButton className="lb-nav-link" />
+              </>
+            ) : (
+              <>
+                <ProfileButton
+                  name={account.member.effectiveName}
+                  accountName={account.member.accountName}
+                  needsOnboarding={account.member.needsOnboarding}
+                  preset={account.member.avatarPreset}
+                  hasAvatar={account.member.avatarPath !== null}
+                />
+                <SignOutButton className="lb-nav-link" />
+              </>
+            )
+          ) : (
+            <Link className="lb-nav-link" href="/connexion">Connexion</Link>
+          )}
         </nav>
       </header>
     );
