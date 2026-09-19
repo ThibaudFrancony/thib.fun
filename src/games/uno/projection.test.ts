@@ -41,6 +41,27 @@ describe("UNO projection", () => {
     expect(view.players[0].score).toBe(50);
   });
 
+  it("ne divulgue la prochaine carte qu'au joueur actif, avec sa jouabilité", () => {
+    const alice = projectUno(state, DEFAULT_UNO_CONFIG, "alice", ["alice", "bob"], [{ id: "alice", pseudo: "Alice" }, { id: "bob", pseudo: "Bob" }]);
+    expect(alice.nextDrawCard?.id).toBe("draw");
+    expect(alice.nextDrawPlayable).toBe(false);
+    const bob = projectUno(state, DEFAULT_UNO_CONFIG, "bob", ["alice", "bob"], [{ id: "alice", pseudo: "Alice" }, { id: "bob", pseudo: "Bob" }]);
+    expect(bob.nextDrawCard).toBeNull();
+    expect(bob.nextDrawPlayable).toBe(false);
+    expect(JSON.stringify(bob)).not.toContain('"draw"');
+  });
+
+  it("signale une prochaine carte jouable et la masque si la pioche doit être recyclée", () => {
+    const playable: UnoState = { ...state, drawPile: [{ id: "draw-red-7", color: "red", symbol: "7" }] };
+    const view = projectUno(playable, DEFAULT_UNO_CONFIG, "alice", ["alice", "bob"], [{ id: "alice", pseudo: "Alice" }, { id: "bob", pseudo: "Bob" }]);
+    expect(view.nextDrawCard?.id).toBe("draw-red-7");
+    expect(view.nextDrawPlayable).toBe(true);
+    const empty: UnoState = { ...state, drawPile: [] };
+    const recycled = projectUno(empty, DEFAULT_UNO_CONFIG, "alice", ["alice", "bob"], [{ id: "alice", pseudo: "Alice" }, { id: "bob", pseudo: "Bob" }]);
+    expect(recycled.nextDrawCard).toBeNull();
+    expect(recycled.nextDrawPlayable).toBe(false);
+  });
+
   it("pendant une attente +2, seuls les +2 sont jouables et la prise est proposée", () => {
     const pending: UnoState = {
       ...state,
@@ -56,6 +77,9 @@ describe("UNO projection", () => {
     expect(view.playableCardIds).toEqual(["blue-2"]);
     expect(view.actions.canDraw).toBe(true);
     expect(view.actions.canPlay).toBe(true);
+    // Une prise de cumul tire plusieurs cartes : pas d'aperçu de la prochaine.
+    expect(view.nextDrawCard).toBeNull();
+    expect(view.nextDrawPlayable).toBe(false);
     expect(view.opponentHand).toBeNull();
     expect(JSON.stringify(view)).not.toContain("secret-bob");
     expect(hasOpponentHandLeak(view)).toBe(false);

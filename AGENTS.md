@@ -72,7 +72,7 @@ Les slugs techniques sont stables. Les noms d'affichage sont des propositions mo
 - PostgreSQL est la source de vérité. Commit atomique et contrôle de version, identifiants de commande idempotents, résultats calculés une seule fois.
 - Realtime informe ; un message manqué se récupère par relecture d'un snapshot. Le moteur ne dépend pas de la livraison exactement une fois d'un message.
 - Horloge de la base et tâches durables pour les échéances. Ni `setTimeout` serveur, ni onglet du créateur, ni Vercel Cron à la minute comme seule horloge des tours.
-- Aucun secret dans `NEXT_PUBLIC_*`, le bundle, les projections, les logs ou les événements Realtime. Aucune table d'état complet publiée dans Postgres Changes.
+- Aucun secret dans `NEXT_PUBLIC_*`, le bundle, les projections, les logs ou les événements Realtime, sauf exception documentée (pioche UNO anticipée, décision du 19 septembre 2026). Aucune table d'état complet publiée dans Postgres Changes.
 - RLS sur toutes les tables exposées ; droits SQL explicitement révoqués puis accordés. Les RPC privilégiées ne sont exécutables que par le rôle serveur.
 - Une partie conserve versions de règles, moteur et contenu. Ne pas casser les parties en cours lors d'un déploiement.
 - Égalités et scores coopératifs sont des résultats distincts. Ne pas inventer de défaite dans les jeux coopératifs.
@@ -145,6 +145,14 @@ Les slugs techniques sont stables. Les noms d'affichage sont des propositions mo
 - Nouvelle règle : placements simultanés en ordre libre dans une échéance partagée unique (60 s par défaut). Le premier `PLACE_CITY` garde phaseId et échéance sans réarmer le chrono ; le second révèle et crédite. Le timeout `turn_timeout` met 0 à tous les sièges sans placement puis révèle. `turnInRound` est conservé mais ignoré (compatibilité des parties en cours, versions `geographie-1`/`geographie-engine-1` inchangées). La projection expose `avatarPreset` par joueur (photo signée chargée côté client via `GET /api/rooms/[roomId]/avatars`) ; la carte affiche photo + pseudo au-dessus de chaque guess, le marqueur auteur restant visible après sa propre validation.
 - Périmètre : `src/games/geographie/engine.ts` (auth, premier placement sans nouveau job, timeout global), `projection.ts` (`active = !submitted`, `avatarPreset`, helper `geoAvatarPresetFromSnapshot`), `types.ts` (`GeoViewPlayer.avatarPreset`), `components/geography-match.tsx` (statuts, `useRoomAvatars`, panneaux), `components/geography-map.tsx` (marqueurs avatar + pseudo), `globals.css` (`.geo-guess-*`, `.geo-player-identity`, `.geo-round-player`), routes `commands`/`start`, `worker.ts` (identités), tests `engine.test.ts` + fixture `network-regressions.spec.ts`, `docs/games/03-geographie.md` §1/§4/§5/§6/§7/§8, `docs/08-engine-contracts.md` §5/§6. Aucune migration, aucun changement de transport Realtime ni de contrat de partie.
 - Raison : supprimer l'attente artificielle tour par tour (une seule attente réelle : la validation adverse) tout en gardant l'équité (placement adverse caché jusqu'au reveal), et rendre la révélation lisible d'un coup d'œil entre amis.
+
+### Pioche UNO anticipée — exception à « aucun secret dans les projections » (19 septembre 2026)
+
+- Demande utilisateur : le tour ne bascule qu'une seconde après la fin de l'animation, ce qui paraît lent ; révéler la carte piochée dès l'atterrissage du vol, en chargeant la prochaine carte de la pioche dans la projection, en acceptant le risque de triche puisque la partie est privée entre amis.
+- Ancienne règle : `AGENTS.md` (« Aucun secret dans … les projections ») et `docs/games/05-uno.md` §5 (« ordre restant pioche toujours caché ») interdisaient d'exposer une carte non révélée.
+- Nouvelle règle : la projection UNO expose `nextDrawCard` (sommet exact de `drawPile`) et `nextDrawPlayable` (jouabilité calculée serveur) **au seul joueur dont c'est le tour**, pendant la phase `playing`, hors pénalité en attente et si la pioche n'est pas vide. Le reste de la pioche, la main adverse et l'état complet restent privés ; aucune autre projection ni aucun autre jeu n'est concerné.
+- Périmètre : `src/games/uno/types.ts`, `src/games/uno/projection.ts`, `src/games/uno/optimistic.ts`, `src/games/uno/components/uno-match.tsx`, tests Vitest et E2E fixtures, `docs/games/05-uno.md` §5/§7/§8, `progression.md`. Aucune migration, aucun changement de moteur, de commande, d'API, de RLS ni de transport.
+- Raison : supprimer l'attente après l'animation de pioche sans mentir au joueur (la carte et sa jouabilité sont connues d'avance), la triche par inspection réseau étant considérée comme hors menaces pour un site privé entre deux amis. Le client n'utilise cette information que pour l'affichage ; le serveur reste seul décideur.
 
 ### Mise à jour proactive du suivi
 

@@ -106,6 +106,16 @@ export type UnoView = {
   hand: UnoCardView[];
   opponentHand: UnoCardView[] | null;
   drawnCard: UnoCardView | null;
+  /**
+   * Prochaine carte de la pioche, exposée au seul joueur actif (décision du
+   * 19/09/2026) pour révéler la carte piochée à la fin de l'animation.
+   * `null` pour l'autre joueur, hors phase `playing`, ou quand la pioche est
+   * vide (le sommet serait remélangé au moment du tirage). Champ optionnel
+   * pour relire les vues persistées avant ce changement.
+   */
+  nextDrawCard?: UnoCardView | null;
+  /** La prochaine carte serait jouable après pioche (calcul serveur). */
+  nextDrawPlayable?: boolean;
   playableCardIds: string[];
   pendingPenalty: UnoPendingPenalty | null;
   players: [UnoPlayerView, UnoPlayerView];

@@ -76,6 +76,14 @@ export function projectUno(
   const drawnCard = active && state.phase === "after_draw" && state.drawnCardId
     ? ownHand.find((card) => card.id === state.drawnCardId) ?? null
     : null;
+  // La prochaine carte n'est divulguée qu'au joueur actif pendant `playing` :
+  // le client peut révéler sa pioche sans attendre l'aller-retour serveur.
+  // Pioche vide = recyclage remélangé au tirage, donc sommet inconnu ;
+  // une pénalité en attente se prend en bloc (plusieurs cartes), sans aperçu.
+  const nextDrawCard = active && state.phase === "playing" && !state.pendingPenalty ? state.drawPile[0] ?? null : null;
+  const nextDrawPlayable = nextDrawCard !== null
+    && !state.pendingPenalty
+    && isUnoCardPlayable(nextDrawCard, state, viewerSeat);
   return {
     kind: "uno",
     stateSchemaVersion: 1,
@@ -89,6 +97,8 @@ export function projectUno(
     hand: ownHand,
     opponentHand: state.phase === "finished" ? state.hands[(1 - viewerSeat) as Seat] : null,
     drawnCard,
+    nextDrawCard,
+    nextDrawPlayable,
     playableCardIds,
     pendingPenalty: state.pendingPenalty ?? null,
     players,

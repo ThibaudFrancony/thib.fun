@@ -114,6 +114,69 @@ test("une carte jouée reste sur la défausse pendant l'attente serveur puis rev
   await expect(page.locator(".uno-discard-optimistic")).toHaveCount(0);
 });
 
+test("le tour passe à l'adversaire à la fin du vol, avant la réponse serveur", async ({ page }) => {
+  const twoCards = view([{ id: "red-5", color: "red", symbol: "5" }, { id: "blue-9", color: "blue", symbol: "9" }]);
+  await page.route(`**/api/matches/${matchId}`, async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(response(twoCards)) });
+  });
+  await page.route(`**/api/matches/${matchId}/commands`, async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 5_000));
+    await route.abort("failed");
+  });
+  await page.goto(`/parties/${matchId}`);
+  await expect(page.getByRole("heading", { name: /2 cartes/ })).toBeVisible();
+  await page.getByRole("button", { name: "5 · jouable" }).click();
+  await expect(page.locator(".uno-discard-optimistic")).toBeVisible();
+  await expect(page.getByText(/Au tour de Bob/)).toBeVisible();
+  await expect(page.getByRole("heading", { name: /1 carte/ })).toBeVisible();
+  await expect(page.getByText(/À ton tour/)).toBeVisible({ timeout: 8_000 });
+  await expect(page.locator(".uno-discard-optimistic")).toHaveCount(0);
+});
+
+test("une pioche préchargée non jouable passe la main dès l'atterrissage", async ({ page }) => {
+  const fixture = view([{ id: "red-5", color: "red", symbol: "5" }]);
+  fixture.nextDrawCard = { id: "green-2", color: "green", symbol: "2" };
+  fixture.nextDrawPlayable = false;
+  await page.route(`**/api/matches/${matchId}`, async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(response(fixture)) });
+  });
+  await page.route(`**/api/matches/${matchId}/commands`, async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 5_000));
+    await route.abort("failed");
+  });
+  await page.goto(`/parties/${matchId}`);
+  await expect(page.getByRole("heading", { name: /1 carte/ })).toBeVisible();
+  await page.getByRole("button", { name: "Piocher une carte" }).click();
+  await expect(page.getByRole("button", { name: "2", exact: true })).toBeVisible();
+  await expect(page.getByText(/Au tour de Bob/)).toBeVisible();
+  await expect(page.getByRole("heading", { name: /2 cartes/ })).toBeVisible();
+  await expect(page.locator(".uno-hand-placeholder")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Piocher une carte" })).toBeEnabled({ timeout: 8_000 });
+  await expect(page.getByRole("button", { name: "2", exact: true })).toHaveCount(0);
+});
+
+test("une pioche préchargée jouable propose la carte piochée sans attendre le serveur", async ({ page }) => {
+  const fixture = view([{ id: "red-5", color: "red", symbol: "5" }]);
+  fixture.nextDrawCard = { id: "red-7", color: "red", symbol: "7" };
+  fixture.nextDrawPlayable = true;
+  await page.route(`**/api/matches/${matchId}`, async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(response(fixture)) });
+  });
+  await page.route(`**/api/matches/${matchId}/commands`, async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 5_000));
+    await route.abort("failed");
+  });
+  await page.goto(`/parties/${matchId}`);
+  await expect(page.getByRole("heading", { name: /1 carte/ })).toBeVisible();
+  await page.getByRole("button", { name: "Piocher une carte" }).click();
+  await expect(page.getByText("Joue la carte piochée ou garde-la.")).toBeVisible();
+  await expect(page.getByRole("button", { name: "7 · jouable" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Garder la carte" })).toBeDisabled();
+  await expect(page.getByText(/Au tour de Bob/)).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: /1 carte/ })).toBeVisible({ timeout: 8_000 });
+  await expect(page.getByRole("button", { name: "7 · jouable" })).toHaveCount(0);
+});
+
 test("un clic sur la pioche envoie une commande DRAW", async ({ page }) => {
   await openFixture(page, view([{ id: "red-5", color: "red", symbol: "5" }]));
   const actions: string[] = [];
