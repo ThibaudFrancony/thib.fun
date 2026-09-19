@@ -68,7 +68,7 @@ export function GroupLaunchControls({
       {group.memberCount < 2 && <p className="geo-panel-note">En attente du deuxième joueur…</p>}
       {error && <p role="alert" className="geo-error">{error}</p>}
       <button type="button" disabled={busy || !canLaunch} onClick={() => void launch()} className="geo-primary-button">
-        {busy ? "Lancement…" : "Lancer la partie"}
+        {busy ? "Lancement…" : "Jouer"}
       </button>
     </>
   );

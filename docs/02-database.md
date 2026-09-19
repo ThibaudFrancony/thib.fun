@@ -192,7 +192,8 @@ Toutes les RPC `server_*` suivantes sont exécutables uniquement par rôle serve
 | `server_provision_account(actor, pseudo?)` | provisionnement/rattrapage idempotent du profil et de l’admission du compte Auth courant |
 | `server_create_room(actor, requestId, slug, config)` | membre actif, limite salons, code unique, siège 0 + projection + reçu |
 | `server_create_lobby(actor, requestId)` | salon d'accueil sans jeu (`game_slug` null) ; renvoie le salon générique actif existant du membre au lieu d'en créer un second, code unique, siège 0 + projection + reçu |
-| `server_get_active_lobby(actor)` | salon générique actif d'un membre (`waiting`, `game_slug is null`, non expiré) ; même forme que `server_get_room` (viewerId, hostId, expiresAt), `null` sinon |
+| `server_get_active_lobby(actor)` | salon générique actif d'un membre (`waiting`, `game_slug is null`, non expiré) ; même forme que `server_get_room` (viewerId, hostId, expiresAt), `null` sinon ; utilisé par `server_create_lobby` pour réutiliser un salon d'accueil |
+| `server_get_active_room(actor)` | salon actif le plus récent d'un membre (`waiting` ou `playing`, avec ou sans jeu, non expiré) ; même forme que `server_get_room`, `null` sinon ; sert la découverte cliente (`/lobbies/active`) et les pages de jeu |
 | `server_prepare_lobby_match(actor, commandId, roomVersion, slug, config)` | hôte seul, salon complet et en attente : pose le jeu et la configuration, marque les deux joueurs prêts de façon atomique, puis la route serveur lance la partie habituelle |
 | `server_join_room(actor, requestId, code)` | verrou salon, existe/en attente/non expiré, place, join idempotent |
 | `server_change_room(actor, commandId, expectedVersion, action)` | ready/config/leave/rematch, droits hôte, projections atomiques |

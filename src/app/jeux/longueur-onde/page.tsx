@@ -1,13 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
-import { GroupRoomBanner } from "@/components/group-room-banner";
-import { getActiveLobbyForViewer } from "@/server/lobbies";
+import { GameRoomAside } from "@/components/game-room-aside";
+import { getActiveRoomForViewer } from "@/server/lobbies";
 import { RoomJoin } from "@/games/geographie/components/geography-setup";
 import { LongueurOndeSetup } from "@/games/longueur-onde/components/longueur-onde-setup";
 
 export default async function LongueurOndePage() {
-  const group = await getActiveLobbyForViewer();
+  const group = await getActiveRoomForViewer();
   return (
     <main className="geo-page game-landing">
       <div className="geo-hx-bg" aria-hidden="true">
@@ -32,7 +32,7 @@ export default async function LongueurOndePage() {
               <Fact title="100 % coop" text="Un score partagé, jamais de perdant" />
             </div>
           </section>
-          <div className="geo-hx-actions"><LongueurOndeSetup groupRoomId={group?.roomId} />{group ? <GroupRoomBanner roomId={group.roomId} /> : <RoomJoin />}</div>
+          <div className="geo-hx-actions"><LongueurOndeSetup groupRoomId={group?.roomId} /><GameRoomAside groupRoomId={group?.roomId} fallback={<RoomJoin />} /></div>
         </div>
       </div>
     </main>

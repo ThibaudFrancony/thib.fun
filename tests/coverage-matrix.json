@@ -6,7 +6,7 @@
       "id": "unit-and-contracts",
       "label": "Unitaires et contrats serveur",
       "status": "pass",
-      "evidence": "Chat, amis, cache et admin du 18/09 : 72 fichiers, 488 tests réussis et 2 sentinelles d'échec attendu ; s'ajoutent le formatage du chat, les schémas zod du chat/amis (contrat `member` objet ou null), le cache par conversation (fusion de pages, hasMore, péremption), les schémas admin, le filtre des jeux masqués sur l'accueil et les gardes des routes admin (401/403/ok), et les routes résumé, demandes d'ami et envoi de message (multipart, upload, nettoyage). Les contrats existants restent exécutés."
+      "evidence": "Salon actif du 19/09 : 75 fichiers, 497 tests réussis et 2 sentinelles d'échec attendu, dont le test statique `src/server/rooms/active-room-rpc.test.ts` (server_get_active_room sans filtre de jeu, privilèges, header de jeu, découverte joker). S'y ajoutent le formatage du chat, les schémas zod du chat/amis (contrat `member` objet ou null), le cache par conversation (fusion de pages, hasMore, péremption), les schémas admin, le filtre des jeux masqués sur l'accueil et les gardes des routes admin (401/403/ok), et les routes résumé, demandes d'ami et envoi de message (multipart, upload, nettoyage). Les contrats existants restent exécutés."
     },
     {
       "id": "admin-console-browser",
@@ -36,7 +36,13 @@
       "id": "home-salon-browser",
       "label": "Salon d'accueil générique (créer / rejoindre / groupe)",
       "status": "pass",
-      "evidence": "Run local du 18/09, Docker/Supabase isolé, Next dev 127.0.0.1:3000, deux comptes Alice/Bob : création du salon depuis la modale du header, rejoindre par code avec code masqué, remplissage de la seconde place en direct, mode groupe sur `/jeux/geographie` sans interface créer/rejoindre, `server_prepare_lobby_match` puis `server_start_match` menant les deux joueurs à `/parties/<id>`, et quitter le groupe qui libère la place. 2/2 sur Chromium desktop et iPhone 13 mobile ; migrations distantes non appliquées."
+      "evidence": "Run local du 18/09, Docker/Supabase isolé, Next dev 127.0.0.1:3000, deux comptes Alice/Bob : création du salon depuis la modale du header, rejoindre par code avec code masqué, remplissage de la seconde place en direct, mode groupe sur `/jeux/geographie` sans interface créer/rejoindre, `server_prepare_lobby_match` puis `server_start_match` menant les deux joueurs à `/parties/<id>`, et quitter le groupe qui libère la place. 2/2 sur Chromium desktop et iPhone 13 mobile ; migrations distantes appliquées ensuite. La spec a été enrichie le 19/09 (chip salon dans le header de jeu, bouton « Jouer », scénario salon avec jeu posé) : ces nouvelles assertions ne sont pas rejouées, voir active-room-browser."
+    },
+    {
+      "id": "active-room-browser",
+      "label": "Salon actif hors de sa page (jeu posé) et bouton Jouer",
+      "status": "not-run",
+      "evidence": "Ajouts du 19/09 non exécutés : `tests/e2e/home-salon.spec.ts` attend désormais le chip salon dans le header `geo`, le bouton « Jouer » et un nouveau scénario « salon créé depuis une page de jeu, toujours détecté à l'accueil puis sur une autre page de jeu ». La migration `20260919095951_step12_active_room` doit être appliquée au distant et la suite exige Docker/Supabase local ; recette Docker refusée dans la tâche du 19/09, donc pgTAP et Playwright restent à lancer."
     },
     {
       "id": "database-pgtap",

@@ -42,6 +42,7 @@ export async function SiteHeader({ variant = "default" }: { variant?: "default" 
         <nav className="geo-nav" aria-label="Navigation principale">
           <Link className="geo-nav-link" href="/">Jeux</Link>
           <Link className="geo-nav-link" href="/historique">Historique</Link>
+          <SalonLauncher connected={Boolean(account)} triggerClassName="geo-nav-link" />
           {account ? account.isGuest ? <><span className="geo-nav-link" aria-label={`Invité ${account.member.pseudo}`}>Invité · {account.member.pseudo}</span><Link className="geo-nav-link" href="/connexion?mode=signUp">Créer un compte</Link><SignOutButton className="geo-nav-link" /></> : <><ProfileButton name={account.member.effectiveName} accountName={account.member.accountName} needsOnboarding={account.member.needsOnboarding} preset={account.member.avatarPreset} hasAvatar={account.member.avatarPath !== null} /><SignOutButton className="geo-nav-link" /></> : <Link className="geo-nav-link" href="/connexion">Connexion</Link>}
         </nav>
       </header>

@@ -476,8 +476,8 @@ export async function createLobby(actorId: string, requestId: string): Promise<R
   return response.data as Record<string, unknown>;
 }
 
-export async function getActiveLobby(actorId: string): Promise<Record<string, unknown> | null> {
-  const response = await createAdminClient().rpc("server_get_active_lobby", { p_actor: actorId });
+export async function getActiveRoom(actorId: string): Promise<Record<string, unknown> | null> {
+  const response = await createAdminClient().rpc("server_get_active_room", { p_actor: actorId });
   if (response.error) throw new Error(rpcErrorCode(response.error.message, "DATABASE_UNAVAILABLE"));
   return (response.data as Record<string, unknown> | null) ?? null;
 }

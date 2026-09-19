@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { postJson } from "@/lib/client-request";
-import { useGroupRoom } from "@/lib/group-room";
+import { useActiveGroupRoom } from "@/lib/group-room";
 import { GroupLaunchControls } from "@/components/group-launch-controls";
 import { DEFAULT_TROU_NOIR_CONFIG, type TrouNoirCategory, type TrouNoirConfig } from "@/games/trou-noir/config";
 
@@ -20,8 +20,7 @@ export function TrouNoirSetup({ groupRoomId }: { groupRoomId?: string } = {}) {
   const [config, setConfig] = useState<TrouNoirConfig>(DEFAULT_TROU_NOIR_CONFIG);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const group = useGroupRoom(groupRoomId ?? null);
-  const inGroup = Boolean(groupRoomId);
+  const { group, inGroup } = useActiveGroupRoom(groupRoomId);
 
   function toggleCategory(value: TrouNoirCategory) {
     setConfig((current) => ({

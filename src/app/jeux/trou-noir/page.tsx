@@ -1,12 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
-import { GroupRoomBanner } from "@/components/group-room-banner";
-import { getActiveLobbyForViewer } from "@/server/lobbies";
+import { GameRoomAside } from "@/components/game-room-aside";
+import { getActiveRoomForViewer } from "@/server/lobbies";
 import { TrouNoirRoomJoin, TrouNoirSetup } from "@/games/trou-noir/components/trou-noir-setup";
 
 export default async function TrouNoirSetupPage() {
-  const group = await getActiveLobbyForViewer();
+  const group = await getActiveRoomForViewer();
   return (
     <main className="geo-page game-landing">
       <div className="geo-hx-bg" aria-hidden="true">
@@ -32,7 +32,7 @@ export default async function TrouNoirSetupPage() {
               <Fact title="5 catégories" text="Niveaux 3 à 6" />
             </div>
           </section>
-          <div className="geo-hx-actions"><TrouNoirSetup groupRoomId={group?.roomId} />{group ? <GroupRoomBanner roomId={group.roomId} /> : <TrouNoirRoomJoin />}</div>
+          <div className="geo-hx-actions"><TrouNoirSetup groupRoomId={group?.roomId} /><GameRoomAside groupRoomId={group?.roomId} fallback={<TrouNoirRoomJoin />} /></div>
         </div>
       </div>
     </main>

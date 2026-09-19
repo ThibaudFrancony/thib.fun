@@ -35,7 +35,7 @@ type MatchCommand = {
 | POST `/rooms` | requestId, gameSlug, config | roomView avec code/lien |
 | POST `/rooms/join` | requestId, code | roomView ; espace/casse normalisés |
 | POST `/lobbies` | requestId | cree (ou renvoie) le salon d'accueil generique du membre, sans jeu ni configuration |
-| GET `/lobbies/active` | — | salon d'accueil actif du membre (`null` sinon), projection authentifiee |
+| GET `/lobbies/active` | — | salon actif du membre, generique ou avec jeu pose (`null` sinon), projection authentifiee ; sert la decouverte continue du header et des pages de jeu |
 | POST `/lobbies/:id/prepare` | commandId, expectedVersion, gameSlug, config | hote seul : pose le jeu/la configuration et marque les deux joueurs prets dans le salon d'accueil |
 | GET `/rooms/:id` | — | projection du membre |
 | POST `/rooms/:id/commands` | commandId, expectedVersion, type, payload | roomView |
@@ -85,7 +85,7 @@ type MatchView = {
 };
 ```
 
-`allowedActions` est ergonomique, le serveur vérifie encore. Si phase simultanée, activePlayerId=null et game comporte `submittedByPlayer`, sans réponse cachée. Result expose seulement les données de fin autorisées. RoomView : id/code/hôte/slug/config/version/membres(prêt,lastSeen)/status/currentMatchId. Un salon d'accueil avant choix du jeu porte `gameSlug = null` ; les pages de jeu détectent ce groupe via `/lobbies/active` et masquent alors créer/rejoindre. Pas de tokens d'invitation de compte dans les salons.
+`allowedActions` est ergonomique, le serveur vérifie encore. Si phase simultanée, activePlayerId=null et game comporte `submittedByPlayer`, sans réponse cachée. Result expose seulement les données de fin autorisées. RoomView : id/code/hôte/slug/config/version/membres(prêt,lastSeen)/status/currentMatchId. Un salon d'accueil avant choix du jeu porte `gameSlug = null`, mais un salon avec jeu posé reste détecté par `/lobbies/active` (`server_get_active_room`, `waiting` ou `playing`) : le header et les pages de jeu gardent alors le salon et masquent créer/rejoindre. La découverte du header relit au montage, toutes les 5 s, au retour de focus et sur tout `room.updated` (`id: "*"`), donc un membre ne perd plus son propre salon. Pas de tokens d'invitation de compte dans les salons.
 
 ## 4. Broadcast et réconciliation
 

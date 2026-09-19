@@ -105,3 +105,87 @@ export function useGroupRoom(roomId: string | null, options: { redirectOnStart?:
     leave,
   };
 }
+
+export type ActiveRoomDiscovery = {
+  roomId: string | null;
+  loading: boolean;
+  refresh: () => Promise<string | null>;
+  /** Pose une valeur immédiate (création, arrivée dans un salon, sortie). */
+  remember: (roomId: string | null) => void;
+};
+
+const ACTIVE_ROOM_POLL_MS = 5000;
+
+/**
+ * Découverte continue du salon actif du visiteur (générique ou avec jeu posé).
+ * Le serveur est la source de vérité : relecture au montage, toutes les 5 s,
+ * au retour de focus/visibilité et à chaque invalidation Realtime. Une erreur
+ * réseau conserve la dernière valeur connue pour ne pas basculer à tort en
+ * « créer / rejoindre ».
+ */
+export function useActiveRoomDiscovery(enabled = true): ActiveRoomDiscovery {
+  const [state, setState] = useState<{ roomId: string | null; loading: boolean }>({ roomId: null, loading: enabled });
+  const sequenceRef = useRef(0);
+
+  const refresh = useCallback(async (): Promise<string | null> => {
+    const sequence = ++sequenceRef.current;
+    const result = await fetch("/api/lobbies/active", { cache: "no-store" })
+      .then(async (response) => ({
+        ok: response.ok,
+        data: (await response.json().catch(() => null)) as { lobby?: { roomId?: string } | null } | null,
+      }))
+      .catch(() => null);
+    if (sequence !== sequenceRef.current) return null;
+    if (!result || !result.ok) {
+      setState((current) => ({ ...current, loading: false }));
+      return null;
+    }
+    const roomId = typeof result.data?.lobby?.roomId === "string" ? result.data.lobby.roomId : null;
+    setState({ roomId, loading: false });
+    return roomId;
+  }, []);
+
+  const remember = useCallback((roomId: string | null) => {
+    sequenceRef.current += 1;
+    setState({ roomId, loading: false });
+  }, []);
+
+  useEffect(() => {
+    if (!enabled) return;
+    // Premier appel différé d'un tick : `set-state-in-effect` refuse un setState
+    // synchrone déclenché depuis le corps de l'effet.
+    const initial = window.setTimeout(() => void refresh(), 0);
+    const poll = window.setInterval(() => void refresh(), ACTIVE_ROOM_POLL_MS);
+    const onFocus = () => void refresh();
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") void refresh();
+    };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.clearTimeout(initial);
+      window.clearInterval(poll);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [enabled, refresh]);
+
+  useUserRealtime(
+    enabled ? [{ event: "room.updated", id: "*", onInvalidate: () => void refresh() }] : [],
+    { enabled },
+  );
+
+  return { roomId: state.roomId, loading: enabled ? state.loading : false, refresh, remember };
+}
+
+/**
+ * Salon actif d'un écran de jeu : l'identifiant détecté côté serveur est
+ * prioritaire, sinon la découverte cliente prend le relais pour éviter de
+ * réafficher « créer / rejoindre » alors que le joueur est déjà dans un salon.
+ */
+export function useActiveGroupRoom(groupRoomId?: string): { roomId: string | null; inGroup: boolean; group: GroupRoomState } {
+  const discovery = useActiveRoomDiscovery(!groupRoomId);
+  const roomId = groupRoomId ?? discovery.roomId ?? null;
+  const group = useGroupRoom(roomId);
+  return { roomId, inGroup: Boolean(roomId), group };
+}

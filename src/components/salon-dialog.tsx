@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { PUBLIC_GAMES } from "@/games/registry";
 import { postJson } from "@/lib/client-request";
-import { useGroupRoom, type GroupRoomState } from "@/lib/group-room";
+import { useActiveRoomDiscovery, useGroupRoom, type GroupRoomState } from "@/lib/group-room";
 import { useRoomAvatars } from "@/lib/room-avatars";
 import { Avatar } from "@/components/avatar";
 import type { RoomView } from "@/server/rooms/schemas";
@@ -28,29 +28,13 @@ function SalonDoor({ disabled, onClick }: { disabled: boolean; onClick: () => vo
  * (sans voile ni flou) permet de créer ou rejoindre un salon. Une fois le
  * groupe formé, le bouton laisse place à un badge inline (ronds, code, porte).
  */
-export function SalonLauncher({ connected }: { connected: boolean }) {
-  const [lobbyId, setLobbyId] = useState<string | null>(null);
-  const [loaded, setLoaded] = useState(false);
+export function SalonLauncher({ connected, triggerClassName = "home-auth-link" }: { connected: boolean; triggerClassName?: string }) {
+  const discovery = useActiveRoomDiscovery(connected);
   const [panel, setPanel] = useState<Panel>(null);
   const anchorRef = useRef<HTMLDivElement>(null);
-  const group = useGroupRoom(lobbyId);
-
-  useEffect(() => {
-    let cancelled = false;
-    void fetch("/api/lobbies/active", { cache: "no-store" })
-      .then(async (response) => (response.ok ? await response.json() : null))
-      .then((data: { lobby?: RoomView | null } | null) => {
-        if (cancelled) return;
-        setLobbyId(data?.lobby?.roomId ?? null);
-        setLoaded(true);
-      })
-      .catch(() => {
-        if (!cancelled) setLoaded(true);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const group = useGroupRoom(discovery.roomId);
+  const lobbyId = discovery.roomId;
+  const loaded = !discovery.loading;
 
   useEffect(() => {
     if (!panel) return;
@@ -74,7 +58,7 @@ export function SalonLauncher({ connected }: { connected: boolean }) {
     const ok = await group.leave();
     if (ok) {
       setPanel(null);
-      setLobbyId(null);
+      discovery.remember(null);
     }
   }
 
@@ -106,7 +90,7 @@ export function SalonLauncher({ connected }: { connected: boolean }) {
       ) : (
         <button
           type="button"
-          className="home-auth-link salon-trigger"
+          className={`${triggerClassName} salon-trigger`}
           onClick={() => setPanel(panel ? null : "choice")}
           aria-expanded={panel !== null}
         >
@@ -119,14 +103,14 @@ export function SalonLauncher({ connected }: { connected: boolean }) {
           {!connected ? (
             <SalonAuthPrompt onClose={() => setPanel(null)} />
           ) : panel === "group" ? (
-            <SalonGroupBody group={group} room={room} seat0={seat0} seat1={seat1} full={full} avatars={avatars} onDoor={() => void leaveGroup()} />
+            <SalonGroupBody group={group} room={room} seat0={seat0} seat1={seat1} full={full} avatars={avatars} onDoor={() => void leaveGroup()} onClose={() => setPanel(null)} />
           ) : (
             <SalonChoice
               step={panel}
               onStep={setPanel}
               onCreated={(roomId) => {
+                discovery.remember(roomId);
                 setPanel(null);
-                setLobbyId(roomId);
               }}
             />
           )}
@@ -244,6 +228,7 @@ function SalonGroupBody({
   full,
   avatars,
   onDoor,
+  onClose,
 }: {
   group: GroupRoomState;
   room: RoomView | null;
@@ -252,6 +237,7 @@ function SalonGroupBody({
   full: boolean;
   avatars: Record<string, string>;
   onDoor: () => void;
+  onClose: () => void;
 }) {
   const [copyStatus, setCopyStatus] = useState<string | null>(null);
 
@@ -281,7 +267,7 @@ function SalonGroupBody({
       <div className="salon-group-head">
         <div>
           <p className="salon-kicker">Groupe</p>
-          <h2 className="salon-title">{full ? "Vous êtes deux" : "En attente"}</h2>
+          <h2 className="salon-title">{room.currentMatchId ? "Partie en cours" : full ? "Vous êtes deux" : "En attente"}</h2>
         </div>
       </div>
 
@@ -299,7 +285,16 @@ function SalonGroupBody({
       {copyStatus && <p role="status" className="salon-status">{copyStatus}</p>}
       {!full && <p className="salon-text">{group.isHost ? "Partage le code à ton adversaire, ou clique un jeu dès qu'il rejoint." : "Attends l'hôte."}</p>}
 
-      {full && (
+      {full && room.currentMatchId && (
+        <>
+          <p className="salon-label">Partie en cours</p>
+          <Link href={`/parties/${room.currentMatchId}`} className="salon-button salon-button-primary" onClick={onClose}>
+            Reprendre
+          </Link>
+        </>
+      )}
+
+      {full && !room.currentMatchId && (
         <>
           <p className="salon-label">Choisis le jeu</p>
           <div className="salon-games">

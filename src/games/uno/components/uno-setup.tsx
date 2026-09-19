@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { postJson } from "@/lib/client-request";
-import { useGroupRoom } from "@/lib/group-room";
+import { useActiveGroupRoom } from "@/lib/group-room";
 import { GroupLaunchControls } from "@/components/group-launch-controls";
 import { DEFAULT_UNO_CONFIG, type UnoConfig } from "@/games/uno/config";
 import { RoomJoin } from "@/games/geographie/components/geography-setup";
@@ -13,8 +13,7 @@ export function UnoSetup({ groupRoomId }: { groupRoomId?: string } = {}) {
   const [config, setConfig] = useState<UnoConfig>(DEFAULT_UNO_CONFIG);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const group = useGroupRoom(groupRoomId ?? null);
-  const inGroup = Boolean(groupRoomId);
+  const { group, inGroup } = useActiveGroupRoom(groupRoomId);
 
   async function createRoom() {
     setBusy(true);

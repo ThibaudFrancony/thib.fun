@@ -51,18 +51,21 @@ test("crée un salon depuis l'accueil, invite, détecte le groupe et lance un je
     await expect(alice.locator(".salon-slot[data-filled='true']")).toHaveCount(2, { timeout: 15_000 });
     await expect(alice.locator(".salon-games")).toBeVisible();
 
-    // Clic sur le jeu : page normale, sans interface créer/rejoindre.
+    // Clic sur le jeu : page normale, sans interface créer/rejoindre, avec le
+    // salon toujours visible dans le header de jeu.
     await alice.getByRole("link", { name: "Géographie" }).click();
     await alice.waitForURL(/\/jeux\/geographie/);
     await expect(alice.locator(".group-room-banner")).toBeVisible({ timeout: 15_000 });
+    await expect(alice.locator(".geo-header .salon-chip")).toBeVisible({ timeout: 15_000 });
     await expect(alice.getByRole("button", { name: "Créer le salon" })).toHaveCount(0);
     await expect(alice.getByRole("button", { name: "Rejoindre le salon" })).toHaveCount(0);
 
     await bob.goto("/jeux/geographie");
     await expect(bob.locator(".group-room-banner")).toBeVisible({ timeout: 15_000 });
-    await expect(bob.getByRole("button", { name: "Lancer la partie" })).toHaveCount(0);
+    await expect(bob.locator(".geo-header .salon-chip")).toBeVisible({ timeout: 15_000 });
+    await expect(bob.getByRole("button", { name: "Jouer" })).toHaveCount(0);
 
-    const launch = alice.getByRole("button", { name: "Lancer la partie" });
+    const launch = alice.getByRole("button", { name: "Jouer" });
     await expect(launch).toBeEnabled({ timeout: 15_000 });
     await launch.click();
     await Promise.all([
@@ -108,4 +111,26 @@ test("le bouton porte fait quitter le groupe et libère la place", async ({ brow
   } finally {
     await bobContext.close();
   }
+});
+
+test("un salon avec jeu posé reste détecté hors de sa page", async ({ page: alice }) => {
+  alice.on("dialog", (dialog) => void dialog.accept());
+  await signIn(alice, aliceEmail, "/");
+  await resetLobby(alice);
+
+  // Salon créé depuis la page d'un jeu : `game_slug` est posé dès la création.
+  await alice.goto("/jeux/geographie");
+  await alice.getByRole("button", { name: "Créer le salon" }).click();
+  await alice.waitForURL(/\/salons\/[0-9a-f-]+$/);
+
+  // Retour à l'accueil : le badge du salon reste visible pour son propre compte.
+  await alice.goto("/");
+  await expect(alice.locator(".salon-chip")).toBeVisible({ timeout: 15_000 });
+
+  // Une autre page de jeu masque créer/rejoindre et garde le bandeau du groupe.
+  await alice.goto("/jeux/uno");
+  await expect(alice.locator(".group-room-banner")).toBeVisible({ timeout: 15_000 });
+  await expect(alice.locator(".geo-header .salon-chip")).toBeVisible({ timeout: 15_000 });
+  await expect(alice.getByRole("button", { name: "Créer le salon UNO" })).toHaveCount(0);
+  await expect(alice.getByRole("button", { name: "Rejoindre le salon" })).toHaveCount(0);
 });

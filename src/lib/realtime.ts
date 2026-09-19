@@ -8,6 +8,7 @@ export type UserRealtimeStatus = "SUBSCRIBING" | "SUBSCRIBED" | "CHANNEL_ERROR" 
 
 export type UserRealtimeListener = {
   event: UserRealtimeEvent;
+  /** Identifiant exact attendu, ou `"*"` pour écouter toutes les ressources de cet événement. */
   id: string;
   onInvalidate: (version: number) => void;
 };
@@ -84,7 +85,9 @@ export function useUserRealtime(
           || candidate.version < 0
         ) return;
         for (const listener of listenersRef.current) {
-          if (listener.event === event && listener.id === candidate.id) listener.onInvalidate(candidate.version);
+          if (listener.event === event && (listener.id === candidate.id || listener.id === "*")) {
+            listener.onInvalidate(candidate.version);
+          }
         }
       }
 

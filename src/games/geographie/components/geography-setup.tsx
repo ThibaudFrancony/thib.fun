@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { postJson } from "@/lib/client-request";
-import { useGroupRoom } from "@/lib/group-room";
+import { useActiveGroupRoom } from "@/lib/group-room";
 import { GroupLaunchControls } from "@/components/group-launch-controls";
 import { DEFAULT_GEO_CONFIG, type GeoConfig } from "@/games/geographie/config";
 
@@ -12,8 +12,7 @@ export function GeographySetup({ groupRoomId }: { groupRoomId?: string } = {}) {
   const [config, setConfig] = useState<GeoConfig>(DEFAULT_GEO_CONFIG);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const group = useGroupRoom(groupRoomId ?? null);
-  const inGroup = Boolean(groupRoomId);
+  const { group, inGroup } = useActiveGroupRoom(groupRoomId);
 
   function update<Key extends keyof GeoConfig>(key: Key, value: GeoConfig[Key]) {
     setConfig((current) => ({ ...current, [key]: value }));
