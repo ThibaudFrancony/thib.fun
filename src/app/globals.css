@@ -378,8 +378,6 @@ button.home-card-play[data-playable="true"]:focus-visible { outline: 3px solid #
 .home-carousel-dot[aria-current="true"] { background: linear-gradient(135deg, #ff5fa2, #ff8a5b); transform: scale(1.6); }
 .home-carousel-dot:disabled { cursor: default; }
 
-.home-carousel-shuffle-row { display: flex; justify-content: center; margin-top: clamp(0.6rem, 2vh, 1rem); }
-
 .home-carousel-shuffle[data-spinning="true"] { border-color: #ff5fa2; cursor: wait; }
 
 .home-carousel-shuffle[data-spinning="true"] svg { animation: home-shuffle-spin 0.9s linear infinite; }
@@ -412,6 +410,13 @@ button.home-card-play[data-playable="true"]:focus-visible { outline: 3px solid #
 
 @media (min-width: 640px) {
   .home-carousel-viewport { height: clamp(340px, 54vh, 660px); }
+}
+
+/* Trois boutons + neuf points doivent tenir sur petit mobile sans déborder. */
+@media (max-width: 480px) {
+  .home-carousel-controls { gap: 0.8rem; }
+  .home-carousel-arrow { width: 44px; height: 44px; }
+  .home-carousel-dots { gap: 0.4rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {

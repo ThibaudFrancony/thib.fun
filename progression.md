@@ -1319,3 +1319,11 @@ Ces corrections ne constituent pas des contradictions de l'utilisateur avec `AGE
 - Limites : sans recette navigateur (animation réelle, mobile, lecteur d'écran) ; E2E/pgTAP non rejoués (Docker opt-in, daemon fermé).
 - Difficultés réellement rencontrées : `pnpm lint` a refusé deux formes successives (setState synchrone dans l'effet de réinitialisation, puis écriture de ref pendant le rendu) — remplacées par une ref `totalRef` synchronisée dans un effet + annulation dans le callback d'animation. En fin de tâche, `pnpm typecheck` a échoué sur des doublons `* 2.ts` apparus à 21h23 dans `.next/types/` (artefacts générés gitignorés, cause externe : copie de fichiers pendant la session) — supprimés, typecheck repassé vert. Dépôt partagé avec des chantiers parallèles (resets/amends visibles dans le reflog, ref distante cassée `refs/remotes/origin/main 2`) : le diff a été relu avant commit pour ne pousser que ce périmètre.
 - Contradiction : aucune avec `AGENTS.md`.
+
+### 19/09/2026 — Accueil : bouton hasard à droite de la flèche droite
+
+- Demande utilisateur : le bouton shuffle, affiché seul sur sa rangée en bas à gauche, doit rejoindre la rangée des contrôles, à droite de la flèche « jeu suivant ».
+- Réalisation : `src/components/home-game-selector.tsx` — bouton `home-carousel-shuffle` déplacé dans `.home-carousel-controls` après la flèche droite, rangée dédiée `.home-carousel-shuffle-row` supprimée ; `src/app/globals.css` — règle de la rangée supprimée, compaction sous 480 px (boutons 44 px, points resserrés, gap réduit) pour que 3 boutons + 9 points tiennent sans débordement horizontal. Animation et logique de tirage inchangées.
+- Vérifications (sans Docker) : `pnpm typecheck`, `pnpm lint`, `pnpm test` (87 fichiers / 545 réussis + 2 sentinelles), `pnpm test:matrix` (11 pass, 5 not-run), `pnpm content:validate`, `pnpm docs:check`, `pnpm exec next build --webpack` propres.
+- Limites : sans recette navigateur (vérification visuelle du mobile 360 px à faire) ; E2E/pgTAP non rejoués (Docker opt-in, daemon fermé).
+- Contradiction : aucune avec `AGENTS.md`.

@@ -417,9 +417,6 @@ export function HomeGameSelector({ games: initialGames }: { games: readonly Publ
         <button type="button" className="home-carousel-arrow" onClick={() => goBy(1)} aria-label="Jeu suivant" disabled={spinning}>
           <ArrowIcon direction="right" />
         </button>
-      </div>
-
-      <div className="home-carousel-shuffle-row">
         <button
           type="button"
           className="home-carousel-arrow home-carousel-shuffle"
