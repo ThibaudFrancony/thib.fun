@@ -10,7 +10,6 @@ export function ProfilePublic({ profile, stats, gameLabels }: { profile: PublicP
   const wins = total(stats, "wins");
   const losses = total(stats, "losses");
   const draws = total(stats, "draws");
-  const legacy = total(stats, "cooperative") + total(stats, "abandoned");
 
   return (
     <section className="pf-card pf-public" aria-label={`Profil de ${profile.name}`}>
@@ -28,7 +27,6 @@ export function ProfilePublic({ profile, stats, gameLabels }: { profile: PublicP
             <div><dt>Victoires</dt><dd>{wins}</dd></div>
             <div><dt>Défaites</dt><dd>{losses}</dd></div>
             <div><dt>Égalités</dt><dd>{draws}</dd></div>
-            <div><dt>Coop / interrompues</dt><dd>{legacy}</dd></div>
           </dl>
           <ul className="pf-public-games">
             {stats.map((row) => (
