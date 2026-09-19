@@ -45,6 +45,8 @@ type UnoCardCommonProps = {
   shake?: boolean;
   /** Met en avant la carte qui vient d'être piochée. */
   drawn?: boolean;
+  /** Position réservée dans la main pendant une prise de pénalité animée. */
+  takeSlot?: number;
   className?: string;
   style?: React.CSSProperties;
 };
@@ -75,7 +77,7 @@ function UnoCardVisual({ card, faceDown }: { card?: UnoCardData | null; faceDown
 }
 
 export function UnoCard(props: UnoCardProps) {
-  const { playable = false, disabled = false, shake = false, drawn = false, className = "", style, onClick, label } = props;
+  const { playable = false, disabled = false, shake = false, drawn = false, takeSlot, className = "", style, onClick, label } = props;
   const classes = [
     "uno-card",
     playable ? "uno-card--playable" : "",
@@ -89,7 +91,7 @@ export function UnoCard(props: UnoCardProps) {
 
   if (onClick) {
     return (
-      <button type="button" className={classes} style={style} aria-label={accessibleLabel} disabled={disabled} onClick={onClick}>
+      <button type="button" className={classes} style={style} aria-label={accessibleLabel} disabled={disabled} data-take-slot={takeSlot} onClick={onClick}>
         <UnoCardVisual card={props.card} faceDown={props.faceDown} />
       </button>
     );

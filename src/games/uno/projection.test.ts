@@ -41,23 +41,33 @@ describe("UNO projection", () => {
     expect(view.players[0].score).toBe(50);
   });
 
-  it("ne divulgue la prochaine carte qu'au joueur actif, avec sa jouabilité", () => {
+  it("ne divulgue la fenêtre de pioche qu'au joueur actif, avec sa jouabilité", () => {
     const alice = projectUno(state, DEFAULT_UNO_CONFIG, "alice", ["alice", "bob"], [{ id: "alice", pseudo: "Alice" }, { id: "bob", pseudo: "Bob" }]);
+    expect((alice.nextDrawCards ?? []).map((card) => card.id)).toEqual(["draw"]);
     expect(alice.nextDrawCard?.id).toBe("draw");
     expect(alice.nextDrawPlayable).toBe(false);
     const bob = projectUno(state, DEFAULT_UNO_CONFIG, "bob", ["alice", "bob"], [{ id: "alice", pseudo: "Alice" }, { id: "bob", pseudo: "Bob" }]);
+    expect(bob.nextDrawCards).toEqual([]);
     expect(bob.nextDrawCard).toBeNull();
     expect(bob.nextDrawPlayable).toBe(false);
     expect(JSON.stringify(bob)).not.toContain('"draw"');
   });
 
-  it("signale une prochaine carte jouable et la masque si la pioche doit être recyclée", () => {
+  it("borne la fenêtre à huit cartes et la vide si la pioche doit être recyclée", () => {
+    const longPile: UnoState = {
+      ...state,
+      drawPile: Array.from({ length: 10 }, (_, index) => ({ id: `draw-${index}`, color: "green" as const, symbol: "2" as const })),
+    };
+    const window = projectUno(longPile, DEFAULT_UNO_CONFIG, "alice", ["alice", "bob"], [{ id: "alice", pseudo: "Alice" }, { id: "bob", pseudo: "Bob" }]);
+    expect(window.nextDrawCards).toHaveLength(8);
+    expect((window.nextDrawCards ?? []).map((card) => card.id)).toEqual(["draw-0", "draw-1", "draw-2", "draw-3", "draw-4", "draw-5", "draw-6", "draw-7"]);
     const playable: UnoState = { ...state, drawPile: [{ id: "draw-red-7", color: "red", symbol: "7" }] };
     const view = projectUno(playable, DEFAULT_UNO_CONFIG, "alice", ["alice", "bob"], [{ id: "alice", pseudo: "Alice" }, { id: "bob", pseudo: "Bob" }]);
     expect(view.nextDrawCard?.id).toBe("draw-red-7");
     expect(view.nextDrawPlayable).toBe(true);
     const empty: UnoState = { ...state, drawPile: [] };
     const recycled = projectUno(empty, DEFAULT_UNO_CONFIG, "alice", ["alice", "bob"], [{ id: "alice", pseudo: "Alice" }, { id: "bob", pseudo: "Bob" }]);
+    expect(recycled.nextDrawCards).toEqual([]);
     expect(recycled.nextDrawCard).toBeNull();
     expect(recycled.nextDrawPlayable).toBe(false);
   });
@@ -77,7 +87,9 @@ describe("UNO projection", () => {
     expect(view.playableCardIds).toEqual(["blue-2"]);
     expect(view.actions.canDraw).toBe(true);
     expect(view.actions.canPlay).toBe(true);
-    // Une prise de cumul tire plusieurs cartes : pas d'aperçu de la prochaine.
+    // La fenêtre reste connue pour animer la prise en bloc, mais l'ancien
+    // champ mono-carte et la jouabilité sont neutralisés pendant l'attente.
+    expect((view.nextDrawCards ?? []).map((card) => card.id)).toEqual(["draw"]);
     expect(view.nextDrawCard).toBeNull();
     expect(view.nextDrawPlayable).toBe(false);
     expect(view.opponentHand).toBeNull();

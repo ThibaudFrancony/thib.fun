@@ -11,6 +11,8 @@ import type { UnoCard, UnoColor, UnoPlayerView, UnoView } from "@/games/uno/type
 
 export type PlayedCardPrediction = { card: UnoCard; chosenColor?: UnoColor };
 export type DrawnCardPrediction = { card: UnoCard; playable: boolean };
+/** Prise de pénalité en bloc : cartes connues et nombre déjà atterri. */
+export type PenaltyTakePrediction = { cards: UnoCard[]; landed: number };
 
 function otherSeat(seat: Seat): Seat {
   return (1 - seat) as Seat;
@@ -29,29 +31,36 @@ function idleActions(view: UnoView): UnoView["actions"] {
 }
 
 /**
- * Vue après un `PLAY_CARD` ou `PLAY_DRAWN` : la carte quitte la main, la
- * couleur active suit, la pénalité éventuelle est cumulée, et le tour va au
- * siège que le moteur désignerait (skip/reverse font rejouer l'auteur).
- * `null` si le coup n'est pas prévisible : pas mon tour, carte absente, ou
- * dernière carte (la fin de partie reste décidée par le serveur).
+ * Vue après un `PLAY_CARD` ou `PLAY_DRAWN` : la carte quitte la main et se
+ * pose sur la défausse, la couleur active suit, la pénalité éventuelle est
+ * cumulée, et le tour va au siège que le moteur désignerait (skip/reverse
+ * font rejouer l'auteur). Une dernière carte vide la main : la fin de partie
+ * reste décidée par le serveur, seul l'effet de plateau est anticipé.
+ * `null` si le coup n'est pas prévisible : pas mon tour ou carte absente.
  */
 export function predictPlayedView(view: UnoView, play: PlayedCardPrediction): UnoView | null {
   if (view.phase === "finished" || view.activeSeat !== view.mySeat) return null;
   if (view.phase !== "playing" && view.phase !== "after_draw") return null;
   if (!view.hand.some((candidate) => candidate.id === play.card.id)) return null;
-  if (view.hand.length <= 1) return null;
   const activeColor = play.card.color ?? play.chosenColor;
   if (!activeColor) return null;
+  const lastCard = view.hand.length === 1;
   const nextSeat = play.card.symbol === "skip" || play.card.symbol === "reverse" ? view.mySeat : otherSeat(view.mySeat);
-  const pendingPenalty = play.card.symbol === "draw2" || play.card.symbol === "wild4"
-    ? { symbol: play.card.symbol, count: (view.pendingPenalty?.count ?? 0) + (play.card.symbol === "draw2" ? 2 : 4) }
-    : view.pendingPenalty ?? null;
+  // Une dernière carte de pénalité termine la partie : le moteur applique la
+  // pioche au score sans attente, donc on n'affiche pas de cumul irréel.
+  const pendingPenalty = lastCard
+    ? view.pendingPenalty ?? null
+    : play.card.symbol === "draw2" || play.card.symbol === "wild4"
+      ? { symbol: play.card.symbol, count: (view.pendingPenalty?.count ?? 0) + (play.card.symbol === "draw2" ? 2 : 4) }
+      : view.pendingPenalty ?? null;
   return withActiveSeat({
     ...view,
     phase: "playing",
+    topCard: play.card,
     hand: view.hand.filter((candidate) => candidate.id !== play.card.id),
     drawnCard: null,
     activeColor,
+    nextDrawCards: [],
     nextDrawCard: null,
     nextDrawPlayable: false,
     playableCardIds: [],
@@ -76,6 +85,7 @@ export function predictDrawnView(view: UnoView, draw: DrawnCardPrediction): UnoV
     ...view,
     hand: [...view.hand, draw.card],
     drawPileCount: Math.max(0, view.drawPileCount - 1),
+    nextDrawCards: [],
     nextDrawCard: null,
     nextDrawPlayable: false,
   }, view.mySeat);
@@ -94,4 +104,34 @@ export function predictDrawnView(view: UnoView, draw: DrawnCardPrediction): UnoV
     playableCardIds: [draw.card.id],
     actions: { canDraw: false, canPlay: false, canPlayDrawn: true, canKeepDrawn: true, canResign: view.actions.canResign },
   };
+}
+
+/**
+ * Vue pendant une prise de pénalité en bloc : toutes les cartes connues
+ * occupent leur place finale dans la main (le composant masque celles encore
+ * en vol) et la pénalité est vidée. Tant que la dernière carte n'a pas
+ * atterri, le joueur reste affiché comme actif sans action possible ; une
+ * fois toutes posées, la main passe à l'auteur de la pénalité. La projection
+ * serveur reste l'autorité et remplace cette vue dès qu'elle confirme.
+ */
+export function predictPenaltyTakeView(view: UnoView, take: PenaltyTakePrediction): UnoView {
+  const done = take.landed >= take.cards.length;
+  const takenIds = new Set(take.cards.map((card) => card.id));
+  const hand = [
+    ...view.hand.filter((card) => !takenIds.has(card.id)),
+    ...take.cards,
+  ];
+  return withActiveSeat({
+    ...view,
+    hand,
+    drawPileCount: Math.max(0, view.drawPileCount - take.landed),
+    pendingPenalty: null,
+    drawnCard: null,
+    nextDrawCards: [],
+    nextDrawCard: null,
+    nextDrawPlayable: false,
+    playableCardIds: [],
+    actions: idleActions(view),
+    turns: view.turns + (done ? 1 : 0),
+  }, done ? otherSeat(view.mySeat) : view.mySeat);
 }

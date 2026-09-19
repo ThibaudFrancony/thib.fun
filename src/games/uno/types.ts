@@ -107,11 +107,17 @@ export type UnoView = {
   opponentHand: UnoCardView[] | null;
   drawnCard: UnoCardView | null;
   /**
-   * Prochaine carte de la pioche, exposée au seul joueur actif (décision du
-   * 19/09/2026) pour révéler la carte piochée à la fin de l'animation.
-   * `null` pour l'autre joueur, hors phase `playing`, ou quand la pioche est
-   * vide (le sommet serait remélangé au moment du tirage). Champ optionnel
-   * pour relire les vues persistées avant ce changement.
+   * Fenêtre de pioche, exposée au seul joueur actif (décision du 19/09/2026)
+   * pour révéler la carte piochée à la fin de l'animation et animer les
+   * prises de pénalité en bloc. `[]` pour l'autre joueur, hors phase
+   * `playing`, ou quand la pioche est vide (le sommet serait remélangé au
+   * moment du tirage). Champ optionnel pour relire les vues persistées.
+   */
+  nextDrawCards?: UnoCardView[];
+  /**
+   * Ancien champ mono-carte conservé pour les clients déjà chargés ; `null`
+   * pendant une pénalité en attente (prise en bloc). Les nouveaux clients
+   * utilisent `nextDrawCards`.
    */
   nextDrawCard?: UnoCardView | null;
   /** La prochaine carte serait jouable après pioche (calcul serveur). */
@@ -130,6 +136,9 @@ export type UnoView = {
   };
   result: UnoResultView | null;
 };
+
+/** Taille de la fenêtre de pioche exposée au joueur actif (décision du 19/09/2026). */
+export const UNO_DRAW_PREVIEW_LIMIT = 8;
 
 export type UnoResultView = {
   outcome: ResultSpec["outcome"];

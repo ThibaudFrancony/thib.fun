@@ -1,7 +1,7 @@
 import type { Seat } from "@/games/contracts";
 import { unoConfigSchema } from "@/games/uno/config";
 import { isUnoCardPlayable } from "@/games/uno/engine";
-import { unoStateSchema, type UnoPlayerView, type UnoResultView, type UnoState, type UnoView } from "@/games/uno/types";
+import { UNO_DRAW_PREVIEW_LIMIT, unoStateSchema, type UnoPlayerView, type UnoResultView, type UnoState, type UnoView } from "@/games/uno/types";
 
 type PlayerIdentity = { id: string; pseudo: string };
 
@@ -76,11 +76,16 @@ export function projectUno(
   const drawnCard = active && state.phase === "after_draw" && state.drawnCardId
     ? ownHand.find((card) => card.id === state.drawnCardId) ?? null
     : null;
-  // La prochaine carte n'est divulguée qu'au joueur actif pendant `playing` :
-  // le client peut révéler sa pioche sans attendre l'aller-retour serveur.
-  // Pioche vide = recyclage remélangé au tirage, donc sommet inconnu ;
-  // une pénalité en attente se prend en bloc (plusieurs cartes), sans aperçu.
-  const nextDrawCard = active && state.phase === "playing" && !state.pendingPenalty ? state.drawPile[0] ?? null : null;
+  // La fenêtre de pioche n'est divulguée qu'au joueur actif pendant
+  // `playing` : le client peut révéler sa pioche et animer les prises de
+  // pénalité sans attendre l'aller-retour serveur. Pioche vide = recyclage
+  // remélangé au tirage, donc aucun sommet connu.
+  const nextDrawCards = active && state.phase === "playing"
+    ? state.drawPile.slice(0, UNO_DRAW_PREVIEW_LIMIT)
+    : [];
+  // Ancien champ mono-carte : jamais exposé pendant une pénalité (les clients
+  // déjà chargés ne savent pas animer une prise en bloc).
+  const nextDrawCard = state.pendingPenalty ? null : nextDrawCards[0] ?? null;
   const nextDrawPlayable = nextDrawCard !== null
     && !state.pendingPenalty
     && isUnoCardPlayable(nextDrawCard, state, viewerSeat);
@@ -97,6 +102,7 @@ export function projectUno(
     hand: ownHand,
     opponentHand: state.phase === "finished" ? state.hands[(1 - viewerSeat) as Seat] : null,
     drawnCard,
+    nextDrawCards,
     nextDrawCard,
     nextDrawPlayable,
     playableCardIds,

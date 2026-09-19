@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { predictDrawnView, predictPlayedView } from "@/games/uno/optimistic";
-import type { UnoView } from "@/games/uno/types";
+import { predictDrawnView, predictPenaltyTakeView, predictPlayedView } from "@/games/uno/optimistic";
+import type { UnoCard, UnoView } from "@/games/uno/types";
 
 function viewFor(seat: 0 | 1, overrides: Partial<UnoView> = {}): UnoView {
   return {
@@ -45,6 +45,7 @@ describe("vues optimistes UNO", () => {
     expect(predicted?.activeSeat).toBe(1);
     expect(predicted?.players[0].active).toBe(false);
     expect(predicted?.players[1].active).toBe(true);
+    expect(predicted?.topCard.id).toBe("red-5");
     expect(predicted?.hand.map((card) => card.id)).toEqual(["blue-9"]);
     expect(predicted?.activeColor).toBe("red");
     expect(predicted?.playableCardIds).toEqual([]);
@@ -90,9 +91,18 @@ describe("vues optimistes UNO", () => {
     expect(wild4?.activeColor).toBe("green");
   });
 
-  it("ne prédit ni la dernière carte, ni un coup hors tour, ni une carte absente", () => {
-    const last = viewFor(0, { hand: [{ id: "red-5", color: "red", symbol: "5" }] });
-    expect(predictPlayedView(last, { card: { id: "red-5", color: "red", symbol: "5" } })).toBeNull();
+  it("pose la dernière carte sans inventer de cumul ni de résultat", () => {
+    const last = viewFor(0, { hand: [{ id: "red-draw2", color: "red", symbol: "draw2" }] });
+    const predicted = predictPlayedView(last, { card: { id: "red-draw2", color: "red", symbol: "draw2" } });
+    expect(predicted?.topCard.id).toBe("red-draw2");
+    expect(predicted?.hand).toEqual([]);
+    expect(predicted?.pendingPenalty).toBeNull();
+    expect(predicted?.phase).toBe("playing");
+    expect(predicted?.result).toBeNull();
+    expect(predicted?.actions.canPlay).toBe(false);
+  });
+
+  it("ne prédit ni un coup hors tour ni une carte absente", () => {
     const notMyTurn = viewFor(0, { activeSeat: 1 });
     expect(predictPlayedView(notMyTurn, { card: { id: "red-5", color: "red", symbol: "5" } })).toBeNull();
     const view = viewFor(0);
@@ -134,5 +144,44 @@ describe("vues optimistes UNO", () => {
     expect(predictDrawnView(notMyTurn, { card: { id: "green-2", color: "green", symbol: "2" }, playable: true })).toBeNull();
     const alreadyInHand = viewFor(0, { hand: [{ id: "green-2", color: "green", symbol: "2" }] });
     expect(predictDrawnView(alreadyInHand, { card: { id: "green-2", color: "green", symbol: "2" }, playable: true })).toBeNull();
+  });
+
+  it("prise de pénalité : cartes en place, tour tenu puis passé à l'auteur", () => {
+    const view = viewFor(0, {
+      hand: [{ id: "red-5", color: "red", symbol: "5" }],
+      pendingPenalty: { symbol: "wild4", count: 8 },
+      drawPileCount: 20,
+    });
+    const cards: UnoCard[] = [
+      { id: "take-1", color: "green", symbol: "2" },
+      { id: "take-2", color: "blue", symbol: "7" },
+      { id: "take-3", color: "red", symbol: "wild" },
+    ];
+    const during = predictPenaltyTakeView(view, { cards, landed: 1 });
+    expect(during.pendingPenalty).toBeNull();
+    expect(during.activeSeat).toBe(0);
+    expect(during.actions.canDraw).toBe(false);
+    expect(during.hand.map((card) => card.id)).toEqual(["red-5", "take-1", "take-2", "take-3"]);
+    expect(during.drawPileCount).toBe(19);
+    expect(during.turns).toBe(2);
+    const after = predictPenaltyTakeView(view, { cards, landed: 3 });
+    expect(after.activeSeat).toBe(1);
+    expect(after.players[1].active).toBe(true);
+    expect(after.drawPileCount).toBe(17);
+    expect(after.turns).toBe(3);
+    expect(after.actions).toEqual({ canDraw: false, canPlay: false, canPlayDrawn: false, canKeepDrawn: false, canResign: true });
+  });
+
+  it("prise de pénalité : ne duplique pas les cartes déjà confirmées par le serveur", () => {
+    const view = viewFor(0, {
+      hand: [{ id: "red-5", color: "red", symbol: "5" }, { id: "take-1", color: "green", symbol: "2" }],
+      pendingPenalty: { symbol: "draw2", count: 2 },
+    });
+    const cards: UnoCard[] = [
+      { id: "take-1", color: "green", symbol: "2" },
+      { id: "take-2", color: "blue", symbol: "7" },
+    ];
+    const taken = predictPenaltyTakeView(view, { cards, landed: 2 });
+    expect(taken.hand.map((card) => card.id)).toEqual(["red-5", "take-1", "take-2"]);
   });
 });
