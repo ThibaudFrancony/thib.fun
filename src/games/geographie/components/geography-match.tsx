@@ -132,7 +132,7 @@ export function GeographyMatch({ matchId }: { matchId: string }) {
           </div>
         )}
         {view.phase !== "finished" && <ForfeitControl busy={busy} resign={() => { if (window.confirm("Abandonner cette partie ?")) void send({ type: "RESIGN" }); }} />}
-        {view.phase === "finished" && <FinishedPanel view={view} back={() => router.push(`/salons/${match.roomId}`)} />}
+        {view.phase === "finished" && <FinishedPanel view={view} back={() => router.push("/jeux/geographie")} />}
         {error && <p role="alert" className="geo-error">{error}</p>}
       </div>
     </main>
@@ -170,7 +170,7 @@ function RevealPanel({ view, avatars, busy, next }: { view: GeoView; avatars: Re
 function FinishedPanel({ view, back }: { view: GeoView; back: () => void }) {
   const result = view.result;
   const label = result?.outcome === "draw" ? "Égalité" : result?.outcome === "abandoned" ? "Partie interrompue" : result?.winnerId === view.players[view.mySeat].id ? "Victoire" : "Défaite";
-  return <section className="geo-panel geo-finish-panel"><p className="geo-kicker geo-kicker-accent">Résultats</p><h1 className="geo-finish-title">{label}</h1>{result?.outcome === "abandoned" && <p className="geo-panel-note">Aucun joueur n&apos;est déclaré vainqueur. La partie a été interrompue ({result.reason}).</p>}<div className="geo-final-scores">{view.players.map((player) => <div key={player.id} className="geo-final-score"><p>{player.pseudo}</p><strong>{player.score}</strong><span>points</span></div>)}</div><button onClick={back} className="geo-primary-button geo-finish-button">Retour au salon</button></section>;
+  return <section className="geo-panel geo-finish-panel"><p className="geo-kicker geo-kicker-accent">Résultats</p><h1 className="geo-finish-title">{label}</h1>{result?.outcome === "abandoned" && <p className="geo-panel-note">Aucun joueur n&apos;est déclaré vainqueur. La partie a été interrompue ({result.reason}).</p>}<div className="geo-final-scores">{view.players.map((player) => <div key={player.id} className="geo-final-score"><p>{player.pseudo}</p><strong>{player.score}</strong><span>points</span></div>)}</div><button onClick={back} className="geo-primary-button geo-finish-button">Rejouer</button></section>;
 }
 
 function ForfeitControl({ busy, resign }: { busy: boolean; resign: () => void }) {

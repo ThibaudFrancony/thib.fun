@@ -25,6 +25,14 @@ Ce fichier décrit la réalité du dépôt et non les seules capacités prévues
 - Limites : recette visuelle navigateur non rejouée (Docker opt-in) ; E2E/pgTAP non exécutés.
 - Contradiction : aucune avec `AGENTS.md`.
 
+### 19/09/2026 — Leaderboard : suppression du rappel de barème
+
+- Demande utilisateur : « 10 points par victoire, 5 par défaite, 7 par match nul, 10 par réussite coopérative. » — supprimer ça aussi.
+- Réalisation : suppression du bloc `<p className="lb-panel-sub">` dans `src/app/leaderboard/leaderboard-view.tsx` (l'en-tête `lb-panel-head` garde le titre « Top 100 ») ; suppression de la règle CSS `.lb-panel-sub` devenue inutilisée dans `src/app/globals.css`. Aucun changement de barème, de RPC, de route ni de calcul de points.
+- Vérifications (sans Docker) : `pnpm typecheck` propre ; `pnpm lint` propre ; `grep` : plus aucune occurrence de `lb-panel-sub` ni de « 10 points par victoire » dans le dépôt.
+- Limites : recette visuelle navigateur non rejouée (Docker opt-in) ; suites complètes non rejouées pour ce changement purement présentationnel.
+- Contradiction : aucune avec `AGENTS.md`.
+
 ### 19/09/2026 — Suppression du détail des parties (prévisualisation seule)
 
 - Demande utilisateur : dans les profils, on peut cliquer pour voir un détail des parties — enlever ça complètement, garder uniquement la prévisualisation visible sur l'interface profil, pas de page détail.

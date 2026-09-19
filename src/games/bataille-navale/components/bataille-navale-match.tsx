@@ -170,7 +170,7 @@ export function BatailleNavaleMatch({ matchId }: { matchId: string }) {
           </>
         )}
 
-        {view.phase === "finished" && <FinishedPanel view={view} back={() => router.push(`/salons/${match.roomId}`)} />}
+        {view.phase === "finished" && <FinishedPanel view={view} back={() => router.push("/jeux/bataille-navale")} />}
 
         {view.phase !== "finished" && (
           <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-dashed border-[var(--line)] bg-white/50 p-4 text-sm">
@@ -529,7 +529,7 @@ function FinishedPanel({ view, back }: { view: NavalView; back: () => void }) {
         </div>
       )}
       <button type="button" onClick={back} className="mt-7 rounded-full bg-[#6d28d9] px-5 py-3 font-bold text-white hover:bg-[#5b21b6]">
-        Retour au salon
+        Rejouer
       </button>
     </section>
   );

@@ -254,8 +254,8 @@ export function TrouNoirMatch({ matchId }: { matchId: string }) {
                 </div>
               ))}
             </div>
-            <button onClick={() => router.push(`/salons/${match.roomId}`)} className="geo-primary-button geo-finish-button">
-              Retour au salon
+            <button onClick={() => router.push("/jeux/trou-noir")} className="geo-primary-button geo-finish-button">
+              Rejouer
             </button>
           </section>
         )}

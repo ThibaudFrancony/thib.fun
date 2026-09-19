@@ -102,6 +102,8 @@ export function UnoMatch({ matchId }: { matchId: string }) {
   const flyKeyRef = useRef(0);
   const flySourceRef = useRef<Rect | null>(null);
   const pendingDrawSourceRef = useRef<Rect | null>(null);
+  const drawBaselineRef = useRef<number | null>(null);
+  const drawFlightRef = useRef(false);
   const handIdsRef = useRef<Set<string>>(new Set());
   const handRef = useRef<HTMLDivElement | null>(null);
   const discardRef = useRef<HTMLDivElement | null>(null);
@@ -121,18 +123,39 @@ export function UnoMatch({ matchId }: { matchId: string }) {
     restoreDialogFocus();
   }, [restoreDialogFocus]);
 
+  /**
+   * Retire le décor de pioche (place reservée, carte en vol) dès que le
+   * serveur a tranché. Une pioche peut se résoudre sans être conservée
+   * (`drawnCard` nul quand la carte est non jouable et le tour passe), donc
+   * on se fie au tour et à la taille de main plutôt qu'à `drawnCard`.
+   */
+  const clearDrawVisual = useCallback(() => {
+    drawBaselineRef.current = null;
+    if (drawFlightRef.current) {
+      drawFlightRef.current = false;
+      if (flyTimerRef.current !== null) {
+        window.clearTimeout(flyTimerRef.current);
+        flyTimerRef.current = null;
+      }
+      setFlying(null);
+      setFlyingCardId(null);
+    }
+    setDrawPending(false);
+    setDrawLanded(false);
+  }, []);
+
   const onSnapshotApplied = useCallback((next: MatchResponse) => {
     if (pendingPlay && !isPendingPlayValid(pendingPlay, next.view)) closeColorDialog();
     setOptimisticDiscard((current) => {
       if (!current) return null;
       return next.view.hand.some((card) => card.id === current.id) ? current : null;
     });
-    const drawConfirmed = next.view.phase === "finished" || next.view.drawnCard !== null;
-    if (drawConfirmed) {
-      setDrawPending(false);
-      setDrawLanded(false);
-    }
-  }, [closeColorDialog, pendingPlay]);
+    const baseline = drawBaselineRef.current;
+    const drawResolved = next.view.phase === "finished"
+      || next.view.activeSeat !== next.view.mySeat
+      || (baseline !== null && next.view.hand.length > baseline);
+    if (drawResolved) clearDrawVisual();
+  }, [clearDrawVisual, closeColorDialog, pendingPlay]);
 
   const {
     snapshot: match,
@@ -198,8 +221,10 @@ export function UnoMatch({ matchId }: { matchId: string }) {
     };
     setFlying(flight);
     setFlyingCardId(card?.id ?? null);
+    drawFlightRef.current = settle === "hand";
     if (flyTimerRef.current !== null) window.clearTimeout(flyTimerRef.current);
     flyTimerRef.current = window.setTimeout(() => {
+      drawFlightRef.current = false;
       if (flight.settle === "discard" && flight.card && handIdsRef.current.has(flight.card.id)) {
         setOptimisticDiscard(flight.card);
       }
@@ -238,6 +263,8 @@ export function UnoMatch({ matchId }: { matchId: string }) {
       window.clearTimeout(flyTimerRef.current);
       flyTimerRef.current = null;
     }
+    drawFlightRef.current = false;
+    drawBaselineRef.current = null;
     setFlying(null);
     setFlyingCardId(null);
     setOptimisticDiscard(null);
@@ -326,6 +353,7 @@ export function UnoMatch({ matchId }: { matchId: string }) {
   function drawCard(source: Rect | null) {
     if (busy || !view.actions.canDraw) return;
     pendingDrawSourceRef.current = source;
+    drawBaselineRef.current = view.hand.length;
     setDrawLanded(false);
     setDrawPending(true);
     void send({ type: "DRAW" }).then((next) => { if (!next) cancelVisual(); });
@@ -373,7 +401,7 @@ export function UnoMatch({ matchId }: { matchId: string }) {
         </header>
 
         {view.phase === "finished" ? (
-          <FinishedPanel view={view} back={() => router.push(`/salons/${match.roomId}`)} />
+          <FinishedPanel view={view} back={() => router.push("/jeux/uno")} />
         ) : (
           <>
             <section className="uno-opponent" data-active={opponent.active} aria-label={`Main de ${opponent.pseudo}`}>
@@ -607,7 +635,7 @@ function FinishedPanel({ view, back }: { view: UnoView; back: () => void }) {
           </div>
         </div>
       )}
-      <button type="button" className="uno-primary" onClick={back}>Retour au salon</button>
+      <button type="button" className="uno-primary" onClick={back}>Rejouer</button>
     </section>
   );
 }

@@ -185,7 +185,6 @@ export function LeaderboardView({
       <section className="lb-panel" aria-label="Classement des cent premiers joueurs">
         <header className="lb-panel-head">
           <h2 className="lb-panel-title">Top 100</h2>
-          <p className="lb-panel-sub">10 points par victoire, 5 par défaite, 7 par match nul, 10 par réussite coopérative.</p>
         </header>
         {entries.length === 0 ? (
           <p className="lb-empty">Aucun point marqué pour le moment. Joue une partie pour ouvrir le classement !</p>
