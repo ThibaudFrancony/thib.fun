@@ -3,36 +3,42 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Avatar } from "@/components/avatar";
+import { cacheAvatar, readCachedAvatar, useIsomorphicLayoutEffect } from "@/lib/avatar-cache";
 
 /**
  * Bouton « Profil » du header : rond d'avatar (photo privée ou initiale) qui
- * mène directement à la page de gestion du profil. Pastille d'alerte tant que
- * le pseudo unique n'est pas choisi (onboarding).
+ * mène directement à la page de gestion du profil. La photo est mise en cache
+ * dans le navigateur dès le premier affichage, puis relue sans réseau : plus de
+ * clignotement de l'ancienne image à chaque navigation. Pastille d'alerte tant
+ * que le pseudo unique n'est pas choisi (onboarding).
  */
 export function ProfileButton({
   name,
   needsOnboarding,
   preset,
-  hasAvatar,
+  avatarVersion,
   className = "",
 }: {
   name: string;
   needsOnboarding: boolean;
   preset: string;
-  hasAvatar: boolean;
+  avatarVersion: string | null;
   className?: string;
 }) {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
 
+  useIsomorphicLayoutEffect(() => {
+    setImageUrl(readCachedAvatar(avatarVersion));
+  }, [avatarVersion]);
+
   useEffect(() => {
-    if (!hasAvatar) return;
+    if (!avatarVersion || readCachedAvatar(avatarVersion)) return;
     const controller = new AbortController();
-    void fetch("/profil/avatar", { cache: "no-store", signal: controller.signal })
-      .then(async (response) => (response.ok ? (await response.json()) as { url?: string | null } : null))
-      .then((data) => setImageUrl(data?.url ?? null))
-      .catch(() => undefined);
+    void cacheAvatar(avatarVersion, `/profil/avatar/image?v=${encodeURIComponent(avatarVersion)}`, controller.signal).then((dataUrl) => {
+      if (dataUrl) setImageUrl(dataUrl);
+    });
     return () => controller.abort();
-  }, [hasAvatar]);
+  }, [avatarVersion]);
 
   return (
     <Link

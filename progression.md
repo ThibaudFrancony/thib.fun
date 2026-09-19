@@ -28,6 +28,15 @@ Ce fichier décrit la réalité du dépôt et non les seules capacités prévues
 - Contradiction : avec `docs/games/05-uno.md` uniquement, réaligné dans ce changement ; aucune contradiction avec `AGENTS.md`. Aucun changement de schéma SQL ni de version de règles/moteur (`uno-1`/`uno-engine-1` conservés).
 - Prochaine étape utile : recette Docker à deux sessions pour confirmer que le client n'envoie plus le champ et que le serveur l'ignore.
 
+### 19/09/2026 — Photo de profil mise en cache navigateur
+
+- Demande utilisateur : la photo de profil custom réapparaît à chaque changement de page ; on voit d'abord l'ancienne (preset/initiale) puis la photo le temps du chargement. Il faut l'enregistrer dès le premier chargement pour ne plus la recharger.
+- Cause confirmée : `ProfileButton` et `ProfileEditor` appelaient `GET /profil/avatar` (URL signée 5 min) à chaque montage ; tant que la requête n'aboutissait pas, l'avatar preset/initiale restait affiché.
+- Réalisation : `src/lib/avatar-cache.ts` (cache `localStorage` des octets de la photo en data URL, clé opaque, plafond 50 entrées, lecture synchrone via `useIsomorphicLayoutEffect`, `cacheAvatar`/`clearCachedAvatar`) ; `src/server/avatar.ts` (`avatarCacheVersion`, empreinte SHA-256 tronquée du chemin, jamais le chemin brut, et `isOwnAvatarPath` mutualisé) ; nouvelle route même origine `GET /profil/avatar/image?v=<version>` qui renvoie les octets privés avec `cache-control private, max-age=31536000, immutable` ; `ProfileButton` prend `avatarVersion` et lit le cache avant peinture ; `ProfileEditor` initialise/fraîchit le cache et le vide à la suppression ; `POST /profil/avatar` renvoie `avatarVersion` au lieu de `avatarPath`. `src/components/site-header.tsx` et `src/app/profil/page.tsx` transmettent la version calculée côté serveur.
+- Vérifications (sans Docker) : `pnpm typecheck`, `pnpm lint`, `pnpm test` (83 fichiers / 523 réussis + 2 sentinelles), `pnpm docs:check`, `pnpm content:validate` propres.
+- Limites : la photo ne se recharge jamais tant que l'entrée `localStorage` existe (si le WebP change à chemin constant, ce qui n'arrive pas aujourd'hui, il faudrait vider le cache) ; les avatars des **autres** joueurs (leaderboard, salons, profil public) utilisent encore des URLs signées rechargées, non couverts par cette demande ; recette à deux sessions non rejouée.
+- Contradiction : aucune avec `AGENTS.md`.
+
 ### 19/09/2026 — Avatar du header vers /profil en un clic
 
 - Demande utilisateur : cliquer sur sa photo dans le header ouvre aujourd'hui une petite fenêtre qu'il faut recliquer ; aller directement sur le profil au premier clic.

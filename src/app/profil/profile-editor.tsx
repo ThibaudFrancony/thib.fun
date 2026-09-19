@@ -3,12 +3,13 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { cacheAvatar, clearCachedAvatar, readCachedAvatar, useIsomorphicLayoutEffect } from "@/lib/avatar-cache";
 import { AVATAR_PRESETS, AVATAR_PRESET_LABELS, avatarPresetImage, type AvatarPreset } from "./profile-helpers";
 
 type ApiPayload = {
   displayName?: string | null;
   avatarPreset?: AvatarPreset;
-  avatarPath?: string | null;
+  avatarVersion?: string | null;
   error?: { message?: string };
 };
 
@@ -21,18 +22,18 @@ type ApiPayload = {
 export function ProfileEditor({
   initialName,
   avatarPreset: initialPreset,
-  avatarPath: initialAvatarPath,
+  avatarVersion: initialAvatarVersion,
 }: {
   initialName: string;
   avatarPreset: string;
-  avatarPath: string | null;
+  avatarVersion: string | null;
 }) {
   const [name, setName] = useState(initialName);
   const router = useRouter();
   const [avatarPreset, setAvatarPreset] = useState<AvatarPreset>(
     AVATAR_PRESETS.includes(initialPreset as AvatarPreset) ? (initialPreset as AvatarPreset) : AVATAR_PRESETS[0],
   );
-  const [avatarPath, setAvatarPath] = useState(initialAvatarPath);
+  const [avatarVersion, setAvatarVersion] = useState(initialAvatarVersion);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [presetBroken, setPresetBroken] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -41,17 +42,20 @@ export function ProfileEditor({
   const [notice, setNotice] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    if (!avatarPath) return;
-    const controller = new AbortController();
-    void fetch("/profil/avatar", { cache: "no-store", signal: controller.signal })
-      .then(async (response) => (response.ok ? (await response.json()) as { url?: string | null } : null))
-      .then((data) => setAvatarUrl(data?.url ?? null))
-      .catch(() => undefined);
-    return () => controller.abort();
-  }, [avatarPath]);
+  useIsomorphicLayoutEffect(() => {
+    setAvatarUrl(readCachedAvatar(avatarVersion));
+  }, [avatarVersion]);
 
-  const effectiveAvatarUrl = avatarPath ? avatarUrl : null;
+  useEffect(() => {
+    if (!avatarVersion || readCachedAvatar(avatarVersion)) return;
+    const controller = new AbortController();
+    void cacheAvatar(avatarVersion, `/profil/avatar/image?v=${encodeURIComponent(avatarVersion)}`, controller.signal).then((dataUrl) => {
+      if (dataUrl) setAvatarUrl(dataUrl);
+    });
+    return () => controller.abort();
+  }, [avatarVersion]);
+
+  const effectiveAvatarUrl = avatarVersion ? avatarUrl : null;
   const presetImage = presetBroken ? null : avatarPresetImage(avatarPreset);
 
   function messageFrom(data: ApiPayload | null, fallback: string): string {
@@ -101,7 +105,16 @@ export function ProfileEditor({
         setError(messageFrom(data, "L'image doit être un JPEG, PNG ou WebP de 2 Mo maximum."));
         return;
       }
-      setAvatarPath(data?.avatarPath ?? null);
+      const nextVersion = data?.avatarVersion ?? null;
+      if (avatarVersion && avatarVersion !== nextVersion) clearCachedAvatar(avatarVersion);
+      setAvatarVersion(nextVersion);
+      if (nextVersion) {
+        const cached = readCachedAvatar(nextVersion);
+        const dataUrl = cached ?? (await cacheAvatar(nextVersion, `/profil/avatar/image?v=${encodeURIComponent(nextVersion)}`));
+        setAvatarUrl(dataUrl);
+      } else {
+        setAvatarUrl(null);
+      }
       setNotice("Photo enregistrée.");
     } catch {
       setError("Envoi impossible. Vérifie ta connexion puis réessaie.");
@@ -112,7 +125,7 @@ export function ProfileEditor({
   }
 
   async function removeAvatar() {
-    if (busy || uploadBusy || !avatarPath) return;
+    if (busy || uploadBusy || !avatarVersion) return;
     setUploadBusy(true);
     setError(null);
     setNotice(null);
@@ -123,7 +136,8 @@ export function ProfileEditor({
         setError(messageFrom(data, "La photo n'a pas pu être supprimée."));
         return;
       }
-      setAvatarPath(null);
+      if (avatarVersion) clearCachedAvatar(avatarVersion);
+      setAvatarVersion(null);
       setAvatarUrl(null);
       setNotice("Photo supprimée.");
     } catch {
@@ -193,7 +207,7 @@ export function ProfileEditor({
         />
       </div>
       <p className="pf-photo-hint">{uploadBusy ? "Envoi de la photo…" : "Cliquer pour changer ma photo"}</p>
-      {avatarPath && (
+      {avatarVersion && (
         <button type="button" className="pf-photo-remove" onClick={() => void removeAvatar()} disabled={busy || uploadBusy}>
           Supprimer ma photo
         </button>

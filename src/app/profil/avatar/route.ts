@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { getAuthenticatedAccount } from "@/server/auth";
+import { avatarCacheVersion, isOwnAvatarPath } from "@/server/avatar";
 import { getSupabaseServerConfig } from "@/server/config";
 import { assertMutationOrigin, jsonError, jsonOk, mapServerError } from "@/server/http";
 import { ALLOWED_IMAGE_CONTENT_TYPES, imageOptimizerTools } from "@/server/images/optimizer";
@@ -9,10 +10,6 @@ const MAX_BYTES = 2 * 1024 * 1024;
 const MAX_DIMENSION = 4096;
 const SIGNED_URL_SECONDS = 5 * 60;
 const ALLOWED_CONTENT_TYPES = ALLOWED_IMAGE_CONTENT_TYPES;
-
-function isOwnAvatarPath(path: string, memberId: string): boolean {
-  return path.startsWith(`${memberId}/`) && !path.includes("..") && path.endsWith(".webp");
-}
 
 export async function GET() {
   if (!getSupabaseServerConfig()) return jsonError("CONFIGURATION_REQUIRED", 503, "Le serveur de données n'est pas configuré.");
@@ -39,14 +36,14 @@ export async function DELETE(request: Request) {
   if (!account) return jsonError("UNAUTHORIZED", 401, "Connecte-toi pour modifier ton avatar.");
   if (account.isGuest) return jsonError("ACCOUNT_REQUIRED", 403, "Crée un compte permanent pour modifier ton avatar.");
   const path = account.member.avatarPath;
-  if (!path) return jsonOk({ avatarPath: null });
+  if (!path) return jsonOk({ avatarVersion: null });
   if (!isOwnAvatarPath(path, account.member.id)) return jsonError("DATABASE_UNAVAILABLE", 503, "L'avatar enregistré est indisponible.");
   try {
     const admin = createAdminClient();
     const updated = await admin.from("profiles").update({ avatar_path: null }).eq("id", account.member.id);
     if (updated.error) throw new Error("DATABASE_UNAVAILABLE");
     await admin.storage.from("avatars").remove([path]);
-    return jsonOk({ avatarPath: null });
+    return jsonOk({ avatarVersion: null });
   } catch (error) {
     return mapServerError(error);
   }
@@ -109,7 +106,7 @@ export async function POST(request: Request) {
     if (previous && previous !== path && isOwnAvatarPath(previous, account.member.id)) {
       await admin.storage.from("avatars").remove([previous]).catch(() => undefined);
     }
-    return jsonOk({ avatarPath: path, width: 256, height: 256 });
+    return jsonOk({ avatarVersion: avatarCacheVersion(path), width: 256, height: 256 });
   } catch (error) {
     if (error instanceof TypeError) return jsonError("INVALID_REQUEST", 400, "Le fichier image est invalide.");
     return mapServerError(error);

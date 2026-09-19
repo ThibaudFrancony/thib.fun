@@ -4,6 +4,7 @@ import { ProfileButton } from "@/components/profile-button";
 import { SignOutButton } from "@/components/sign-out-button";
 import { SiteHeader } from "@/components/site-header";
 import { getAuthenticatedAccount } from "@/server/auth";
+import { avatarCacheVersion } from "@/server/avatar";
 import { OnboardingPseudo } from "./onboarding-pseudo";
 import { ProfileEditor } from "./profile-editor";
 
@@ -13,12 +14,12 @@ function ProfileHeader({
   name,
   needsOnboarding,
   preset,
-  hasAvatar,
+  avatarVersion,
 }: {
   name: string;
   needsOnboarding: boolean;
   preset: string;
-  hasAvatar: boolean;
+  avatarVersion: string | null;
 }) {
   return (
     <header className="pf-header">
@@ -39,7 +40,7 @@ function ProfileHeader({
           name={name}
           needsOnboarding={needsOnboarding}
           preset={preset}
-          hasAvatar={hasAvatar}
+          avatarVersion={avatarVersion}
         />
         <SignOutButton className="pf-logout" />
       </nav>
@@ -65,7 +66,7 @@ export default async function ProfilePage() {
           name={account.member.effectiveName}
           needsOnboarding
           preset={account.member.avatarPreset}
-          hasAvatar={false}
+          avatarVersion={null}
         />
         <main className="pf-main">
           <OnboardingPseudo />
@@ -78,16 +79,16 @@ export default async function ProfilePage() {
     <div className="pf-page">
       <HomeHeroBackground />
       <ProfileHeader
-        name={account.member.effectiveName}
-        needsOnboarding={false}
-        preset={account.member.avatarPreset}
-        hasAvatar={account.member.avatarPath !== null}
-      />
+          name={account.member.effectiveName}
+          needsOnboarding={false}
+          preset={account.member.avatarPreset}
+          avatarVersion={avatarCacheVersion(account.member.avatarPath)}
+        />
       <main className="pf-main">
         <ProfileEditor
           initialName={account.member.effectiveName}
           avatarPreset={account.member.avatarPreset}
-          avatarPath={account.member.avatarPath}
+          avatarVersion={avatarCacheVersion(account.member.avatarPath)}
         />
       </main>
     </div>
