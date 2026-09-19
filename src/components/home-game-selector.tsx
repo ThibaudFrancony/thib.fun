@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent as ReactPointerEvent } from "react";
 import type { PublicGame } from "@/games/registry";
+import { haveSameGameSlugs, parseVisibleGames } from "@/lib/visible-games";
 
 const PLAYABLE_ROUTES: Readonly<Partial<Record<string, string>>> = {
   geographie: "/jeux/geographie",
@@ -20,6 +21,12 @@ const PLAYABLE_ROUTES: Readonly<Partial<Record<string, string>>> = {
 const CARD_EXTENSIONS = ["png", "webp"] as const;
 const MAX_VISIBLE = 3;
 const DRAG_THRESHOLD = 6;
+// Tirage au hasard : 3 à 5 tours complets avant de ralentir sur la cible,
+// sur une durée aléatoire de 2,6 s à 4,4 s (ralenti marqué en fin de course).
+const SPIN_LOOPS_MIN = 3;
+const SPIN_LOOPS_EXTRA = 3;
+const SPIN_DURATION_MIN = 2600;
+const SPIN_DURATION_RANGE = 1800;
 
 function playableRoute(game: PublicGame): string | undefined {
   return game.availability === "coming_soon" ? undefined : PLAYABLE_ROUTES[game.slug];
@@ -42,17 +49,75 @@ function layoutFor(width: number): { card: number; step: number } {
   return { card: 128, step: 118 };
 }
 
-export function HomeGameSelector({ games }: { games: readonly PublicGame[] }) {
+export function HomeGameSelector({ games: initialGames }: { games: readonly PublicGame[] }) {
   const router = useRouter();
+  // Affichage immédiat depuis le cache serveur (`initialGames`), puis
+  // vérification en arrière-plan (`stale-while-revalidate` client) via
+  // `GET /api/games/visible` : si les slugs ont changé, on remplace la liste.
+  const [games, setGames] = useState(initialGames);
+  const gamesRef = useRef(games);
+  useEffect(() => {
+    gamesRef.current = games;
+  }, [games]);
+  useEffect(() => {
+    if (!haveSameGameSlugs(gamesRef.current, initialGames)) setGames(initialGames);
+  }, [initialGames]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function refresh() {
+      try {
+        const response = await fetch("/api/games/visible", { cache: "no-store" });
+        if (!response.ok || cancelled) return;
+        const data = (await response.json().catch(() => null)) as { games?: unknown } | null;
+        const fresh = parseVisibleGames(data?.games);
+        if (!fresh || cancelled || haveSameGameSlugs(gamesRef.current, fresh)) return;
+        setGames(fresh);
+      } catch {
+        // Panne réseau : on garde la liste servie depuis le cache.
+      }
+    }
+    void refresh();
+    function onFocus() {
+      void refresh();
+    }
+    function onVisibility() {
+      if (document.visibilityState === "visible") void refresh();
+    }
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, []);
+
   const total = games.length;
   const [position, setPosition] = useState(() => Math.max(0, games.findIndex((game) => game.slug === "geographie")));
   const [dragging, setDragging] = useState(false);
+  const [spinning, setSpinning] = useState(false);
   const [width, setWidth] = useState(1200);
   const [imageAttempt, setImageAttempt] = useState<Record<string, number>>({});
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const dragRef = useRef<{ startX: number; startPosition: number } | null>(null);
   const movedRef = useRef(false);
   const stepRef = useRef(layoutFor(1200).step);
+  const spinFrameRef = useRef<number | null>(null);
+  const spinningRef = useRef(false);
+
+  // Annule le tirage en cours si la liste des jeux change ou au démontage.
+  useEffect(() => {
+    if (spinFrameRef.current !== null) {
+      cancelAnimationFrame(spinFrameRef.current);
+      spinFrameRef.current = null;
+    }
+    spinningRef.current = false;
+    setSpinning(false);
+  }, [total]);
+  useEffect(() => () => {
+    if (spinFrameRef.current !== null) cancelAnimationFrame(spinFrameRef.current);
+  }, []);
 
   useEffect(() => {
     const element = viewportRef.current;
@@ -84,8 +149,46 @@ export function HomeGameSelector({ games }: { games: readonly PublicGame[] }) {
     });
   }, [total]);
 
+  /** Tirage au hasard : plusieurs tours rapides puis ralenti marqué jusqu'à la cible. */
+  const shuffle = useCallback(() => {
+    if (spinningRef.current || total <= 1) return;
+    const target = Math.floor(Math.random() * total);
+    if (typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+      goToIndex(target);
+      return;
+    }
+    const loops = SPIN_LOOPS_MIN + Math.floor(Math.random() * SPIN_LOOPS_EXTRA);
+    const startPos = position;
+    const startRounded = Math.round(startPos);
+    const delta = loops * total + ((((target - startRounded) % total) + total) % total);
+    const end = startRounded + delta;
+    // Durée aléatoire : la vitesse de rotation varie d'un tirage à l'autre.
+    const duration = SPIN_DURATION_MIN + Math.random() * SPIN_DURATION_RANGE;
+    spinningRef.current = true;
+    setSpinning(true);
+    setDragging(false);
+    dragRef.current = null;
+    const startTime = performance.now();
+    const tick = (now: number) => {
+      const elapsed = Math.min(1, (now - startTime) / duration);
+      // Ease-out quintique : départ rapide, arrivée très lente sur le jeu tiré.
+      const eased = 1 - Math.pow(1 - elapsed, 5);
+      setPosition(startPos + (end - startPos) * eased);
+      if (elapsed < 1) {
+        spinFrameRef.current = requestAnimationFrame(tick);
+      } else {
+        spinFrameRef.current = null;
+        spinningRef.current = false;
+        setSpinning(false);
+        setPosition(end);
+      }
+    };
+    spinFrameRef.current = requestAnimationFrame(tick);
+  }, [position, total, goToIndex]);
+
   function onKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+    if (spinningRef.current) return;
     if (event.key === "ArrowLeft") {
       event.preventDefault();
       goBy(-1);
@@ -129,7 +232,7 @@ export function HomeGameSelector({ games }: { games: readonly PublicGame[] }) {
   }, []);
 
   function onPointerDown(event: ReactPointerEvent<HTMLDivElement>) {
-    if (event.button !== 0) return;
+    if (event.button !== 0 || spinningRef.current) return;
     dragRef.current = { startX: event.clientX, startPosition: position };
     movedRef.current = false;
     setDragging(true);
@@ -175,6 +278,7 @@ export function HomeGameSelector({ games }: { games: readonly PublicGame[] }) {
       aria-label="Les jeux à deux"
       tabIndex={0}
       data-dragging={dragging}
+      data-spinning={spinning}
       onKeyDown={onKeyDown}
     >
       <div
@@ -283,7 +387,7 @@ export function HomeGameSelector({ games }: { games: readonly PublicGame[] }) {
       </div>
 
       <div className="home-carousel-controls">
-        <button type="button" className="home-carousel-arrow" onClick={() => goBy(-1)} aria-label="Jeu précédent">
+        <button type="button" className="home-carousel-arrow" onClick={() => goBy(-1)} aria-label="Jeu précédent" disabled={spinning}>
           <ArrowIcon direction="left" />
         </button>
         <ul className="home-carousel-dots">
@@ -295,16 +399,31 @@ export function HomeGameSelector({ games }: { games: readonly PublicGame[] }) {
                 aria-label={`Afficher ${game.cardName}`}
                 aria-current={index === roundedActive}
                 onClick={() => goToIndex(index)}
+                disabled={spinning}
               />
             </li>
           ))}
         </ul>
-        <button type="button" className="home-carousel-arrow" onClick={() => goBy(1)} aria-label="Jeu suivant">
+        <button type="button" className="home-carousel-arrow" onClick={() => goBy(1)} aria-label="Jeu suivant" disabled={spinning}>
           <ArrowIcon direction="right" />
         </button>
       </div>
 
-      <p className="home-carousel-caption" aria-live="polite">
+      <div className="home-carousel-shuffle-row">
+        <button
+          type="button"
+          className="home-carousel-arrow home-carousel-shuffle"
+          onClick={shuffle}
+          aria-label="Choisir un jeu au hasard"
+          title="Jeu au hasard"
+          disabled={spinning || total <= 1}
+          data-spinning={spinning}
+        >
+          <ShuffleIcon />
+        </button>
+      </div>
+
+      <p className="home-carousel-caption" aria-live={spinning ? "off" : "polite"}>
         <strong>{activeGame.cardName}</strong>
         <span>{activeGame.description}</span>
         {activeRoute ? null : <span className="home-carousel-soon">Bientôt disponible</span>}
@@ -317,6 +436,19 @@ function ArrowIcon({ direction }: { direction: "left" | "right" }) {
   return (
     <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
       <path d={direction === "left" ? "M19 12H5m6-6-6 6 6 6" : "M5 12h14m-6-6 6 6-6 6"} />
+    </svg>
+  );
+}
+
+/** Icône « lecture aléatoire » des applis de musique : deux flèches qui se croisent. */
+function ShuffleIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+      <path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.8-1.1 2-1.7 3.3-1.7H22" />
+      <path d="m18 2 4 4-4 4" />
+      <path d="M2 6h1.9c1.5 0 2.9.9 3.6 2.2" />
+      <path d="M22 18h-5.9c-1.3 0-2.6-.7-3.3-1.8l-.5-.8" />
+      <path d="m18 14 4 4-4 4" />
     </svg>
   );
 }

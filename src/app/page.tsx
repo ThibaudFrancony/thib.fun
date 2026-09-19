@@ -6,6 +6,10 @@ import { getVisibleGames } from "@/server/games/visibility";
 // Coquille d'accueil mise en cache (régénérée au plus toutes les heures) :
 // `getVisibleGames` ne lit que la table publique `games` via le rôle serveur,
 // sans cookie. La partie compte du header est un îlot client (`SiteHeaderAuth`).
+// Affichage immédiat depuis le cache + vérification en arrière-plan côté
+// client (`HomeGameSelector` → `GET /api/games/visible`, `no-store`) qui
+// remplace la liste si les slugs ont changé ; la route admin invalide aussi
+// l'ISR via `revalidatePath("/")` pour le visiteur suivant.
 export const revalidate = 3600;
 
 export default async function HomePage() {

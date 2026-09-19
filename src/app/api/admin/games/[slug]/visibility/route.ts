@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { requireAdminAccount } from "@/server/admin/guard";
 import { setAdminGameVisibility } from "@/server/admin/repository";
 import { setGameVisibilityInputSchema } from "@/server/admin/schemas";
@@ -16,7 +17,14 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
   const body = setGameVisibilityInputSchema.safeParse(await request.json().catch(() => null));
   if (!body.success) return jsonError("INVALID_REQUEST", 400, "La demande de visibilité est invalide.");
   try {
-    return jsonOk(await setAdminGameVisibility(guard.account.member.id, body.data.requestId, slug, body.data.visible));
+    const result = await setAdminGameVisibility(guard.account.member.id, body.data.requestId, slug, body.data.visible);
+    try {
+      revalidatePath("/");
+    } catch {
+      // La bascule est déjà persistée ; un échec de revalidation retombe sur
+      // le TTL ISR de l'accueil et sa revalidation cliente.
+    }
+    return jsonOk(result);
   } catch (error) {
     return mapServerError(error);
   }

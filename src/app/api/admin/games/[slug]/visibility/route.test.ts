@@ -2,6 +2,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
+vi.mock("next/cache", () => ({
+  revalidatePath: vi.fn(),
+}));
+
 const mocks = vi.hoisted(() => ({
   configured: true,
   admin: true,
@@ -24,6 +28,7 @@ vi.mock("@/server/admin/repository", () => ({
 }));
 
 import { POST } from "@/app/api/admin/games/[slug]/visibility/route";
+import { revalidatePath } from "next/cache";
 
 const REQUEST_ID = "33333333-3333-4333-8333-333333333333";
 
@@ -50,6 +55,7 @@ describe("route admin de visibilité des jeux", () => {
     mocks.account = { isGuest: false, member: { id: "11111111-1111-4111-8111-111111111111", effectiveName: "Admin" } };
     mocks.setVisibility.mockReset();
     mocks.setVisibility.mockResolvedValue({ slug: "uno", visible: false });
+    vi.mocked(revalidatePath).mockClear();
   });
 
   it("refuse un membre non administrateur", async () => {
@@ -58,6 +64,7 @@ describe("route admin de visibilité des jeux", () => {
     expect(response.status).toBe(403);
     expect((await json(response)).error).toMatchObject({ code: "ADMIN_REQUIRED" });
     expect(mocks.setVisibility).not.toHaveBeenCalled();
+    expect(revalidatePath).not.toHaveBeenCalled();
   });
 
   it("refuse un corps invalide avant d'écrire", async () => {
@@ -76,6 +83,7 @@ describe("route admin de visibilité des jeux", () => {
       "uno",
       false,
     );
+    expect(revalidatePath).toHaveBeenCalledWith("/");
   });
 
   it("mappe un jeu inconnu", async () => {
