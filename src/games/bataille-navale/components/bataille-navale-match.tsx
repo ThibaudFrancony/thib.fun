@@ -403,9 +403,22 @@ function SetupPanel({ view, busy, send }: { view: NavalView; busy: boolean; send
   const [hoverCell, setHoverCell] = useState<Cell | null>(null);
   const [pendingTap, setPendingTap] = useState<Cell | null>(null);
   const [shake, setShake] = useState<Cell | null>(null);
+  // Pose optimiste : le brouillon local s'affiche aussitôt, la persistance
+  // SET_FLEET part en arrière-plan sans jamais bloquer la grille.
+  const [dirty, setDirty] = useState(false);
+  const [finishing, setFinishing] = useState(false);
+  const [randomizing, setRandomizing] = useState(false);
   const gridRef = useRef<HTMLDivElement | null>(null);
   const saveTimer = useRef<number | null>(null);
   const shakeTimer = useRef<number | null>(null);
+  const draftRef = useRef(draft);
+  const dirtyRef = useRef(false);
+  const sendingRef = useRef(false);
+  const sendRef = useRef(send);
+  useEffect(() => {
+    draftRef.current = draft;
+    sendRef.current = send;
+  });
 
   const occupied = useMemo(() => {
     const map = new Map<string, string>();
@@ -415,16 +428,72 @@ function SetupPanel({ view, busy, send }: { view: NavalView; busy: boolean; send
     return map;
   }, [draft]);
 
-  function persist(next: DraftShip[]) {
+  function shipsPayload(ships: DraftShip[]) {
+    return ships.map((ship) => ({ id: ship.id, row: ship.row, col: ship.col, orientation: ship.orientation }));
+  }
+
+  async function persistNow(): Promise<void> {
+    if (sendingRef.current) {
+      // Un envoi est en cours : réessaie juste après au lieu de le doublonner.
+      if (saveTimer.current !== null) window.clearTimeout(saveTimer.current);
+      saveTimer.current = window.setTimeout(() => void persistNow(), 400);
+      return;
+    }
+    sendingRef.current = true;
+    try {
+      const sent = draftRef.current;
+      const next = await sendRef.current({ type: "SET_FLEET", ships: shipsPayload(sent) });
+      if (next === null && draftRef.current === sent) {
+        // Envoi refusé (réseau occupé) sans nouveau brouillon : réessaie.
+        if (saveTimer.current !== null) window.clearTimeout(saveTimer.current);
+        saveTimer.current = window.setTimeout(() => void persistNow(), 400);
+        return;
+      }
+      if (draftRef.current !== sent) {
+        // Le joueur a reposé un bateau pendant l'envoi : persiste la suite.
+        if (saveTimer.current !== null) window.clearTimeout(saveTimer.current);
+        saveTimer.current = window.setTimeout(() => void persistNow(), 400);
+        return;
+      }
+      dirtyRef.current = false;
+      setDirty(false);
+    } finally {
+      sendingRef.current = false;
+    }
+  }
+
+  function schedulePersist() {
+    dirtyRef.current = true;
+    setDirty(true);
     if (saveTimer.current !== null) window.clearTimeout(saveTimer.current);
-    saveTimer.current = window.setTimeout(() => {
-      void send({ type: "SET_FLEET", ships: next.map((ship) => ({ id: ship.id, row: ship.row, col: ship.col, orientation: ship.orientation })) });
-    }, 600);
+    saveTimer.current = window.setTimeout(() => void persistNow(), 600);
+  }
+
+  /** Vide la file de persistance : utilisé avant READY et avant le tirage aléatoire. */
+  async function flushDraft(): Promise<void> {
+    if (saveTimer.current !== null) window.clearTimeout(saveTimer.current);
+    const deadline = Date.now() + 8000;
+    while (sendingRef.current && Date.now() < deadline) {
+      await new Promise((resolve) => window.setTimeout(resolve, 100));
+    }
+    if (dirtyRef.current) await persistNow();
+    if (dirtyRef.current) {
+      // Dernier recours : le brouillon a encore bougé pendant le flush.
+      if (saveTimer.current !== null) window.clearTimeout(saveTimer.current);
+      await persistNow();
+    }
   }
 
   useEffect(() => () => {
     if (saveTimer.current !== null) window.clearTimeout(saveTimer.current);
     if (shakeTimer.current !== null) window.clearTimeout(shakeTimer.current);
+  }, []);
+
+  // Meilleur effort : ne pas perdre un brouillon posé juste avant de quitter.
+  useEffect(() => () => {
+    if (dirtyRef.current && !sendingRef.current) {
+      void sendRef.current({ type: "SET_FLEET", ships: shipsPayload(draftRef.current) });
+    }
   }, []);
 
   function flagInvalid(cell: Cell) {
@@ -441,13 +510,14 @@ function SetupPanel({ view, busy, send }: { view: NavalView; busy: boolean; send
     }
     const next = draft.filter((ship) => ship.id !== selectedId);
     next.push({ id: selectedId, row: origin.row, col: origin.col, orientation });
+    // Affichage immédiat : le bateau est posé avant même l'envoi réseau.
     setDraft(next);
     setPendingTap(null);
-    persist(next);
+    schedulePersist();
   }
 
   function handleCellActivate(row: number, col: number) {
-    if (view.myReady || busy) return;
+    if (view.myReady || randomizing || finishing) return;
     const origin = { row, col };
     const canHover = typeof window !== "undefined" && typeof window.matchMedia === "function"
       ? window.matchMedia("(hover: hover)").matches
@@ -462,11 +532,23 @@ function SetupPanel({ view, busy, send }: { view: NavalView; busy: boolean; send
   }
 
   function removeShip(id: string) {
-    if (view.myReady || busy) return;
+    if (view.myReady || randomizing || finishing) return;
     const next = draft.filter((ship) => ship.id !== id);
     setDraft(next);
     setPendingTap(null);
-    persist(next);
+    schedulePersist();
+  }
+
+  async function confirmReady() {
+    if (finishing || !valid || !view.allowedActions.includes("READY_FLEET")) return;
+    setFinishing(true);
+    try {
+      // Le serveur ne verrouille que ce qu'il a reçu : persiste d'abord.
+      await flushDraft();
+      await send({ type: "READY_FLEET" });
+    } finally {
+      setFinishing(false);
+    }
   }
 
   function focusCell(row: number, col: number) {
@@ -496,7 +578,7 @@ function SetupPanel({ view, busy, send }: { view: NavalView; busy: boolean; send
                 key={index}
                 type="button"
                 role="gridcell"
-                disabled={view.myReady || busy}
+                disabled={view.myReady || randomizing || finishing}
                 tabIndex={focus.row === row && focus.col === col ? 0 : -1}
                 onClick={() => { setFocus({ row, col }); handleCellActivate(row, col); }}
                 onMouseEnter={() => setHoverCell({ row, col })}
@@ -540,7 +622,7 @@ function SetupPanel({ view, busy, send }: { view: NavalView; busy: boolean; send
             const placed = draft.find((ship) => ship.id === entry.id);
             return (
               <div key={entry.id} className="naval-ship-card" data-selected={selectedId === entry.id}>
-                <button type="button" disabled={view.myReady} onClick={() => { setSelectedId(entry.id as ShipId); setPendingTap(null); }} className="naval-ship-name" data-selected={selectedId === entry.id} aria-pressed={selectedId === entry.id} style={{ all: "unset", cursor: view.myReady ? "default" : "pointer", display: "block" }}>
+                <button type="button" disabled={view.myReady || randomizing || finishing} onClick={() => { setSelectedId(entry.id as ShipId); setPendingTap(null); }} className="naval-ship-name" data-selected={selectedId === entry.id} aria-pressed={selectedId === entry.id} style={{ all: "unset", cursor: view.myReady ? "default" : "pointer", display: "block" }}>
                   {shipName(entry.id)} <small>· {entry.length} cases</small>
                   <span className="naval-ship-state">{placed ? `posé en ${cellLabel(placed.row, placed.col)}` : "à placer"}</span>
                 </button>
@@ -557,29 +639,38 @@ function SetupPanel({ view, busy, send }: { view: NavalView; busy: boolean; send
           })}
         </div>
         <div className="naval-form-actions">
-          <button type="button" disabled={view.myReady || busy} onClick={() => { setOrientation((o) => (o === "horizontal" ? "vertical" : "horizontal")); }} className="naval-secondary-button">
+          <button type="button" disabled={view.myReady || randomizing || finishing} onClick={() => { setOrientation((o) => (o === "horizontal" ? "vertical" : "horizontal")); }} className="naval-secondary-button">
             Pivoter ({orientation === "horizontal" ? "→" : "↓"})
           </button>
-          <button type="button" disabled={view.myReady || busy} onClick={() => { void (async () => {
-            // Le serveur remplace toute la flotte : adopter la flotte
-            // renvoyée pour ne pas réécraser le tirage au prochain dépôt.
-            const next = await send({ type: "RANDOMIZE_FLEET" });
-            if (next) {
-              setDraft(next.view.myFleet.map((ship) => ({ id: ship.id as ShipId, row: ship.row, col: ship.col, orientation: ship.orientation })));
-              setPendingTap(null);
+          <button type="button" disabled={view.myReady || randomizing || finishing} onClick={() => { void (async () => {
+            // Le tirage remplace toute la flotte : annule d'abord la
+            // persistance en attente pour ne pas écraser le résultat,
+            // puis adopte la flotte renvoyée par le serveur.
+            if (saveTimer.current !== null) window.clearTimeout(saveTimer.current);
+            dirtyRef.current = false;
+            setDirty(false);
+            setRandomizing(true);
+            try {
+              const next = await send({ type: "RANDOMIZE_FLEET" });
+              if (next) {
+                setDraft(next.view.myFleet.map((ship) => ({ id: ship.id as ShipId, row: ship.row, col: ship.col, orientation: ship.orientation })));
+                setPendingTap(null);
+              }
+            } finally {
+              setRandomizing(false);
             }
           })(); }} className="naval-secondary-button">
-            Aléatoire
+            {randomizing ? "Tirage…" : "Aléatoire"}
           </button>
         </div>
         {!view.myReady ? (
           <button
             type="button"
-            disabled={!valid || busy || !view.allowedActions.includes("READY_FLEET")}
-            onClick={() => void send({ type: "READY_FLEET" })}
+            disabled={!valid || finishing || !view.allowedActions.includes("READY_FLEET")}
+            onClick={() => void confirmReady()}
             className="naval-primary-button"
           >
-            Valider ma flotte ({draft.length}/5)
+            {finishing ? "Verrouillage…" : `Valider ma flotte (${draft.length}/5)`}
           </button>
         ) : (
           <button
@@ -594,6 +685,7 @@ function SetupPanel({ view, busy, send }: { view: NavalView; busy: boolean; send
         )}
         <p className="naval-panel-note">
           {view.opponentReady ? "Ton adversaire est prêt." : "Ton adversaire place sa flotte…"}
+          {dirty && !view.myReady ? " · Enregistrement…" : ""}
         </p>
       </div>
     </section>
