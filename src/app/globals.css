@@ -3604,9 +3604,368 @@ button.uno-card:disabled { cursor: progress; opacity: 0.8; }
   .uno-card--playable:active { transform: translateY(-8px); }
 }
 
+/* ==========================================================================
+   Bataille navale — Flotte cachée (DA sombre océan nuit, sans assets).
+   Même langage que UNO / Géographie : panneaux verre, kickers, scoreboard
+   data-self / data-active, barre de statut, grilles 10×10 à états.
+   ========================================================================== */
+
+.naval-page {
+  --naval-muted: #c3d4e8;
+  --naval-faint: #8fa6c2;
+  --naval-accent: #7ef0d4;
+  --naval-accent-strong: #a7f3e0;
+  --naval-accent-ink: #07332a;
+  --naval-warm: #ffe49a;
+  --naval-danger: #ff9aa5;
+  --naval-line: #ffffff2b;
+  --naval-cell: clamp(1.9rem, 7.4vw, 2.6rem);
+  min-height: 100svh;
+  min-height: 100dvh;
+  overflow-x: clip;
+  color: #fff;
+  background:
+    radial-gradient(ellipse at 12% 8%, #1d5f8a80, transparent 48%),
+    radial-gradient(ellipse at 88% 82%, #155e6b55, transparent 46%),
+    radial-gradient(ellipse at 50% 108%, #3b2f7a55, transparent 58%),
+    linear-gradient(150deg, #0a2540, #061626 62%, #0a1f33);
+}
+
+.naval-page :focus-visible { outline: 3px solid var(--naval-accent-strong); outline-offset: 2px; }
+
+.naval-shell {
+  width: min(100% - 2rem, 1120px);
+  margin: 0 auto;
+  padding: clamp(0.8rem, 2vh, 1.4rem) 0 2.5rem;
+}
+
+.naval-shell--state { display: grid; place-items: center; min-height: 100dvh; }
+
+.naval-state-card {
+  width: min(100%, 30rem);
+  padding: 1.4rem 1.6rem;
+  border: 1px solid var(--naval-line);
+  border-radius: 1.25rem;
+  background: linear-gradient(145deg, #ffffff15, #ffffff08 58%, #06162660);
+  color: var(--naval-muted);
+  text-align: center;
+  backdrop-filter: blur(14px);
+}
+
+.naval-error {
+  padding: 0.8rem 0.9rem;
+  border: 1px solid #ffb6c24f;
+  border-radius: 0.8rem;
+  background: #8e28483d;
+  color: #ffd8e0;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+/* --- En-tête --- */
+
+.naval-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; }
+
+.naval-back {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0.45rem 1rem;
+  border: 1px solid var(--naval-line);
+  border-radius: 999px;
+  background: #ffffff08;
+  color: var(--naval-muted);
+  font-size: 0.85rem;
+  font-weight: 750;
+}
+
+.naval-back:hover { border-color: #ffffff82; background: #ffffff18; color: #fff; }
+
+.naval-heading { min-width: 0; text-align: center; }
+
+.naval-kicker { margin: 0; color: var(--naval-accent); font-size: 0.72rem; font-weight: 800; letter-spacing: 0.19em; text-transform: uppercase; }
+
+.naval-round { margin: 0.25rem 0 0; color: #fff; font-size: 0.9rem; font-weight: 850; }
+
+.naval-header-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+/* --- Boutons --- */
+
+.naval-primary-button, .naval-secondary-button, .naval-danger-button {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.85rem;
+  padding: 0.7rem 1rem;
+  font-size: 0.82rem;
+  font-weight: 800;
+  transition: background-color 180ms ease, border-color 180ms ease, transform 180ms ease;
+}
+
+.naval-primary-button { border: 1px solid var(--naval-accent-strong); background: var(--naval-accent); color: var(--naval-accent-ink); box-shadow: 0 8px 20px #07332a55; }
+.naval-primary-button:hover:not(:disabled) { background: #fff; transform: translateY(-1px); }
+.naval-primary-button:disabled { cursor: not-allowed; opacity: 0.55; }
+.naval-secondary-button { border: 1px solid var(--naval-line); background: #ffffff0b; color: #fff; }
+.naval-secondary-button:hover:not(:disabled) { border-color: #fff; background: #ffffff1b; }
+.naval-danger-button { border: 0; background: transparent; color: var(--naval-muted); }
+.naval-danger-button:hover:not(:disabled) { background: #ff9aa51a; color: #ffd2dc; }
+
+/* --- Scoreboard --- */
+
+.naval-scoreboard { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.7rem; margin-top: 1.25rem; }
+
+.naval-score-card { min-width: 0; padding: 1rem; border: 1px solid var(--naval-line); border-radius: 1rem; background: #ffffff0a; }
+
+.naval-score-card[data-self="true"] { border-color: var(--naval-accent-strong); background: #7ef0d414; box-shadow: inset 0 0 0 1px #7ef0d426; }
+
+.naval-score-card[data-active="true"] { box-shadow: 0 0 0 2px #ffe49a4d, inset 0 0 0 1px #7ef0d426; }
+
+.naval-score-topline { display: flex; align-items: center; justify-content: space-between; gap: 0.7rem; }
+
+.naval-player-name { min-width: 0; overflow-wrap: anywhere; font-size: 0.88rem; font-weight: 800; }
+
+.naval-player-score { color: var(--naval-accent); font-size: 1.7rem; font-variant-numeric: tabular-nums; font-weight: 850; letter-spacing: -0.05em; }
+.naval-player-score small { color: var(--naval-faint); font-size: 0.85rem; font-weight: 700; }
+
+.naval-score-status { margin: 0.3rem 0 0; color: var(--naval-muted); font-size: 0.7rem; font-weight: 700; }
+
+/* --- Barre de statut --- */
+
+.naval-status-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+  min-height: 52px;
+  margin-top: 0.8rem;
+  padding: 0.7rem 1rem;
+  border: 1px solid #ffffff18;
+  border-radius: 0.9rem;
+  background: #04121fb8;
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.naval-status-bar[data-urgent="true"] { border-color: #ffe49a8a; color: var(--naval-warm); }
+
+.naval-timer { color: var(--naval-accent); font-variant-numeric: tabular-nums; }
+
+/* --- Panneaux et notes --- */
+
+.naval-panel { border: 1px solid var(--naval-line); border-radius: 1.5rem; background: linear-gradient(145deg, #ffffff15, #ffffff08 58%, #06162630); box-shadow: inset 0 1px 0 #ffffff16, 0 18px 42px #020a1438; }
+
+.naval-panel-note { margin: 1rem 0 0; color: var(--naval-muted); font-size: 0.78rem; line-height: 1.6; text-align: center; }
+
+.naval-setup { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 320px); align-items: start; gap: 1rem; margin-top: 1rem; }
+
+.naval-side-panel, .naval-board-panel { padding: clamp(1rem, 2.5vw, 1.4rem); }
+
+.naval-game-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; gap: 1rem; margin-top: 1rem; }
+
+.naval-board-title { margin: 0 0 0.6rem; color: var(--naval-faint); font-size: 0.72rem; font-weight: 800; letter-spacing: 0.16em; text-align: center; text-transform: uppercase; }
+.naval-board-title strong { color: var(--naval-accent); }
+
+.naval-board-hint { min-height: 1.4em; margin: 0.55rem 0 0; color: var(--naval-faint); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.72rem; text-align: center; }
+.naval-board-hint strong { color: var(--naval-accent); }
+
+/* --- Grilles 10×10 --- */
+
+.naval-board { display: grid; grid-template-columns: repeat(10, var(--naval-cell)); gap: 4px; justify-content: center; }
+
+.naval-board[data-zoom="true"] { --naval-cell: clamp(2.4rem, 9vw, 3.2rem); }
+
+.naval-cell {
+  display: grid;
+  place-items: center;
+  width: var(--naval-cell);
+  height: var(--naval-cell);
+  border: 1px solid #ffffff14;
+  border-radius: 0.55rem;
+  background: #0e2f4db8;
+  color: #7d94b3;
+  font-size: 0.85rem;
+  font-weight: 800;
+  line-height: 1;
+  transition: transform 160ms ease, background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+button.naval-cell:not(:disabled) { cursor: pointer; }
+
+button.naval-cell:not(:disabled):hover { border-color: var(--naval-accent-strong); transform: translateY(-1px); }
+
+button.naval-cell[data-state="ship"] { border-color: #7ef0d455; background: linear-gradient(150deg, #134e5e, #0c3a54); color: #d9fff4; box-shadow: inset 0 1px 0 #ffffff22; }
+
+button.naval-cell[data-preview="ok"], div.naval-cell[data-preview="ok"] { border-color: var(--naval-accent-strong); background: #7ef0d433; color: #eafff9; box-shadow: 0 0 0 1px var(--naval-accent-strong), 0 0 14px #7ef0d455; }
+
+button.naval-cell[data-preview="bad"], div.naval-cell[data-preview="bad"] { border-color: #ff9aa5aa; background: #8e284855; color: #ffd8e0; box-shadow: 0 0 0 1px #ff9aa588; }
+
+div.naval-cell[data-state="ship"] { border-color: #7ef0d455; background: linear-gradient(150deg, #134e5e, #0c3a54); color: #d9fff4; }
+
+div.naval-cell[data-state="water"] { background: #0a2238cc; color: #5b7594; }
+
+div.naval-cell[data-state="miss"] { background: #20344d; color: #9db4cf; animation: navalSplash 260ms ease both; }
+
+div.naval-cell[data-state="hit"] { border-color: #ffe49a99; background: #f4c95d; color: #5b3b00; animation: navalHitFlash 220ms ease both; }
+
+div.naval-cell[data-state="sunk"] { border-color: #ff9aa5; background: #b42318; color: #fff; animation: navalSunkPulse 480ms ease both; }
+
+.naval-cell[data-selected="true"] { border-color: var(--naval-accent-strong); box-shadow: 0 0 0 2px var(--naval-accent-strong), 0 0 16px #7ef0d466; transform: translateY(-2px); }
+
+.naval-cell[data-aim="true"] { border-color: var(--naval-accent-strong); background: #7ef0d422; color: #eafff9; }
+
+.naval-cell[data-last="true"] { box-shadow: 0 0 0 2px var(--naval-warm), 0 0 16px #ffe49a55; }
+
+.naval-cell--shake { animation: navalShake 340ms ease; }
+
+@keyframes navalSplash {
+  from { transform: scale(1.25); opacity: 0.4; }
+  to { transform: none; opacity: 1; }
+}
+
+@keyframes navalHitFlash {
+  0% { transform: scale(1.3); filter: brightness(1.8); }
+  100% { transform: none; filter: none; }
+}
+
+@keyframes navalSunkPulse {
+  0%, 100% { transform: none; }
+  35% { transform: scale(1.12); box-shadow: 0 0 22px #ff9aa599; }
+}
+
+@keyframes navalShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+/* --- Confirmation de tir --- */
+
+.naval-fire-confirm { min-height: 4.2rem; margin-top: 1rem; text-align: center; }
+
+.naval-fire-confirm .naval-primary-button { min-height: 48px; padding-inline: 1.6rem; font-size: 0.9rem; }
+
+.naval-fire-idle { margin: 0; color: var(--naval-muted); font-size: 0.82rem; font-weight: 700; }
+
+.naval-last-shot { margin: 0.5rem 0 0; color: var(--naval-faint); font-size: 0.72rem; font-weight: 700; }
+
+/* --- Liste des bateaux --- */
+
+.naval-ship-list { display: grid; gap: 0.55rem; }
+
+.naval-ship-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid var(--naval-line);
+  border-radius: 1rem;
+  background: #ffffff08;
+  color: #fff;
+  text-align: left;
+  transition: border-color 160ms ease, background-color 160ms ease;
+}
+
+button.naval-ship-card:not(:disabled):hover { border-color: #ffffff82; background: #ffffff12; }
+
+.naval-ship-card[data-selected="true"] { border-color: var(--naval-accent-strong); background: #7ef0d41a; box-shadow: inset 0 0 0 1px #7ef0d438; }
+
+.naval-ship-name { font-size: 0.85rem; font-weight: 850; text-transform: capitalize; }
+.naval-ship-name small { color: var(--naval-faint); font-weight: 700; }
+
+.naval-ship-state { display: block; margin-top: 0.2rem; color: var(--naval-faint); font-size: 0.7rem; font-weight: 700; }
+
+.naval-ship-silhouette { display: flex; gap: 3px; }
+
+.naval-ship-silhouette span { width: 0.7rem; height: 0.7rem; border-radius: 0.25rem; background: #ffffff22; }
+.naval-ship-silhouette span[data-on="true"] { background: var(--naval-accent); box-shadow: 0 0 8px #7ef0d477; }
+
+.naval-ship-remove {
+  min-height: 40px;
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--naval-line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--naval-muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.naval-ship-remove:hover:not(:disabled) { border-color: var(--naval-danger); color: #ffd2dc; }
+
+.naval-form-actions { display: flex; gap: 0.55rem; margin-top: 0.7rem; }
+.naval-form-actions .naval-secondary-button { flex: 1; }
+.naval-form-actions + .naval-primary-button, .naval-side-panel > .naval-primary-button { width: 100%; margin-top: 0.7rem; }
+
+/* --- Onglets mobile --- */
+
+.naval-tabs { display: none; gap: 0.5rem; margin-top: 1rem; }
+
+.naval-tabs button { flex: 1; min-height: 48px; border: 1px solid var(--naval-line); border-radius: 999px; background: #ffffff08; color: var(--naval-muted); font-size: 0.85rem; font-weight: 850; }
+
+.naval-tabs button[data-active="true"] { border-color: var(--naval-accent-strong); background: var(--naval-accent); color: var(--naval-accent-ink); }
+
+/* --- Listes de coulés --- */
+
+.naval-sunk { margin: 0.7rem 0 0; color: var(--naval-accent); font-size: 0.78rem; font-weight: 800; text-align: center; }
+
+/* --- Fin de partie --- */
+
+.naval-finish { margin-top: 1.5rem; padding: clamp(1.2rem, 3vw, 2rem); text-align: center; animation: navalFinishPop 420ms cubic-bezier(0.2, 0.9, 0.3, 1.15) both; }
+
+.naval-finish-title { margin: 0.5rem 0 0; color: #fff; font-size: clamp(2.2rem, 7vw, 3.6rem); font-weight: 850; letter-spacing: -0.05em; line-height: 1; animation: navalRiseIn 460ms ease 90ms backwards; }
+
+.naval-finish-scores { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.7rem; max-width: 28rem; margin: 1.4rem auto 0; animation: navalRiseIn 460ms ease 200ms backwards; }
+
+.naval-finish-scores > div { padding: 0.9rem; border: 1px solid #ffffff18; border-radius: 1rem; background: #ffffff08; }
+.naval-finish-scores p { margin: 0; overflow-wrap: anywhere; color: var(--naval-muted); font-size: 0.8rem; font-weight: 800; }
+.naval-finish-scores strong { display: block; margin-top: 0.2rem; color: var(--naval-accent); font-size: 2.1rem; font-variant-numeric: tabular-nums; font-weight: 850; letter-spacing: -0.05em; }
+.naval-finish-scores span { color: var(--naval-faint); font-size: 0.68rem; }
+
+.naval-finish-meta { margin: 1rem 0 0; color: var(--naval-muted); font-size: 0.8rem; animation: navalRiseIn 460ms ease 320ms backwards; }
+.naval-finish-reveal { margin-top: 1.4rem; animation: navalRiseIn 460ms ease 340ms backwards; }
+.naval-finish .naval-primary-button { margin-top: 1.6rem; animation: navalRiseIn 460ms ease 460ms backwards; }
+
+@keyframes navalFinishPop {
+  from { opacity: 0; transform: translateY(24px) scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes navalRiseIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* --- Abandon --- */
+
+.naval-forfeit-panel { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.6rem; margin-top: 1.25rem; padding: 0.9rem 1rem; border: 1px dashed var(--naval-line); border-radius: 1rem; background: #ffffff06; color: var(--naval-muted); font-size: 0.8rem; font-weight: 700; }
+
+@media (max-width: 860px) {
+  .naval-setup { grid-template-columns: 1fr; }
+  .naval-game-layout { grid-template-columns: 1fr; }
+  .naval-tabs { display: flex; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .naval-cell, .naval-primary-button, .naval-secondary-button, .naval-ship-card { transition: none; }
+  .naval-cell--shake,
+  div.naval-cell[data-state="miss"],
+  div.naval-cell[data-state="hit"],
+  div.naval-cell[data-state="sunk"],
+  .naval-finish, .naval-finish-title, .naval-finish-scores, .naval-finish-meta, .naval-finish-reveal, .naval-finish .naval-primary-button { animation: none; }
+}
+
+@media (forced-colors: active) {
+  .naval-panel, .naval-score-card, .naval-cell, .naval-ship-card, .naval-back { border-color: CanvasText; }
+  .naval-page :focus-visible { outline-color: Highlight; }
+}
+
 /* ---------------------------------------------------------------------------
    Leaderboard /leaderboard — DA spatiale sombre (fond, couronne, badges).
---------------------------------------------------------------------------- */
+   --------------------------------------------------------------------------- */
 
 .lb-page {
   position: relative;

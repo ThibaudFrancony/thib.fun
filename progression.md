@@ -1,6 +1,6 @@
 # Progression du projet
 
-Dernière mise à jour : 19 septembre 2026
+Dernière mise à jour : 20 septembre 2026
 Branche de référence : `main`
 Référence du cycle de l'étape 3 : `6130c99` — `fix: wire transactional match commits`
 Référence du cycle de l'étape 4 : `9968878` — `fix: restore worker dispatcher and quiz judgments`, poussé sur `origin/main` et vérifié
@@ -16,6 +16,15 @@ Ce fichier décrit la réalité du dépôt et non les seules capacités prévues
 - ⚠️ dépendance ou décision externe non vérifiée.
 
 **Diagnostic du 13 septembre : le code des neuf jeux est présent, mais leur disponibilité fonctionnelle n'est pas acquise.** L'[audit complet](docs/audit-code-2026-09-13.md) et le [plan pas à pas](docs/plan-correction-2026-09-13.md) identifient 29 défauts de code/produit et 6 observations d'infrastructure : blocages du worker, abandon/forfait, présence, finalisation, réseau, sécurité et parcours incomplets. L'étape 1 est appliquée au harnais de tests ; le contrat commun de l'étape 2 est intégré à `main` (`d885079`), le raccordement SQL de l'étape 3 est versionné dans `6130c99` et sa validation PostgreSQL isolée ainsi que sa concurrence à deux sessions sont désormais démontrées localement. L'inspection Supabase du 16 septembre rapporte 33 migrations distantes, alignées avec les fichiers locaux, mais elle reste strictement en lecture seule. Quatre parties actives (trois TTMC et une Géographie), dix jobs échus en attente et deux joueurs engagés dans plusieurs parties doivent être préservés en production. Aucun secret, traitement de donnée, migration distante, écriture Vault, déploiement ou opération de reprise n'a été effectué dans la présente session. Les observations datées ci-dessous restent historiques ; l'audit et le préflight Étape 10 prévalent pour les limitations actuelles.
+
+### 20/09/2026 — Bataille navale : restylage sombre + prévisualisation de placement
+
+- Demande utilisateur : styliser l'interface de la bataille navale sans assets, la rendre plus ergonomique et cohérente avec UNO et Géographie ; prévisualisation du bateau avant le clic au survol ; animations fluides. Choix précisés en conversation : thème sombre naval, chantier complet (placement + tirs + fin), tactile en tap = preview puis 2e tap = pose.
+- Réalisation : nouveau namespace `.naval-*` dans `src/app/globals.css` (page océan-nuit en dégradés CSS, panneaux verre, scoreboard `data-self`/`data-active`, barre de statut `data-urgent`, grilles 10×10 à états `data-state`/`data-preview`/`data-selected`/`data-last`/`data-aim`, keyframes `navalSplash`/`navalHitFlash`/`navalSunkPulse`/`navalShake`/`navalRiseIn`, `prefers-reduced-motion` et `forced-colors`) ; `src/games/bataille-navale/components/bataille-navale-match.tsx` réécrit en UI seule — `SetupPanel` avec preview locale verte/rouge au hover et au focus clavier (jamais envoyée au serveur), clic invalide = secousse sans `SET_FLEET` (le brouillon précédent reste intact), tactile 1er tap preview / 2e tap pose via `matchMedia("(hover: hover)")`, bandeau de coordonnées `B4–B8 · emplacement libre`, noms de bateaux en français et silhouettes CSS ; `FireGrid` avec visée au survol et dernier tir distingué par camp ; `FleetGrid`/`SunkList`/`FinishedPanel` alignés sur les panneaux de fin géo/UNO. Aucun changement de moteur, de projection, d'API, de RLS, de migration ni de version de règles.
+- Vérifications (sans Docker) : `pnpm typecheck`, `pnpm lint`, `pnpm test` (88 fichiers / 557 réussis + 2 sentinelles), `pnpm test:matrix` (11 pass, 5 not-run), `pnpm content:validate`, `pnpm docs:check` (25 fichiers), `pnpm exec next build --webpack` propres.
+- Limites : recette visuelle navigateur à deux sessions non rejouée (Docker opt-in, daemon fermé) — survol, tap-tap tactile, animations de tirs, zoom et clavier seul à confirmer en partie réelle ; E2E navale inexistante (cf. audit).
+- Contradiction : aucune avec `AGENTS.md` (restylage UI seul, conforme à `docs/04-product-ui.md` §1/§6/§8 et à la fiche §6).
+- Prochaine étape utile : recette à deux sessions (desktop + mobile tactile), puis envisager un scénario E2E naval setup → tirs.
 
 ### 19/09/2026 — UNO : animations d'arrivée supprimées et fenêtre de pioche à 8 cartes
 
