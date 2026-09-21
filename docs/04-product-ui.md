@@ -2,9 +2,13 @@
 
 ## 1. Intention et statut visuel
 
-Site privé de jeux entre amis, français, parties principalement à deux. Interface moderne et ludique, lisible et rapide à comprendre. **Palette, noms et typographie ci-dessous sont des défauts provisoires**, pas une DA visuellement approuvée. Lors de l'implémentation, montrer accueil + salon + un écran de Géographie avant de décliner tous les jeux. Aucun besoin d'image IA ou de logo propriétaire pour construire les moteurs.
+Site privé de jeux entre amis, français, parties principalement à deux. Interface moderne et ludique, lisible et rapide à comprendre. **Décision utilisateur du 21 septembre 2026 : UNO et Géographie sont les références visuelles à préserver.** Harmoniser les sept autres jeux avec leur esthétique sans toucher aux deux interfaces de référence. Cette demande remplace la palette crème/verte et la validation préalable d'un écran autrefois proposées comme défauts provisoires.
 
-Base proposée : fond crème `#F7F7F2`, surfaces blanches, texte `#17211B`, secondaire `#536157`, accent vert `#245B45`, erreur `#B42318`, attention `#8A5300`, bordure `#D6DED7`. Vérifier les contrastes WCAG AA réels dans chaque combinaison ; jamais utiliser un accent clair comme seul texte. Police sans-serif locale/system (`Inter` si embarquée, sinon system-ui), chiffres tabulaires pour chronos et scores. Coins 16 px cartes/12 px boutons, espaces base 4 px, ombres discrètes. Pas de fond animé permanent. Chaque jeu reçoit un accent et une petite illustration vectorielle originale.
+Les parties Trou Noir, TTMC, Skyjo, BombParty, Bataille navale, Compatibilité et Longueur d'onde partagent `src/app/game-tables.css` : fond violet nuit `#100819`, panneaux sombres légèrement translucides, texte clair `#FAF5FF`, secondaire `#CEC2DE`, bordures lavande et accents pastel (lilas, jaune doux, menthe, rose ou bleu selon le jeu). Boutons principaux à texte foncé, focus contrasté, chiffres tabulaires, coins arrondis et ombres légères. La typographie Fredoka déjà embarquée sert les titres et éléments de jeu ; les textes longs conservent la police du site. Aucun fond animé permanent ; transitions coupées en mouvement réduit.
+
+Plateaux : Trou Noir garde ses réserves et met la question en avant avec un halo ; TTMC propose dix tuiles de niveau avec points et sélection explicite ; Skyjo reçoit des cartes à dos violet texturé et des faces colorées ; BombParty met la syllabe au centre ; Compatibilité présente de grandes cartes de choix ; Longueur d'onde reçoit un cadran sombre gradué ; Bataille navale conserve son placement, ses états de grille et ses animations avec une enveloppe violette commune. L'entraînement BombParty adopte aussi ces surfaces. Révélations, résultats, champs et états d'erreur suivent la même palette. Les styles `.uno-*` et `.geo-*`, leurs composants et leurs assets restent inchangés.
+
+Les contrôles navigateur sur fixtures sont distincts d'une recette multijoueur réelle et d'une validation esthétique par le propriétaire. Consulter `progression.md` pour les preuves et limites.
 
 ## 2. Routes et parcours
 

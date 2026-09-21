@@ -154,6 +154,14 @@ Les slugs techniques sont stables. Les noms d'affichage sont des propositions mo
 - Périmètre : `src/games/uno/types.ts` (`UNO_DRAW_PREVIEW_LIMIT`), `src/games/uno/projection.ts`, `src/games/uno/optimistic.ts`, `src/games/uno/components/uno-match.tsx`, `src/games/uno/components/uno-card.tsx`, `globals.css`, tests Vitest et E2E fixtures, `docs/games/05-uno.md` §5/§7/§8, `docs/08-engine-contracts.md` §5, `progression.md`. Aucune migration, aucun changement de moteur, de commande, d'API, de RLS ni de transport.
 - Raison : supprimer l'attente après les animations de pioche et de prise de pénalité sans mentir au joueur (les cartes et leur jouabilité sont connues d'avance), la triche par inspection réseau étant considérée comme hors menaces pour un site privé entre deux amis. Le client n'utilise cette information que pour l'affichage ; le serveur reste seul décideur.
 
+### Direction artistique des jeux — références UNO et Géographie (21 septembre 2026)
+
+- Demande utilisateur : conserver strictement la DA actuelle de UNO et Géographie et rapprocher les sept autres jeux de ces références.
+- Ancienne base documentaire : palette crème/verte provisoire et validation d'un écran préalable à la déclinaison ; plusieurs parties utilisaient encore des surfaces claires.
+- Nouvelle référence : UNO et Géographie sont les références visuelles choisies. Les autres jeux utilisent un fond violet nuit, des panneaux translucides, des accents pastel lisibles, des contrôles tactiles et des plateaux adaptés à chaque jeu. Ne pas modifier les composants, assets ou styles de UNO/Géographie pour harmoniser les autres.
+- Périmètre : présentation des sept autres parties, états de chargement/erreur/résultat et entraînement BombParty ; aucun changement des règles, moteurs, projections, réseau ou schéma.
+- Raison : unifier l'expérience autour des deux interfaces appréciées par le propriétaire. Aucune contradiction avec les invariants ; la base visuelle provisoire des documents est remplacée par cette référence explicite.
+
 ### Mise à jour proactive du suivi
 
 - Lire `AGENTS.md` et `progression.md` avant toute modification substantielle.

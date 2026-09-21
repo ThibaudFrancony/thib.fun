@@ -63,15 +63,15 @@ export function TtmcMatch({ matchId }: { matchId: string }) {
 
   if (error && !match) {
     return (
-      <main className="geo-page geo-state-page">
-        <div role="alert" className="geo-error geo-state-message">{error}</div>
+      <main className="table-page table-ttmc table-state-page">
+        <div role="alert" className="table-error table-state-message">{error}</div>
       </main>
     );
   }
   if (!match) {
     return (
-      <main className="geo-page geo-state-page">
-        <div className="geo-panel geo-loading-panel">Chargement de la partie…</div>
+      <main className="table-page table-ttmc table-state-page">
+        <div className="table-panel table-loading-panel">Chargement de la partie…</div>
       </main>
     );
   }
@@ -81,30 +81,30 @@ export function TtmcMatch({ matchId }: { matchId: string }) {
   const isMyTurn = view.activePlayerId === me.id && (view.phase === "choose_level" || view.phase === "answering");
 
   return (
-    <main className="geo-page geo-match-page">
-      <div className="geo-content geo-match-content">
-        <header className="geo-match-header">
-          <button type="button" onClick={() => router.push(`/salons/${match.roomId}`)} className="geo-back-link">
+    <main className="table-page table-ttmc table-match-page">
+      <div className="table-content table-match-content">
+        <header className="table-match-header">
+          <button type="button" onClick={() => router.push(`/salons/${match.roomId}`)} className="table-back-link">
             ← Salon
           </button>
-          <div className="geo-match-heading">
-            <p className="geo-kicker geo-kicker-accent">À ton niveau</p>
+          <div className="table-match-heading">
+            <p className="table-kicker table-kicker-accent">À ton niveau</p>
             <p>Manche {Math.min(view.round, view.maxRounds)} / {view.maxRounds} · cible {view.targetScore}</p>
           </div>
-          <button type="button" onClick={() => void refresh()} className="geo-secondary-button geo-refresh-button">
+          <button type="button" onClick={() => void refresh()} className="table-secondary-button table-refresh-button">
             Actualiser
           </button>
         </header>
 
-        <div className="geo-scoreboard">
+        <div className="table-scoreboard">
           {[me, opponent].map((player) => (
-            <div key={player.id} className="geo-score-card" data-self={player.seat === view.mySeat} data-active={player.active}>
-              <div className="geo-score-topline">
-                <span className="geo-player-name">
+            <div key={player.id} className="table-score-card" data-self={player.seat === view.mySeat} data-active={player.active}>
+              <div className="table-score-topline">
+                <span className="table-player-name">
                   {player.pseudo}
                   {player.seat === view.mySeat ? " · toi" : ""}
                 </span>
-                <span className="geo-player-score">{player.score}</span>
+                <span className="table-player-score">{player.score}</span>
               </div>
               <div aria-hidden="true" style={{ marginTop: "0.6rem", height: "8px", borderRadius: "999px", background: "#ffffff1f" }}>
                 <div
@@ -117,7 +117,7 @@ export function TtmcMatch({ matchId }: { matchId: string }) {
                   }}
                 />
               </div>
-              <p className="geo-score-status">
+              <p className="table-score-status">
                 Score · {player.correct} bonne{player.correct > 1 ? "s" : ""} · {player.incorrect} manquée{player.incorrect > 1 ? "s" : ""}
                 {player.averageLevel !== null ? ` · niveau moyen ${player.averageLevel.toFixed(1)}` : ""}
               </p>
@@ -125,64 +125,63 @@ export function TtmcMatch({ matchId }: { matchId: string }) {
           ))}
         </div>
 
-        <div aria-live="polite" aria-atomic="true" className="geo-status-bar" data-urgent={remaining !== null && remaining <= 10}>
+        <div aria-live="polite" aria-atomic="true" className="table-status-bar" data-urgent={remaining !== null && remaining <= 10}>
           <span>{phaseLabel(view, isMyTurn, expired)}</span>
-          {remaining !== null && view.phase !== "finished" && <span className="geo-timer">{remaining}s</span>}
+          {remaining !== null && view.phase !== "finished" && <span className="table-timer">{remaining}s</span>}
         </div>
         {view.lastChanceOfRound && view.phase !== "finished" && (
-          <p className="geo-panel-note" style={{ marginTop: "0.6rem" }}>Dernier tour de la manche : la cible est atteinte, la manche va à son terme.</p>
+          <p className="table-panel-note" style={{ marginTop: "0.6rem" }}>Dernier tour de la manche : la cible est atteinte, la manche va à son terme.</p>
         )}
-        {error && <p role="alert" className="geo-error" style={{ marginTop: "0.8rem" }}>{error}</p>}
+        {error && <p role="alert" className="table-error" style={{ marginTop: "0.8rem" }}>{error}</p>}
 
         {view.theme && view.phase === "choose_level" && (
-          <section className="geo-panel geo-side-panel" style={{ marginTop: "1rem", padding: "clamp(1.2rem, 3vw, 1.7rem)" }}>
-            <p className="geo-kicker geo-kicker-warm">Thème de la manche</p>
-            <h2 className="geo-panel-title">{view.theme.label}</h2>
-            <p className="geo-panel-note">{view.theme.description}</p>
+          <section className="table-panel table-side-panel">
+            <p className="table-kicker table-kicker-warm">Thème de la manche</p>
+            <h2 className="table-panel-title">{view.theme.label}</h2>
+            <p className="table-panel-note">{view.theme.description}</p>
             {view.activePlayerId === me.id ? (
               <>
-                <p className="geo-panel-note geo-instruction">Choisis ton niveau avant de voir la question. Difficulté = points possibles.</p>
-                <div role="group" aria-label="Niveaux de 1 à 10" style={{ display: "grid", gridTemplateColumns: "repeat(5, minmax(0, 1fr))", gap: "0.5rem", marginTop: "0.8rem" }}>
+                <p className="table-panel-note table-instruction">Choisis ton niveau avant de voir la question. Difficulté = points possibles.</p>
+                <div role="group" aria-label="Niveaux de 1 à 10" className="table-levels">
                   {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((level) => (
                     <button
                       key={level}
                       type="button"
                       onClick={() => setLevelDraft(level)}
                       aria-pressed={levelDraft === level}
-                      className="geo-secondary-button"
-                      style={{ minHeight: "44px", borderColor: levelDraft === level ? "#b9f9df" : undefined }}
+                      className="table-level"
                     >
-                      {level}
+                      <strong>{level}</strong><small>{level} pt{level > 1 ? "s" : ""}</small>
                     </button>
                   ))}
                 </div>
-                <p className="geo-panel-note" style={{ marginTop: "0.5rem" }}>
+                <p className="table-panel-note" style={{ marginTop: "0.5rem" }}>
                   <span>1 · accessible</span> · <span>10 · très difficile</span>
                 </p>
                 <button
                   disabled={busy}
                   onClick={() => void send({ type: "CHOOSE_LEVEL", level: levelDraft })}
-                  className="geo-primary-button"
+                  className="table-primary-button"
                 >
                   {busy ? "Envoi…" : `Confirmer le niveau ${levelDraft}`}
                 </button>
               </>
             ) : (
-              <p className="geo-panel-note">{opponent.pseudo} choisit son niveau…</p>
+              <p className="table-panel-note">{opponent.pseudo} choisit son niveau…</p>
             )}
           </section>
         )}
 
         {(view.phase === "answering" || view.phase === "judging") && (
-          <section className="geo-panel geo-side-panel" style={{ marginTop: "1rem", padding: "clamp(1.2rem, 3vw, 1.7rem)" }}>
+          <section className="table-panel table-side-panel">
             {view.question ? (
               <>
-                <p className="geo-kicker geo-kicker-warm">Niveau {view.question.level} · {view.question.level} point{view.question.level > 1 ? "s" : ""} possible{view.question.level > 1 ? "s" : ""}</p>
+                <p className="table-kicker table-kicker-warm">Niveau {view.question.level} · {view.question.level} point{view.question.level > 1 ? "s" : ""} possible{view.question.level > 1 ? "s" : ""}</p>
                 {view.technicalReplacement && (
-                  <p className="geo-panel-note">Question de remplacement : incident technique, même niveau, sans pénalité.</p>
+                  <p className="table-panel-note">Question de remplacement : incident technique, même niveau, sans pénalité.</p>
                 )}
-                <h2 className="geo-target-title" style={{ fontSize: "clamp(1.4rem, 3vw, 2rem)" }}>{view.question.prompt}</h2>
-                <p className="geo-panel-note geo-instruction">
+                <h2 className="table-target-title">{view.question.prompt}</h2>
+                <p className="table-panel-note table-instruction">
                   {view.phase === "judging"
                     ? "Réponse envoyée. Vérification en cours…"
                     : view.question.addresseeIsMe
@@ -196,7 +195,7 @@ export function TtmcMatch({ matchId }: { matchId: string }) {
                       if (draft.trim()) void send({ type: "SUBMIT_ANSWER", answer: draft.slice(0, 240) });
                     }}
                   >
-                    <label className="geo-label" htmlFor="ttmc-answer">Ta réponse</label>
+                    <label className="table-label" htmlFor="ttmc-answer">Ta réponse</label>
                     <input
                       id="ttmc-answer"
                       value={draft}
@@ -204,42 +203,42 @@ export function TtmcMatch({ matchId }: { matchId: string }) {
                       maxLength={240}
                       autoComplete="off"
                       placeholder="Écris ta réponse…"
-                      className="geo-input"
+                      className="table-input"
                     />
-                    <button disabled={busy || !draft.trim()} type="submit" className="geo-primary-button">
+                    <button disabled={busy || !draft.trim()} type="submit" className="table-primary-button">
                       {busy ? "Envoi…" : "Valider ma réponse"}
                     </button>
                   </form>
                 )}
               </>
             ) : (
-              <p className="geo-panel-note">Préparation de la question…</p>
+              <p className="table-panel-note">Préparation de la question…</p>
             )}
           </section>
         )}
 
         {view.phase === "reveal" && view.reveal && (
-          <section className="geo-panel geo-side-panel" style={{ marginTop: "1rem", padding: "clamp(1.2rem, 3vw, 1.7rem)" }}>
-            <p className="geo-kicker geo-kicker-warm">Révélation</p>
-            <h2 className="geo-panel-title">{view.reveal.timeout ? "Temps écoulé" : view.reveal.verdict === "accept" ? `Bonne réponse · +${view.reveal.points}` : "Réponse refusée · +0"}</h2>
+          <section className="table-panel table-side-panel">
+            <p className="table-kicker table-kicker-warm">Révélation</p>
+            <h2 className="table-panel-title">{view.reveal.timeout ? "Temps écoulé" : view.reveal.verdict === "accept" ? `Bonne réponse · +${view.reveal.points}` : "Réponse refusée · +0"}</h2>
             {!view.reveal.timeout && (
-              <p className="geo-panel-note">Réponse saisie : « {view.reveal.submittedAnswer} »</p>
+              <p className="table-panel-note">Réponse saisie : « {view.reveal.submittedAnswer} »</p>
             )}
-            <p className="geo-panel-note">Réponse attendue : {view.reveal.expectedAnswer}</p>
-            <p className="geo-panel-note">{view.reveal.explanation}</p>
+            <p className="table-panel-note">Réponse attendue : {view.reveal.expectedAnswer}</p>
+            <p className="table-panel-note">{view.reveal.explanation}</p>
             {view.reveal.contest?.status === "pending" && (
-              <p className="geo-panel-note">
+              <p className="table-panel-note">
                 {view.reveal.contest.requesterIsMe
                   ? "Contestation envoyée. Ton adversaire tranche."
                   : "Ton adversaire conteste. À toi de trancher."}
               </p>
             )}
-            <div className="geo-form-actions">
+            <div className="table-form-actions">
               {view.reveal.contestable && (
                 <button
                   disabled={busy}
                   onClick={() => void send({ type: "CONTEST", attemptId: view.reveal?.attemptId ?? "" })}
-                  className="geo-secondary-button"
+                  className="table-secondary-button"
                 >
                   Contester
                 </button>
@@ -249,7 +248,7 @@ export function TtmcMatch({ matchId }: { matchId: string }) {
                   <button
                     disabled={busy}
                     onClick={() => void send({ type: "RESOLVE_CONTEST", attemptId: view.reveal?.attemptId ?? "", accept: true })}
-                    className="geo-primary-button"
+                    className="table-primary-button"
                     style={{ width: "auto", marginTop: 0 }}
                   >
                     Accepter
@@ -257,14 +256,14 @@ export function TtmcMatch({ matchId }: { matchId: string }) {
                   <button
                     disabled={busy}
                     onClick={() => void send({ type: "RESOLVE_CONTEST", attemptId: view.reveal?.attemptId ?? "", accept: false })}
-                    className="geo-secondary-button"
+                    className="table-secondary-button"
                   >
                     Maintenir
                   </button>
                 </>
               )}
               {view.allowedActions.includes("NEXT") && (
-                <button disabled={busy} onClick={() => void send({ type: "NEXT" })} className="geo-primary-button" style={{ width: "auto", marginTop: 0 }}>
+                <button disabled={busy} onClick={() => void send({ type: "NEXT" })} className="table-primary-button" style={{ width: "auto", marginTop: 0 }}>
                   {busy ? "Actualisation…" : view.acknowledged ? "En attente de l'autre…" : "Continuer"}
                 </button>
               )}
@@ -273,19 +272,19 @@ export function TtmcMatch({ matchId }: { matchId: string }) {
         )}
 
         {view.phase === "finished" && (
-          <section className="geo-panel geo-finish-panel">
-            <p className="geo-kicker geo-kicker-accent">Résultats</p>
-            <h1 className="geo-finish-title">{finishLabel(view)}</h1>
-            <div className="geo-final-scores">
+          <section className="table-panel table-finish-panel">
+            <p className="table-kicker table-kicker-accent">Résultats</p>
+            <h1 className="table-finish-title">{finishLabel(view)}</h1>
+            <div className="table-final-scores">
               {view.players.map((player) => (
-                <div key={player.id} className="geo-final-score">
+                <div key={player.id} className="table-final-score">
                   <p>{player.pseudo}</p>
                   <strong>{player.score}</strong>
                   <span>points</span>
                 </div>
               ))}
             </div>
-            <button onClick={() => router.push("/jeux/ttmc")} className="geo-primary-button geo-finish-button">
+            <button onClick={() => router.push("/jeux/ttmc")} className="table-primary-button table-finish-button">
               Rejouer
             </button>
           </section>
@@ -293,10 +292,10 @@ export function TtmcMatch({ matchId }: { matchId: string }) {
 
         {view.phase !== "finished" && (
           <div style={{ display: "grid", gap: "0.55rem", marginTop: "1rem" }}>
-            <button disabled={busy} onClick={() => void send({ type: "RESIGN" })} className="geo-danger-button">
+            <button disabled={busy} onClick={() => void send({ type: "RESIGN" })} className="table-danger-button">
               Abandonner
             </button>
-            <div className="geo-forfeit-panel">
+            <div className="table-forfeit-panel">
               <p>Partenaire absent ?</p>
               <span>Le forfait devient disponible après 90 secondes sans signal.</span>
               </div>

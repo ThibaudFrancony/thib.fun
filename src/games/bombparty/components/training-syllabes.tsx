@@ -455,18 +455,18 @@ export function TrainingSyllabes() {
 
   return (
     <div className="space-y-5">
-      <section className="rounded-[1.75rem] border border-[var(--line)] bg-[var(--card)] p-6">
+      <section className="rounded-[1.75rem] border border-[var(--line)] table-panel p-6">
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label className="block text-sm font-bold" htmlFor="training-mode">Mode</label>
-            <select id="training-mode" value={mode} onChange={(event) => changeMode(event.target.value as TrainingMode)} className="mt-2 w-full rounded-xl border border-[var(--line)] bg-white px-4 py-3">
+            <select id="training-mode" value={mode} onChange={(event) => changeMode(event.target.value as TrainingMode)} className="mt-2 w-full rounded-xl border border-[var(--line)] table-surface px-4 py-3">
               <option value="free">Libre · sans chrono</option>
               <option value="timed">Chrono solo · contre la montre</option>
             </select>
           </div>
           <div>
             <label className="block text-sm font-bold" htmlFor="training-difficulty">Difficulté</label>
-            <select id="training-difficulty" value={difficulty} onChange={(event) => setDifficulty(event.target.value as Difficulty)} className="mt-2 w-full rounded-xl border border-[var(--line)] bg-white px-4 py-3">
+            <select id="training-difficulty" value={difficulty} onChange={(event) => setDifficulty(event.target.value as Difficulty)} className="mt-2 w-full rounded-xl border border-[var(--line)] table-surface px-4 py-3">
               <option value="easy">Facile</option>
               <option value="normal">Normal</option>
               <option value="hard">Difficile</option>
@@ -477,7 +477,7 @@ export function TrainingSyllabes() {
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <div>
               <label className="block text-sm font-bold" htmlFor="training-seconds">Secondes par tirage (5 à 30)</label>
-              <input id="training-seconds" type="number" min={5} max={30} value={seconds} onChange={(event) => setSeconds(Math.min(30, Math.max(5, Number(event.target.value) || 15)))} className="mt-2 w-full rounded-xl border border-[var(--line)] bg-white px-4 py-3" />
+              <input id="training-seconds" type="number" min={5} max={30} value={seconds} onChange={(event) => setSeconds(Math.min(30, Math.max(5, Number(event.target.value) || 15)))} className="mt-2 w-full rounded-xl border border-[var(--line)] table-surface px-4 py-3" />
             </div>
             <label className="flex items-center gap-2 text-sm font-bold">
               <input type="checkbox" checked={revealAfterExpiry} onChange={(event) => setRevealAfterExpiry(event.target.checked)} />
@@ -490,24 +490,24 @@ export function TrainingSyllabes() {
           Signaler les mots déjà proposés pendant la session
         </label>
         <div className="mt-5 flex flex-wrap gap-2">
-          <button type="button" disabled={busy} onClick={() => void drawSequence()} className="rounded-full bg-[#6d28d9] px-5 py-3 font-bold text-white hover:bg-[#5b21b6]">
+          <button type="button" disabled={busy} onClick={() => void drawSequence()} className="rounded-full table-primary px-5 py-3 font-bold text-white ">
             {busy ? "Tirage…" : "Tirer une séquence"}
           </button>
-          <button type="button" onClick={resetSession} className="rounded-full border border-[var(--line)] bg-white px-5 py-3 font-bold">Réinitialiser la session</button>
+          <button type="button" onClick={resetSession} className="rounded-full border border-[var(--line)] table-surface px-5 py-3 font-bold">Réinitialiser la session</button>
         </div>
-        <p className="mt-4 text-sm font-bold text-[var(--muted)]">
+        <p className="mt-4 text-sm font-bold table-muted">
           Session : {successes}/{attempts} réussis{accuracy !== null ? ` · ${accuracy} %` : ""}{trackUsed ? ` · ${usedWords.length}/${TRAINING_USED_WORD_LIMIT} mot${usedWords.length > 1 ? "s" : ""} proposé${usedWords.length > 1 ? "s" : ""}` : ""}
         </p>
       </section>
 
       {sequence && (
-        <section className="rounded-[1.75rem] border border-[var(--line)] bg-[var(--card)] p-6 text-center">
-          <p className="text-xs font-black uppercase tracking-[0.16em] text-[#6d28d9]">
+        <section className="rounded-[1.75rem] border border-[var(--line)] table-panel p-6 text-center">
+          <p className="text-xs font-black uppercase tracking-[0.16em] table-accent">
             Séquence{count !== null ? ` · ${count} mot${count > 1 ? "s" : ""}` : ""}
             {remaining !== null && mode === "timed" ? ` · ${remaining}s` : ""}
           </p>
           <p aria-live="polite" className="mt-2 text-6xl font-black uppercase">{sequence}</p>
-          {revealed && <p role="status" className="mt-3 rounded-2xl bg-[#f1eafe] px-4 py-3 text-sm font-bold text-[#4c1d95]">{revealed}</p>}
+          {revealed && <p role="status" className="mt-3 rounded-2xl table-tint px-4 py-3 text-sm font-bold table-accent">{revealed}</p>}
           <form
             className="mx-auto mt-5 max-w-md"
             onSubmit={(event) => {
@@ -528,43 +528,43 @@ export function TrainingSyllabes() {
               spellCheck={false}
               maxLength={60}
               disabled={busy || (mode === "timed" && remaining === 0)}
-              className="w-full rounded-2xl border-2 border-[#6d28d9] px-4 py-3 text-lg font-bold"
+              className="w-full rounded-2xl border-2 table-border-accent px-4 py-3 text-lg font-bold"
             />
-            <button type="submit" disabled={busy || word.trim().length === 0} className="mt-3 w-full rounded-full bg-[#6d28d9] px-4 py-3 font-bold text-white hover:bg-[#5b21b6] disabled:opacity-50">
+            <button type="submit" disabled={busy || word.trim().length === 0} className="mt-3 w-full rounded-full table-primary px-4 py-3 font-bold text-white  disabled:opacity-50">
               Vérifier
             </button>
           </form>
           {feedback && (
-            <p role="status" className={`mx-auto mt-4 max-w-md rounded-xl px-3 py-2 text-sm font-bold ${feedback.ok ? "bg-emerald-50 text-emerald-800" : "bg-red-50 text-red-700"}`}>
+            <p role="status" className={`mx-auto mt-4 max-w-md rounded-xl px-3 py-2 text-sm font-bold ${feedback.ok ? "table-success " : "table-error "}`}>
               {feedback.text}
             </p>
           )}
           <div className="mt-4 flex flex-wrap justify-center gap-2">
-            <button type="button" disabled={busy} onClick={() => void loadHint()} className="rounded-full border border-[#6d28d9]/30 bg-white px-4 py-2 text-sm font-bold text-[#5b21b6]">Indice</button>
-            <button type="button" disabled={busy} onClick={() => void loadSuggestions(null)} className="rounded-full border border-[#6d28d9]/30 bg-white px-4 py-2 text-sm font-bold text-[#5b21b6]">Suggestions</button>
+            <button type="button" disabled={busy} onClick={() => void loadHint()} className="rounded-full border table-border-accent table-surface px-4 py-2 text-sm font-bold table-accent">Indice</button>
+            <button type="button" disabled={busy} onClick={() => void loadSuggestions(null)} className="rounded-full border table-border-accent table-surface px-4 py-2 text-sm font-bold table-accent">Suggestions</button>
           </div>
-          {hint && <p role="status" className="mt-3 text-sm font-bold text-[#4c1d95]">{hint}</p>}
+          {hint && <p role="status" className="mt-3 text-sm font-bold table-accent">{hint}</p>}
         </section>
       )}
 
       {suggestions.length > 0 && (
-        <section className="rounded-[1.75rem] border border-[var(--line)] bg-white/70 p-5">
+        <section className="rounded-[1.75rem] border border-[var(--line)] table-surface p-5">
           <h2 className="font-black">Exemples pour « {sequence} »</h2>
           <ul className="mt-3 grid max-h-96 gap-2 overflow-y-auto sm:grid-cols-2">
             {suggestions.map((item) => (
-              <li key={item.word} className="rounded-xl bg-[var(--paper)] px-3 py-2 text-sm font-bold">{item.word} <span className="text-xs font-bold text-[var(--muted)]">· {item.length} lettres</span></li>
+              <li key={item.word} className="rounded-xl table-inset px-3 py-2 text-sm font-bold">{item.word} <span className="text-xs font-bold table-muted">· {item.length} lettres</span></li>
             ))}
           </ul>
           {nextCursor && (
-            <button type="button" disabled={busy} onClick={() => void loadSuggestions(nextCursor)} className="mt-4 rounded-full border border-[var(--line)] bg-white px-4 py-2 text-sm font-bold">
+            <button type="button" disabled={busy} onClick={() => void loadSuggestions(nextCursor)} className="mt-4 rounded-full border border-[var(--line)] table-surface px-4 py-2 text-sm font-bold">
               Voir plus
             </button>
           )}
         </section>
       )}
 
-      {error && <p role="alert" className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
-      <p className="text-sm leading-6 text-[var(--muted)]">
+      {error && <p role="alert" className="rounded-xl table-error px-3 py-2 text-sm ">{error}</p>}
+      <p className="text-sm leading-6 table-muted">
         L&apos;entraînement est indisponible pendant une partie Syllabe Express en cours : termine-la avant de revenir t&apos;échauffer. La reprise locale est limitée à cette session de navigation.
       </p>
     </div>

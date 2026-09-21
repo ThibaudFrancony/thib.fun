@@ -1,6 +1,6 @@
 # Progression du projet
 
-Dernière mise à jour : 20 septembre 2026
+Dernière mise à jour : 21 septembre 2026
 Branche de référence : `main`
 Référence du cycle de l'étape 3 : `6130c99` — `fix: wire transactional match commits`
 Référence du cycle de l'étape 4 : `9968878` — `fix: restore worker dispatcher and quiz judgments`, poussé sur `origin/main` et vérifié
@@ -16,6 +16,15 @@ Ce fichier décrit la réalité du dépôt et non les seules capacités prévues
 - ⚠️ dépendance ou décision externe non vérifiée.
 
 **Diagnostic du 13 septembre : le code des neuf jeux est présent, mais leur disponibilité fonctionnelle n'est pas acquise.** L'[audit complet](docs/audit-code-2026-09-13.md) et le [plan pas à pas](docs/plan-correction-2026-09-13.md) identifient 29 défauts de code/produit et 6 observations d'infrastructure : blocages du worker, abandon/forfait, présence, finalisation, réseau, sécurité et parcours incomplets. L'étape 1 est appliquée au harnais de tests ; le contrat commun de l'étape 2 est intégré à `main` (`d885079`), le raccordement SQL de l'étape 3 est versionné dans `6130c99` et sa validation PostgreSQL isolée ainsi que sa concurrence à deux sessions sont désormais démontrées localement. L'inspection Supabase du 16 septembre rapporte 33 migrations distantes, alignées avec les fichiers locaux, mais elle reste strictement en lecture seule. Quatre parties actives (trois TTMC et une Géographie), dix jobs échus en attente et deux joueurs engagés dans plusieurs parties doivent être préservés en production. Aucun secret, traitement de donnée, migration distante, écriture Vault, déploiement ou opération de reprise n'a été effectué dans la présente session. Les observations datées ci-dessous restent historiques ; l'audit et le préflight Étape 10 prévalent pour les limitations actuelles.
+
+### 21/09/2026 — Harmonisation des sept jeux autour de UNO et Géographie
+
+- Demande utilisateur : préserver la DA actuelle de UNO/Géographie et embellir tous les autres jeux en reprenant ces références.
+- Réalisation : styles isolés `src/app/game-tables.css` importés par le layout ; fond violet nuit, panneaux translucides, textes clairs, accents par jeu, boutons en relief, états de focus/sélection et replis mobiles. Trou Noir/TTMC quittent les classes `geo-*` pour un namespace indépendant ; question et réserves mises en avant, tuiles TTMC de 1 à 10 avec points. Skyjo : table sombre, dos de cartes texturés, faces pastel ; BombParty : syllabe centrale et vies lisibles ; Compatibilité : grandes cartes à lettres et coche de sélection ; Longueur d'onde : cadran sombre gradué et aiguilles contrastées ; Bataille navale : enveloppe violette et panneaux harmonisés, interactions préservées. Entraînement BombParty également restylé. Chargements/erreurs/révélations/résultats concernés par ces classes. Aucun changement moteur, projection, API, réseau, migration, assets ou code UNO/Géographie ; `globals.css` inchangé.
+- Décision : références visuelles et protection UNO/Géographie consignées dans `AGENTS.md`, index et document UI. Aucune contradiction avec les invariants de `AGENTS.md` ; remplacement explicite de l'ancienne palette documentaire provisoire.
+- Vérifications : TypeScript/lint propres ; Vitest 88 fichiers, 557 réussis et 2 échecs attendus ; matrice 11 pass / 5 not-run ; validation des contenus propre. Captures Chromium sur fixtures API des sept jeux à 1440 et 390 px : 14 vues sans erreur JavaScript ni débordement horizontal, sélection des niveaux TTMC, des deux cartes Skyjo et des choix Compatibilité exercée. Régressions réseau Playwright sur fixtures : 10/10 (5 Chromium + 5 iPhone/WebKit), `pnpm docs:check` (25 fichiers) et build de production `pnpm exec next build --webpack` réussis.
+- Limites : captures sur données fictives, pas une recette réelle à deux comptes ; toutes les phases ne sont pas couvertes visuellement. Docker/pgTAP/E2E avec base non lancés (opt-in). Aucune mutation ni migration distante ; aucune configuration supplémentaire requise pour cette présentation.
+- Prochaine étape utile : appréciation des nouveaux plateaux par le propriétaire en partie réelle après publication du code.
 
 ### 20/09/2026 — Bataille navale : placement optimiste sans attente réseau
 
@@ -437,6 +446,14 @@ Ce fichier décrit la réalité du dépôt et non les seules capacités prévues
 | Longueur d'onde | `longueur-onde` | 🟢 | Pack local original généré et validé : 80 axes opposés, 30 quotidien/25 culture/25 absurde, labels bornés, exemples de tutoriel hors partie, manifest et migration/RPC versionnés. Moteur pur versionné (`longueur-onde-1`/`longueur-onde-engine-1`), indice borné et filtré, cible secrète, estimation tactile, révélation, score coopératif, projection sans fuite, résultat/historique sans victoire-défaite, API/worker durable, UI violette sobre, page `/jeux/longueur-onde`, registre `ready`, 16 tests dédiés. Étape 5 corrige la jointure `match_id`, les triggers coopératifs et le cumul des métriques ; les migrations initiale `20260911210000_longueur_onde_ready.sql` et corrective `20260911233839_longueur_onde_cooperative_result_triggers.sql` restent immuables et appliquées à distance. | L'historique distant contient les 33 migrations locales jusqu'à l'additive Étape 8, mais aucune recette de production ou à deux sessions n'est validée ; préserver les engagements avant toute reprise. |
 
 ## Difficultés rencontrées pendant le développement
+
+### 21/09/2026 — Vérification visuelle des sept jeux
+
+- Signalement utilisateur : les jeux hors UNO/Géographie sont jugés inesthétiques. Constat dans le code : surfaces crème/blanches et accents violets foncés dans quatre parties et l'entraînement ; quiz déjà sombres mais présentation uniforme et contrôles compacts ; Bataille navale récemment restylée en bleu nuit. Résolution : harmonisation décrite dans l'entrée du 21/09 ci-dessus.
+- Le premier serveur Next local a échoué avec `listen EPERM: operation not permitted 127.0.0.1:3000` ; le premier lancement Chromium a échoué avec `bootstrap_check_in … Permission denied (1100)` dans le sandbox macOS. Relancés avec l'escalade d'exécution autorisée ; serveur et captures fonctionnent sans Docker.
+- Le script temporaire de capture Skyjo a d'abord échoué sur un sélecteur ambigu : « Case 1, carte cachée » existe dans les deux grilles. Sélecteur resserré sur la grille personnelle, puis 14 captures réussies. Il s'agissait du harnais de vérification, pas d'une panne du jeu.
+- La première inspection des captures a montré des pieds de page Skyjo/BombParty encore en `bg-white/50` et des symboles de résultat trop sombres. Classes et couleurs corrigées ; nouvelle capture de contrôle effectuée après correction.
+
 
 Cette section est un journal des problèmes réellement observés pendant le travail. L'IA l'alimente automatiquement lorsqu'un problème est signalé ou détecté, notamment quand l'utilisateur dit « ça ne marche pas », « j'ai une erreur » ou lorsqu'une commande, un test ou une implémentation échoue.
 

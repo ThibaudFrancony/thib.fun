@@ -37,3 +37,7 @@ Pour chaque lot terminé ajouter date, version/commit si existant, tests effectu
 ## Accès invité
 
 Le parcours est présent et validé localement : CTA dans le mode inscription, dialogue d'avertissement, session Auth anonyme, pseudo aléatoire généré côté serveur, accès aux salons/parties et distinction entre invité et compte permanent. La migration additive `20260912000100_anonymous_guest_access.sql` protège les écritures d'historique et de statistiques personnelles. Le nettoyage automatique des utilisateurs anonymes reste à vérifier/configurer.
+
+## Harmonisation visuelle du 21 septembre 2026
+
+Présente dans le code : DA commune sombre des sept jeux hors UNO/Géographie, avec styles isolés dans `src/app/game-tables.css`, plateaux et accents propres à chaque jeu, chargements, erreurs, révélations et résultats cohérents ; entraînement BombParty inclus. UNO/Géographie, leurs assets et les règles de jeu sont inchangés. Captures Chromium sur fixtures des sept parties à 1440 et 390 px, sélections TTMC/Skyjo/Compatibilité vérifiées ; aucune erreur JavaScript ni débordement horizontal sur ces 14 vues. Validation esthétique propriétaire et recette réelle à deux comptes restantes. Les détails des vérifications et difficultés figurent dans `progression.md`.

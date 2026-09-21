@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Fredoka } from "next/font/google";
 import { ChatDock } from "@/components/chat/chat-dock";
 import "./globals.css";
+import "./game-tables.css";
 
 const displayFont = Fredoka({
   subsets: ["latin"],

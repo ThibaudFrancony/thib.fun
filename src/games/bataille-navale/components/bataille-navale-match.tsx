@@ -126,10 +126,10 @@ export function BatailleNavaleMatch({ matchId }: { matchId: string }) {
   const remaining = match?.deadlineAt ? Math.max(0, Math.ceil((Date.parse(match.deadlineAt) - (now + serverOffset)) / 1000)) : null;
 
   if (error && !match) {
-    return <main className="naval-page naval-shell--state"><div role="alert" className="naval-state-card">{error}</div></main>;
+    return <main className="naval-page table-page table-naval naval-shell--state"><div role="alert" className="naval-state-card">{error}</div></main>;
   }
   if (!match || !view) {
-    return <main className="naval-page naval-shell--state"><div className="naval-state-card">Chargement de la partie…</div></main>;
+    return <main className="naval-page table-page table-naval naval-shell--state"><div className="naval-state-card">Chargement de la partie…</div></main>;
   }
 
   const isMyTurn = view.phase === "playing" && view.activePlayerId !== null && view.players[view.mySeat].id === view.activePlayerId;
@@ -137,7 +137,7 @@ export function BatailleNavaleMatch({ matchId }: { matchId: string }) {
   const opponent = view.players[(1 - view.mySeat) as 0 | 1];
 
   return (
-    <main className="naval-page">
+    <main className="naval-page table-page table-naval">
       <div className="naval-shell">
         <header className="naval-header">
           <button type="button" onClick={() => router.push(`/salons/${match.roomId}`)} className="naval-back">← Salon</button>
