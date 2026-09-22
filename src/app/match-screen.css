@@ -1,0 +1,188 @@
+/* In-match layout only. Landings, lobbies and visual identities stay separate. */
+.play-screen {
+  height: var(--play-height, 100dvh); min-height: 0; padding: 0;
+  container-type: size; color-scheme: dark;
+}
+.play-screen .play-shell {
+  display: flex; flex-direction: column; gap: 8px; width: min(100% - 24px, 1120px);
+  height: 100%; min-height: 0; margin: 0 auto;
+  padding: max(8px, env(safe-area-inset-top)) 0 max(12px, env(safe-area-inset-bottom));
+}
+.play-toolbar { display: flex; flex: 0 0 auto; align-items: center; gap: 12px; height: 44px; }
+.play-toolbar > h1 { flex: 1; min-width: 0; margin: 0; font-family: var(--font-display),sans-serif; font-size: clamp(1rem,2.5vw,1.3rem); font-weight: 600; text-align: center; }
+.play-toolbar > h1 > span { margin-left: .7rem; font: 500 .75rem ui-sans-serif,system-ui; color: #d4c7e3; white-space: nowrap; }
+.play-toolbar > button { flex: 0 0 44px; height: 44px; padding: 0; border: 1px solid #ffffff26; border-radius: 50%; background: #ffffff08; color: #fff; font-size: 1rem; }
+.play-resources { display:flex; flex:0 0 auto; justify-content:center; gap:24px; font-size:.75rem; color:#cec2de; }
+.play-resources strong { margin-left:8px; color:var(--table-accent,#fff); font-variant-numeric:tabular-nums; }
+.play-dialog { width:min(92vw,600px); max-height:85dvh; margin:auto; padding:20px; border:1px solid #bfa4d655; border-radius:20px; background:#21132e; color:#fff; overflow:auto; }
+.play-dialog::backdrop { background:#070311b3; backdrop-filter:blur(6px); }
+.play-dialog-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px; }
+.play-dialog-heading h2 { margin:0; font-size:1.15rem; font-weight:750; }
+.play-dialog button { min-height:44px; padding:8px 16px; border:1px solid #ffffff38; border-radius:12px; background:#ffffff09; color:#fff; }
+.play-dialog-actions { display:flex; flex-wrap:wrap; gap:12px; margin-top:20px; }
+.play-dialog :is(.table-scoreboard,.geo-scoreboard,.naval-scoreboard) { margin:0 0 16px; }
+.play-details-button { min-height:44px; padding:8px 16px; border:1px solid #ffffff30; border-radius:12px; background:#ffffff08; color:#ded0ee; font-size:.8rem; }
+.play-screen .play-shell > :is(.table-status,.table-status-bar,.geo-status-bar,.naval-status-bar) { flex:0 0 auto; min-height:28px; margin:0; padding:3px 8px; border:0; background:none; font-size:.8rem; }
+.play-screen .play-shell > :is(section,.table-panel) { flex:1 1 0; min-height:0; margin:0; padding:clamp(12px,2.5cqh,28px); display:flex; flex-direction:column; justify-content:center; gap:12px; }
+.play-screen .play-shell > section :is(h1,h2,p,form) { margin-top:0; margin-bottom:0; }
+.play-screen .table-side-panel::before { display:none; }
+.play-screen .table-side-panel { max-width:850px; width:100%; align-self:center; }
+.play-screen .table-side-panel form { width:100%; margin:16px 0 0; max-width:none; }
+.play-screen .table-target-title { max-width:none; font-size:clamp(1.25rem,3.7cqh,2.6rem); line-height:1.25; }
+.play-screen .table-panel-note { font-size:.85rem; line-height:1.45; }
+.play-screen .table-levels { margin:4px 0; gap:8px; }
+.play-screen .table-level { min-height:clamp(44px,9cqh,90px); }
+.play-screen .table-level strong { font-size:clamp(1.25rem,4cqh,2rem); }
+.play-screen .table-form-actions { margin-top:8px; }
+.play-screen .table-primary-button { margin-top:10px; }
+.play-screen :is(.table-finish-title,.geo-finish-title,.naval-finish-title,.uno-finish-title) { font-size:clamp(2rem,7cqh,4rem); line-height:1.1; }
+.play-screen :is(.table-final-scores,.geo-final-scores,.naval-finish-scores,.uno-finish-scores) { width:100%; margin:12px auto; grid-template-columns:repeat(2,minmax(0,1fr)); }
+.play-screen .play-shell > :is(.table-error,.geo-error,.naval-error,.uno-error) { flex:0 0 auto; margin:0 !important; padding:6px 10px; font-size:.8rem; }
+
+/* Cards remain the board; both grids are visible even on a narrow phone. */
+.play-screen .play-shell > .table-skyjo-board { display:grid; grid-template-columns:minmax(0,1fr) 150px minmax(0,1fr); align-content:center; align-items:center; gap:16px; }
+.play-screen .table-skyjo-board .table-skyjo-card, .play-screen .table-skyjo-board [aria-hidden=true] { width:clamp(36px,5.6cqw,70px); height:clamp(46px,12cqh,94px); }
+.play-screen .table-skyjo-board > div:first-child .table-skyjo-card { width:clamp(32px,4.6cqw,58px); height:clamp(38px,10cqh,78px); }
+.play-screen .table-skyjo-board p { font-size:.65rem; margin:0 0 6px; }
+.play-screen.table-skyjo .play-shell > div:not(.play-toolbar):not(.table-status) { margin-top:0; }
+.play-screen.table-skyjo .play-shell > section:not(.table-skyjo-board) { flex:0 0 auto; }
+.play-screen.table-skyjo .play-shell > section:not(.table-skyjo-board) > .h-24 { display:none; }
+.play-screen.table-skyjo .play-shell > section:not(.table-skyjo-board) .mt-4 { margin-top:8px; }
+.play-screen.table-skyjo .play-shell > section:not(.table-skyjo-board):last-child { margin:auto; }
+
+.play-screen .table-bomb-sequence { min-height:0; height:clamp(64px,22cqh,180px); margin:0 auto; font-size:clamp(2.8rem,12cqh,6rem); }
+.play-screen.table-bombparty .play-shell > section { max-width:700px; width:100%; align-self:center; }
+.play-screen.table-bombparty form { width:100%; }
+.play-screen.table-compatibilite .play-shell > section { width:100%; max-width:850px; align-self:center; }
+.play-screen.table-compatibilite h1 { font-size:clamp(1.2rem,3.8cqh,2.5rem); line-height:1.2; max-width:none; }
+.play-screen.table-compatibilite [role=radiogroup] { margin:4px 0; gap:8px; }
+.play-screen.table-compatibilite [role=radio] { min-height:52px; padding:12px; font-size:clamp(.8rem,2cqh,1rem); }
+.play-screen.table-compatibilite .mt-7 { margin-top:4px; }
+
+.play-screen.table-longueur-onde .play-shell > section { max-width:800px; width:100%; align-self:center; gap:8px; }
+.play-screen .table-dial { flex:1 1 0; min-height:0; max-height:48cqh; display:flex; flex-direction:column; padding:8px; margin:0; }
+.play-screen .table-dial svg { flex:1 1 0; min-height:0; width:100%; height:100%; }
+.play-screen .table-dial > div { flex:0 0 auto; font-size:.8rem; }
+.play-screen.table-longueur-onde :is(.mt-5,.mt-6) { margin-top:0; }
+.play-screen.table-longueur-onde .table-tint { padding:8px 12px; }
+.play-screen.table-longueur-onde input[type=range] { margin-top:0; }
+.play-screen.table-longueur-onde label { font-size:.8rem; }
+
+/* The map uses the available height, and controls sit beside/below it. */
+.play-screen .geo-game-layout { flex:1 1 0; min-height:0; margin:0; grid-template-columns:minmax(0,1fr) 260px; align-items:stretch; }
+.play-screen .geo-map-column { min-height:0; }
+.play-screen .geo-map-shell { display:flex; flex-direction:column; height:100%; min-height:0; }
+.play-screen .geo-map-svg { flex:1 1 0; min-height:0; height:100%; width:100%; }
+.play-screen .geo-map-controls { flex:0 0 auto; padding-bottom:0; }
+.play-screen .geo-side-panel { padding:16px; }
+.play-screen .geo-side-content { justify-content:center; }
+.play-screen .geo-target-title { font-size:clamp(1.3rem,4cqh,2.5rem); }
+.play-screen .geo-round-results { margin-top:12px; }
+.play-screen .geo-challenge-panel { justify-content:flex-start !important; }
+.play-screen .geo-city-results { flex:1; min-height:0; overflow:auto; margin:0; }
+.play-screen .geo-selected-cities { margin:0; }
+.play-screen .geo-selected-cities .geo-city-chip { padding:2px 6px; }
+
+.play-screen.table-naval { --naval-cell:min(44px,calc((100cqh - 230px) / 10 - 4px),calc((100cqw - 76px) / 10 - 4px)); }
+.play-screen .play-shell > .naval-setup { display:grid; grid-template-columns:minmax(0,1fr) 300px; align-content:center; align-items:center; gap:12px; padding:0; }
+.play-screen .naval-board-panel { padding:12px; }
+.play-screen .naval-board-title { font-size:.7rem; margin-bottom:8px; }
+.play-screen .naval-board-hint { min-height:0; margin:6px 0 0; font-size:.7rem; }
+.play-screen .naval-side-panel { padding:12px; }
+.play-ship-picker { display:flex; gap:8px; }
+.play-ship-picker select { width:100%; min-width:0; padding:8px; border-radius:10px; }
+.play-screen .naval-form-actions { margin-top:8px; }
+.play-screen .naval-side-panel > .naval-panel-note { display:none; }
+.play-screen .naval-game-layout { flex:1 1 0; min-height:0; margin:0; align-content:center; }
+.play-screen .naval-tabs { margin:0; flex:0 0 auto; }
+.play-screen .naval-tabs button { min-height:40px; }
+.play-screen .naval-fire-confirm { min-height:0; margin:8px 0 0; }
+.play-screen .naval-last-shot { font-size:.75rem; margin:4px 0 0; }
+
+/* UNO keeps its art and animations; redundant labels no longer take space. */
+.play-screen .uno-opponent { flex:0 0 auto; min-height:0; gap:4px 12px; }
+.play-screen .uno-opponent-hand { --uno-card-w:clamp(18px,4cqh,38px); }
+.play-screen .uno-opponent-avatar { width:28px; height:28px; }
+.play-screen .uno-opponent-hand .uno-card { flex-shrink:1; }
+.play-screen .uno-table { flex:1 1 0; align-content:center; align-items:center; margin:0; gap:12px; }
+.play-screen .uno-pile { --uno-card-w:clamp(44px,13cqh,94px); padding:8px 16px; gap:4px; }
+.play-screen .uno-pile--discard { min-width:0; }
+.play-screen .uno-active-color { margin:2px 0 0; font-size:.7rem; }
+.play-screen .uno-hand-panel { flex:0 0 auto; margin:0; padding:10px 12px; }
+.play-screen .uno-hand { --uno-card-w:clamp(42px,12cqh,88px); flex-wrap:nowrap; margin-top:8px; padding:10px 6px; min-height:0; }
+.play-screen .uno-hand .uno-card { min-width:0; flex:0 1 var(--uno-card-w); --uno-hand-lift:0px !important; }
+.play-screen .uno-penalty-banner { margin:0; font-size:.75rem; }
+.play-screen .uno-finish { margin:0; }
+
+@media (max-width:760px) {
+  .play-screen .table-levels { grid-template-columns:repeat(5,minmax(0,1fr)); }
+  .play-screen .play-shell > .table-skyjo-board { grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:12px; padding:12px; }
+  .play-screen .table-skyjo-board > div:last-child { grid-column:1 / -1; }
+  .play-screen .table-skyjo-board > div:nth-child(2) { gap:8px; }
+  .play-screen .table-skyjo-board .table-skyjo-card { width:clamp(36px,12cqw,62px); height:clamp(44px,9cqh,78px); }
+  .play-screen .table-skyjo-board > div:first-child .table-skyjo-card { width:clamp(22px,6.5cqw,38px); height:clamp(27px,5.5cqh,48px); }
+  .play-screen .geo-game-layout { grid-template-columns:1fr; grid-template-rows:minmax(0,1fr) auto; gap:8px; }
+  .play-screen .geo-side-panel { padding:10px 12px; }
+  .play-screen .geo-side-content { display:grid; grid-template-columns:1fr auto; align-items:center; gap:3px 12px; }
+  .play-screen .geo-side-content > .geo-kicker { display:none; }
+  .play-screen .geo-side-content > h2 { grid-column:1; margin:0; font-size:1.3rem; }
+  .play-screen .geo-side-content > .geo-target-department { grid-column:1; margin:0; font-size:.75rem; }
+  .play-screen .geo-side-content > button { grid-column:2; grid-row:1 / span 3; margin:0; }
+  .play-screen .geo-round-results { grid-column:1 / -1; display:grid; grid-template-columns:1fr 1fr; margin-top:8px; }
+  .play-screen .geo-round-result { padding:6px; gap:4px; }
+  .play-screen .geo-round-result .geo-round-player { gap:4px; }
+  .play-screen .geo-round-result strong { font-size:.75rem; }
+  .play-screen .play-shell > .naval-setup { grid-template-columns:1fr; flex:1 1 0; gap:8px; padding:0; }
+  .play-screen .naval-game-layout { grid-template-columns:1fr; }
+}
+@media (max-height:500px) and (min-width:600px) {
+  .play-screen .play-shell { gap:4px; }
+  .play-screen .table-levels { grid-template-columns:repeat(10,minmax(0,1fr)); }
+  .play-screen .table-level { min-height:44px; }
+  .play-screen .play-shell > .table-skyjo-board { grid-template-columns:1fr 100px 1fr; gap:12px; }
+  .play-screen .table-skyjo-board > div:last-child { grid-column:auto; }
+  .play-screen .table-skyjo-board .table-skyjo-card { height:42px; width:32px; }
+  .play-screen .table-skyjo-board > div:first-child .table-skyjo-card { height:36px; width:28px; }
+  .play-screen .geo-game-layout { grid-template-columns:1fr 230px; grid-template-rows:minmax(0,1fr); }
+  .play-screen .geo-side-content { display:flex; align-items:stretch; }
+  .play-screen .geo-round-results { grid-template-columns:1fr; }
+  .play-screen.table-naval { --naval-cell:min(25px,calc((100cqh - 165px) / 10 - 4px)); }
+  .play-screen .play-shell > .naval-setup { grid-template-columns:1fr 280px; }
+  .play-screen.table-longueur-onde .play-shell > section { display:grid; grid-template-columns:1fr 1fr; align-items:center; }
+  .play-screen.table-longueur-onde .table-dial { grid-column:1; grid-row:1 / span 4; height:100%; max-height:none; }
+  .play-screen.table-longueur-onde section > :not(.table-dial) { grid-column:2; }
+  .play-screen .uno-opponent { position:absolute; top:60px; right:0; max-width:42%; }
+  .play-screen .uno-table { justify-content:flex-start; padding-left:12px; }
+  .play-screen .uno-hand-panel { position:absolute; bottom:12px; right:0; width:56%; }
+}
+/* A keyboard should leave the current question and submit control accessible. */
+.play-screen[data-keyboard] .play-resources { display:none; }
+.play-screen[data-keyboard] .play-shell > section { padding:10px; gap:6px; }
+.play-screen[data-keyboard] .table-bomb-sequence { height:44px; font-size:2rem; border:0; }
+.play-screen[data-keyboard] .table-target-title { font-size:1.05rem; }
+.play-screen[data-keyboard] .table-side-panel form { margin-top:6px; }
+.play-screen.table-longueur-onde[data-keyboard] .table-dial { max-height:20cqh; }
+
+.play-screen .uno-card--paged-out { display:none; }
+.uno-hand-pages { display:flex; align-items:center; gap:6px; margin-left:auto; font-size:.7rem; }
+.uno-hand-pages button { min-width:36px; min-height:36px; padding:4px; border-radius:50%; border:1px solid #ffffff30; }
+
+.play-screen[data-phase=finished] .play-shell > :is(.play-resources,.table-status,.table-status-bar,.geo-status-bar,.naval-status-bar) { display:none; }
+.play-screen[data-phase=finished] .play-shell > section { flex:1 1 0; margin:0; gap:8px; }
+@media (max-height:500px) and (min-width:600px) {
+  .play-screen[data-phase=finished] .play-shell > section { padding:12px; }
+  .play-screen[data-phase=finished] section > :is(.table-kicker,.geo-kicker,.naval-kicker,.uno-kicker) { display:none; }
+  .play-screen[data-phase=finished] section > h1 { margin:0; font-size:2rem; }
+  .play-screen[data-phase=finished] section > button { margin:0; }
+  .play-screen[data-phase=finished] :is(.table-final-scores,.geo-final-scores,.naval-finish-scores,.uno-finish-scores) { margin:4px auto; }
+  .play-screen[data-phase=finished] :is(.table-inset,.table-final-score,.geo-final-score,.naval-finish-scores > div,.uno-finish-scores > div) { padding:8px 16px; }
+  .play-screen .geo-side-content { gap:4px; }
+  .play-screen .geo-side-content > .geo-kicker { display:none; }
+  .play-screen .geo-side-content > :is(h2,p,button) { margin:0; }
+  .play-screen .geo-round-results { margin:4px 0; gap:4px; }
+  .play-screen .geo-round-result { padding:6px; }
+  .play-screen .naval-game-layout { grid-template-columns:1fr 1fr; }
+  .play-screen .naval-tabs { display:none; }
+  .play-screen .naval-game-layout > section { display:block; }
+  .play-screen.table-naval[data-phase=playing] { --naval-cell:min(25px,calc((100cqh - 215px) / 10 - 4px)); }
+}

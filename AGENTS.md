@@ -162,6 +162,14 @@ Les slugs techniques sont stables. Les noms d'affichage sont des propositions mo
 - Périmètre : présentation des sept autres parties, états de chargement/erreur/résultat et entraînement BombParty ; aucun changement des règles, moteurs, projections, réseau ou schéma.
 - Raison : unifier l'expérience autour des deux interfaces appréciées par le propriétaire. Aucune contradiction avec les invariants ; la base visuelle provisoire des documents est remplacée par cette référence explicite.
 
+### Plateaux essentiels dans la fenêtre (22 septembre 2026)
+
+- Demande utilisateur : interfaces de tous les jeux trop chargées ; supprimer descriptions, compteurs et scores sans utilité immédiate, et faire tenir le plateau à l'écran sans défilement.
+- Ancienne règle : bandeau systématique à deux scores, détails affichés en continu et main potentiellement défilante ; la décision du 21 septembre protégeait aussi les composants UNO/Géographie contre toute modification d'harmonisation.
+- Nouvelle règle : les neuf parties affichent uniquement le plateau, le tour/chrono utile et les actions du moment, dans la hauteur disponible. Les scores secondaires et actions générales vont dans « Options de la partie », les explications/récapitulatifs dans des dialogues. Les grandes mains sont paginées, sans défilement du plateau. Les ressources décisives (vies, réserves, cartes adverses UNO) restent visibles. Le zoom d'accessibilité garde son déplacement natif.
+- Périmètre : allègement et disposition des neuf interfaces, y compris UNO/Géographie ; leur DA, palette, illustrations et assets restent les références à conserver. Aucun changement moteur, projection, API ou schéma.
+- Raison : donner la priorité au jeu et à la lisibilité. Cette précision remplace la protection absolue des composants uniquement pour leur encombrement et ergonomie ; elle n'autorise pas à redessiner UNO/Géographie.
+
 ### Mise à jour proactive du suivi
 
 - Lire `AGENTS.md` et `progression.md` avant toute modification substantielle.

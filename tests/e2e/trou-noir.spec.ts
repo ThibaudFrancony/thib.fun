@@ -46,7 +46,7 @@ test("mène une manche Trou Noir à deux sans fuite de solution", async ({ brows
     const activeField = (await aliceAnswer.count()) > 0 ? aliceAnswer : bobAnswer;
     const activePage = (await aliceAnswer.count()) > 0 ? alice : bob;
     await activeField.fill("une réponse de test");
-    await activePage.getByRole("button", { name: "Valider ma réponse" }).click();
+    await activePage.getByRole("button", { name: "Valider" }).click();
     await expect(activePage.getByText("Vérification de la réponse")).toBeVisible({ timeout: 15_000 });
   } finally {
     await bobContext.close();

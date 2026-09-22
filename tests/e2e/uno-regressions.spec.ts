@@ -64,7 +64,7 @@ async function openFixture(page: Page, currentView: UnoView, getVersion: () => n
     await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(response(currentView, getVersion())) });
   });
   await page.goto(`/parties/${matchId}`);
-  await expect(page.getByRole("heading", { name: /1 carte/ })).toBeVisible();
+  await expect(page.locator(".uno-hand > button")).toHaveCount(1);
 }
 
 test("le dialogue de joker survit à une actualisation de projection", async ({ page }) => {
@@ -125,11 +125,11 @@ test("le tour passe à l'adversaire à la fin du vol, avant la réponse serveur"
     await route.abort("failed");
   });
   await page.goto(`/parties/${matchId}`);
-  await expect(page.getByRole("heading", { name: /2 cartes/ })).toBeVisible();
+  await expect(page.locator(".uno-hand > button")).toHaveCount(2);
   await page.getByRole("button", { name: "5 · jouable" }).click();
   await expect(page.getByRole("img", { name: "Défausse : 5" })).toBeVisible();
   await expect(page.getByText(/Au tour de Bob/)).toBeVisible();
-  await expect(page.getByRole("heading", { name: /1 carte/ })).toBeVisible();
+  await expect(page.locator(".uno-hand > button")).toHaveCount(1);
   await expect(page.getByText(/À ton tour/)).toBeVisible({ timeout: 8_000 });
   await expect(page.getByRole("img", { name: "Défausse : 3" })).toBeVisible();
 });
@@ -146,12 +146,12 @@ test("une pioche préchargée non jouable passe la main dès l'atterrissage", as
     await route.abort("failed");
   });
   await page.goto(`/parties/${matchId}`);
-  await expect(page.getByRole("heading", { name: /1 carte/ })).toBeVisible();
+  await expect(page.locator(".uno-hand > button")).toHaveCount(1);
   await page.getByRole("button", { name: "Piocher une carte" }).click();
   await expect(page.getByRole("button", { name: "2", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "2", exact: true })).toHaveClass(/uno-card--no-in/);
   await expect(page.getByText(/Au tour de Bob/)).toBeVisible();
-  await expect(page.getByRole("heading", { name: /2 cartes/ })).toBeVisible();
+  await expect(page.locator(".uno-hand > button")).toHaveCount(2);
   await expect(page.locator(".uno-hand-placeholder")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Piocher une carte" })).toBeEnabled({ timeout: 8_000 });
   await expect(page.getByRole("button", { name: "2", exact: true })).toHaveCount(0);
@@ -169,14 +169,14 @@ test("une pioche préchargée jouable propose la carte piochée sans attendre le
     await route.abort("failed");
   });
   await page.goto(`/parties/${matchId}`);
-  await expect(page.getByRole("heading", { name: /1 carte/ })).toBeVisible();
+  await expect(page.locator(".uno-hand > button")).toHaveCount(1);
   await page.getByRole("button", { name: "Piocher une carte" }).click();
-  await expect(page.getByText("Joue la carte piochée ou garde-la.")).toBeVisible();
+  await expect(page.getByText("Jouer ou garder ?")).toBeVisible();
   await expect(page.getByRole("button", { name: "7 · jouable" })).toBeVisible();
   await expect(page.getByRole("button", { name: "7 · jouable" })).toHaveClass(/uno-card--no-in/);
-  await expect(page.getByRole("button", { name: "Garder la carte" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Garder" })).toBeDisabled();
   await expect(page.getByText(/Au tour de Bob/)).toHaveCount(0);
-  await expect(page.getByRole("heading", { name: /1 carte/ })).toBeVisible({ timeout: 8_000 });
+  await expect(page.locator(".uno-hand > button")).toHaveCount(1, { timeout: 8_000 });
   await expect(page.getByRole("button", { name: "7 · jouable" })).toHaveCount(0);
 });
 
@@ -199,7 +199,7 @@ test("une prise de pénalité préchargée remplit la main puis passe le tour", 
   await page.goto(`/parties/${matchId}`);
   await expect(page.getByText("+4 à prendre ou à contrer avec un +2")).toBeVisible();
   await page.getByRole("button", { name: "Prendre 4 cartes" }).click();
-  await expect(page.getByRole("heading", { name: /5 cartes/ })).toBeVisible();
+  await expect(page.locator(".uno-hand > button")).toHaveCount(5);
   await expect(page.getByRole("button", { name: "2", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "7", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "9", exact: true })).toBeVisible();
@@ -244,7 +244,7 @@ test("une prise de pénalité confirmée pendant l'animation termine proprement"
   await page.getByRole("button", { name: "Prendre 2 cartes" }).click();
   await expect(page.getByRole("button", { name: "2", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "7", exact: true })).toBeVisible();
-  await expect(page.getByRole("heading", { name: /3 cartes/ })).toBeVisible();
+  await expect(page.locator(".uno-hand > button")).toHaveCount(3);
   await expect(page.getByText(/Au tour de Bob/)).toBeVisible();
   await expect(page.getByText("+2 à prendre ou à contrer avec un +2")).toHaveCount(0);
 });
@@ -290,7 +290,7 @@ test("une pioche auto-passée ne laisse pas de carte fantôme dans la main", asy
   await page.goto(`/parties/${matchId}`);
   await expect(page.getByRole("button", { name: "Piocher une carte" })).toBeEnabled();
   await page.getByRole("button", { name: "Piocher une carte" }).click();
-  await expect(page.getByRole("heading", { name: /2 cartes/ })).toBeVisible();
+  await expect(page.locator(".uno-hand > button")).toHaveCount(2);
   await expect(page.locator(".uno-hand-placeholder")).toHaveCount(0);
 });
 
@@ -317,6 +317,7 @@ test("Abandonner demande confirmation puis envoie RESIGN", async ({ page }) => {
     await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ matchId, version: 2, commandHash: "fixture" }) });
   });
   page.on("dialog", (dialog) => { void dialog.accept(); });
+  await page.getByRole("button", { name: "Options de la partie" }).click();
   await page.getByRole("button", { name: "Abandonner" }).click();
   await expect.poll(() => actions.length).toBe(1);
   expect(actions[0]).toBe("RESIGN");
@@ -328,7 +329,7 @@ test("jouer une carte sans annonce envoie une commande sans announceLastCard", a
     await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(response(twoCards)) });
   });
   await page.goto(`/parties/${matchId}`);
-  await expect(page.getByRole("heading", { name: /2 cartes/ })).toBeVisible();
+  await expect(page.locator(".uno-hand > button")).toHaveCount(2);
   await expect(page.getByRole("checkbox")).toHaveCount(0);
   let body: unknown = null;
   await page.route(`**/api/matches/${matchId}/commands`, async (route) => {
@@ -351,7 +352,7 @@ test("une pénalité en attente propose de prendre le cumul", async ({ page }) =
     await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(response(pending)) });
   });
   await page.goto(`/parties/${matchId}`);
-  await expect(page.getByRole("heading", { name: /2 cartes/ })).toBeVisible();
+  await expect(page.locator(".uno-hand > button")).toHaveCount(2);
   await expect(page.getByText("+4 à prendre ou à contrer avec un +2")).toBeVisible();
   const actions: string[] = [];
   await page.route(`**/api/matches/${matchId}/commands`, async (route) => {
@@ -410,7 +411,7 @@ test("une relecture déclenchée par le heartbeat rattrape une mise à jour Real
     await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(response(view([{ id: "red-5", color: "red", symbol: "5" }]), currentVersion)) });
   });
   await page.goto(`/parties/${matchId}`);
-  await expect(page.getByRole("heading", { name: /1 carte/ })).toBeVisible();
+  await expect(page.locator(".uno-hand > button")).toHaveCount(1);
   await expect.poll(() => readCount).toBeGreaterThan(1);
   expect(currentVersion).toBe(2);
 });

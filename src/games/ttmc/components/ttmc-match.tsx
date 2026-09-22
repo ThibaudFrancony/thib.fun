@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { MatchToolbar, MatchDetails } from "@/components/match-toolbar";
 import { useRouter } from "next/navigation";
 import type { TtmcAction, TtmcView } from "@/games/ttmc/types";
 import { parseMatchSnapshot, useResourceNetwork } from "@/lib/network-sync";
@@ -81,22 +82,10 @@ export function TtmcMatch({ matchId }: { matchId: string }) {
   const isMyTurn = view.activePlayerId === me.id && (view.phase === "choose_level" || view.phase === "answering");
 
   return (
-    <main className="table-page table-ttmc table-match-page">
-      <div className="table-content table-match-content">
-        <header className="table-match-header">
-          <button type="button" onClick={() => router.push(`/salons/${match.roomId}`)} className="table-back-link">
-            ← Salon
-          </button>
-          <div className="table-match-heading">
-            <p className="table-kicker table-kicker-accent">À ton niveau</p>
-            <p>Manche {Math.min(view.round, view.maxRounds)} / {view.maxRounds} · cible {view.targetScore}</p>
-          </div>
-          <button type="button" onClick={() => void refresh()} className="table-secondary-button table-refresh-button">
-            Actualiser
-          </button>
-        </header>
-
-        <div className="table-scoreboard">
+    <main className="table-page table-ttmc table-match-page play-screen" data-phase={view.phase}>
+      <div className="table-content table-match-content play-shell">
+        <MatchToolbar title="À ton niveau" progress={`${Math.min(view.round, view.maxRounds)}/${view.maxRounds}`} busy={busy} onBack={() => router.push(`/salons/${match.roomId}`)} onRefresh={() => void refresh()} onResign={view.phase === "finished" ? undefined : () => void send({ type: "RESIGN" })}>
+          <div className="table-scoreboard">
           {[me, opponent].map((player) => (
             <div key={player.id} className="table-score-card" data-self={player.seat === view.mySeat} data-active={player.active}>
               <div className="table-score-topline">
@@ -124,7 +113,7 @@ export function TtmcMatch({ matchId }: { matchId: string }) {
             </div>
           ))}
         </div>
-
+        </MatchToolbar>
         <div aria-live="polite" aria-atomic="true" className="table-status-bar" data-urgent={remaining !== null && remaining <= 10}>
           <span>{phaseLabel(view, isMyTurn, expired)}</span>
           {remaining !== null && view.phase !== "finished" && <span className="table-timer">{remaining}s</span>}
@@ -138,10 +127,9 @@ export function TtmcMatch({ matchId }: { matchId: string }) {
           <section className="table-panel table-side-panel">
             <p className="table-kicker table-kicker-warm">Thème de la manche</p>
             <h2 className="table-panel-title">{view.theme.label}</h2>
-            <p className="table-panel-note">{view.theme.description}</p>
+
             {view.activePlayerId === me.id ? (
               <>
-                <p className="table-panel-note table-instruction">Choisis ton niveau avant de voir la question. Difficulté = points possibles.</p>
                 <div role="group" aria-label="Niveaux de 1 à 10" className="table-levels">
                   {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((level) => (
                     <button
@@ -151,19 +139,17 @@ export function TtmcMatch({ matchId }: { matchId: string }) {
                       aria-pressed={levelDraft === level}
                       className="table-level"
                     >
-                      <strong>{level}</strong><small>{level} pt{level > 1 ? "s" : ""}</small>
+                      <strong>{level}</strong>
                     </button>
                   ))}
                 </div>
-                <p className="table-panel-note" style={{ marginTop: "0.5rem" }}>
-                  <span>1 · accessible</span> · <span>10 · très difficile</span>
-                </p>
+
                 <button
                   disabled={busy}
                   onClick={() => void send({ type: "CHOOSE_LEVEL", level: levelDraft })}
                   className="table-primary-button"
                 >
-                  {busy ? "Envoi…" : `Confirmer le niveau ${levelDraft}`}
+                  {busy ? "Envoi…" : `Choisir ${levelDraft}`}
                 </button>
               </>
             ) : (
@@ -176,18 +162,11 @@ export function TtmcMatch({ matchId }: { matchId: string }) {
           <section className="table-panel table-side-panel">
             {view.question ? (
               <>
-                <p className="table-kicker table-kicker-warm">Niveau {view.question.level} · {view.question.level} point{view.question.level > 1 ? "s" : ""} possible{view.question.level > 1 ? "s" : ""}</p>
+                <p className="table-kicker table-kicker-warm">Niveau {view.question.level}</p>
                 {view.technicalReplacement && (
                   <p className="table-panel-note">Question de remplacement : incident technique, même niveau, sans pénalité.</p>
                 )}
                 <h2 className="table-target-title">{view.question.prompt}</h2>
-                <p className="table-panel-note table-instruction">
-                  {view.phase === "judging"
-                    ? "Réponse envoyée. Vérification en cours…"
-                    : view.question.addresseeIsMe
-                      ? "C'est à toi. Faux = 0, réponse libre tolérante."
-                      : `Au tour de ${opponent.pseudo}. Sa réponse restera cachée jusqu'à la révélation.`}
-                </p>
                 {view.phase === "answering" && view.question.addresseeIsMe && (
                   <form
                     onSubmit={(event) => {
@@ -195,7 +174,7 @@ export function TtmcMatch({ matchId }: { matchId: string }) {
                       if (draft.trim()) void send({ type: "SUBMIT_ANSWER", answer: draft.slice(0, 240) });
                     }}
                   >
-                    <label className="table-label" htmlFor="ttmc-answer">Ta réponse</label>
+                    <label className="sr-only" htmlFor="ttmc-answer">Ta réponse</label>
                     <input
                       id="ttmc-answer"
                       value={draft}
@@ -206,7 +185,7 @@ export function TtmcMatch({ matchId }: { matchId: string }) {
                       className="table-input"
                     />
                     <button disabled={busy || !draft.trim()} type="submit" className="table-primary-button">
-                      {busy ? "Envoi…" : "Valider ma réponse"}
+                      {busy ? "Envoi…" : "Valider"}
                     </button>
                   </form>
                 )}
@@ -221,11 +200,10 @@ export function TtmcMatch({ matchId }: { matchId: string }) {
           <section className="table-panel table-side-panel">
             <p className="table-kicker table-kicker-warm">Révélation</p>
             <h2 className="table-panel-title">{view.reveal.timeout ? "Temps écoulé" : view.reveal.verdict === "accept" ? `Bonne réponse · +${view.reveal.points}` : "Réponse refusée · +0"}</h2>
-            {!view.reveal.timeout && (
-              <p className="table-panel-note">Réponse saisie : « {view.reveal.submittedAnswer} »</p>
-            )}
             <p className="table-panel-note">Réponse attendue : {view.reveal.expectedAnswer}</p>
-            <p className="table-panel-note">{view.reveal.explanation}</p>
+            <MatchDetails label="Explication">{!view.reveal.timeout && (
+              <p className="table-panel-note">Réponse saisie : « {view.reveal.submittedAnswer} »</p>
+            )}<p>{view.reveal.explanation}</p></MatchDetails>
             {view.reveal.contest?.status === "pending" && (
               <p className="table-panel-note">
                 {view.reveal.contest.requesterIsMe
@@ -290,17 +268,6 @@ export function TtmcMatch({ matchId }: { matchId: string }) {
           </section>
         )}
 
-        {view.phase !== "finished" && (
-          <div style={{ display: "grid", gap: "0.55rem", marginTop: "1rem" }}>
-            <button disabled={busy} onClick={() => void send({ type: "RESIGN" })} className="table-danger-button">
-              Abandonner
-            </button>
-            <div className="table-forfeit-panel">
-              <p>Partenaire absent ?</p>
-              <span>Le forfait devient disponible après 90 secondes sans signal.</span>
-              </div>
-          </div>
-        )}
       </div>
     </main>
   );

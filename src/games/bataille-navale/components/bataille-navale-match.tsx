@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { MatchToolbar, MatchDetails } from "@/components/match-toolbar";
 import { useRouter } from "next/navigation";
 import { NAVAL_SHIP_CATALOG } from "@/games/bataille-navale/config";
 import type { NavalAction, NavalShipView, NavalShotView, NavalView } from "@/games/bataille-navale/types";
@@ -137,32 +138,14 @@ export function BatailleNavaleMatch({ matchId }: { matchId: string }) {
   const opponent = view.players[(1 - view.mySeat) as 0 | 1];
 
   return (
-    <main className="naval-page table-page table-naval">
-      <div className="naval-shell">
-        <header className="naval-header">
-          <button type="button" onClick={() => router.push(`/salons/${match.roomId}`)} className="naval-back">← Salon</button>
-          <div className="naval-heading">
-            <p className="naval-kicker">Flotte cachée</p>
-            <p className="naval-round">Tour {view.turn}</p>
-          </div>
-          <div className="naval-header-actions">
-            <button
-              type="button"
-              onClick={() => setZoom((current) => !current)}
-              aria-pressed={zoom}
-              className="naval-secondary-button"
-            >
-              {zoom ? "Grille normale" : "Grille agrandie"}
-            </button>
-            <button type="button" onClick={() => void refresh()} className="naval-secondary-button">Actualiser</button>
-          </div>
-        </header>
-
-        <div className="naval-scoreboard">
+    <main className="naval-page table-page table-naval play-screen" data-phase={view.phase}>
+      <div className="naval-shell play-shell">
+        <MatchToolbar title="Flotte cachée" busy={busy} onBack={() => router.push(`/salons/${match.roomId}`)} onRefresh={() => void refresh()} onResign={view.phase === "finished" ? undefined : () => void send({ type: "RESIGN" })}>
+          <div className="naval-scoreboard">
           <ScorePanel pseudo={opponent.pseudo} score={opponent.score} active={opponent.active} isMe={false} />
           <ScorePanel pseudo={`${me.pseudo} · toi`} score={me.score} active={me.active} isMe />
         </div>
-
+        <button type="button" aria-pressed={zoom} onClick={() => setZoom((current) => !current)}>{zoom ? "Grille normale" : "Grille agrandie"}</button></MatchToolbar>
         <div aria-live="polite" className="naval-status-bar" data-urgent={remaining !== null && remaining <= 10 && view.phase === "playing"}>
           <span>{phaseLabel(view, isMyTurn)}</span>
           {remaining !== null && view.phase === "playing" && (
@@ -174,7 +157,7 @@ export function BatailleNavaleMatch({ matchId }: { matchId: string }) {
           <SetupPanel view={view} busy={busy} send={send} />
         )}
 
-        {view.phase !== "setup" && (
+        {view.phase === "playing" && (
           <>
             <div className="naval-tabs" role="tablist" aria-label="Choix de la grille">
               <button type="button" role="tab" aria-selected={tab === "shots"} data-active={tab === "shots"} onClick={() => setTab("shots")}>Mes tirs</button>
@@ -188,24 +171,14 @@ export function BatailleNavaleMatch({ matchId }: { matchId: string }) {
               <section aria-label="Ma flotte" className={`naval-panel naval-board-panel ${tab === "fleet" ? "" : "hidden md:block"}`}>
                 <p className="naval-board-title"><strong>Ta flotte</strong></p>
                 <FleetGrid fleet={view.myFleet} incoming={view.incomingShots} lastShot={view.lastShot} mySeat={view.mySeat} zoom={zoom} />
-                <SunkList title="Bateaux coulés chez l'adversaire" ids={view.sunkByMe} />
-                <SunkList title="Tes bateaux coulés" ids={view.sunkOfMine} />
+
               </section>
             </div>
-            <p className="naval-panel-note">
-              Toucher ou couler ne fait pas rejouer. Les bateaux peuvent se toucher.
-            </p>
           </>
         )}
 
         {view.phase === "finished" && <FinishedPanel view={view} back={() => router.push("/jeux/bataille-navale")} />}
 
-        {view.phase !== "finished" && (
-          <div className="naval-forfeit-panel">
-            <span>Besoin d&apos;arrêter la partie ?</span>
-            <button type="button" disabled={busy} onClick={() => { if (window.confirm("Abandonner cette partie ?")) void send({ type: "RESIGN" }); }} className="naval-danger-button">Abandonner</button>
-          </div>
-        )}
         {error && <p role="alert" className="naval-error" style={{ marginTop: "1rem" }}>{error}</p>}
       </div>
     </main>
@@ -330,7 +303,7 @@ function FireGrid({ view, busy, zoom, onFire }: { view: NavalView; busy: boolean
           </button>
         ) : (
           <p className="naval-fire-idle">
-            {view.phase !== "playing" ? "La partie n'a pas commencé." : canFire ? "Choisis une case, puis confirme ton tir." : "En attente du tir adverse…"}
+            {view.phase !== "playing" ? "La partie n'a pas commencé." : canFire ? "Choisis une case" : ""}
           </p>
         )}
         {view.lastShot && (
@@ -381,15 +354,6 @@ function FleetGrid({ fleet, incoming, lastShot, mySeat, zoom }: { fleet: NavalSh
         return <div key={index} aria-label={label} className="naval-cell" data-state="water">·</div>;
       })}
     </div>
-  );
-}
-
-function SunkList({ title, ids }: { title: string; ids: string[] }) {
-  if (ids.length === 0) return null;
-  return (
-    <p className="naval-sunk">
-      {title} : {ids.map((id) => shipName(id)).join(", ")} ({ids.length})
-    </p>
   );
 }
 
@@ -565,7 +529,7 @@ function SetupPanel({ view, busy, send }: { view: NavalView; busy: boolean; send
   return (
     <section aria-label="Préparation de la flotte" className="naval-setup">
       <div className="naval-panel naval-board-panel">
-        <p className="naval-board-title">Place tes bateaux · <strong>{shipName(selectedId)}</strong></p>
+        <p className="naval-board-title"><strong>{shipName(selectedId)}</strong></p>
         <div ref={gridRef} role="grid" aria-label="Grille de placement, 10 par 10" className="naval-board" data-zoom={false}>
           {Array.from({ length: 100 }, (_, index) => {
             const row = Math.floor(index / 10);
@@ -604,39 +568,15 @@ function SetupPanel({ view, busy, send }: { view: NavalView; busy: boolean; send
             );
           })}
         </div>
-        <p className="naval-board-hint" aria-live="polite">
-          {preview && previewOrigin ? (
-            preview.valid ? (
-              <><strong>{shipName(selectedId)}</strong> ({selectedLength} cases, {orientation === "horizontal" ? "horizontal" : "vertical"}) → {cellLabel(preview.cells[0].row, preview.cells[0].col)}–{cellLabel(preview.cells[preview.cells.length - 1].row, preview.cells[preview.cells.length - 1].col)} · emplacement libre</>
-            ) : (
-              <>Ici ça ne passe pas (hors grille ou chevauchement) — décale le pointeur.</>
-            )
-          ) : (
-            <><strong>{shipName(selectedId)}</strong> ({selectedLength} cases, {orientation === "horizontal" ? "horizontal" : "vertical"}) — survole la grille pour prévisualiser, clique pour poser.</>
-          )}
-        </p>
+        <p className="naval-board-hint" aria-live="polite">{preview && !preview.valid ? "Emplacement impossible" : `${selectedLength} cases · ${orientation === "horizontal" ? "→" : "↓"}`}</p>
       </div>
       <div className="naval-panel naval-side-panel">
-        <div className="naval-ship-list">
-          {NAVAL_SHIP_CATALOG.map((entry) => {
-            const placed = draft.find((ship) => ship.id === entry.id);
-            return (
-              <div key={entry.id} className="naval-ship-card" data-selected={selectedId === entry.id}>
-                <button type="button" disabled={view.myReady || randomizing || finishing} onClick={() => { setSelectedId(entry.id as ShipId); setPendingTap(null); }} className="naval-ship-name" data-selected={selectedId === entry.id} aria-pressed={selectedId === entry.id} style={{ all: "unset", cursor: view.myReady ? "default" : "pointer", display: "block" }}>
-                  {shipName(entry.id)} <small>· {entry.length} cases</small>
-                  <span className="naval-ship-state">{placed ? `posé en ${cellLabel(placed.row, placed.col)}` : "à placer"}</span>
-                </button>
-                <span className="naval-ship-silhouette" aria-hidden="true">
-                  {Array.from({ length: entry.length }, (_, i) => (
-                    <span key={i} data-on={Boolean(placed)} />
-                  ))}
-                </span>
-                {placed && !view.myReady && (
-                  <button type="button" onClick={() => removeShip(entry.id)} aria-label={`Retirer ${shipName(entry.id)}`} className="naval-ship-remove">Retirer</button>
-                )}
-              </div>
-            );
-          })}
+        <div className="play-ship-picker">
+          <label htmlFor="naval-ship" className="sr-only">Bateau à placer</label>
+          <select id="naval-ship" value={selectedId} disabled={view.myReady || randomizing || finishing} onChange={(event) => { setSelectedId(event.target.value as ShipId); setPendingTap(null); }}>
+            {NAVAL_SHIP_CATALOG.map((entry) => <option key={entry.id} value={entry.id}>{shipName(entry.id)} · {entry.length}{draft.some((ship) => ship.id === entry.id) ? " ✓" : ""}</option>)}
+          </select>
+          {draft.some((ship) => ship.id === selectedId) && !view.myReady && <button type="button" className="naval-secondary-button" onClick={() => removeShip(selectedId)}>Retirer</button>}
         </div>
         <div className="naval-form-actions">
           <button type="button" disabled={view.myReady || randomizing || finishing} onClick={() => { setOrientation((o) => (o === "horizontal" ? "vertical" : "horizontal")); }} className="naval-secondary-button">
@@ -670,7 +610,7 @@ function SetupPanel({ view, busy, send }: { view: NavalView; busy: boolean; send
             onClick={() => void confirmReady()}
             className="naval-primary-button"
           >
-            {finishing ? "Verrouillage…" : `Valider ma flotte (${draft.length}/5)`}
+            {finishing ? "Verrouillage…" : `Prêt (${draft.length}/5)`}
           </button>
         ) : (
           <button
@@ -715,10 +655,10 @@ function FinishedPanel({ view, back }: { view: NavalView; back: () => void }) {
         {accuracy === null ? " · aucun tir" : ` · précision ${Math.round(accuracy * 100)} %`} · tour {view.turn}.
       </p>
       {view.opponentFleet && (
-        <div className="naval-finish-reveal">
+        <MatchDetails label="Flotte adverse"><div className="naval-finish-reveal">
           <p className="naval-board-title">Flotte adverse révélée</p>
           <FleetGrid fleet={view.opponentFleet} incoming={view.myShots} lastShot={null} mySeat={view.mySeat} zoom={false} />
-        </div>
+        </div></MatchDetails>
       )}
       <button type="button" onClick={back} className="naval-primary-button">
         Rejouer

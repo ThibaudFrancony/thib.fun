@@ -1,6 +1,6 @@
 # Progression du projet
 
-Dernière mise à jour : 21 septembre 2026
+Dernière mise à jour : 22 septembre 2026
 Branche de référence : `main`
 Référence du cycle de l'étape 3 : `6130c99` — `fix: wire transactional match commits`
 Référence du cycle de l'étape 4 : `9968878` — `fix: restore worker dispatcher and quiz judgments`, poussé sur `origin/main` et vérifié
@@ -16,6 +16,15 @@ Ce fichier décrit la réalité du dépôt et non les seules capacités prévues
 - ⚠️ dépendance ou décision externe non vérifiée.
 
 **Diagnostic du 13 septembre : le code des neuf jeux est présent, mais leur disponibilité fonctionnelle n'est pas acquise.** L'[audit complet](docs/audit-code-2026-09-13.md) et le [plan pas à pas](docs/plan-correction-2026-09-13.md) identifient 29 défauts de code/produit et 6 observations d'infrastructure : blocages du worker, abandon/forfait, présence, finalisation, réseau, sécurité et parcours incomplets. L'étape 1 est appliquée au harnais de tests ; le contrat commun de l'étape 2 est intégré à `main` (`d885079`), le raccordement SQL de l'étape 3 est versionné dans `6130c99` et sa validation PostgreSQL isolée ainsi que sa concurrence à deux sessions sont désormais démontrées localement. L'inspection Supabase du 16 septembre rapporte 33 migrations distantes, alignées avec les fichiers locaux, mais elle reste strictement en lecture seule. Quatre parties actives (trois TTMC et une Géographie), dix jobs échus en attente et deux joueurs engagés dans plusieurs parties doivent être préservés en production. Aucun secret, traitement de donnée, migration distante, écriture Vault, déploiement ou opération de reprise n'a été effectué dans la présente session. Les observations datées ci-dessous restent historiques ; l'audit et le préflight Étape 10 prévalent pour les limitations actuelles.
+
+### 22/09/2026 — Neuf plateaux épurés et adaptés à la fenêtre
+
+- Demande : retirer textes d’explication, compteurs et scores secondaires ; afficher strictement l’essentiel et jouer sans faire défiler le plateau.
+- Présent dans le code : `MatchToolbar` commun (salon, titre/progression, options), scores/actualisation/abandon dans le dialogue ; explications et récapitulatifs sur demande. Libellés raccourcis, suppression des doublons de tour, choix et résultat. Réserves Trou Noir, vies BombParty et nombre de cartes adverses UNO conservés. Navale : choix de bateau compact, placement optimiste préservé. Skyjo : deux grilles adaptées, récapitulatif séparé du plateau. UNO : grandes mains par pages de sept, pioche affichée automatiquement, animations et choix de couleur conservés. Géographie : carte mesurée selon sa taille SVG réelle ; cible et validation compactes. Styles limités aux parties, hauteur `100dvh`/VisualViewport, disposition paysage ; palettes et assets UNO/Géographie conservés.
+- Décision : la précision « tous les jeux » autorise l’allègement UNO/Géographie malgré la protection des composants du 21 septembre ; leur DA reste protégée. `AGENTS.md` et documents UI/index alignés. Aucun autre conflit avec les invariants.
+- Validé localement : Playwright sur projections simulées, 200/200 scénarios (Chromium + WebKit), puis 8/8 contrôles ciblés après sélection d’une case navale/Skyjo. Neuf plateaux à 1440×900, 390×844, 360×640 et 844×390 ; révélations, contestations et fins de partie sur les deux formats contraints ; grande main UNO, focus des dialogues et régressions réseau/animations. 36 captures Chromium sans erreur JavaScript ni débordement de page ; inspection visuelle de plateaux représentatifs. `pnpm typecheck`, `pnpm lint`, `pnpm test` (88 fichiers, 557 réussis + 2 sentinelles attendues), `pnpm test:matrix` (11 pass / 5 not-run), `pnpm content:validate`, `pnpm docs:check` (25 fichiers) et `pnpm exec next build --webpack` réussis. `next-env.d.ts` généré restauré après build.
+- Limites : contrôles navigateur sur projections simulées, sans recette réelle à deux comptes. Docker/pgTAP/E2E avec base non lancés (opt-in). Clavier logiciel physique et zoom d’accessibilité restent à apprécier sur appareil ; défilement possible volontairement dans les détails/recherches secondaires. Aucun changement serveur, migration ou configuration à appliquer.
+- Prochaine étape utile : appréciation sur appareil et en partie réelle après publication du code.
 
 ### 21/09/2026 — Harmonisation des sept jeux autour de UNO et Géographie
 
@@ -446,6 +455,15 @@ Ce fichier décrit la réalité du dépôt et non les seules capacités prévues
 | Longueur d'onde | `longueur-onde` | 🟢 | Pack local original généré et validé : 80 axes opposés, 30 quotidien/25 culture/25 absurde, labels bornés, exemples de tutoriel hors partie, manifest et migration/RPC versionnés. Moteur pur versionné (`longueur-onde-1`/`longueur-onde-engine-1`), indice borné et filtré, cible secrète, estimation tactile, révélation, score coopératif, projection sans fuite, résultat/historique sans victoire-défaite, API/worker durable, UI violette sobre, page `/jeux/longueur-onde`, registre `ready`, 16 tests dédiés. Étape 5 corrige la jointure `match_id`, les triggers coopératifs et le cumul des métriques ; les migrations initiale `20260911210000_longueur_onde_ready.sql` et corrective `20260911233839_longueur_onde_cooperative_result_triggers.sql` restent immuables et appliquées à distance. | L'historique distant contient les 33 migrations locales jusqu'à l'additive Étape 8, mais aucune recette de production ou à deux sessions n'est validée ; préserver les engagements avant toute reprise. |
 
 ## Difficultés rencontrées pendant le développement
+
+### 22/09/2026 — Encombrement des interfaces et vérification des plateaux
+
+- Signalement utilisateur : trop d’écrit, de compteurs et de descriptions, besoin de voir l’essentiel sans défiler. Cause confirmée : scores systématiques, panneaux explicatifs et espacements cumulés ; quelques fins de partie conservaient leur plateau sous le résultat. Allègement et adaptation documentés dans l’entrée du jour.
+- Premier typecheck : `refresh` manquant dans la déstructuration réseau UNO après ajout du menu ; ajouté, typecheck repassé. Directive ESLint devenue inutile dans Géographie supprimée. La génération d’une fixture a ciblé un sous-dossier inexistant (`FileNotFoundError`) ; fichier placé dans le répertoire E2E existant.
+- Première recette viewport : le placement naval dépassait en paysage à cause d’un sélecteur général plus spécifique que la grille ; portée corrigée. La recette étendue aux résultats a détecté des marges excessives, deux grilles navales empilées en paysage, une révélation Géographie trop haute et la syllabe BombParty encore présente après fin ; mises en page et rendu conditionnel corrigés, contrôles relancés.
+- Le test unitaire statique `geo-theme.test.ts` cherchait encore « Abandonner » dans le composant Géographie après extraction : assertion déplacée vers `MatchToolbar`, câblage `onResign` conservé et suite repassée à 557 réussites. Une lecture initiale de l’entraînement utilisait un nom de fichier inexistant ; chemin réel retrouvé, aucun changement de ce module.
+- Les tests historiques UNO d’abandon attendaient encore un bouton directement sur le plateau : deux timeouts, tandis que 122 autres scénarios passaient. Les sélecteurs suivent désormais l’ouverture du menu ; les assertions réseau et animation sont conservées. Les scénarios avec base reçoivent aussi les nouveaux libellés, sans être exécutés ici.
+
 
 ### 21/09/2026 — Vérification visuelle des sept jeux
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { MatchToolbar, MatchDetails } from "@/components/match-toolbar";
 import { useRouter } from "next/navigation";
 import type { LongueurOndeAction, LongueurOndeResultView, LongueurOndeView } from "@/games/longueur-onde/types";
 import { dialArcPath, positionToDialPoint } from "@/games/longueur-onde/dial";
@@ -64,37 +65,31 @@ export function LongueurOndeMatch({ matchId }: { matchId: string }) {
   const displayGuess = view.myGuess ?? (view.phase === "guessing" && !view.isClueGiver ? draftGuess : null);
 
   return (
-    <main className="table-page table-longueur-onde min-h-screen pb-12">
-      <div className="table-shell">
-        <header className="table-header">
-          <button type="button" onClick={() => router.push(`/salons/${match.roomId}`)} className="rounded-full px-3 py-2 text-sm font-bold table-muted hover:bg-white/10">← Salon</button>
-          <div className="table-heading"><p className="text-xs font-black uppercase tracking-[0.16em]" style={{ color: ACCENT }}>À l&apos;unisson</p><p className="font-black">Manche {view.round} / {view.rounds}</p></div>
-          <button type="button" onClick={() => void refresh()} className="rounded-full border border-[var(--line)] table-surface px-3 py-2 text-sm font-bold">Actualiser</button>
-        </header>
-
-        <div className="table-scoreboard table-scoreboard--coop">
+    <main className="table-page table-longueur-onde min-h-screen pb-12 play-screen" data-phase={view.phase}>
+      <div className="table-shell play-shell">
+        <MatchToolbar title="À l’unisson" progress={`${view.round}/${view.rounds}`} busy={busy} onBack={() => router.push(`/salons/${match.roomId}`)} onRefresh={() => void refresh()} onResign={view.phase === "finished" ? undefined : () => void send({ type: "RESIGN" })}>
+          <div className="table-scoreboard table-scoreboard--coop">
           <PlayerCard label={opponent.pseudo} isGiver={view.clueSeat === opponent.seat} />
           <div className="table-total"><p className="text-xs font-bold uppercase tracking-[0.14em] text-white/60">Score commun</p><p className="mt-1 text-3xl font-black">{view.total} <span className="text-base font-bold text-white/60">/ {view.rounds * 4}</span></p><p className="text-xs text-white/70">{view.missed} manche{view.missed === 1 ? "" : "s"} manquée{view.missed === 1 ? "" : "s"}</p></div>
           <PlayerCard label={`${me.pseudo} · toi`} isGiver={view.isClueGiver} />
         </div>
-
+        </MatchToolbar>
         <div aria-live="polite" className="table-status" data-urgent={remaining !== null && remaining <= 5}><span>{phaseLabel(view, me.pseudo, opponent.pseudo)}</span>{remaining !== null && <strong className={remaining <= 5 ? "text-[var(--yellow)]" : "text-white"}>{remaining}s</strong>}</div>
         {error && <p role="alert" className="mt-3 rounded-2xl table-error px-4 py-3 text-sm">{error}</p>}
 
         {view.axis && view.phase !== "finished" && <section className="mt-6 rounded-[2rem] border border-[var(--line)] table-panel p-5 shadow-[0_16px_36px_rgba(20,33,29,0.06)] sm:p-8">
-          <div className="flex items-center justify-between gap-3"><p className="text-xs font-black uppercase tracking-[0.16em]" style={{ color: ACCENT }}>Axe {view.round}</p></div>
+
           <Dial axis={view.axis} target={view.target} guess={view.phase === "reveal" ? view.myGuess : displayGuess} />
           {view.clue && (view.phase === "guessing" || view.phase === "reveal") && <p className="mt-5 rounded-2xl border table-border-accent table-tint px-4 py-4 text-center text-lg font-bold table-accent">« {view.clue} »</p>}
-          {view.phase === "clue" && view.isClueGiver && <div className="mt-5"><label htmlFor="longueur-onde-clue" className="text-sm font-bold">Ton indice</label><textarea id="longueur-onde-clue" value={draftClue} maxLength={120} onChange={(event) => setClueDraft({ round: view.round, value: event.target.value })} rows={3} placeholder="Un exemple concret, sans donner la position" className="mt-2 w-full resize-none rounded-2xl border border-[var(--line)] table-surface px-4 py-3 leading-6 outline-none focus:border-[var(--table-accent)] focus:ring-2 focus:ring-[var(--table-accent)]" /><div className="mt-2 flex items-center justify-between gap-3 text-xs table-muted"><span>Évite chiffres, liens et codes convenus.</span><span>{draftClue.length} / 120</span></div></div>}
+          {view.phase === "clue" && view.isClueGiver && <div className="mt-5"><label htmlFor="longueur-onde-clue" className="text-sm font-bold">Ton indice</label><textarea id="longueur-onde-clue" value={draftClue} maxLength={120} onChange={(event) => setClueDraft({ round: view.round, value: event.target.value })} rows={2} placeholder="Un exemple concret, sans donner la position" className="mt-2 w-full resize-none rounded-2xl border border-[var(--line)] table-surface px-4 py-3 leading-6 outline-none focus:border-[var(--table-accent)] focus:ring-2 focus:ring-[var(--table-accent)]" /><div className="mt-2 flex items-center justify-between gap-3 text-xs table-muted"><span>{draftClue.length} / 120</span></div></div>}
           {view.phase === "clue" && !view.isClueGiver && <Waiting text={`Attends l'indice de ${opponent.pseudo}.`} />}
           {view.phase === "guessing" && view.isClueGiver && <Waiting text={`${opponent.pseudo} place l'aiguille. Ta cible reste privée.`} />}
           {view.phase === "guessing" && !view.isClueGiver && <div className="mt-5"><label htmlFor="longueur-onde-position" className="text-sm font-bold">Place ton aiguille</label><input id="longueur-onde-position" type="range" min={0} max={100} step={1} value={displayGuess ?? 50} disabled={busy || view.myGuess !== null} onChange={(event) => setGuessDraft({ round: view.round, value: Number(event.target.value) })} className="mt-5 h-3 w-full cursor-pointer accent-[var(--table-accent)]" aria-valuetext={`${displayGuess ?? 50} sur 100`} /><div className="mt-2 flex justify-between text-xs font-bold table-muted"><span>{view.axis.leftLabel}</span><output htmlFor="longueur-onde-position" className="rounded-full table-tint px-3 py-1 table-accent">{displayGuess ?? 50}</output><span>{view.axis.rightLabel}</span></div></div>}
           {view.phase === "reveal" && <div className="mt-5 rounded-2xl table-tint p-4 text-center table-accent"><p className="text-sm font-bold">Cible {view.target} · aiguille {view.myGuess ?? "—"}</p><p className="mt-1 text-2xl font-black">{view.lastPoints} point{view.lastPoints === 1 ? "" : "s"}{view.lastError === null ? "" : ` · ${view.lastError} d'écart`}</p></div>}
-          <div className="mt-6 flex flex-wrap items-center justify-end gap-3">{view.phase === "clue" && view.isClueGiver && <button type="button" disabled={busy || draftClue.trim().length === 0} onClick={() => void send({ type: "SUBMIT_CLUE", clue: draftClue })} className="rounded-full px-6 py-3 font-bold text-white disabled:cursor-not-allowed disabled:opacity-40" data-primary="true">Envoyer l&apos;indice</button>}{view.phase === "guessing" && !view.isClueGiver && view.myGuess === null && <button type="button" disabled={busy} onClick={() => void send({ type: "SUBMIT_GUESS", position: displayGuess ?? 50 })} className="rounded-full px-6 py-3 font-bold text-white" data-primary="true">Valider ma position</button>}{view.phase === "reveal" && view.allowedActions.includes("NEXT") && <button type="button" disabled={busy} onClick={() => void send({ type: "NEXT" })} className="rounded-full px-6 py-3 font-bold text-white" data-primary="true">Continuer</button>}</div>
+          <div className="mt-6 flex flex-wrap items-center justify-end gap-3">{view.phase === "clue" && view.isClueGiver && <button type="button" disabled={busy || draftClue.trim().length === 0} onClick={() => void send({ type: "SUBMIT_CLUE", clue: draftClue })} className="rounded-full px-6 py-3 font-bold text-white disabled:cursor-not-allowed disabled:opacity-40" data-primary="true">Envoyer</button>}{view.phase === "guessing" && !view.isClueGiver && view.myGuess === null && <button type="button" disabled={busy} onClick={() => void send({ type: "SUBMIT_GUESS", position: displayGuess ?? 50 })} className="rounded-full px-6 py-3 font-bold text-white" data-primary="true">Valider</button>}{view.phase === "reveal" && view.allowedActions.includes("NEXT") && <button type="button" disabled={busy} onClick={() => void send({ type: "NEXT" })} className="rounded-full px-6 py-3 font-bold text-white" data-primary="true">Continuer</button>}</div>
         </section>}
 
         {view.phase === "finished" && view.result && <ResultPanel result={view.result} />}
-        {view.phase !== "finished" && <div className="mt-6 flex justify-end gap-2"><button type="button" disabled={busy} onClick={() => void send({ type: "RESIGN" })} className="rounded-full px-3 py-2 text-xs font-bold table-muted">Quitter la partie</button></div>}
       </div>
     </main>
   );
@@ -124,7 +119,7 @@ function DialNeedle({ point, center, color, label }: { point: { x: number; y: nu
 
 function ResultPanel({ result }: { result: NonNullable<LongueurOndeResultView> }) {
   const router = useRouter();
-  return <section className="mt-6 rounded-[2rem] border border-[var(--line)] table-panel p-6 sm:p-8"><p className="text-xs font-black uppercase tracking-[0.16em]" style={{ color: ACCENT }}>{result.outcome === "cooperative" ? "Résultat commun" : "Partie interrompue"}</p><h2 className="mt-3 text-4xl font-black tracking-[-0.05em]">{result.outcome === "cooperative" ? `${result.total} / ${result.maxTotal} points` : "Progression enregistrée"}</h2>{result.percentage !== null && <p className="mt-2 table-muted">{result.percentage} % · {result.missed} manche{result.missed === 1 ? "" : "s"} manquée{result.missed === 1 ? "" : "s"}{result.averageError === null ? "" : ` · ${result.averageError} d'écart moyen`}</p>}<div className="mt-7 space-y-2">{result.rounds.map((round) => <div key={round.round} className="flex items-center justify-between gap-3 rounded-xl table-surface px-3 py-3 text-sm"><span className="min-w-0 truncate font-bold">{round.leftLabel} <span className="font-normal table-muted">·</span> {round.rightLabel}</span><span className="shrink-0 font-black table-accent">{round.points} pt{round.points === 1 ? "" : "s"}{round.error === null ? "" : ` · ${round.error}`}</span></div>)}</div><button type="button" onClick={() => router.push("/jeux/longueur-onde")} className="mt-7 rounded-full px-6 py-3 font-bold text-white" data-primary="true">Rejouer</button></section>;
+  return <section className="mt-6 rounded-[2rem] border border-[var(--line)] table-panel p-6 sm:p-8"><p className="text-xs font-black uppercase tracking-[0.16em]" style={{ color: ACCENT }}>{result.outcome === "cooperative" ? "Résultat commun" : "Partie interrompue"}</p><h2 className="mt-3 text-4xl font-black tracking-[-0.05em]">{result.outcome === "cooperative" ? `${result.total} / ${result.maxTotal} points` : "Progression enregistrée"}</h2>{result.percentage !== null && <p className="mt-2 table-muted">{result.percentage} % · {result.missed} manche{result.missed === 1 ? "" : "s"} manquée{result.missed === 1 ? "" : "s"}{result.averageError === null ? "" : ` · ${result.averageError} d'écart moyen`}</p>}<MatchDetails label="Manches"><div className="mt-7 space-y-2">{result.rounds.map((round) => <div key={round.round} className="flex items-center justify-between gap-3 rounded-xl table-surface px-3 py-3 text-sm"><span className="min-w-0 truncate font-bold">{round.leftLabel} <span className="font-normal table-muted">·</span> {round.rightLabel}</span><span className="shrink-0 font-black table-accent">{round.points} pt{round.points === 1 ? "" : "s"}{round.error === null ? "" : ` · ${round.error}`}</span></div>)}</div></MatchDetails><button type="button" onClick={() => router.push("/jeux/longueur-onde")} className="mt-7 rounded-full px-6 py-3 font-bold text-white" data-primary="true">Rejouer</button></section>;
 }
 
 function phaseLabel(view: LongueurOndeView, me: string, opponent: string): string {

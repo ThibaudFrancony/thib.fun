@@ -25,13 +25,16 @@ describe("direction artistique ExaPoint", () => {
     const setup = read("src/games/geographie/components/geography-setup.tsx");
     const match = read("src/games/geographie/components/geography-match.tsx");
     const map = read("src/games/geographie/components/geography-map.tsx");
+    const toolbar = read("src/components/match-toolbar.tsx");
 
     for (const token of ["/api/rooms", "/api/rooms/join", "gameSlug", "rounds", "turnSeconds", "difficulty", "room-code"]) {
       expect(setup).toContain(token);
     }
-    for (const token of ["/api/matches/", "PLACE_CITY", "SET_CITY_SELECTION", "CONFIRM_CITY_SELECTION", "RESIGN", "NEXT", "Abandonner", "aria-live", "role=\"alert\""]) {
+    for (const token of ["/api/matches/", "PLACE_CITY", "SET_CITY_SELECTION", "CONFIRM_CITY_SELECTION", "RESIGN", "NEXT", "MatchToolbar", "onResign", "aria-live", "role=\"alert\""]) {
       expect(match).toContain(token);
     }
+    expect(toolbar).toContain("Abandonner");
+    expect(toolbar).toContain("window.confirm");
     for (const token of ["role=\"application\"", "tabIndex={0}", "data-map-ready", "aria-busy", "onKeyDown", "onPointerDown", "onWheel", "ResizeObserver", "Zoomer", "Recentrer"]) {
       expect(map).toContain(token);
     }

@@ -1,7 +1,7 @@
 "use client";
-/* eslint-disable react/no-unescaped-entities */
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { MatchToolbar } from "@/components/match-toolbar";
 import { useRouter } from "next/navigation";
 import { GeographyMap } from "@/games/geographie/components/geography-map";
 import { Avatar } from "@/components/avatar";
@@ -94,14 +94,10 @@ export function GeographyMatch({ matchId }: { matchId: string }) {
   // Placements simultanés : actif tant que le joueur n'a pas validé.
   const canPlace = view.phase === "placing" && !me.submitted;
   return (
-    <main className="geo-page geo-match-page">
-      <div className="geo-content geo-match-content">
-        <header className="geo-match-header">
-          <button type="button" onClick={() => router.push(`/salons/${match.roomId}`)} className="geo-back-link">← Salon</button>
-          <div className="geo-match-heading"><p className="geo-kicker geo-kicker-accent">HexaPoint</p><p>Manche {Math.min(view.round, view.rounds)} / {view.rounds}</p></div>
-          <button type="button" onClick={() => void refresh()} className="geo-secondary-button geo-refresh-button">Actualiser</button>
-        </header>
-        <div className="geo-scoreboard">
+    <main className="geo-page geo-match-page play-screen" data-phase={view.phase}>
+      <div className="geo-content geo-match-content play-shell">
+        <MatchToolbar title="HexaPoint" progress={`${Math.min(view.round, view.rounds)}/${view.rounds}`} busy={busy} onBack={() => router.push(`/salons/${match.roomId}`)} onRefresh={() => void refresh()} onResign={view.phase === "finished" ? undefined : () => void send({ type: "RESIGN" })}>
+          <div className="geo-scoreboard">
           {view.players.map((player) => (
             <div key={player.id} className="geo-score-card" data-self={player.seat === view.mySeat} data-active={player.active}>
               <div className="geo-score-topline">
@@ -115,6 +111,7 @@ export function GeographyMatch({ matchId }: { matchId: string }) {
             </div>
           ))}
         </div>
+        </MatchToolbar>
         <div aria-live="polite" aria-atomic="true" className="geo-status-bar" data-urgent={remaining !== null && remaining <= 10}>
           <span>{phaseLabel(view, canPlace)}</span>{remaining !== null && <span className="geo-timer">{remaining}s</span>}
         </div>
@@ -123,7 +120,7 @@ export function GeographyMatch({ matchId }: { matchId: string }) {
           <div className="geo-game-layout">
             <div className="geo-map-column">
               <GeographyMap view={view} interactive={canPlace && !busy} pendingPoint={pendingPoint} onPendingPointChange={setPendingPoint} avatars={avatars} />
-              <p className="geo-map-caption" aria-live="polite">{pendingPoint ? `${pendingPoint.latitude.toFixed(4)}, ${pendingPoint.longitude.toFixed(4)} · point local, pas encore envoyé` : "Aucun point confirmé"}</p>
+
             </div>
             <aside className="geo-panel geo-side-panel">
               {view.phase === "placing" && <PlacingPanel view={view} canPlace={canPlace} pendingPoint={pendingPoint} busy={busy} confirm={() => { if (pendingPoint) void send({ type: "PLACE_CITY", latitude: pendingPoint.latitude, longitude: pendingPoint.longitude }); }} />}
@@ -131,7 +128,6 @@ export function GeographyMatch({ matchId }: { matchId: string }) {
             </aside>
           </div>
         )}
-        {view.phase !== "finished" && <ForfeitControl busy={busy} resign={() => { if (window.confirm("Abandonner cette partie ?")) void send({ type: "RESIGN" }); }} />}
         {view.phase === "finished" && <FinishedPanel view={view} back={() => router.push("/jeux/geographie")} />}
         {error && <p role="alert" className="geo-error">{error}</p>}
       </div>
@@ -155,12 +151,12 @@ function ChallengeSelection({ view, query, setQuery, results, selectedIds, toggl
   const challenge = view.challenge;
   if (!challenge) return null;
   const selectedCities = selectedIds.map((id) => labels[id] ?? results.find((city) => city.id === id)).filter((city): city is { id: string; name: string; departmentName: string } => Boolean(city));
-  return <section className="geo-panel geo-challenge-panel"><div className="geo-panel-heading geo-challenge-heading"><div><p className="geo-kicker geo-kicker-accent">Mode défi</p><h2 className="geo-panel-title">Propose {challenge.required} ville{challenge.required > 1 ? "s" : ""}</h2></div><span className="geo-count-badge">{selectedIds.length} / {challenge.required}</span></div><p className="geo-panel-note">La liste de l'autre joueur reste invisible. Une ville déjà confirmée devra être remplacée.</p><input disabled={challenge.myConfirmed} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Rechercher une ville ou un département" className="geo-input" aria-label="Rechercher une ville" /><div className="geo-city-results">{results.map((city) => <button type="button" key={city.id} disabled={challenge.myConfirmed} onClick={() => toggle(city.id)} className="geo-city-option" data-selected={selectedIds.includes(city.id)}><span>{city.name}</span><small>{city.departmentName}</small></button>)}</div>{selectedCities.length > 0 && <div className="geo-selected-cities">{selectedCities.map((city) => <span key={city.id} className="geo-city-chip">{city.name} · {city.departmentName}</span>)}</div>}<div className="geo-form-actions"><button disabled={busy || challenge.myConfirmed || selectedIds.length !== challenge.required} onClick={onSave} className="geo-secondary-button">Enregistrer la liste</button><button disabled={busy || challenge.myConfirmed || selectedIds.length !== challenge.required} onClick={onConfirm} className="geo-primary-button">Confirmer</button></div></section>;
+  return <section className="geo-panel geo-challenge-panel"><div className="geo-panel-heading geo-challenge-heading"><div><p className="geo-kicker geo-kicker-accent">Mode défi</p><h2 className="geo-panel-title">Propose {challenge.required} ville{challenge.required > 1 ? "s" : ""}</h2></div><span className="geo-count-badge">{selectedIds.length} / {challenge.required}</span></div><input disabled={challenge.myConfirmed} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Rechercher une ville ou un département" className="geo-input" aria-label="Rechercher une ville" /><div className="geo-city-results">{results.map((city) => <button type="button" key={city.id} disabled={challenge.myConfirmed} onClick={() => toggle(city.id)} className="geo-city-option" data-selected={selectedIds.includes(city.id)}><span>{city.name}</span><small>{city.departmentName}</small></button>)}</div>{selectedCities.length > 0 && <div className="geo-selected-cities">{selectedCities.map((city) => <span key={city.id} className="geo-city-chip">{city.name} · {city.departmentName}</span>)}</div>}<div className="geo-form-actions"><button disabled={busy || challenge.myConfirmed || selectedIds.length !== challenge.required} onClick={onSave} className="geo-secondary-button">Enregistrer</button><button disabled={busy || challenge.myConfirmed || selectedIds.length !== challenge.required} onClick={onConfirm} className="geo-primary-button">Confirmer</button></div></section>;
 }
 
 function PlacingPanel({ view, canPlace, pendingPoint, busy, confirm }: { view: GeoView; canPlace: boolean; pendingPoint: GeoPoint | null; busy: boolean; confirm: () => void }) {
   const submitted = view.players[view.mySeat].submitted;
-  return <div className="geo-side-content"><p className="geo-kicker geo-kicker-warm">Ville cible</p><h2 className="geo-target-title">{view.target?.name ?? "…"}</h2><p className="geo-target-department">{view.target?.departmentName}</p><p className="geo-panel-note geo-instruction">{submitted ? "Placement envoyé. En attente de la validation de ton partenaire pour révéler la manche." : "Place le point au meilleur endroit, puis confirme. Un simple clic ne valide jamais l'envoi. Vous jouez en même temps."}</p><button disabled={!canPlace || !pendingPoint || busy} onClick={confirm} className="geo-primary-button">{busy ? "Envoi…" : submitted ? "Placement envoyé" : "Confirmer le placement"}</button></div>;
+  return <div className="geo-side-content"><p className="geo-kicker geo-kicker-warm">Ville cible</p><h2 className="geo-target-title">{view.target?.name ?? "…"}</h2><p className="geo-target-department">{view.target?.departmentName}</p><button disabled={!canPlace || !pendingPoint || busy} onClick={confirm} className="geo-primary-button">{busy ? "Envoi…" : submitted ? "Placement envoyé" : "Valider"}</button></div>;
 }
 
 function RevealPanel({ view, avatars, busy, next }: { view: GeoView; avatars: Record<string, string>; busy: boolean; next: () => void }) {
@@ -171,8 +167,4 @@ function FinishedPanel({ view, back }: { view: GeoView; back: () => void }) {
   const result = view.result;
   const label = result?.outcome === "draw" ? "Égalité" : result?.outcome === "abandoned" ? "Partie interrompue" : result?.winnerId === view.players[view.mySeat].id ? "Victoire" : "Défaite";
   return <section className="geo-panel geo-finish-panel"><p className="geo-kicker geo-kicker-accent">Résultats</p><h1 className="geo-finish-title">{label}</h1>{result?.outcome === "abandoned" && <p className="geo-panel-note">Aucun joueur n&apos;est déclaré vainqueur. La partie a été interrompue ({result.reason}).</p>}<div className="geo-final-scores">{view.players.map((player) => <div key={player.id} className="geo-final-score"><p>{player.pseudo}</p><strong>{player.score}</strong><span>points</span></div>)}</div><button onClick={back} className="geo-primary-button geo-finish-button">Rejouer</button></section>;
-}
-
-function ForfeitControl({ busy, resign }: { busy: boolean; resign: () => void }) {
-  return <div className="geo-forfeit-panel"><p>Partie bloquée ?</p><span>Abandonner termine la partie ; sans clic, elle continue.</span><div className="flex flex-wrap gap-2"><button type="button" disabled={busy} onClick={resign} className="geo-danger-button">Abandonner</button></div></div>;
 }

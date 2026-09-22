@@ -9,7 +9,7 @@ async function placeFrom(page: Page) {
   await expect(map).toBeVisible();
   await expect(map).toHaveAttribute("data-map-ready", "true", { timeout: 15_000 });
   await map.click({ position: { x: 240, y: 180 } });
-  await page.getByRole("button", { name: "Confirmer le placement" }).click();
+  await page.getByRole("button", { name: "Valider" }).click();
 }
 
 test("joue une manche à deux et ne révèle le résultat qu'après les deux placements", async ({ browser, page: alice }) => {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { MatchToolbar, MatchDetails } from "@/components/match-toolbar";
 import { useRouter } from "next/navigation";
 import type { TrouNoirAction, TrouNoirView } from "@/games/trou-noir/types";
 import { parseMatchSnapshot, useResourceNetwork } from "@/lib/network-sync";
@@ -88,22 +89,10 @@ export function TrouNoirMatch({ matchId }: { matchId: string }) {
   const isMyTurn = view.phase === "answering" && view.question?.addresseeIsMe === true;
 
   return (
-    <main className="table-page table-trou-noir table-match-page">
-      <div className="table-content table-match-content">
-        <header className="table-match-header">
-          <button type="button" onClick={() => router.push(`/salons/${match.roomId}`)} className="table-back-link">
-            ← Salon
-          </button>
-          <div className="table-match-heading">
-            <p className="table-kicker table-kicker-accent">Chute libre</p>
-            <p>Manche {Math.min(view.round, view.maxRounds)} / {view.maxRounds}</p>
-          </div>
-          <button type="button" onClick={() => void refresh()} className="table-secondary-button table-refresh-button">
-            Actualiser
-          </button>
-        </header>
-
-        <div className="table-scoreboard">
+    <main className="table-page table-trou-noir table-match-page play-screen" data-phase={view.phase}>
+      <div className="table-content table-match-content play-shell">
+        <MatchToolbar title="Chute libre" progress={`${Math.min(view.round, view.maxRounds)}/${view.maxRounds}`} busy={busy} onBack={() => router.push(`/salons/${match.roomId}`)} onRefresh={() => void refresh()} onResign={view.phase === "finished" ? undefined : () => void send({ type: "RESIGN" })}>
+          <div className="table-scoreboard">
           {[me, opponent].map((player) => (
             <div key={player.id} className="table-score-card" data-self={player.seat === view.mySeat} data-active={player.active}>
               <div className="table-score-topline">
@@ -130,8 +119,8 @@ export function TrouNoirMatch({ matchId }: { matchId: string }) {
             </div>
           ))}
         </div>
-
-        <div aria-live="polite" aria-atomic="true" className="table-status-bar" data-urgent={remaining !== null && remaining <= 10}>
+        </MatchToolbar>
+        <div className="play-resources" aria-label="Réserves">{view.players.map((player) => <span key={player.id}>{player.pseudo} <strong>{player.reserve}</strong></span>)}</div><div aria-live="polite" aria-atomic="true" className="table-status-bar" data-urgent={remaining !== null && remaining <= 10}>
           <span>{phaseLabel(view, isMyTurn, expired)}</span>
           {remaining !== null && view.phase !== "finished" && <span className="table-timer">{remaining}s</span>}
         </div>
@@ -145,13 +134,6 @@ export function TrouNoirMatch({ matchId }: { matchId: string }) {
                   {CATEGORY_LABELS[view.question.category] ?? view.question.category} · niveau {view.question.difficulty}
                 </p>
                 <h2 className="table-target-title">{view.question.prompt}</h2>
-                <p className="table-panel-note table-instruction">
-                  {view.phase === "judging"
-                    ? "Réponse envoyée. Vérification en cours…"
-                    : isMyTurn
-                      ? "C'est à toi. Ton brouillon n'est pas transmis avant l'envoi."
-                      : `Au tour de ${opponent.pseudo}. Sa réponse restera cachée jusqu'à la révélation.`}
-                </p>
                 {view.phase === "answering" && isMyTurn && (
                   <form
                     onSubmit={(event) => {
@@ -159,7 +141,7 @@ export function TrouNoirMatch({ matchId }: { matchId: string }) {
                       if (draft.trim()) void send({ type: "SUBMIT_ANSWER", answer: draft.slice(0, 240) });
                     }}
                   >
-                    <label className="table-label" htmlFor="tn-answer">Ta réponse</label>
+                    <label className="sr-only" htmlFor="tn-answer">Ta réponse</label>
                     <input
                       id="tn-answer"
                       value={draft}
@@ -170,12 +152,9 @@ export function TrouNoirMatch({ matchId }: { matchId: string }) {
                       className="table-input"
                     />
                     <button disabled={busy || !draft.trim()} type="submit" className="table-primary-button">
-                      {busy ? "Envoi…" : "Valider ma réponse"}
+                      {busy ? "Envoi…" : "Valider"}
                     </button>
                   </form>
-                )}
-                {view.phase === "answering" && !isMyTurn && (
-                  <p className="table-panel-note">Question adressée à {opponent.pseudo}.</p>
                 )}
               </>
             ) : (
@@ -188,14 +167,11 @@ export function TrouNoirMatch({ matchId }: { matchId: string }) {
           <section className="table-panel table-side-panel">
             <p className="table-kicker table-kicker-warm">Révélation</p>
             <h2 className="table-panel-title">{view.reveal.timeout ? "Temps écoulé" : view.reveal.verdict === "accept" ? "Bonne réponse" : "Réponse refusée"}</h2>
-            {!view.reveal.timeout && (
-              <p className="table-panel-note">Réponse saisie : « {view.reveal.submittedAnswer} »</p>
-            )}
             <p className="table-panel-note">Réponse attendue : {view.reveal.expectedAnswer}</p>
-            <p className="table-panel-note">{view.reveal.explanation}</p>
-            <p className="table-panel-note">
-              Effet proposé : {view.reveal.impact === 0 ? "±0 point" : "−10 points de réserve"} (appliqué à la clôture).
-            </p>
+            <MatchDetails label="Explication">{!view.reveal.timeout && (
+              <p className="table-panel-note">Réponse saisie : « {view.reveal.submittedAnswer} »</p>
+            )}<p>{view.reveal.explanation}</p></MatchDetails>
+
             {view.reveal.contest?.status === "pending" && (
               <p className="table-panel-note">
                 {view.reveal.contest.requesterIsMe
@@ -260,17 +236,6 @@ export function TrouNoirMatch({ matchId }: { matchId: string }) {
           </section>
         )}
 
-        {view.phase !== "finished" && (
-          <div style={{ display: "grid", gap: "0.55rem", marginTop: "1rem" }}>
-            <button disabled={busy} onClick={() => void send({ type: "RESIGN" })} className="table-danger-button">
-              Abandonner
-            </button>
-            <div className="table-forfeit-panel">
-              <p>Partenaire absent ?</p>
-              <span>Le forfait devient disponible après 90 secondes sans signal.</span>
-              </div>
-          </div>
-        )}
       </div>
     </main>
   );

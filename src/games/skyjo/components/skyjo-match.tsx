@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { MatchToolbar } from "@/components/match-toolbar";
 import { useRouter } from "next/navigation";
 import type { SkyjoAction, SkyjoCellView, SkyjoView } from "@/games/skyjo/types";
 import { parseMatchSnapshot, useResourceNetwork } from "@/lib/network-sync";
@@ -92,22 +93,14 @@ export function SkyjoMatch({ matchId }: { matchId: string }) {
   const opponent = view.players[(1 - view.mySeat) as 0 | 1];
 
   return (
-    <main className="table-page table-skyjo min-h-screen pb-10">
-      <div className="table-shell">
-        <header className="table-header">
-          <button type="button" onClick={() => router.push(`/salons/${match.roomId}`)} className="rounded-full px-3 py-2 text-sm font-bold table-muted hover:bg-white/10">← Salon</button>
-          <div className="table-heading">
-            <p className="text-xs font-black uppercase tracking-[0.16em] table-accent">Douze cases</p>
-            <p className="font-black">Manche {view.round} / {view.maxRounds}</p>
-          </div>
-          <button type="button" onClick={() => void refresh()} className="rounded-full border border-[var(--line)] table-surface px-3 py-2 text-sm font-bold">Actualiser</button>
-        </header>
-
-        <div className="table-scoreboard">
+    <main className="table-page table-skyjo min-h-screen pb-10 play-screen" data-phase={view.phase}>
+      <div className="table-shell play-shell">
+        <MatchToolbar title="Douze cases" progress={`${view.round}/${view.maxRounds}`} busy={busy} onBack={() => router.push(`/salons/${match.roomId}`)} onRefresh={() => void refresh()} onResign={view.phase === "finished" ? undefined : () => void send({ type: "RESIGN" })}>
+          <div className="table-scoreboard">
           <ScorePanel pseudo={opponent.pseudo} score={opponent.score} active={opponent.active} isMe={false} />
           <ScorePanel pseudo={`${me.pseudo} · toi`} score={me.score} active={me.active} isMe />
         </div>
-
+        </MatchToolbar>
         <div aria-live="polite" className="table-status" data-urgent={remaining !== null && remaining <= 10}>
           <span>{phaseLabel(view, isMyTurn)}</span>
           {remaining !== null && view.phase !== "finished" && view.phase !== "round_reveal" && (
@@ -115,10 +108,10 @@ export function SkyjoMatch({ matchId }: { matchId: string }) {
           )}
         </div>
         {view.lastTurn && view.phase !== "finished" && view.phase !== "round_reveal" && (
-          <p className="mt-3 rounded-2xl table-tint px-4 py-3 text-center text-sm font-bold table-accent">Dernier tour : la manche se termine après ce coup.</p>
+          <p className="mt-3 rounded-2xl table-tint px-4 py-3 text-center text-sm font-bold table-accent">Dernier tour</p>
         )}
 
-        <section aria-label="Table de jeu" className="table-skyjo-board mt-6 grid gap-6 lg:grid-cols-[1fr_200px_1fr] lg:items-center">
+        {view.phase !== "finished" && view.phase !== "round_reveal" && <section aria-label="Table de jeu" className="table-skyjo-board mt-6 grid gap-6 lg:grid-cols-[1fr_200px_1fr] lg:items-center">
           <div>
             <p className="mb-2 text-center text-xs font-black uppercase tracking-[0.16em] table-muted">{opponent.pseudo}</p>
             <Grid cells={view.opponentGrid} compact onPick={undefined} picked={[]} target={null} disabled />
@@ -143,13 +136,13 @@ export function SkyjoMatch({ matchId }: { matchId: string }) {
               disabled={busy || (!view.allowedActions.includes("REVEAL_INITIAL") && view.phase === "setup") || (view.phase !== "setup" && view.phase !== "resolve_draw" && view.phase !== "replace_discard") || (view.phase !== "setup" && !isMyTurn)}
             />
           </div>
-        </section>
+        </section>}
 
         {view.phase === "setup" && view.allowedActions.includes("REVEAL_INITIAL") && (
           <div className="mt-5 text-center">
-            <p className="text-sm table-muted">Choisis deux cartes à révéler ({selected.length}/2).</p>
+
             <button type="button" disabled={selected.length !== 2 || busy} onClick={() => void send({ type: "REVEAL_INITIAL", slots: [selected[0], selected[1]] })} className="mt-3 rounded-full table-primary px-6 py-3 font-bold text-white">
-              Révéler ces deux cartes
+              Révéler
             </button>
           </div>
         )}
@@ -184,14 +177,6 @@ export function SkyjoMatch({ matchId }: { matchId: string }) {
 
         {view.phase === "finished" && <FinishedPanel view={view} back={() => router.push("/jeux/skyjo")} />}
 
-        {view.phase !== "finished" && (
-          <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-dashed border-[var(--line)] table-surface p-4 text-sm">
-            <span className="table-muted">Besoin d&apos;arrêter la partie ?</span>
-            <div className="flex gap-2">
-              <button type="button" disabled={busy} onClick={() => { if (window.confirm("Abandonner cette partie ?")) void send({ type: "RESIGN" }); }} className="rounded-full px-3 py-2 font-bold table-muted hover:bg-red-50 hover:text-red-700">Abandonner</button>
-              </div>
-          </div>
-        )}
         {error && <p role="alert" className="mt-4 rounded-xl table-error px-3 py-2 text-sm">{error}</p>}
       </div>
     </main>
@@ -273,7 +258,7 @@ function Grid({ cells, compact, onPick, picked, target, disabled }: {
   );
 }
 
-function Pile({ label, count, value, covered, onClick, hint }: {
+function Pile({ label, value, covered, onClick, hint }: {
   label: string;
   count: number;
   value?: number | null;
@@ -292,7 +277,7 @@ function Pile({ label, count, value, covered, onClick, hint }: {
           {inner}
         </button>
       ) : inner}
-      <p className="text-xs font-bold table-muted">{count} carte{count > 1 ? "s" : ""} · {hint}</p>
+
     </div>
   );
 }
@@ -313,14 +298,14 @@ function HeldPanel({ view, busy, targetSlot, onReplace, onReveal }: {
     <section className="mx-auto mt-5 max-w-xl rounded-3xl border-2 table-border-accent table-tint p-5 text-center">
       <p className="text-xs font-black uppercase tracking-[0.16em] table-accent">Carte en main · {heldValue}</p>
       {style && <div className="mx-auto mt-3 grid h-24 w-16 place-items-center rounded-xl text-3xl font-black" style={{ backgroundColor: style.background, color: style.color }}>{heldValue}</div>}
-      <p className="mt-3 text-sm table-accent">{targetSlot === null ? "Touche une case de ta grille." : `Case ${targetSlot + 1} visée.`}</p>
+
       <div className="mt-4 flex flex-wrap justify-center gap-2">
         <button type="button" disabled={targetSlot === null || busy} onClick={onReplace} className="rounded-full table-primary px-4 py-3 text-sm font-bold text-white">
-          Remplacer cette case
+          Remplacer
         </button>
         {view.phase === "resolve_draw" && (
           <button type="button" disabled={!canReveal || busy} onClick={onReveal} className="rounded-full border table-border-accent table-surface px-4 py-3 text-sm font-bold table-accent">
-            Jeter et révéler
+            Révéler
           </button>
         )}
       </div>

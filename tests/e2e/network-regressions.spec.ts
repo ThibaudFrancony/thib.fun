@@ -161,10 +161,13 @@ async function expectPendingIntent(page: Page, actionType: string): Promise<void
 
 test("une coupure pendant l'abandon conserve l'intention et libère le bouton", async ({ page }) => {
   const commands = await openFixture(page, "trou-noir", trouNoirView());
+  await page.getByRole("button", { name: "Options de la partie" }).click();
+  page.once("dialog", (dialog) => void dialog.accept());
   const abandon = page.getByRole("button", { name: "Abandonner", exact: true });
   await expect(abandon).toBeEnabled();
   await abandon.click();
   await expectCommand(commands, "RESIGN");
+  await page.getByRole("button", { name: "Options de la partie" }).click();
   await expect(abandon).toBeEnabled();
   await expectPendingIntent(page, "RESIGN");
 });
@@ -173,7 +176,7 @@ test("une coupure pendant une réponse conserve le brouillon et libère l'envoi"
   const commands = await openFixture(page, "trou-noir", trouNoirView());
   const answer = page.getByLabel("Ta réponse");
   await answer.fill("réponse interrompue");
-  const submit = page.getByRole("button", { name: "Valider ma réponse" });
+  const submit = page.getByRole("button", { name: "Valider" });
   await submit.click();
   await expectCommand(commands, "SUBMIT_ANSWER");
   await expect(submit).toBeEnabled();
@@ -197,7 +200,7 @@ test("une coupure pendant un placement conserve le point local et le bouton", as
   const map = page.locator('svg[role="application"]');
   await expect(map).toBeVisible();
   await map.click({ position: { x: 240, y: 180 } });
-  const place = page.getByRole("button", { name: "Confirmer le placement" });
+  const place = page.getByRole("button", { name: "Valider" });
   await expect(place).toBeEnabled();
   await place.click();
   await expectCommand(commands, "PLACE_CITY");

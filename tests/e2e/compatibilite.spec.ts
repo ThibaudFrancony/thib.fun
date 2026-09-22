@@ -33,16 +33,17 @@ test("compare deux choix simultanés sans exposer le choix adverse avant la rév
       expect(bob).toHaveURL(/\/parties\/[0-9a-f-]+$/, { timeout: 15_000 }),
     ]);
 
-    await expect(alice.getByText("Question 1 / 10")).toBeVisible({ timeout: 10_000 });
+    await expect(alice.locator(".play-toolbar h1")).toContainText("1/10", { timeout: 10_000 });
     const aliceOption = alice.locator('[role="radio"]').first();
     const bobOption = bob.locator('[role="radio"]').nth(1);
     await aliceOption.click();
-    await alice.getByRole("button", { name: "Confirmer mon choix" }).click();
+    await alice.getByRole("button", { name: "Valider" }).click();
     await expect(alice.getByText(/^En attente de .+$/)).toBeVisible({ timeout: 10_000 });
     await expect(alice.getByText("Vos choix se dévoilent")).toHaveCount(0);
     await bobOption.click();
-    await bob.getByRole("button", { name: "Confirmer mon choix" }).click();
+    await bob.getByRole("button", { name: "Valider" }).click();
     await expect(alice.getByText("Vos choix se dévoilent")).toBeVisible({ timeout: 10_000 });
+    await alice.getByRole("button", { name: "Options de la partie" }).click();
     await expect(alice.getByText("Choix confirmé")).toHaveCount(2);
   } finally {
     await bobContext.close();

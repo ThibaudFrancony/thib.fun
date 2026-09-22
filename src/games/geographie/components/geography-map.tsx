@@ -60,12 +60,13 @@ export function GeographyMap({ view, interactive, pendingPoint, onPendingPointCh
   }, [mapRequestKey]);
 
   useEffect(() => {
-    if (!shellRef.current) return;
+    if (!svgRef.current) return;
     const observer = new ResizeObserver((entries) => {
-      const width = Math.max(300, Math.floor(entries[0]?.contentRect.width ?? 720));
-      setSize({ width, height: Math.max(300, Math.min(560, Math.round(width * 0.68))) });
+      const width = Math.max(1, Math.floor(entries[0]?.contentRect.width ?? 720));
+      const height = Math.max(1, Math.floor(entries[0]?.contentRect.height ?? 500));
+      setSize((current) => current.width === width && current.height === height ? current : { width, height });
     });
-    observer.observe(shellRef.current);
+    observer.observe(svgRef.current);
     return () => observer.disconnect();
   }, []);
 
@@ -150,7 +151,6 @@ export function GeographyMap({ view, interactive, pendingPoint, onPendingPointCh
 
   const transform = `translate(${size.width / 2 + viewport.offsetX} ${size.height / 2 + viewport.offsetY}) scale(${viewport.scale}) translate(${-size.width / 2} ${-size.height / 2})`;
   return <div ref={shellRef} className="map-shell geo-map-shell">
-    <div className="geo-map-toolbar"><span>Carte muette · métropole + Corse</span><span aria-live="polite">{pendingPoint ? "Point prêt à confirmer" : "Clique ou appuie sur Entrée"}</span></div>
     {mapLoading && !map && <p className="geo-map-loading" role="status">Chargement de la carte…</p>}
     {mapError && <GeographyMapLoadError onRetry={() => { setMapLoading(true); setMapError(false); setMapRequestKey((current) => current + 1); }} />}
     <svg ref={svgRef} role="application" aria-label="Carte muette de la France métropolitaine. Les flèches déplacent le curseur de cinq pixels, Maj de vingt pixels, et Entrée pose le point." aria-busy={mapLoading} data-map-ready={map ? "true" : "false"} tabIndex={0} viewBox={`0 0 ${size.width} ${size.height}`} className="geo-map-svg" onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={() => { dragRef.current = null; }} onWheel={onWheel} onKeyDown={onKeyDown}>

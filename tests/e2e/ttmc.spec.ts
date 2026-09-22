@@ -39,14 +39,14 @@ test("mène un tour TTMC à deux avec niveaux différents et sans fuite", async 
     await expect(bob.locator("text=Réponse attendue")).toHaveCount(0);
 
     // Le joueur actif choisit un niveau puis répond.
-    const aliceConfirm = alice.getByRole("button", { name: /Confirmer le niveau/ });
-    const bobConfirm = bob.getByRole("button", { name: /Confirmer le niveau/ });
+    const aliceConfirm = alice.getByRole("button", { name: /Choisir/ });
+    const bobConfirm = bob.getByRole("button", { name: /Choisir/ });
     const activeConfirm = (await aliceConfirm.count()) > 0 ? aliceConfirm : bobConfirm;
     const activePage = (await aliceConfirm.count()) > 0 ? alice : bob;
     await activeConfirm.click();
     await expect(activePage.getByLabel("Ta réponse")).toBeVisible({ timeout: 10_000 });
     await activePage.getByLabel("Ta réponse").fill("une réponse de test");
-    await activePage.getByRole("button", { name: "Valider ma réponse" }).click();
+    await activePage.getByRole("button", { name: "Valider" }).click();
     await expect(activePage.getByText("Vérification de la réponse")).toBeVisible({ timeout: 15_000 });
   } finally {
     await bobContext.close();

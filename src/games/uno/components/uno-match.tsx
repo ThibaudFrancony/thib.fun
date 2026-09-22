@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import Image from "next/image";
+import { MatchToolbar, MatchDetails } from "@/components/match-toolbar";
 import { useRouter } from "next/navigation";
 import type { UnoAction, UnoCard as UnoCardData, UnoColor, UnoView } from "@/games/uno/types";
 import { cardLabel } from "@/games/uno/deck";
@@ -132,6 +133,7 @@ export function UnoMatch({ matchId }: { matchId: string }) {
   const [drawPending, setDrawPending] = useState(false);
   const [drawLanded, setDrawLanded] = useState(false);
   const [now, setNow] = useState(0);
+  const [requestedHandPage, setHandPage] = useState(0);
   const focusReturnRef = useRef<HTMLElement | null>(null);
   const shakeTimerRef = useRef<number | null>(null);
   const flightTimersRef = useRef<Map<number, number>>(new Map());
@@ -258,6 +260,7 @@ export function UnoMatch({ matchId }: { matchId: string }) {
     error,
     busy,
     serverOffset,
+    refresh,
     send: networkSend,
   } = useResourceNetwork<MatchResponse, UnoAction>({
     resourceId: matchId,
@@ -327,7 +330,7 @@ export function UnoMatch({ matchId }: { matchId: string }) {
         flyKeyRef.current,
         card,
         source,
-        slot ? toRect(slot.getBoundingClientRect()) : fallback,
+        slot?.getClientRects().length ? toRect(slot.getBoundingClientRect()) : fallback,
         index % 2 === 0 ? -12 : 12,
         index * TAKE_STAGGER,
         { kind: "take" },
@@ -414,6 +417,10 @@ export function UnoMatch({ matchId }: { matchId: string }) {
   const playView = predictedPlay ? predictPlayedView(serverView, predictedPlay) : null;
   const drawView = !playView && predictedDraw ? predictDrawnView(serverView, predictedDraw) : null;
   const view = takeView ?? playView ?? drawView ?? serverView;
+  const pageSize = 7;
+  const handPages = Math.max(1, Math.ceil((view.hand.length + (drawPending ? 1 : 0)) / pageSize));
+  const drawnIndex = view.phase === "after_draw" ? view.hand.findIndex((card) => card.id === view.drawnCard?.id) : -1;
+  const handPage = drawnIndex >= 0 ? Math.floor(drawnIndex / pageSize) : Math.min(requestedHandPage, handPages - 1);
   const opponent = view.players[(1 - view.mySeat) as 0 | 1];
   const isMyTurn = view.activeSeat === view.mySeat && view.phase !== "finished";
   const pending = view.pendingPenalty ?? null;
@@ -471,6 +478,7 @@ export function UnoMatch({ matchId }: { matchId: string }) {
     if (busy || !view.actions.canDraw) return;
     const windowCards = view.nextDrawCards ?? [];
     const penaltyCount = view.pendingPenalty?.count ?? 0;
+    setHandPage(Math.floor((view.hand.length + Math.max(1, penaltyCount) - 1) / pageSize));
     drawBaselineRef.current = view.hand.length;
     setPendingTake(null);
     setDrawLanded(false);
@@ -518,26 +526,12 @@ export function UnoMatch({ matchId }: { matchId: string }) {
   }
 
   return (
-    <main className="uno-page">
+    <main className="uno-page play-screen" data-phase={view.phase}>
       <UnoBackground />
-      <div className="uno-shell">
-        <header className="uno-header">
-          <button type="button" className="uno-back" onClick={() => router.push(`/salons/${match.roomId}`)}>← Salon</button>
-          <div className="uno-heading">
-            <p className="uno-brand">
-              <svg viewBox="0 0 32 32" width="26" height="26" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
-                <path d="M10 9h12c3 0 5 3 6 7l1 6c.5 4-3 6-5 3l-4-4h-8l-4 4c-2 3-5.5 1-5-3l1-6c1-4 3-7 6-7Z" />
-                <path d="M10 13v6m-3-3h6" />
-                <circle cx="22" cy="14" r="1.3" fill="currentColor" stroke="none" />
-                <circle cx="25" cy="18" r="1.3" fill="currentColor" stroke="none" />
-              </svg>
-              <span>tibo.fun</span>
-            </p>
-            <p className="uno-kicker">Dernière carte</p>
-            <p className="uno-round">Manche unique · tour {view.turns + 1}</p>
-          </div>
-          <span className="uno-header-spacer" aria-hidden="true" />
-        </header>
+      <div className="uno-shell play-shell">
+        <MatchToolbar title="Dernière carte" busy={busy} onBack={() => router.push(`/salons/${match.roomId}`)} onRefresh={() => void refresh()} onResign={view.phase === "finished" ? undefined : () => void send({ type: "RESIGN" })}>
+
+        </MatchToolbar>
 
         {view.phase === "finished" ? (
           <FinishedPanel view={view} back={() => router.push("/jeux/uno")} />
@@ -551,7 +545,7 @@ export function UnoMatch({ matchId }: { matchId: string }) {
                 <span className="uno-opponent-avatar" aria-hidden="true">{opponent.pseudo.slice(0, 1).toLocaleUpperCase("fr-FR")}</span>
                 <span className="uno-opponent-text">
                   <strong>{opponent.pseudo}</strong>
-                  <small>Adversaire</small>
+
                 </span>
                 <span className="uno-count-badge" aria-label={`${opponent.cardCount} cartes en main`}>{opponent.cardCount}</span>
               </div>
@@ -566,8 +560,7 @@ export function UnoMatch({ matchId }: { matchId: string }) {
                 <button type="button" className="uno-draw" aria-label={pending ? `Prendre ${pending.count} cartes` : "Piocher une carte"} disabled={!view.actions.canDraw || busy} onClick={(event) => drawCard(toRect(event.currentTarget.getBoundingClientRect()))}>
                   <UnoCard faceDown />
                 </button>
-                <p className="uno-pile-count">{view.drawPileCount} cartes dans la pioche</p>
-                <p className="uno-pile-action">{pending ? `Prendre ${pending.count}` : view.actions.canDraw ? "Piocher une carte" : "Patiente…"}</p>
+
               </div>
               <div className="uno-pile uno-pile--discard">
                 <p className="uno-pile-label">Défausse</p>
@@ -595,7 +588,7 @@ export function UnoMatch({ matchId }: { matchId: string }) {
               <div className="uno-hand-head">
                 <div>
                   <p className="uno-hand-title">Ta main</p>
-                  <h2 className="uno-hand-count">{view.hand.length} carte{view.hand.length > 1 ? "s" : ""}</h2>
+
                 </div>
                 {view.phase === "playing" && isMyTurn && activeTake === null && (
                   <p className="uno-turn-hint" aria-live="polite">
@@ -604,19 +597,25 @@ export function UnoMatch({ matchId }: { matchId: string }) {
                 )}
                 {view.phase === "after_draw" && (
                   <div className="uno-drawn-actions">
-                    <p>{isMyTurn ? "Joue la carte piochée ou garde-la." : "Ton adversaire choisit sa carte piochée."}</p>
+                    <p>{isMyTurn ? "Jouer ou garder ?" : "Son choix…"}</p>
                     {isMyTurn && (
                       <button type="button" disabled={!view.actions.canKeepDrawn || busy} onClick={() => void send({ type: "KEEP_DRAWN" })}>
-                        Garder la carte
+                        Garder
                       </button>
                     )}
                   </div>
                 )}
               </div>
+              {handPages > 1 && <nav className="uno-hand-pages" aria-label="Pages de la main">
+                <button type="button" aria-label="Cartes précédentes" disabled={handPage === 0 || busy || activeTake !== null || view.phase === "after_draw"} onClick={() => setHandPage(handPage - 1)}>←</button>
+                <span aria-live="polite">{handPage + 1}/{handPages}</span>
+                <button type="button" aria-label="Cartes suivantes" disabled={handPage === handPages - 1 || busy || activeTake !== null || view.phase === "after_draw"} onClick={() => setHandPage(handPage + 1)}>→</button>
+              </nav>}
               <div ref={handRef} className="uno-hand">
                 {view.hand.map((card, index) => {
                   const takeSlot = activeTake ? activeTake.cards.findIndex((taken) => taken.id === card.id) : -1;
                   const classes = [
+                    Math.floor(index / pageSize) !== handPage ? "uno-card--paged-out" : "",
                     hiddenCardId === card.id ? "uno-card--flying" : "",
                     takePendingIds?.has(card.id) ? "uno-card--take-pending" : "",
                     silentHandIds.has(card.id) ? "uno-card--no-in" : "",
@@ -631,7 +630,7 @@ export function UnoMatch({ matchId }: { matchId: string }) {
                       disabled={busy || activeTake !== null}
                       takeSlot={takeSlot >= 0 ? takeSlot : undefined}
                       className={classes || undefined}
-                      style={handCardStyle(index, view.hand.length)}
+                      style={handCardStyle(index % pageSize, Math.min(pageSize, view.hand.length - handPage * pageSize))}
                       onClick={(event) => playCard(card, toRect(event.currentTarget.getBoundingClientRect()))}
                     />
                   );
@@ -644,19 +643,6 @@ export function UnoMatch({ matchId }: { matchId: string }) {
               </div>
             </section>
 
-            <footer className="uno-footer">
-              <span>Besoin d&apos;arrêter la partie ?</span>
-              <button
-                type="button"
-                className="uno-resign"
-                disabled={busy}
-                onClick={() => {
-                  if (window.confirm("Abandonner cette partie ?")) void send({ type: "RESIGN" });
-                }}
-              >
-                Abandonner
-              </button>
-            </footer>
           </>
         )}
 
@@ -775,14 +761,14 @@ function FinishedPanel({ view, back }: { view: UnoView; back: () => void }) {
         ))}
       </div>
       {remaining.length > 0 && (
-        <div className="uno-finish-reveal">
+        <MatchDetails label="Main adverse"><div className="uno-finish-reveal">
           <p>Main adverse révélée</p>
           <div className="uno-finish-cards">
             {remaining.map((card, index) => (
               <UnoCard key={card.id} card={card} style={{ "--uno-card-in-delay": `${280 + index * 90}ms` } as React.CSSProperties} />
             ))}
           </div>
-        </div>
+        </div></MatchDetails>
       )}
       <button type="button" className="uno-primary" onClick={back}>Rejouer</button>
     </section>

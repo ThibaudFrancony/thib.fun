@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { MatchToolbar } from "@/components/match-toolbar";
 import { useRouter } from "next/navigation";
 import type { BombpartyAction, BombpartyView } from "@/games/bombparty/types";
 import { parseMatchSnapshot, useResourceNetwork } from "@/lib/network-sync";
@@ -86,31 +87,40 @@ export function BombpartyMatch({ matchId }: { matchId: string }) {
   const opponent = view.players[(1 - view.mySeat) as 0 | 1];
 
   return (
-    <main className="table-page table-bombparty min-h-screen pb-10">
-      <div className="table-shell">
-        <header className="table-header">
-          <button type="button" onClick={() => router.push(`/salons/${match.roomId}`)} className="rounded-full px-3 py-2 text-sm font-bold table-muted hover:bg-white/10">← Salon</button>
-          <div className="table-heading">
-            <p className="text-xs font-black uppercase tracking-[0.16em] table-accent">Syllabe Express</p>
-            <p className="font-black">Tour {Math.min(view.turn, view.maxTurns)} · {view.validWordsTotal} mot{view.validWordsTotal > 1 ? "s" : ""} valide{view.validWordsTotal > 1 ? "s" : ""}</p>
-          </div>
-          <button type="button" onClick={() => void refresh()} className="rounded-full border border-[var(--line)] table-surface px-3 py-2 text-sm font-bold">Actualiser</button>
-        </header>
-
-        <div className="table-scoreboard">
+    <main className="table-page table-bombparty min-h-screen pb-10 play-screen" data-phase={view.phase}>
+      <div className="table-shell play-shell">
+        <MatchToolbar title="Syllabe Express" busy={busy} onBack={() => router.push(`/salons/${match.roomId}`)} onRefresh={() => void refresh()} onResign={view.phase === "finished" ? undefined : () => void send({ type: "RESIGN" })}>
+          <div className="table-scoreboard">
           <LifePanel pseudo={opponent.pseudo} lives={opponent.lives} score={opponent.score} active={opponent.active} isMe={false} />
           <LifePanel pseudo={`${me.pseudo} · toi`} lives={me.lives} score={me.score} active={me.active} isMe />
         </div>
-
-        <div aria-live="polite" className="table-status" data-urgent={remaining !== null && remaining <= 5}>
+                <section aria-label="Mots acceptés" className="mt-6 rounded-[2rem] border border-[var(--line)] table-surface p-5">
+          <div className="flex items-baseline justify-between gap-3">
+            <h2 className="font-black">Mots acceptés</h2>
+            <p className="text-sm font-bold table-muted">{view.validWordsTotal} au total</p>
+          </div>
+          {view.acceptedWords.length === 0 ? (
+            <p className="mt-3 text-sm table-muted">Aucun mot pour l&apos;instant. À toi de lancer la série !</p>
+          ) : (
+            <ul className="mt-3 grid max-h-64 gap-2 overflow-y-auto sm:grid-cols-2">
+              {[...view.acceptedWords].reverse().map((item, index) => (
+                <li key={`${item.turn}-${index}`} className="flex items-center justify-between gap-2 rounded-xl table-inset px-3 py-2 text-sm">
+                  <span className="font-bold">{highlightSequence(item.word, item.sequence)}</span>
+                  <span className="shrink-0 text-xs font-bold table-muted">tour {item.turn}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section></MatchToolbar>
+        <div className="play-resources" aria-label="Vies">{view.players.map((player) => <span key={player.id}>{player.pseudo} <strong aria-label={`${player.lives} vies`}>{"♥".repeat(Math.max(0, player.lives)) || "0"}</strong></span>)}</div><div aria-live="polite" className="table-status" data-urgent={remaining !== null && remaining <= 5}>
           <span>{phaseLabel(view, isMyTurn, opponent.pseudo)}</span>
           {remaining !== null && view.phase === "playing" && (
             <strong className={remaining <= 5 ? "text-[var(--yellow)]" : "text-white"}>{remaining}s</strong>
           )}
         </div>
 
-        <section aria-label="Séquence à jouer" className="mt-6 rounded-[2rem] border border-[var(--line)] table-panel p-6 text-center sm:p-8">
-          <p className="text-xs font-black uppercase tracking-[0.16em] table-accent">Séquence ({view.turnSeconds}s ce tour)</p>
+        {view.phase === "playing" && <section aria-label="Séquence à jouer" className="mt-6 rounded-[2rem] border border-[var(--line)] table-panel p-6 text-center sm:p-8">
+
           <p aria-live="polite" className="table-bomb-sequence">{view.sequence}</p>
           {view.phase === "playing" && (
             isMyTurn ? (
@@ -141,7 +151,7 @@ export function BombpartyMatch({ matchId }: { matchId: string }) {
                   style={{ borderColor: ACCENT }}
                 />
                 <button type="submit" disabled={busy || word.trim().length === 0} className="mt-3 w-full rounded-full table-primary px-4 py-3 font-bold text-white  disabled:opacity-50">
-                  {busy ? "Envoi…" : "Valider (Entrée)"}
+                  {busy ? "Envoi…" : "Valider"}
                 </button>
               </form>
             ) : (
@@ -149,37 +159,10 @@ export function BombpartyMatch({ matchId }: { matchId: string }) {
             )
           )}
           {error && <p role="alert" className="mx-auto mt-4 max-w-md rounded-xl table-error px-3 py-2 text-sm">{error}</p>}
-        </section>
-
-        <section aria-label="Mots acceptés" className="mt-6 rounded-[2rem] border border-[var(--line)] table-surface p-5">
-          <div className="flex items-baseline justify-between gap-3">
-            <h2 className="font-black">Mots acceptés</h2>
-            <p className="text-sm font-bold table-muted">{view.validWordsTotal} au total</p>
-          </div>
-          {view.acceptedWords.length === 0 ? (
-            <p className="mt-3 text-sm table-muted">Aucun mot pour l&apos;instant. À toi de lancer la série !</p>
-          ) : (
-            <ul className="mt-3 grid max-h-64 gap-2 overflow-y-auto sm:grid-cols-2">
-              {[...view.acceptedWords].reverse().map((item, index) => (
-                <li key={`${item.turn}-${index}`} className="flex items-center justify-between gap-2 rounded-xl table-inset px-3 py-2 text-sm">
-                  <span className="font-bold">{highlightSequence(item.word, item.sequence)}</span>
-                  <span className="shrink-0 text-xs font-bold table-muted">tour {item.turn}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+        </section>}
 
         {view.phase === "finished" && <FinishedPanel view={view} back={() => router.push("/jeux/bombparty")} />}
 
-        {view.phase !== "finished" && (
-          <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-dashed border-[var(--line)] table-surface p-4 text-sm">
-            <span className="table-muted">Besoin d&apos;arrêter la partie ?</span>
-            <div className="flex gap-2">
-              <button type="button" disabled={busy} onClick={() => { if (window.confirm("Abandonner cette partie ?")) void send({ type: "RESIGN" }); }} className="rounded-full px-3 py-2 font-bold table-muted hover:bg-red-50 hover:text-red-700">Abandonner</button>
-              </div>
-          </div>
-        )}
       </div>
     </main>
   );
