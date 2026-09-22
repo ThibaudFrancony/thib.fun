@@ -31,11 +31,18 @@ async function expectFits(page: Page) {
         const rect = element.getBoundingClientRect();
         return rect.bottom > innerHeight + 2 || rect.right > innerWidth + 2 || rect.top < -2 || rect.left < -2;
       }).map((element) => element.getAttribute("aria-label") ?? element.textContent?.slice(0, 40));
-    return { extraWidth: Math.max(0, root.scrollWidth - innerWidth), extraHeight: Math.max(0, root.scrollHeight - innerHeight), outside };
-  })).toEqual({ extraWidth: 0, extraHeight: 0, outside: [] });
+    const scrollers = [...document.querySelectorAll<HTMLElement>("main *")]
+      .filter((element) => element.getClientRects().length && !element.closest("dialog") && !element.closest('[aria-hidden="true"]') && !element.matches("input,textarea"))
+      .filter((element) => {
+        const style = getComputedStyle(element);
+        return (["auto", "scroll"].includes(style.overflowX) && element.scrollWidth > element.clientWidth + 2)
+          || (["auto", "scroll"].includes(style.overflowY) && element.scrollHeight > element.clientHeight + 2);
+      }).map((element) => element.className);
+    return { scrollers, extraWidth: Math.max(0, root.scrollWidth - innerWidth), extraHeight: Math.max(0, root.scrollHeight - innerHeight), outside };
+  })).toEqual({ scrollers: [], extraWidth: 0, extraHeight: 0, outside: [] });
 }
 
-for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 }, { width: 360, height: 640 }, { width: 844, height: 390 }]) {
+for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 }, { width: 360, height: 640 }, { width: 844, height: 390 }, { width: 320, height: 568 }, { width: 600, height: 800 }, { width: 768, height: 1024 }, { width: 800, height: 600 }, { width: 667, height: 375 }]) {
   for (const slug of Object.keys(compactViews)) {
     test(`${slug} tient dans ${viewport.width} × ${viewport.height}`, async ({ page }) => {
       await page.setViewportSize(viewport);
@@ -101,3 +108,30 @@ for (const viewport of [{ width: 360, height: 640 }, { width: 844, height: 390 }
     });
   }
 }
+
+for (const viewport of [{ width: 320, height: 568 }, { width: 768, height: 1024 }, { width: 800, height: 600 }]) {
+  test(`les deux grilles navales restent accessibles dans ${viewport.width} × ${viewport.height}`, async ({ page }) => {
+    await page.setViewportSize(viewport);
+    await openMatch(page, "bataille-navale", { phase: "playing", myReady: true, opponentReady: true, allowedActions: ["FIRE"] });
+    await page.locator('[data-cell="0-0"]').click();
+    await expect(page.getByRole("button", { name: "Tirer en A1" })).toBeEnabled();
+    await expectFits(page);
+    await page.getByRole("tab", { name: "Ma flotte", exact: true }).click();
+    await expect(page.getByRole("region", { name: "Ma flotte", exact: true })).toBeVisible();
+    await expectFits(page);
+    await page.getByRole("tab", { name: "Mes tirs", exact: true }).click();
+    await expect(page.getByRole("button", { name: "Tirer en A1" })).toBeVisible();
+  });
+}
+
+test("le zoom naval volontaire se déplace dans son panneau, sans agrandir la page", async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 640 });
+  await openMatch(page, "bataille-navale", { phase: "playing", allowedActions: ["FIRE"] });
+  await page.getByRole("button", { name: "Options de la partie" }).click();
+  await page.getByRole("button", { name: "Grille agrandie" }).click();
+  await page.getByRole("button", { name: "Fermer les options" }).click();
+  const panel = page.getByRole("region", { name: "Grille de tirs", exact: true });
+  expect(await panel.evaluate((element) => element.scrollWidth > element.clientWidth)).toBe(true);
+  expect(await page.evaluate(() => document.documentElement.scrollHeight - innerHeight)).toBe(0);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBe(0);
+});

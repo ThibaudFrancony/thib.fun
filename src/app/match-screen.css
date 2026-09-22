@@ -83,17 +83,21 @@
 .play-screen .geo-selected-cities { margin:0; }
 .play-screen .geo-selected-cities .geo-city-chip { padding:2px 6px; }
 
-.play-screen.table-naval { --naval-cell:min(44px,calc((100cqh - 230px) / 10 - 4px),calc((100cqw - 76px) / 10 - 4px)); }
-.play-screen .play-shell > .naval-setup { display:grid; grid-template-columns:minmax(0,1fr) 300px; align-content:center; align-items:center; gap:12px; padding:0; }
-.play-screen .naval-board-panel { padding:12px; }
+.play-screen .play-shell > .naval-setup { display:grid; grid-template-columns:minmax(0,1fr) 300px; grid-template-rows:minmax(0,1fr); align-items:stretch; gap:12px; padding:0; }
+.play-screen .naval-board-panel { container-type:size; min-width:0; min-height:0; padding:12px; display:flex; flex-direction:column; justify-content:center; }
+.play-screen .naval-board-panel .naval-board:not([data-zoom=true]) { --naval-cell:min(44px,calc((100cqw - 36px) / 10),calc((100cqh - 148px) / 10)); }
+.play-screen .naval-setup .naval-board-panel .naval-board { --naval-cell:min(44px,calc((100cqw - 36px) / 10),calc((100cqh - 80px) / 10)); }
+/* Explicit enlargement is the only pannable board mode; the page still fits. */
+.play-screen .naval-board-panel:has([data-zoom=true]) { overflow:auto; justify-content:flex-start; }
+.play-screen .naval-board[data-zoom=true] { justify-content:start; }
 .play-screen .naval-board-title { font-size:.7rem; margin-bottom:8px; }
 .play-screen .naval-board-hint { min-height:0; margin:6px 0 0; font-size:.7rem; }
-.play-screen .naval-side-panel { padding:12px; }
+.play-screen .naval-side-panel { padding:12px; align-self:center; }
 .play-ship-picker { display:flex; gap:8px; }
 .play-ship-picker select { width:100%; min-width:0; padding:8px; border-radius:10px; }
 .play-screen .naval-form-actions { margin-top:8px; }
 .play-screen .naval-side-panel > .naval-panel-note { display:none; }
-.play-screen .naval-game-layout { flex:1 1 0; min-height:0; margin:0; align-content:center; }
+.play-screen .naval-game-layout { flex:1 1 0; min-height:0; margin:0; align-items:stretch; grid-template-rows:minmax(0,1fr); }
 .play-screen .naval-tabs { margin:0; flex:0 0 auto; }
 .play-screen .naval-tabs button { min-height:40px; }
 .play-screen .naval-fire-confirm { min-height:0; margin:8px 0 0; }
@@ -132,8 +136,14 @@
   .play-screen .geo-round-result { padding:6px; gap:4px; }
   .play-screen .geo-round-result .geo-round-player { gap:4px; }
   .play-screen .geo-round-result strong { font-size:.75rem; }
-  .play-screen .play-shell > .naval-setup { grid-template-columns:1fr; flex:1 1 0; gap:8px; padding:0; }
+}
+/* Use the same breakpoint for columns, tabs and hidden fleet. */
+@media (max-width:860px) and (min-height:501px), (max-width:599px) {
+  .play-screen .play-shell > .naval-setup { grid-template-columns:1fr; grid-template-rows:minmax(0,1fr) auto; gap:8px; }
+  .play-screen .naval-side-panel { width:100%; }
   .play-screen .naval-game-layout { grid-template-columns:1fr; }
+  .play-screen .naval-game-layout > section.hidden { display:none; }
+  .play-screen .naval-tabs { display:flex; }
 }
 @media (max-height:500px) and (min-width:600px) {
   .play-screen .play-shell { gap:4px; }
@@ -146,8 +156,8 @@
   .play-screen .geo-game-layout { grid-template-columns:1fr 230px; grid-template-rows:minmax(0,1fr); }
   .play-screen .geo-side-content { display:flex; align-items:stretch; }
   .play-screen .geo-round-results { grid-template-columns:1fr; }
-  .play-screen.table-naval { --naval-cell:min(25px,calc((100cqh - 165px) / 10 - 4px)); }
-  .play-screen .play-shell > .naval-setup { grid-template-columns:1fr 280px; }
+
+  .play-screen .play-shell > .naval-setup { grid-template-columns:1fr 280px; grid-template-rows:minmax(0,1fr); }
   .play-screen.table-longueur-onde .play-shell > section { display:grid; grid-template-columns:1fr 1fr; align-items:center; }
   .play-screen.table-longueur-onde .table-dial { grid-column:1; grid-row:1 / span 4; height:100%; max-height:none; }
   .play-screen.table-longueur-onde section > :not(.table-dial) { grid-column:2; }
@@ -183,6 +193,5 @@
   .play-screen .geo-round-result { padding:6px; }
   .play-screen .naval-game-layout { grid-template-columns:1fr 1fr; }
   .play-screen .naval-tabs { display:none; }
-  .play-screen .naval-game-layout > section { display:block; }
-  .play-screen.table-naval[data-phase=playing] { --naval-cell:min(25px,calc((100cqh - 215px) / 10 - 4px)); }
+  .play-screen .naval-game-layout > section { display:flex; }
 }
