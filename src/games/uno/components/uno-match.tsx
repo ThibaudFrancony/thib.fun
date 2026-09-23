@@ -677,7 +677,7 @@ export function UnoMatch({ matchId }: { matchId: string }) {
 function UnoBackground() {
   return (
     <div className="uno-bg" aria-hidden="true">
-      <Image src="/home/hero.png" alt="" fill priority sizes="100vw" className="uno-bg-image" />
+      <Image src="/games/backgrounds/uno.webp" alt="" fill priority sizes="100vw" className="uno-bg-image" />
     </div>
   );
 }

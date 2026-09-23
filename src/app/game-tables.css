@@ -72,12 +72,25 @@
     radial-gradient(ellipse at 100% 70%, #4b275c38, transparent 54%),
     #100819;
 }
-.table-trou-noir { --table-accent: #eacaff; }
-.table-ttmc { --table-accent: #ffe49a; }
-.table-compatibilite { --table-accent: #ffc9e5; }
-.table-longueur-onde { --table-accent: #b5e6ff; }
-.table-bombparty { --table-accent: #ffe49a; }
-.table-skyjo { --table-accent: #d2ffe8; }
+.table-trou-noir { --table-accent: #eacaff; --table-game-background: url("/games/backgrounds/trou-noir.webp"); }
+.table-ttmc { --table-accent: #ffe49a; --table-game-background: url("/games/backgrounds/ttmc.webp"); }
+.table-compatibilite { --table-accent: #ffc9e5; --table-game-background: url("/games/backgrounds/compatibilite.webp"); }
+.table-longueur-onde { --table-accent: #b5e6ff; --table-game-background: url("/games/backgrounds/longueur-onde.webp"); }
+.table-bombparty { --table-accent: #ffe49a; --table-game-background: url("/games/backgrounds/bombparty.webp"); }
+.table-skyjo { --table-accent: #d2ffe8; --table-game-background: url("/games/backgrounds/skyjo.webp"); }
+.table-naval { --table-game-background: url("/games/backgrounds/bataille-navale.webp"); }
+.table-page.play-screen {
+  background:
+    linear-gradient(90deg, rgba(16, 8, 25, 0.55), transparent 24%, transparent 76%, rgba(16, 8, 25, 0.55)),
+    linear-gradient(180deg, rgba(16, 8, 25, 0.42), transparent 27%, transparent 70%, rgba(16, 8, 25, 0.42)),
+    var(--table-game-background),
+    radial-gradient(ellipse at 50% -12%, #793daa66, transparent 58%),
+    radial-gradient(ellipse at 100% 70%, #4b275c38, transparent 54%),
+    #100819;
+  background-size: auto, auto, cover, auto, auto, auto;
+  background-position: center;
+  background-attachment: fixed;
+}
 html:has(.table-page), body:has(.table-page) { background: #100819; }
 .table-page :focus-visible { outline: 3px solid var(--table-accent); outline-offset: 4px; }
 .table-page :is(h1,h2,h3,p,span) { overflow-wrap: anywhere; }

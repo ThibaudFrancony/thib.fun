@@ -458,6 +458,18 @@ button.home-card-play[data-playable="true"]:focus-visible { outline: 3px solid #
 }
 
 .geo-page :focus-visible { outline: 3px solid var(--geo-warm); outline-offset: 4px; }
+.geo-match-page {
+  background:
+    linear-gradient(90deg, rgba(32, 14, 51, 0.55), transparent 24%, transparent 76%, rgba(32, 14, 51, 0.55)),
+    linear-gradient(180deg, rgba(32, 14, 51, 0.42), transparent 27%, transparent 70%, rgba(32, 14, 51, 0.42)),
+    radial-gradient(ellipse at 8% 12%, #9855be55, transparent 46%),
+    radial-gradient(ellipse at 92% 78%, #cf598b30, transparent 44%),
+    radial-gradient(ellipse at 50% 100%, #6553ca52, transparent 58%),
+    url("/games/backgrounds/geographie.webp");
+  background-size: auto, auto, auto, auto, auto, cover;
+  background-position: center;
+  background-attachment: fixed;
+}
 .geo-page .home-header { border-bottom-color: #ffffff1f; background: #ffffff08; }
 .geo-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; min-height: 5.5rem; padding: 1rem clamp(1rem, 4vw, 4rem); border-bottom: 1px solid #ffffff1f; background: #ffffff08; backdrop-filter: blur(20px); }
 .geo-brand { display: inline-flex; align-items: center; gap: 0.6rem; min-height: 44px; color: #fff; font-size: clamp(1.25rem, 2vw, 1.65rem); font-weight: 850; letter-spacing: -0.06em; text-decoration: none; }

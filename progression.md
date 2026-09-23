@@ -1,6 +1,6 @@
 # Progression du projet
 
-Dernière mise à jour : 22 septembre 2026
+Dernière mise à jour : 23 septembre 2026
 Branche de référence : `main`
 Référence du cycle de l'étape 3 : `6130c99` — `fix: wire transactional match commits`
 Référence du cycle de l'étape 4 : `9968878` — `fix: restore worker dispatcher and quiz judgments`, poussé sur `origin/main` et vérifié
@@ -438,6 +438,7 @@ Ce fichier décrit la réalité du dépôt et non les seules capacités prévues
 | Cadrage produit et architecture | ✅ | Neuf jeux, V1 à deux joueurs, contrats d'architecture, base, API et moteurs documentés. |
 | Dépôt et branche de travail | 🟢 | Remote GitHub configuré ; `main` suit `origin/main` et constitue la branche de production déclarée. Ne pas forcer ni réécrire son historique. |
 | Shell Next.js et accueil | 🟢 | App Router, layout, header, accueil et rail responsive des neuf jeux présents. Homepage refondue en DA violette sobre : sélection prioritaire visible, jeux secondaires en rail, palette unifiée et responsive validé en E2E. Les jeux non prêts restent désactivés. |
+| Fonds de partie | 🟢 | Neuf illustrations de fond WebP (Trou Noir, TTMC, Géographie, Skyjo, UNO, BombParty, Bataille navale, Compatibilité, Longueur d’onde), total 319 Ko. Ciblées sur les conteneurs `play-screen` uniquement ; voile violet sombre, composition peu contrastée au centre. Menus de lancement préservés. |
 | Authentification et admission privée | 🟢 | Inscription libre, provisionnement, callback, profil et accès invité présents. La session anonyme complète atteint `/profil` sur Chromium desktop et iPhone 13 mobile dans Supabase local ; le fixture permanent Alice/Bob et le tiers désactivé restent séparés. Recette de production non revendiquée. |
 | Salons et lancement de partie | 🟢 | Le salon monté dans `src/app/salons/[roomId]/` couvre heartbeat, garde de version, Broadcast/relecture, `READY`/`START`, configuration, transfert d'hôte, départ, fermeture et reprise. La gate Étape 8 valide ce parcours à deux contextes sur desktop/mobile. Le salon actif est désormais relu en continu (header `geo` et pages de jeu) via `server_get_active_room` : un salon avec jeu posé reste détecté, créer/rejoindre est masqué et l'hôte lance avec « Jouer » ; nouvelles assertions E2E non exécutées sans Docker (19/09). La dissolution automatique d'un salon `waiting` après 1 h sans partie ni présence est codée (migration `20260919121421_step13_room_dissolution.sql`, cron 30 s + heartbeat, test unitaire vert, pgTAP non exécuté) et appliquée au distant le 19/09 (51/51 versions alignées). L'Étape 9 complète reste à exécuter. |
 | PostgreSQL/Supabase | 🟡 | Inspection connecteur en lecture seule le 16 septembre : projet `ACTIVE_HEALTHY`, 33 migrations distantes jusqu'à `20260915210754`, alignées avec les fichiers locaux. Les agrégats de préservation comptent 4 parties actives (8 sièges), 10 jobs `pending` échus et aucun job `running`/`failed` ; deux joueurs ont plusieurs engagements actifs (maximum 3). Aucun traitement, changement de schéma, écriture Vault, contrainte ou donnée distante n'a été modifié. |
@@ -448,6 +449,15 @@ Ce fichier décrit la réalité du dépôt et non les seules capacités prévues
 | Contenus | 🟡 | Packs publiés vérifiés à distance : Géographie 380, Trou Noir 120, TTMC 440/22 thèmes, Compatibilité 160, Longueur d'onde 80. Les manifests portent provenance, version, quantité, couverture et checksum ; `content:validate` est désormais une validation locale en lecture seule. Trou Noir reste sous le seuil 300/60 par catégorie et TTMC sous 30 thèmes ; seules les configurations TTMC 20/15 et 30/20 sont disponibles. Benchmark DeepSeek et publication de contenu restant à établir. |
 | Tests et CI | 🟡 | Étape 8 démontrée localement : Vitest 60 fichiers / 432 succès + 2 sentinelles attendues, pgTAP 190 assertions et gate Playwright 10/10 sans retry sur Chromium desktop/iPhone 13. La suite E2E complète a terminé sans échec final avant correction de deux attentes instables ; leurs relances ciblées passent 6/6. L'Étape 9 reste `not-run`, donc le statut global demeure partiel. |
 | Déploiement Vercel/Supabase | 🟡 | Le projet Vercel `thib.fun` et son dernier déploiement de production observé `READY` (`dpl_2h6H8pCc2VdrMvCRHbauVX8uy9Sa`) correspondaient au commit applicatif préflight `9f4aba3…`; les commits documentaires `b27ce0f` et `79a5200` n'ont pas été déployés. Les logs de build n'ont qu'un avertissement Node et les erreurs runtime des dernières 24 h sont vides. Le connecteur expose les domaines mais pas les noms de variables ni le réglage d'origine autorisée ; aucun déploiement ou changement Vercel n'a été effectué. |
+
+### 23/09/2026 — Fonds visuels des neuf jeux
+
+- Demande : neuf fonds reprenant la DA violette de l'accueil et des pages de lancement, appliqués à l'interface active de jeu, suffisamment décoratifs sans gêner le plateau.
+- Réalisation : images générées par l'outil intégré `image_gen__imagegen`, compressées en WebP 1672×940/941 (qualité 82), environ 319 Ko cumulés sous `public/games/backgrounds/`. Style commun indigo/prune, accents néon doux, objets relégués aux bords et centre sombre calme. Motifs : trou noir/planètes, jetons quiz, carte topographique/repères, cartes Skyjo, cartes UNO génériques, bombe/cubes, sonar/navire, jetons reliés et arc de spectre. Aucun texte, logo, nombre ou écran d'interface intégré aux illustrations.
+- Application : les sept jeux partagés ciblent `.table-page.play-screen`, Géographie `.geo-match-page`, UNO son composant de fond actif. Des dégradés assombrissent les bords pour maintenir le contraste ; les pages de lancement ne reçoivent pas ces images.
+- Vérification : dimensions/conversion confirmées par Sharp ; aperçus navigateur des neuf parties à 1440×900 sur projections locales compactes, sans compte ni base, tous les fonds reçus (UNO image décodée), sans erreur JavaScript. Contrôle visuel détaillé de Trou Noir, Géographie et UNO. Aucune suite de tests automatisés exécutée.
+- Limite : seule la vue desktop a été contrôlée ; le recadrage `cover` masque davantage les objets placés sur les bords en format portrait. Les zones centrales restent dégagées.
+- Contradiction avec `AGENTS.md` : aucune.
 
 ## Progression par jeu
 
@@ -464,6 +474,16 @@ Ce fichier décrit la réalité du dépôt et non les seules capacités prévues
 | Longueur d'onde | `longueur-onde` | 🟢 | Pack local original généré et validé : 80 axes opposés, 30 quotidien/25 culture/25 absurde, labels bornés, exemples de tutoriel hors partie, manifest et migration/RPC versionnés. Moteur pur versionné (`longueur-onde-1`/`longueur-onde-engine-1`), indice borné et filtré, cible secrète, estimation tactile, révélation, score coopératif, projection sans fuite, résultat/historique sans victoire-défaite, API/worker durable, UI violette sobre, page `/jeux/longueur-onde`, registre `ready`, 16 tests dédiés. Étape 5 corrige la jointure `match_id`, les triggers coopératifs et le cumul des métriques ; les migrations initiale `20260911210000_longueur_onde_ready.sql` et corrective `20260911233839_longueur_onde_cooperative_result_triggers.sql` restent immuables et appliquées à distance. | L'historique distant contient les 33 migrations locales jusqu'à l'additive Étape 8, mais aucune recette de production ou à deux sessions n'est validée ; préserver les engagements avant toute reprise. |
 
 ## Difficultés rencontrées pendant le développement
+
+### 23/09/2026 — Démarrage de l’aperçu local pour captures desktop
+
+- Problème : `pnpm dev --hostname 127.0.0.1 --port 3100` a déclenché une installation de dépendances puis s’est arrêté avec `[ERR_PNPM_ABORTED_REMOVE_MODULES_DIR_NO_TTY]`, faute de terminal interactif.
+- Résolution : lancement du binaire Next déjà installé (`node node_modules/next/dist/bin/next dev ...`). Les neuf écrans de partie ont ensuite été capturés à 1920×900 à partir des projections locales de démonstration, sans compte ni partie réelle. L’accès à Google Fonts étant indisponible, Next a rendu ces captures avec sa police de secours.
+
+### 23/09/2026 — Résolution du module Sharp pour les WebP
+
+- Problème : import direct de `sharp` depuis le checkout impossible, car le lien racine `node_modules/sharp` est absent alors que les fichiers existent dans le store pnpm.
+- Résolution : import de `dist/index.mjs` depuis le paquet Sharp 0.35.4 du store pnpm ; la conversion des neuf PNG en WebP a ensuite réussi. Les sources générées ont été conservées.
 
 ### 22/09/2026 — Débordements navals entre les formats précédemment couverts
 
