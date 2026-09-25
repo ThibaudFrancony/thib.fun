@@ -32,6 +32,8 @@ export function MessageList({
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const countRef = useRef(0);
+  const maxSeqRef = useRef(0);
+  const firstRenderRef = useRef(true);
   const [lightbox, setLightbox] = useState<string | null>(null);
   const groups = groupMessagesByDay(messages);
 
@@ -43,6 +45,12 @@ export function MessageList({
     const nearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 160;
     if (grew && (firstRender || nearBottom)) container.scrollTop = container.scrollHeight;
     countRef.current = messages.length;
+  }, [messages]);
+
+  useEffect(() => {
+    const max = messages.reduce((peak, message) => Math.max(peak, message.seq), 0);
+    if (max > maxSeqRef.current) maxSeqRef.current = max;
+    firstRenderRef.current = false;
   }, [messages]);
 
   useEffect(() => {
@@ -110,6 +118,7 @@ export function MessageList({
               readOnly={readOnly}
               onAddFriend={onAddFriend}
               onOpenImage={setLightbox}
+              fresh={!firstRenderRef.current && message.seq > maxSeqRef.current}
             />
           ))}
         </section>

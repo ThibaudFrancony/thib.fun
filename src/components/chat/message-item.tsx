@@ -21,6 +21,7 @@ export function MessageItem({
   readOnly = false,
   onAddFriend,
   onOpenImage,
+  fresh = false,
 }: {
   message: ChatMessage;
   viewerId: string;
@@ -29,6 +30,7 @@ export function MessageItem({
   readOnly?: boolean;
   onAddFriend: (userId: string) => void;
   onOpenImage: (url: string) => void;
+  fresh?: boolean;
 }) {
   const own = message.authorId === viewerId;
   const [popoverOpen, setPopoverOpen] = useState(false);
@@ -54,7 +56,7 @@ export function MessageItem({
   const relationLabel = RELATION_LABEL[relation];
 
   return (
-    <article ref={rootRef} className="chat-message" data-own={own}>
+    <article ref={rootRef} className="chat-message" data-own={own} data-fresh={fresh || undefined}>
       <ChatAvatar
         name={message.authorName}
         preset={message.authorAvatarPreset}

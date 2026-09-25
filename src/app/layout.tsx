@@ -4,6 +4,7 @@ import { ChatDock } from "@/components/chat/chat-dock";
 import "./globals.css";
 import "./game-tables.css";
 import "./match-screen.css";
+import "./motion.css";
 
 const displayFont = Fredoka({
   subsets: ["latin"],

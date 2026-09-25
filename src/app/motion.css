@@ -1,0 +1,532 @@
+/* Socle d'animations ludiques du site (lot "motion").
+ * UI seule : aucun changement de règles, moteur, projection ou réseau.
+ * Principe : `transform` + `opacity` uniquement, feedback 150-300ms,
+ * célébrations 400-600ms, `prefers-reduced-motion` respecté en fin de fichier.
+ * Importé par `src/app/layout.tsx` après les autres feuilles pour prendre
+ * le dessus sur les transitions existantes. */
+
+:root {
+  --motion-fast: 150ms;
+  --motion-med: 220ms;
+  --motion-slow: 280ms;
+  --motion-celebrate: 520ms;
+  --motion-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --motion-ease-spring: cubic-bezier(0.2, 0.9, 0.3, 1.25);
+  --motion-ease-slide: cubic-bezier(0.22, 0.68, 0.24, 1);
+}
+
+/* --- Keyframes --- */
+
+@keyframes motion-pop {
+  0% { opacity: 0; transform: scale(0.6); }
+  60% { opacity: 1; transform: scale(1.08); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes motion-slide-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes motion-slide-up-spring {
+  0% { opacity: 0; transform: translateY(16px) scale(0.97); }
+  60% { opacity: 1; transform: translateY(-3px) scale(1.01); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes motion-send {
+  0% { opacity: 0; transform: translateX(22px) translateY(10px) scale(0.94); }
+  60% { opacity: 1; transform: translateX(-3px) translateY(0) scale(1.01); }
+  100% { opacity: 1; transform: none; }
+}
+
+@keyframes motion-receive {
+  0% { opacity: 0; transform: translateX(-22px) translateY(10px) scale(0.94); }
+  60% { opacity: 1; transform: translateX(3px) translateY(0) scale(1.01); }
+  100% { opacity: 1; transform: none; }
+}
+
+@keyframes motion-slide-in-right {
+  from { opacity: 0; transform: translateX(26px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes motion-slide-in-left {
+  from { opacity: 0; transform: translateX(-26px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes motion-drop {
+  0% { opacity: 0; transform: translateY(-14px) scale(0.5); }
+  60% { opacity: 1; transform: translateY(2px) scale(1.08); }
+  100% { opacity: 1; transform: none; }
+}
+
+@keyframes motion-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-7px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(3px); }
+}
+
+@keyframes motion-shimmer {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+
+@keyframes motion-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes motion-typing {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+  30% { transform: translateY(-5px); opacity: 1; }
+}
+
+@keyframes motion-pulse-dot {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.35); opacity: 0.7; }
+}
+
+@keyframes motion-pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgba(185, 249, 223, 0.55); }
+  70% { box-shadow: 0 0 0 9px rgba(185, 249, 223, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(185, 249, 223, 0); }
+}
+
+@keyframes motion-flip-in {
+  0% { opacity: 0; transform: perspective(600px) rotateY(80deg) scale(0.92); }
+  60% { opacity: 1; transform: perspective(600px) rotateY(-8deg) scale(1.02); }
+  100% { opacity: 1; transform: perspective(600px) rotateY(0) scale(1); }
+}
+
+@keyframes motion-duel-left {
+  0% { opacity: 0; transform: translateX(-30px) scale(0.95); }
+  60% { opacity: 1; transform: translateX(4px) scale(1.01); }
+  100% { opacity: 1; transform: none; }
+}
+
+@keyframes motion-duel-right {
+  0% { opacity: 0; transform: translateX(30px) scale(0.95); }
+  60% { opacity: 1; transform: translateX(-4px) scale(1.01); }
+  100% { opacity: 1; transform: none; }
+}
+
+@keyframes motion-crown-drop {
+  0% { opacity: 0; transform: translateY(-16px) rotate(-10deg) scale(0.7); }
+  60% { opacity: 1; transform: translateY(2px) rotate(3deg) scale(1.1); }
+  100% { opacity: 1; transform: none; }
+}
+
+@keyframes motion-confetti-fall {
+  0% { opacity: 1; transform: translate(0, -6px) rotate(0deg) scale(1); }
+  100% { opacity: 0; transform: translate(var(--motion-x, 0px), 120px) rotate(540deg) scale(0.7); }
+}
+
+@keyframes motion-blur-in {
+  from { opacity: 0; filter: blur(8px); transform: scale(1.03); }
+  to { opacity: 1; filter: blur(0); transform: scale(1); }
+}
+
+@keyframes motion-press {
+  0% { transform: scale(1); }
+  40% { transform: scale(0.94); }
+  100% { transform: scale(1); }
+}
+
+@keyframes motion-needle-pop {
+  0% { opacity: 0; transform: scale(0.4); }
+  60% { opacity: 1; transform: scale(1.15); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* --- Boutons : clic pressé + reflet qui glisse (ludique) --- */
+
+.table-primary-button,
+.geo-primary-button,
+.table-secondary-button,
+.geo-secondary-button,
+.salon-button,
+.chat-send,
+.chat-retry,
+.chat-load-older,
+.home-carousel-arrow {
+  position: relative;
+  overflow: hidden;
+  transition: transform var(--motion-fast) var(--motion-ease-out), filter var(--motion-fast) ease,
+    background-color var(--motion-fast) ease, border-color var(--motion-fast) ease, box-shadow var(--motion-fast) ease;
+}
+
+.table-primary-button:not(:disabled):active,
+.geo-primary-button:not(:disabled):active,
+.table-secondary-button:not(:disabled):active,
+.geo-secondary-button:not(:disabled):active,
+.salon-button:not(:disabled):active,
+.chat-send:not(:disabled):active,
+.chat-retry:not(:disabled):active,
+.home-carousel-arrow:not(:disabled):active {
+  transform: scale(0.94);
+  transition-duration: 100ms;
+}
+
+/* Reflet qui traverse le bouton au survol. */
+.table-primary-button:not(:disabled)::after,
+.geo-primary-button:not(:disabled)::after,
+.salon-button:not(:disabled)::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 40%;
+  left: 0;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.45), transparent);
+  transform: translateX(-150%) skewX(-18deg);
+  pointer-events: none;
+}
+
+.table-primary-button:not(:disabled):hover::after,
+.geo-primary-button:not(:disabled):hover::after,
+.salon-button:not(:disabled):hover::after {
+  transform: translateX(350%) skewX(-18deg);
+  transition: transform 450ms var(--motion-ease-out);
+}
+
+/* Pastille play de l'accueil : transform complète préservée. */
+button.home-card-play[data-playable="true"]:active {
+  transform: translate(-50%, -50%) scale(0.88);
+}
+
+/* Bouton d'envoi du chat : petit bond + rotation de l'avion. */
+.chat-send:not(:disabled):active svg {
+  transform: translate(2px, -2px) rotate(12deg) scale(0.9);
+  transition: transform 120ms var(--motion-ease-out);
+}
+
+.chat-send svg {
+  transition: transform 180ms var(--motion-ease-out);
+}
+
+.chat-send:not(:disabled):hover svg {
+  transform: translate(2px, -2px);
+}
+
+/* --- Erreurs : secousse à l'apparition --- */
+
+.table-error[role="alert"],
+.chat-composer-error,
+.geo-error,
+.chat-error {
+  animation: motion-shake 300ms var(--motion-ease-out) both;
+}
+
+/* --- Skeletons : balayage brillant --- */
+
+.table-loading-panel,
+.geo-loading-panel,
+.chat-messages-note {
+  position: relative;
+  overflow: hidden;
+}
+
+.table-loading-panel::after,
+.geo-loading-panel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, 0.12) 50%, transparent 80%);
+  animation: motion-shimmer 1.4s linear infinite;
+  pointer-events: none;
+}
+
+/* --- Chat : envoi et réception en slides --- */
+
+.chat-message[data-fresh="true"][data-own="true"] {
+  animation: motion-send 300ms var(--motion-ease-spring) both;
+  transform-origin: right bottom;
+}
+
+.chat-message[data-fresh="true"][data-own="false"] {
+  animation: motion-receive 300ms var(--motion-ease-spring) both;
+  transform-origin: left bottom;
+}
+
+.chat-message-image {
+  animation: motion-blur-in 280ms var(--motion-ease-out) both;
+}
+
+.chat-notice {
+  animation: motion-pop 220ms var(--motion-ease-spring) both;
+}
+
+.chat-badge,
+.chat-handle-badge {
+  animation: motion-pop 200ms var(--motion-ease-spring) both;
+}
+
+/* Indicateur d'onglet qui glisse. */
+.chat-tabs button {
+  position: relative;
+  transition: color var(--motion-fast) ease, background-color var(--motion-fast) ease;
+}
+
+.chat-tabs button::after {
+  content: "";
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 4px;
+  height: 3px;
+  border-radius: 999px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform var(--motion-med) var(--motion-ease-slide);
+}
+
+.chat-tabs button[data-active="true"]::after {
+  transform: scaleX(1);
+}
+
+/* Point de présence qui respire. */
+.chat-online-dot[data-online="true"] {
+  animation: motion-pulse-dot 2s ease-in-out infinite;
+}
+
+/* Participants du salon en ligne : même respiration. */
+.salon-chip-avatar[data-filled="true"] {
+  animation: motion-pop 240ms var(--motion-ease-spring) both;
+}
+
+/* --- Fenêtres ancrées : ouverture spring + cascade --- */
+
+.salon-popover,
+.chat-author-popover,
+.chat-friend-menu {
+  animation: motion-slide-up-spring 240ms var(--motion-ease-spring) both;
+  transform-origin: top right;
+}
+
+.salon-popover > *:nth-child(1) { animation: motion-slide-up 200ms var(--motion-ease-out) 20ms both; }
+.salon-popover > *:nth-child(2) { animation: motion-slide-up 200ms var(--motion-ease-out) 60ms both; }
+.salon-popover > *:nth-child(3) { animation: motion-slide-up 200ms var(--motion-ease-out) 100ms both; }
+.salon-popover > *:nth-child(4) { animation: motion-slide-up 200ms var(--motion-ease-out) 140ms both; }
+.salon-popover > *:nth-child(n + 5) { animation: motion-slide-up 200ms var(--motion-ease-out) 170ms both; }
+
+/* --- Utilitaires motion par jeu --- */
+
+/* Question qui entre en glissant (sens via --motion-from, 1 = droite, -1 = gauche). */
+.motion-question {
+  animation: motion-slide-in-right 260ms var(--motion-ease-slide) both;
+}
+
+.motion-question[data-from="left"] {
+  animation-name: motion-slide-in-left;
+}
+
+/* Révélation qui rebondit. */
+.motion-reveal {
+  animation: motion-slide-up-spring 280ms var(--motion-ease-spring) both;
+}
+
+/* Panneau de fin : montée + cascade des enfants. */
+.motion-finish {
+  animation: motion-slide-up 280ms var(--motion-ease-out) both;
+}
+
+.motion-finish > *:nth-child(1) { animation: motion-slide-up 240ms var(--motion-ease-out) 40ms both; }
+.motion-finish > *:nth-child(2) { animation: motion-slide-up 240ms var(--motion-ease-out) 100ms both; }
+.motion-finish > *:nth-child(3) { animation: motion-slide-up 240ms var(--motion-ease-out) 160ms both; }
+.motion-finish > *:nth-child(n + 4) { animation: motion-slide-up 240ms var(--motion-ease-out) 210ms both; }
+
+/* Tuiles TTMC / cartes Skyjo distribuées en cascade. */
+.motion-tiles > *:nth-child(1),
+.motion-deal > *:nth-child(1) { animation: motion-drop 240ms var(--motion-ease-spring) 0ms both; }
+.motion-tiles > *:nth-child(2),
+.motion-deal > *:nth-child(2) { animation: motion-drop 240ms var(--motion-ease-spring) 35ms both; }
+.motion-tiles > *:nth-child(3),
+.motion-deal > *:nth-child(3) { animation: motion-drop 240ms var(--motion-ease-spring) 70ms both; }
+.motion-tiles > *:nth-child(4),
+.motion-deal > *:nth-child(4) { animation: motion-drop 240ms var(--motion-ease-spring) 105ms both; }
+.motion-tiles > *:nth-child(5),
+.motion-deal > *:nth-child(5) { animation: motion-drop 240ms var(--motion-ease-spring) 140ms both; }
+.motion-tiles > *:nth-child(6),
+.motion-deal > *:nth-child(6) { animation: motion-drop 240ms var(--motion-ease-spring) 175ms both; }
+.motion-tiles > *:nth-child(7),
+.motion-deal > *:nth-child(7) { animation: motion-drop 240ms var(--motion-ease-spring) 210ms both; }
+.motion-tiles > *:nth-child(8),
+.motion-deal > *:nth-child(8) { animation: motion-drop 240ms var(--motion-ease-spring) 245ms both; }
+.motion-tiles > *:nth-child(9),
+.motion-deal > *:nth-child(9) { animation: motion-drop 240ms var(--motion-ease-spring) 280ms both; }
+.motion-tiles > *:nth-child(n + 10),
+.motion-deal > *:nth-child(n + 10) { animation: motion-drop 240ms var(--motion-ease-spring) 315ms both; }
+
+/* Syllabe BombParty qui éclate à chaque tour. */
+.motion-syllable {
+  animation: motion-pop 280ms var(--motion-ease-spring) both;
+  display: inline-block;
+}
+
+/* Vies qui sautent. */
+.motion-lives {
+  animation: motion-pop 240ms var(--motion-ease-spring) both;
+  display: inline-block;
+}
+
+/* Duel Compatibilité : les deux choix se rejoignent. */
+.motion-duel > *:nth-child(1) {
+  animation: motion-duel-left 260ms var(--motion-ease-spring) both;
+}
+
+.motion-duel > *:nth-child(2) {
+  animation: motion-duel-right 260ms var(--motion-ease-spring) 60ms both;
+}
+
+/* Aiguille longueur d'onde : apparition rebondie (le glissé reste natif au range). */
+.motion-needle {
+  animation: motion-needle-pop 260ms var(--motion-ease-spring) both;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* Indice qui monte. */
+.motion-clue {
+  animation: motion-slide-up-spring 260ms var(--motion-ease-spring) both;
+}
+
+/* Marqueurs géo : chute + avatar. */
+.geo-guess-marker {
+  animation: motion-drop 300ms var(--motion-ease-spring) both;
+}
+
+/* Résultats de manche géo en cascade. */
+.geo-round-results > *:nth-child(1) { animation: motion-slide-up 220ms var(--motion-ease-out) 30ms both; }
+.geo-round-results > *:nth-child(2) { animation: motion-slide-up 220ms var(--motion-ease-out) 110ms both; }
+.geo-round-results > *:nth-child(n + 3) { animation: motion-slide-up 220ms var(--motion-ease-out) 190ms both; }
+
+/* Dernier tir naval : halo pulsant. */
+.naval-cell[data-last] {
+  animation: motion-pulse-ring 1.6s ease-out infinite;
+}
+
+/* Choix de bateau naval : la prévisualisation glisse déjà case par case,
+ * on ajoute un rebond à la pose validée. */
+.naval-cell[data-state="ship"] {
+  animation: motion-pop 200ms var(--motion-ease-spring);
+}
+
+/* Historique des coups BombParty : le dernier mot glisse. */
+.motion-word-in {
+  animation: motion-slide-up 220ms var(--motion-ease-out) both;
+}
+
+/* --- Classement : podium + lignes --- */
+
+.motion-podium > *:nth-child(1) { animation: motion-slide-up-spring 300ms var(--motion-ease-spring) 120ms both; }
+.motion-podium > *:nth-child(2) { animation: motion-slide-up-spring 300ms var(--motion-ease-spring) 0ms both; }
+.motion-podium > *:nth-child(3) { animation: motion-slide-up-spring 300ms var(--motion-ease-spring) 200ms both; }
+
+.motion-crown {
+  animation: motion-crown-drop 450ms var(--motion-ease-spring) 300ms both;
+  transform-origin: bottom center;
+}
+
+.motion-rows > *:nth-child(1) { animation: motion-slide-up 200ms var(--motion-ease-out) 0ms both; }
+.motion-rows > *:nth-child(2) { animation: motion-slide-up 200ms var(--motion-ease-out) 40ms both; }
+.motion-rows > *:nth-child(3) { animation: motion-slide-up 200ms var(--motion-ease-out) 80ms both; }
+.motion-rows > *:nth-child(4) { animation: motion-slide-up 200ms var(--motion-ease-out) 120ms both; }
+.motion-rows > *:nth-child(5) { animation: motion-slide-up 200ms var(--motion-ease-out) 160ms both; }
+.motion-rows > *:nth-child(6) { animation: motion-slide-up 200ms var(--motion-ease-out) 200ms both; }
+.motion-rows > *:nth-child(7) { animation: motion-slide-up 200ms var(--motion-ease-out) 240ms both; }
+.motion-rows > *:nth-child(8) { animation: motion-slide-up 200ms var(--motion-ease-out) 280ms both; }
+.motion-rows > *:nth-child(n + 9) { animation: motion-slide-up 200ms var(--motion-ease-out) 300ms both; }
+
+/* --- Confettis (composant MotionConfetti, aria-hidden) --- */
+
+.motion-confetti {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.motion-confetti > span {
+  position: absolute;
+  top: -10px;
+  left: calc(var(--motion-left, 50%) - 4px);
+  width: 8px;
+  height: 12px;
+  border-radius: 2px;
+  background: var(--motion-color, #ff5fa2);
+  animation: motion-confetti-fall 1.1s ease-in forwards;
+  animation-delay: var(--motion-delay, 0ms);
+}
+
+/* --- Mouvement réduit : tout est coupé --- */
+
+@media (prefers-reduced-motion: reduce) {
+  .motion-question,
+  .motion-reveal,
+  .motion-finish,
+  .motion-finish > *,
+  .motion-tiles > *,
+  .motion-deal > *,
+  .motion-syllable,
+  .motion-lives,
+  .motion-duel > *,
+  .motion-needle,
+  .motion-clue,
+  .motion-podium > *,
+  .motion-crown,
+  .motion-rows > *,
+  .motion-word-in,
+  .motion-confetti > span,
+  .geo-guess-marker,
+  .geo-round-results > *,
+  .naval-cell[data-last],
+  .naval-cell[data-state="ship"],
+  .salon-popover,
+  .salon-popover > *,
+  .salon-chip-avatar[data-filled="true"],
+  .chat-message[data-fresh="true"],
+  .chat-message-image,
+  .chat-notice,
+  .chat-badge,
+  .chat-handle-badge,
+  .chat-online-dot[data-online="true"],
+  .chat-tabs button::after,
+  .table-loading-panel::after,
+  .geo-loading-panel::after,
+  .table-error[role="alert"],
+  .chat-composer-error,
+  .geo-error,
+  .chat-error,
+  .table-primary-button:not(:disabled)::after,
+  .geo-primary-button:not(:disabled)::after,
+  .salon-button:not(:disabled)::after {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .table-primary-button:not(:disabled):active,
+  .geo-primary-button:not(:disabled):active,
+  .table-secondary-button:not(:disabled):active,
+  .geo-secondary-button:not(:disabled):active,
+  .salon-button:not(:disabled):active,
+  .chat-send:not(:disabled):active,
+  .chat-retry:not(:disabled):active,
+  .home-carousel-arrow:not(:disabled):active {
+    transform: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .table-primary-button:not(:disabled)::after,
+  .geo-primary-button:not(:disabled)::after,
+  .salon-button:not(:disabled)::after,
+  .table-loading-panel::after,
+  .geo-loading-panel::after {
+    display: none;
+  }
+}
