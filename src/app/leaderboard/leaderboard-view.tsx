@@ -57,7 +57,7 @@ function PodiumCard({
       ) : null}
       {entry ? (
         <Image
-          className={asset.className}
+          className={place === 1 ? `${asset.className} motion-crown` : asset.className}
           src={asset.src}
           alt=""
           aria-hidden="true"
@@ -170,7 +170,7 @@ export function LeaderboardView({
 
   return (
     <div className="lb-root">
-      <section className="lb-podium" aria-label="Podium des trois premiers">
+      <section className="lb-podium motion-podium" aria-label="Podium des trois premiers">
         {podium.map((place) => (
           <PodiumCard
             key={place}
@@ -199,7 +199,7 @@ export function LeaderboardView({
                   <th scope="col" className="lb-cell-points">Points</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="motion-rows">
                 {entries.map((entry) => {
                   const isSelf = entry.userId === viewerId;
                   return (

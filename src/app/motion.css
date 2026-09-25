@@ -218,7 +218,8 @@ button.home-card-play[data-playable="true"]:active {
 .chat-composer-error,
 .geo-error,
 .chat-error,
-.naval-error[role="alert"] {
+.naval-error[role="alert"],
+.pf-history-error[role="alert"] {
   animation: motion-shake 300ms var(--motion-ease-out) both;
 }
 
@@ -510,6 +511,7 @@ button.home-card-play[data-playable="true"]:active {
   .geo-error,
   .chat-error,
   .naval-error[role="alert"],
+  .pf-history-error[role="alert"],
   .table-skyjo-card,
   .table-primary-button:not(:disabled)::after,
   .geo-primary-button:not(:disabled)::after,

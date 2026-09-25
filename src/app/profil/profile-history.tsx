@@ -118,7 +118,7 @@ export function ProfileHistory({
       {entries.length === 0 ? (
         <p className="pf-history-empty">{emptyLabel}</p>
       ) : (
-        <ul className="pf-history-list">
+        <ul className="pf-history-list motion-rows">
           {entries.map((entry) => {
             const gameLabel = games.find((item) => item.slug === entry.gameSlug)?.displayName ?? entry.gameSlug;
             return (
