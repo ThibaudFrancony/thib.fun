@@ -120,7 +120,7 @@ export function SkyjoMatch({ matchId }: { matchId: string }) {
             <Pile label="Pioche" count={view.drawCount} covered onClick={view.allowedActions.includes("TAKE_DRAW") && !busy ? () => void send({ type: "TAKE_DRAW" }) : undefined} hint="Piocher" />
             <Pile label="Défausse" count={view.discardCount} value={view.discardTop} onClick={view.allowedActions.includes("TAKE_DISCARD") && !busy ? () => void send({ type: "TAKE_DISCARD" }) : undefined} hint={view.discardTop === null ? "Vide" : `Prendre (${view.discardTop})`} />
           </div>
-          <div>
+          <div key={`skyjo-my-${view.round}`}>
             <p className="mb-2 text-center text-xs font-black uppercase tracking-[0.16em] table-accent">Ta grille</p>
             <Grid
               cells={view.myGrid}
@@ -155,7 +155,7 @@ export function SkyjoMatch({ matchId }: { matchId: string }) {
         )}
 
         {view.phase === "round_reveal" && view.roundSummary && (
-          <section className="mt-6 rounded-[2rem] border border-[var(--line)] table-panel p-6 text-center">
+          <section key={`skyjo-rr-${view.round}`} className="mt-6 rounded-[2rem] border border-[var(--line)] table-panel p-6 text-center motion-reveal">
             <p className="text-xs font-black uppercase tracking-[0.16em] table-accent">Manche {view.roundSummary.round} terminée</p>
             <div className="mx-auto mt-4 grid max-w-md grid-cols-2 gap-3">
               {view.players.map((player, index) => (
@@ -318,7 +318,7 @@ function FinishedPanel({ view, back }: { view: SkyjoView; back: () => void }) {
   const winner = result?.winnerId !== null && result?.winnerId === view.players[view.mySeat].id;
   const title = result?.outcome === "draw" ? "Égalité" : result?.outcome === "abandoned" ? "Partie interrompue" : winner ? "Victoire" : "Défaite";
   return (
-    <section className="mt-7 rounded-[2rem] border border-[var(--line)] table-panel p-6 text-center">
+    <section className="mt-7 rounded-[2rem] border border-[var(--line)] table-panel p-6 text-center motion-finish">
       <p className="text-xs font-black uppercase tracking-[0.16em] table-accent">Résultats</p>
       <h1 className="mt-2 text-5xl font-black tracking-[-0.05em]">{title}</h1>
       <div className="mx-auto mt-6 grid max-w-md grid-cols-2 gap-3">

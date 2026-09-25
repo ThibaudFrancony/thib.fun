@@ -506,7 +506,7 @@ export function TrainingSyllabes() {
             Séquence{count !== null ? ` · ${count} mot${count > 1 ? "s" : ""}` : ""}
             {remaining !== null && mode === "timed" ? ` · ${remaining}s` : ""}
           </p>
-          <p aria-live="polite" className="mt-2 text-6xl font-black uppercase">{sequence}</p>
+          <p key={`train-seq-${sequence}`} aria-live="polite" className="mt-2 text-6xl font-black uppercase"><span className="motion-syllable">{sequence}</span></p>
           {revealed && <p role="status" className="mt-3 rounded-2xl table-tint px-4 py-3 text-sm font-bold table-accent">{revealed}</p>}
           <form
             className="mx-auto mt-5 max-w-md"

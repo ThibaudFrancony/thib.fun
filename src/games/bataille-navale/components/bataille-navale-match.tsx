@@ -146,7 +146,7 @@ export function BatailleNavaleMatch({ matchId }: { matchId: string }) {
           <ScorePanel pseudo={`${me.pseudo} · toi`} score={me.score} active={me.active} isMe />
         </div>
         <button type="button" aria-pressed={zoom} onClick={() => setZoom((current) => !current)}>{zoom ? "Grille normale" : "Grille agrandie"}</button></MatchToolbar>
-        <div aria-live="polite" className="naval-status-bar" data-urgent={remaining !== null && remaining <= 10 && view.phase === "playing"}>
+        <div key={`naval-status-${view.phase}`} aria-live="polite" className="naval-status-bar motion-word-in" data-urgent={remaining !== null && remaining <= 10 && view.phase === "playing"}>
           <span>{phaseLabel(view, isMyTurn)}</span>
           {remaining !== null && view.phase === "playing" && (
             <strong className="naval-timer">{remaining}s</strong>
@@ -163,7 +163,7 @@ export function BatailleNavaleMatch({ matchId }: { matchId: string }) {
               <button type="button" role="tab" aria-selected={tab === "shots"} data-active={tab === "shots"} onClick={() => setTab("shots")}>Mes tirs</button>
               <button type="button" role="tab" aria-selected={tab === "fleet"} data-active={tab === "fleet"} onClick={() => setTab("fleet")}>Ma flotte</button>
             </div>
-            <div className="naval-game-layout">
+            <div key={`naval-tab-${tab}`} className="naval-game-layout motion-word-in">
               <section aria-label="Grille de tirs" className={`naval-panel naval-board-panel ${tab === "shots" ? "" : "hidden md:block"}`}>
                 <p className="naval-board-title">Tes tirs · <strong>{opponent.pseudo}</strong></p>
                 <FireGrid view={view} busy={busy} zoom={zoom} onFire={(row, col) => void send({ type: "FIRE", row, col })} />
@@ -638,7 +638,7 @@ function FinishedPanel({ view, back }: { view: NavalView; back: () => void }) {
   const title = result?.outcome === "abandoned" ? "Partie interrompue" : won ? "Victoire" : "Défaite";
   const accuracy = view.hitsByMe + view.missesByMe === 0 ? null : view.hitsByMe / (view.hitsByMe + view.missesByMe);
   return (
-    <section className="naval-panel naval-finish">
+    <section className="naval-panel naval-finish motion-finish">
       <p className="naval-kicker">Résultats</p>
       <h1 className="naval-finish-title">{title}</h1>
       <div className="naval-finish-scores">

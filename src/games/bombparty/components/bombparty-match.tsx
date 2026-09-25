@@ -104,7 +104,7 @@ export function BombpartyMatch({ matchId }: { matchId: string }) {
           ) : (
             <ul className="mt-3 grid max-h-64 gap-2 overflow-y-auto sm:grid-cols-2">
               {[...view.acceptedWords].reverse().map((item, index) => (
-                <li key={`${item.turn}-${index}`} className="flex items-center justify-between gap-2 rounded-xl table-inset px-3 py-2 text-sm">
+                <li key={`${item.turn}-${index}`} className={`flex items-center justify-between gap-2 rounded-xl table-inset px-3 py-2 text-sm${index === 0 ? " motion-word-in" : ""}`}>
                   <span className="font-bold">{highlightSequence(item.word, item.sequence)}</span>
                   <span className="shrink-0 text-xs font-bold table-muted">tour {item.turn}</span>
                 </li>
@@ -112,7 +112,7 @@ export function BombpartyMatch({ matchId }: { matchId: string }) {
             </ul>
           )}
         </section></MatchToolbar>
-        <div className="play-resources" aria-label="Vies">{view.players.map((player) => <span key={player.id}>{player.pseudo} <strong aria-label={`${player.lives} vies`}>{"♥".repeat(Math.max(0, player.lives)) || "0"}</strong></span>)}</div><div aria-live="polite" className="table-status" data-urgent={remaining !== null && remaining <= 5}>
+        <div className="play-resources" aria-label="Vies">{view.players.map((player) => <span key={player.id}>{player.pseudo} <strong key={`${player.id}-${player.lives}`} className="motion-lives" aria-label={`${player.lives} vies`}>{"♥".repeat(Math.max(0, player.lives)) || "0"}</strong></span>)}</div><div aria-live="polite" className="table-status" data-urgent={remaining !== null && remaining <= 5}>
           <span>{phaseLabel(view, isMyTurn, opponent.pseudo)}</span>
           {remaining !== null && view.phase === "playing" && (
             <strong className={remaining <= 5 ? "text-[var(--yellow)]" : "text-white"}>{remaining}s</strong>
@@ -121,7 +121,7 @@ export function BombpartyMatch({ matchId }: { matchId: string }) {
 
         {view.phase === "playing" && <section aria-label="Séquence à jouer" className="mt-6 rounded-[2rem] border border-[var(--line)] table-panel p-6 text-center sm:p-8">
 
-          <p aria-live="polite" className="table-bomb-sequence">{view.sequence}</p>
+          <p key={`bomb-seq-${view.sequence}`} aria-live="polite" className="table-bomb-sequence"><span className="motion-syllable">{view.sequence}</span></p>
           {view.phase === "playing" && (
             isMyTurn ? (
               <form
@@ -178,7 +178,7 @@ function LifePanel({ pseudo, lives, score, active, isMe }: { pseudo: string; liv
     <div data-self={isMe} data-active={active} className={`table-player rounded-2xl border p-4 ${isMe ? "table-border-accent table-tint" : "border-[var(--line)] table-surface"}`}>
       <div className="flex items-center justify-between gap-3">
         <span className="font-black">{pseudo}</span>
-        <span aria-label={`${lives} vies`} className="text-lg font-black tracking-tight">
+        <span key={`lives-${lives}`} aria-label={`${lives} vies`} className="motion-lives text-lg font-black tracking-tight">
           {"●".repeat(Math.max(0, lives))} <span className="text-sm table-muted">{lives}</span>
         </span>
       </div>
@@ -204,7 +204,7 @@ function FinishedPanel({ view, back }: { view: BombpartyView; back: () => void }
   const winner = result?.winnerId !== null && result?.winnerId === view.players[view.mySeat].id;
   const title = result?.outcome === "draw" ? "Égalité" : result?.outcome === "abandoned" ? "Partie interrompue" : winner ? "Victoire" : "Défaite";
   return (
-    <section className="mt-7 rounded-[2rem] border border-[var(--line)] table-panel p-6 text-center">
+    <section className="mt-7 rounded-[2rem] border border-[var(--line)] table-panel p-6 text-center motion-finish">
       <p className="text-xs font-black uppercase tracking-[0.16em] table-accent">Résultats</p>
       <h1 className="mt-2 text-5xl font-black tracking-[-0.05em]">{title}</h1>
       <div className="mx-auto mt-6 grid max-w-md grid-cols-2 gap-3">

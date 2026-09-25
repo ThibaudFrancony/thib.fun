@@ -217,7 +217,8 @@ button.home-card-play[data-playable="true"]:active {
 .table-error[role="alert"],
 .chat-composer-error,
 .geo-error,
-.chat-error {
+.chat-error,
+.naval-error[role="alert"] {
   animation: motion-shake 300ms var(--motion-ease-out) both;
 }
 
@@ -416,6 +417,12 @@ button.home-card-play[data-playable="true"]:active {
   animation: motion-pop 200ms var(--motion-ease-spring);
 }
 
+/* Cartes Skyjo révélées : flip à l'apparition (la donne en cascade
+ * .motion-deal prend le dessus au changement de manche par spécificité). */
+.table-skyjo-card {
+  animation: motion-flip-in 260ms var(--motion-ease-out) both;
+}
+
 /* Historique des coups BombParty : le dernier mot glisse. */
 .motion-word-in {
   animation: motion-slide-up 220ms var(--motion-ease-out) both;
@@ -502,6 +509,8 @@ button.home-card-play[data-playable="true"]:active {
   .chat-composer-error,
   .geo-error,
   .chat-error,
+  .naval-error[role="alert"],
+  .table-skyjo-card,
   .table-primary-button:not(:disabled)::after,
   .geo-primary-button:not(:disabled)::after,
   .salon-button:not(:disabled)::after {
