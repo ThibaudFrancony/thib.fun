@@ -340,7 +340,12 @@ export function usePersistentChatOpen(): [boolean, (value: boolean) => void] {
   // Ouvert par défaut à l'arrivée sur le site ; une fermeture manuelle n'est
   // conservée que pour l'onglet courant (sessionStorage) afin de ne pas
   // rouvrir automatiquement, et le chat se rouvre à la prochaine visite.
-  const [open, setOpenState] = useState(() => readSessionBooleanPreference(CHAT_OPEN_PREFERENCE_KEY, true));
+  // En fenêtre étroite (téléphone), fermé d'emblée pour ne pas recouvrir
+  // l'écran : le bouton haut-droit et sa pastille prennent le relais.
+  const [open, setOpenState] = useState(() => {
+    if (typeof window !== "undefined" && window.matchMedia("(max-width: 720px)").matches) return false;
+    return readSessionBooleanPreference(CHAT_OPEN_PREFERENCE_KEY, true);
+  });
   const setOpen = useCallback((value: boolean) => {
     setOpenState(value);
     try {

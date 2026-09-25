@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ProfileButton } from "@/components/profile-button";
 import { SalonLauncher } from "@/components/salon-dialog";
 import { SignOutButton } from "@/components/sign-out-button";
+import { useIsNarrow } from "@/lib/use-is-narrow";
 import type { HeaderSession } from "@/lib/header-session";
 
 export type CachedHeaderVariant = "default" | "home" | "geo";
@@ -23,8 +24,12 @@ function isFullSession(session: HeaderSession): session is Extract<HeaderSession
  */
 export function SiteHeaderAuth({ variant = "default" }: { variant?: CachedHeaderVariant }) {
   const [session, setSession] = useState<HeaderSession | null>(null);
+  // En fenêtre étroite, le header du site se réduit au logo : la barre
+  // d'onglets basse prend le relais, cet îlot ne monte rien (pas de polling).
+  const narrow = useIsNarrow();
 
   useEffect(() => {
+    if (narrow) return;
     const controller = new AbortController();
     void fetch("/api/auth/session", { cache: "no-store", signal: controller.signal })
       .then(async (response) => {
@@ -39,8 +44,9 @@ export function SiteHeaderAuth({ variant = "default" }: { variant?: CachedHeader
         if (!controller.signal.aborted) setSession({ connected: false });
       });
     return () => controller.abort();
-  }, []);
+  }, [narrow]);
 
+  if (narrow) return null;
   if (!session) return <AuthFallback variant={variant} />;
   if (variant === "home") return <HomeAuth session={session} />;
   if (variant === "geo") return <GeoAuth session={session} />;

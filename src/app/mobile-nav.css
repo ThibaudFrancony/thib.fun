@@ -1,0 +1,263 @@
+/* Navigation étroite (téléphone ou fenêtre ≤ 720px) : mini-header avec logo +
+ * bouton chat en haut, barre d'onglets icônes en bas. UI seule : aucune
+ * logique métier, aucun changement desktop au-delà de 720px. */
+
+:root {
+  --tabbar-h: calc(58px + env(safe-area-inset-bottom, 0px));
+}
+
+/* Cachés sur desktop, pilotés par la media query étroite. */
+.mobile-tabbar,
+.chat-top-button,
+.pf-signout-narrow {
+  display: none;
+}
+
+@media (max-width: 720px) {
+  /* --- Haut : logo seul + bouton chat, tout le reste du header disparaît --- */
+  .home-header nav,
+  .geo-header nav,
+  .lb-header nav,
+  .site-header-default nav {
+    display: none;
+  }
+
+  .home-header,
+  .geo-header,
+  .lb-header,
+  .site-header-default {
+    min-height: 0;
+  }
+
+  /* --- Barre d'onglets basse, 100 % icônes --- */
+  .mobile-tabbar {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 70;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    align-items: stretch;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    border-top: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(20, 8, 55, 0.92);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+
+  .mobile-tab {
+    position: relative;
+    display: grid;
+    place-items: center;
+    min-height: 58px;
+    border: 0;
+    background: none;
+    color: #cdbddd;
+    cursor: pointer;
+    text-decoration: none;
+    transition: color 180ms ease, background-color 180ms ease;
+  }
+
+  .mobile-tab:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .mobile-tab[data-active="true"] {
+    color: #fff;
+  }
+
+  .mobile-tab[data-active="true"]::before {
+    content: "";
+    position: absolute;
+    top: 6px;
+    width: 22px;
+    height: 3px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #ff5fa2, #ff8a5b);
+  }
+
+  .mobile-tab:active {
+    transform: scale(0.92);
+  }
+
+  .mobile-tab-avatar {
+    display: grid;
+    place-items: center;
+    position: relative;
+    min-height: 58px;
+  }
+
+  .mobile-tab-avatar[data-active="true"]::before {
+    content: "";
+    position: absolute;
+    top: 6px;
+    width: 22px;
+    height: 3px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #ff5fa2, #ff8a5b);
+  }
+
+  /* Pastille salon : chip compacté (avatars + porte, sans code). */
+  .mobile-tabbar .salon-anchor {
+    display: grid;
+    place-items: center;
+  }
+
+  .mobile-tabbar .salon-chip {
+    border: 0;
+    background: none;
+    backdrop-filter: none;
+    padding: 0;
+  }
+
+  .mobile-tabbar .salon-chip-code {
+    display: none;
+  }
+
+  .mobile-tabbar .salon-chip-main {
+    min-height: 58px;
+    padding-inline: 0.2rem;
+  }
+
+  /* Fenêtre salon en bottom sheet au-dessus de la barre. */
+  .salon-popover {
+    position: fixed;
+    top: auto;
+    right: 10px;
+    bottom: calc(var(--tabbar-h) + 10px);
+    left: 10px;
+    width: auto;
+    max-height: min(70dvh, 36rem);
+  }
+
+  /* --- Chat : bouton haut-droit + sheet sous le header --- */
+  .chat-handle {
+    display: none;
+  }
+
+  .chat-top-button {
+    position: fixed;
+    top: 10px;
+    right: 12px;
+    z-index: 73;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    background: rgba(20, 8, 55, 0.72);
+    color: #fff;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    transition: transform 180ms var(--motion-ease-out, ease), background-color 180ms ease;
+  }
+
+  .chat-top-button:hover {
+    background: rgba(60, 30, 120, 0.8);
+  }
+
+  .chat-top-button:active {
+    transform: scale(0.9);
+  }
+
+  .chat-top-button svg {
+    width: 22px;
+    height: 22px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.9;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .chat-top-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    display: grid;
+    place-items: center;
+    min-width: 20px;
+    height: 20px;
+    padding-inline: 5px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #ff5fa2, #ff3d7f);
+    color: #fff;
+    font-size: 0.68rem;
+    font-weight: 800;
+    animation: motion-pop 200ms cubic-bezier(0.2, 0.9, 0.3, 1.25) both;
+  }
+
+  .chat-panel {
+    top: 62px;
+    right: 8px;
+    left: 8px;
+    bottom: auto;
+    width: auto;
+    height: min(78dvh, calc(100dvh - 160px));
+    border: 1px solid var(--chat-line);
+    border-radius: 20px;
+    box-shadow: 0 24px 60px rgba(5, 2, 12, 0.55);
+    transform: translateY(-14px);
+  }
+
+  .chat-dock[data-open="true"] .chat-panel {
+    transform: translateY(0);
+  }
+
+  /* --- La barre ne mange pas le contenu --- */
+  body {
+    padding-bottom: var(--tabbar-h);
+  }
+
+  .home-hero,
+  .table-page,
+  .geo-page,
+  :is(.geo-hexapoint, .game-landing) {
+    min-height: calc(100dvh - var(--tabbar-h));
+  }
+
+  /* Déconnexion de secours sur la page profil (header masqué). */
+  .pf-signout-narrow {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 44px;
+    margin-top: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.06);
+    color: #fff;
+    font-weight: 700;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-tab,
+  .chat-top-button {
+    transition: none;
+  }
+
+  .mobile-tab:active,
+  .chat-top-button:active {
+    transform: none;
+  }
+
+  .chat-top-badge {
+    animation: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .mobile-tabbar {
+    border-top-color: CanvasText;
+  }
+
+  .mobile-tab[data-active="true"]::before,
+  .mobile-tab-avatar[data-active="true"]::before {
+    background: Highlight;
+  }
+}

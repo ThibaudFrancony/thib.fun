@@ -457,12 +457,18 @@ export function ChatDock() {
   // Le chat s'ouvre par défaut à l'arrivée sur le site : on branche la
   // conversation générale dès que le résumé est prêt, une seule fois par
   // montage. Une fermeture manuelle n'est jamais rouverte automatiquement.
+  // En fenêtre étroite (téléphone), le chat reste fermé à l'arrivée : le
+  // bouton haut-droit et sa pastille prennent le relais.
   useEffect(() => {
     if (!available || !open || didAutoOpenRef.current) return;
     if (!summaryRef.current) return;
     didAutoOpenRef.current = true;
+    if (window.matchMedia("(max-width: 720px)").matches) {
+      setOpen(false);
+      return;
+    }
     void openGeneral();
-  }, [available, open, openGeneral]);
+  }, [available, open, openGeneral, setOpen]);
 
   useChatRealtime(summary?.viewer.id ?? null, (event) => {
     if (refreshTimerRef.current !== null) window.clearTimeout(refreshTimerRef.current);
@@ -609,6 +615,23 @@ export function ChatDock() {
   return (
     <div className="chat-dock" data-open={open}>
       {open ? <button type="button" className="chat-backdrop" aria-label="Fermer le chat" onClick={() => setOpen(false)} /> : null}
+      <button
+        type="button"
+        className="chat-top-button"
+        onClick={toggleOpen}
+        aria-expanded={open}
+        aria-label={open ? "Fermer le chat et les amis" : "Ouvrir le chat et les amis"}
+      >
+        {!open && totalBadge > 0 ? (
+          <span className="chat-top-badge" aria-hidden="true">
+            {totalBadge > 99 ? "99+" : totalBadge}
+          </span>
+        ) : null}
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 6h16v9H9l-5 4V6Z" />
+          <path d="M8 10h8M8 13.5h5" />
+        </svg>
+      </button>
       <button
         type="button"
         className="chat-handle"

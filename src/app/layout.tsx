@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import { Fredoka } from "next/font/google";
 import { ChatDock } from "@/components/chat/chat-dock";
+import { MobileTabBar } from "@/components/mobile-tab-bar";
 import "./globals.css";
 import "./game-tables.css";
 import "./match-screen.css";
 import "./motion.css";
+import "./mobile-nav.css";
 
 const displayFont = Fredoka({
   subsets: ["latin"],
@@ -29,6 +31,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body>
         {children}
         <ChatDock />
+        <MobileTabBar />
       </body>
     </html>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { PUBLIC_GAMES } from "@/games/registry";
 import { postJson } from "@/lib/client-request";
@@ -28,7 +29,7 @@ function SalonDoor({ disabled, onClick }: { disabled: boolean; onClick: () => vo
  * (sans voile ni flou) permet de créer ou rejoindre un salon. Une fois le
  * groupe formé, le bouton laisse place à un badge inline (ronds, code, porte).
  */
-export function SalonLauncher({ connected, triggerClassName = "home-auth-link" }: { connected: boolean; triggerClassName?: string }) {
+export function SalonLauncher({ connected, triggerClassName = "home-auth-link", icon = null, triggerLabel = "Salon" }: { connected: boolean; triggerClassName?: string; icon?: ReactNode; triggerLabel?: string }) {
   const discovery = useActiveRoomDiscovery(connected);
   const [panel, setPanel] = useState<Panel>(null);
   const anchorRef = useRef<HTMLDivElement>(null);
@@ -93,8 +94,9 @@ export function SalonLauncher({ connected, triggerClassName = "home-auth-link" }
           className={`${triggerClassName} salon-trigger`}
           onClick={() => setPanel(panel ? null : "choice")}
           aria-expanded={panel !== null}
+          aria-label={icon ? triggerLabel : undefined}
         >
-          Salon
+          {icon ?? "Salon"}
         </button>
       )}
 

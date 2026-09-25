@@ -6,6 +6,7 @@ import { getAuthenticatedAccount } from "@/server/auth";
 import { avatarCacheVersion } from "@/server/avatar";
 import { getProfileHistoryPage } from "@/app/historique/_data";
 import { AccountHeader } from "@/components/account-header";
+import { SignOutButton } from "@/components/sign-out-button";
 import { OnboardingPseudo } from "./onboarding-pseudo";
 import { ProfileEditor } from "./profile-editor";
 import { ProfileHistory } from "./profile-history";
@@ -59,6 +60,7 @@ export default async function ProfilePage() {
             avatarPreset={account.member.avatarPreset}
             avatarVersion={avatarCacheVersion(account.member.avatarPath)}
           />
+          <SignOutButton className="pf-signout-narrow" />
         </div>
         <div className="pf-col-history">
           <ProfileHistory
