@@ -127,7 +127,7 @@ export function TrouNoirMatch({ matchId }: { matchId: string }) {
         {error && <p role="alert" className="table-error" style={{ marginTop: "0.8rem" }}>{error}</p>}
 
         {(view.phase === "answering" || view.phase === "judging") && (
-          <section className="table-panel table-side-panel">
+          <section key={`tn-q-${view.round}`} className="table-panel table-side-panel motion-question" data-from={view.round % 2 === 0 ? "right" : "left"}>
             {view.question ? (
               <>
                 <p className="table-kicker table-kicker-warm">
@@ -164,7 +164,7 @@ export function TrouNoirMatch({ matchId }: { matchId: string }) {
         )}
 
         {view.phase === "reveal" && view.reveal && (
-          <section className="table-panel table-side-panel">
+          <section key={`tn-r-${view.reveal.attemptId}`} className="table-panel table-side-panel motion-reveal">
             <p className="table-kicker table-kicker-warm">Révélation</p>
             <h2 className="table-panel-title">{view.reveal.timeout ? "Temps écoulé" : view.reveal.verdict === "accept" ? "Bonne réponse" : "Réponse refusée"}</h2>
             <p className="table-panel-note">Réponse attendue : {view.reveal.expectedAnswer}</p>
@@ -218,7 +218,7 @@ export function TrouNoirMatch({ matchId }: { matchId: string }) {
         )}
 
         {view.phase === "finished" && (
-          <section className="table-panel table-finish-panel">
+          <section className="table-panel table-finish-panel motion-finish">
             <p className="table-kicker table-kicker-accent">Résultats</p>
             <h1 className="table-finish-title">{finishLabel(view)}</h1>
             <div className="table-final-scores">

@@ -124,13 +124,13 @@ export function TtmcMatch({ matchId }: { matchId: string }) {
         {error && <p role="alert" className="table-error" style={{ marginTop: "0.8rem" }}>{error}</p>}
 
         {view.theme && view.phase === "choose_level" && (
-          <section className="table-panel table-side-panel">
+          <section key={`ttmc-t-${view.round}`} className="table-panel table-side-panel motion-question" data-from={view.round % 2 === 0 ? "right" : "left"}>
             <p className="table-kicker table-kicker-warm">Thème de la manche</p>
             <h2 className="table-panel-title">{view.theme.label}</h2>
 
             {view.activePlayerId === me.id ? (
               <>
-                <div role="group" aria-label="Niveaux de 1 à 10" className="table-levels">
+                <div role="group" aria-label="Niveaux de 1 à 10" className="table-levels motion-tiles">
                   {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((level) => (
                     <button
                       key={level}
@@ -159,7 +159,7 @@ export function TtmcMatch({ matchId }: { matchId: string }) {
         )}
 
         {(view.phase === "answering" || view.phase === "judging") && (
-          <section className="table-panel table-side-panel">
+          <section key={`ttmc-q-${view.round}`} className="table-panel table-side-panel motion-question" data-from={view.round % 2 === 0 ? "right" : "left"}>
             {view.question ? (
               <>
                 <p className="table-kicker table-kicker-warm">Niveau {view.question.level}</p>
@@ -197,7 +197,7 @@ export function TtmcMatch({ matchId }: { matchId: string }) {
         )}
 
         {view.phase === "reveal" && view.reveal && (
-          <section className="table-panel table-side-panel">
+          <section key={`ttmc-r-${view.reveal.attemptId}`} className="table-panel table-side-panel motion-reveal">
             <p className="table-kicker table-kicker-warm">Révélation</p>
             <h2 className="table-panel-title">{view.reveal.timeout ? "Temps écoulé" : view.reveal.verdict === "accept" ? `Bonne réponse · +${view.reveal.points}` : "Réponse refusée · +0"}</h2>
             <p className="table-panel-note">Réponse attendue : {view.reveal.expectedAnswer}</p>
@@ -250,7 +250,7 @@ export function TtmcMatch({ matchId }: { matchId: string }) {
         )}
 
         {view.phase === "finished" && (
-          <section className="table-panel table-finish-panel">
+          <section className="table-panel table-finish-panel motion-finish">
             <p className="table-kicker table-kicker-accent">Résultats</p>
             <h1 className="table-finish-title">{finishLabel(view)}</h1>
             <div className="table-final-scores">

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { MatchToolbar, MatchDetails } from "@/components/match-toolbar";
+import { MotionConfetti } from "@/components/motion-confetti";
 import { useRouter } from "next/navigation";
 import type { CompatibiliteAction, CompatibiliteView, CompatibilityRound } from "@/games/compatibilite/types";
 import { parseMatchSnapshot, useResourceNetwork } from "@/lib/network-sync";
@@ -93,12 +94,13 @@ export function CompatibiliteMatch({ matchId }: { matchId: string }) {
         {error && <p role="alert" className="mt-3 rounded-2xl table-error px-4 py-3 text-sm">{error}</p>}
 
         {view.question && view.phase !== "finished" && (
-          <section className="mt-6 rounded-[2rem] border border-[var(--line)] table-panel p-5 shadow-[0_16px_36px_rgba(20,33,29,0.06)] sm:p-8">
+          <section key={`compat-q-${view.question.itemId}`} className="mt-6 rounded-[2rem] border border-[var(--line)] table-panel p-5 shadow-[0_16px_36px_rgba(20,33,29,0.06)] sm:p-8 motion-question" data-from={view.questionIndex % 2 === 0 ? "right" : "left"} style={{ position: "relative" }}>
+            {view.phase === "reveal" && view.myChoice !== null && view.myChoice === view.opponentChoice ? <MotionConfetti /> : null}
 
             <h1 className="mt-5 text-3xl font-black leading-tight tracking-[-0.04em] sm:text-4xl">{view.question.prompt}</h1>
             {view.phase === "answering" && !view.mySubmitted && <div role="radiogroup" aria-label="Tes choix" className="mt-7 grid gap-3 sm:grid-cols-2">{view.question.options.map((option) => <button key={option.id} type="button" role="radio" aria-checked={selectedId === option.id} disabled={busy} onClick={() => setSelected({ questionId: view.question!.itemId, optionId: option.id })} className={`rounded-2xl border px-4 py-4 text-left font-bold transition ${selectedId === option.id ? "table-border-accent table-tint table-accent ring-2 ring-[var(--table-accent)]" : "border-[var(--line)] table-surface hover:border-[var(--table-accent)]"}`}>{option.label}</button>)}</div>}
             {view.phase === "answering" && view.mySubmitted && <p className="mt-7 rounded-2xl table-tint px-4 py-4 text-center text-sm font-bold table-accent">Ton choix est enregistré. En attente de {opponent.pseudo}…</p>}
-            {view.phase === "reveal" && <div className="mt-7 grid gap-3 sm:grid-cols-2"><RevealChoice label={me.pseudo} optionId={view.myChoice} options={view.question.options} /><RevealChoice label={opponent.pseudo} optionId={view.opponentChoice} options={view.question.options} /></div>}
+            {view.phase === "reveal" && <div className="mt-7 grid gap-3 sm:grid-cols-2 motion-duel"><RevealChoice label={me.pseudo} optionId={view.myChoice} options={view.question.options} highlight={view.myChoice !== null && view.myChoice === view.opponentChoice} /><RevealChoice label={opponent.pseudo} optionId={view.opponentChoice} options={view.question.options} highlight={view.myChoice !== null && view.myChoice === view.opponentChoice} /></div>}
             <div className="mt-7 flex flex-wrap items-center justify-between gap-3">
               {view.phase === "answering" && view.allowedActions.includes("SKIP_QUESTION") && <button type="button" disabled={busy} onClick={() => void send({ type: "SKIP_QUESTION" })} className="rounded-full border border-[var(--line)] table-surface px-5 py-3 text-sm font-bold table-muted hover:text-[var(--ink)]">Passer ({view.skipsRemaining})</button>}
               {view.phase === "answering" && view.allowedActions.includes("SUBMIT_CHOICE") && <button type="button" disabled={busy || selectedId === null} onClick={() => { if (selectedId) void send({ type: "SUBMIT_CHOICE", optionId: selectedId }); }} className="rounded-full px-6 py-3 font-bold text-white disabled:cursor-not-allowed disabled:opacity-40" data-primary="true">Valider</button>}
@@ -118,14 +120,14 @@ function ScoreCard({ label, submitted }: { label: string; submitted: boolean }) 
   return <div className="table-player rounded-2xl border border-[var(--line)] table-surface p-4"><p className="font-black">{label}</p><p className="mt-1 text-xs table-muted">{submitted ? "Choix confirmé" : "Choix en attente"}</p></div>;
 }
 
-function RevealChoice({ label, optionId, options }: { label: string; optionId: string | null; options: NonNullable<CompatibiliteView["question"]>["options"] }) {
+function RevealChoice({ label, optionId, options, highlight = false }: { label: string; optionId: string | null; options: NonNullable<CompatibiliteView["question"]>["options"]; highlight?: boolean }) {
   const option = options.find((item) => item.id === optionId);
-  return <div className={`rounded-2xl border p-4 ${optionId ? "table-border-accent table-tint" : "border-[var(--line)] table-surface"}`}><p className="text-xs font-black uppercase tracking-[0.12em] table-muted">{label}</p><p className="mt-2 font-black">{option?.label ?? "Pas de choix"}</p></div>;
+  return <div className={`rounded-2xl border p-4 ${optionId ? "table-border-accent table-tint" : "border-[var(--line)] table-surface"}`} style={highlight && optionId ? { boxShadow: "0 0 24px rgba(185,249,223,0.35)" } : undefined}><p className="text-xs font-black uppercase tracking-[0.12em] table-muted">{label}{highlight && optionId ? " · pareil !" : ""}</p><p className="mt-2 font-black">{option?.label ?? "Pas de choix"}</p></div>;
 }
 
 function ResultPanel({ result }: { result: NonNullable<CompatibiliteView["result"]> }) {
   const router = useRouter();
-  return <section className="mt-6 rounded-[2rem] border border-[var(--line)] table-panel p-6 sm:p-8"><p className="text-xs font-black uppercase tracking-[0.16em]" style={{ color: ACCENT }}>{result.outcome === "cooperative" ? "Résultat commun" : "Partie interrompue"}</p><h2 className="mt-3 text-4xl font-black tracking-[-0.05em]">{result.sharedScore === null ? "Progression enregistrée" : `${result.sharedScore} % en commun`}</h2><p className="mt-2 table-muted">{result.matches} choix en commun sur {result.compared} comparés{result.skipped ? ` · ${result.skipped} passé${result.skipped === 1 ? "" : "s"}` : ""}</p><MatchDetails label="Manches"><div className="mt-7 space-y-2">{result.rounds.map((round) => <RoundLine key={round.questionId} round={round} />)}</div></MatchDetails><button type="button" onClick={() => router.push("/jeux/compatibilite")} className="mt-7 rounded-full px-6 py-3 font-bold text-white" data-primary="true">Rejouer</button></section>;
+  return <section className="mt-6 rounded-[2rem] border border-[var(--line)] table-panel p-6 sm:p-8 motion-finish"><p className="text-xs font-black uppercase tracking-[0.16em]" style={{ color: ACCENT }}>{result.outcome === "cooperative" ? "Résultat commun" : "Partie interrompue"}</p><h2 className="mt-3 text-4xl font-black tracking-[-0.05em]">{result.sharedScore === null ? "Progression enregistrée" : `${result.sharedScore} % en commun`}</h2><p className="mt-2 table-muted">{result.matches} choix en commun sur {result.compared} comparés{result.skipped ? ` · ${result.skipped} passé${result.skipped === 1 ? "" : "s"}` : ""}</p><MatchDetails label="Manches"><div className="mt-7 space-y-2">{result.rounds.map((round) => <RoundLine key={round.questionId} round={round} />)}</div></MatchDetails><button type="button" onClick={() => router.push("/jeux/compatibilite")} className="mt-7 rounded-full px-6 py-3 font-bold text-white" data-primary="true">Rejouer</button></section>;
 }
 
 function RoundLine({ round }: { round: CompatibilityRound }) {
