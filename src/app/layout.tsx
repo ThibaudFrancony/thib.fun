@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Fredoka } from "next/font/google";
 import { ChatDock } from "@/components/chat/chat-dock";
 import { MobileTabBar } from "@/components/mobile-tab-bar";
@@ -18,6 +18,12 @@ const displayFont = Fredoka({
 export const metadata: Metadata = {
   title: "tibo.fun — jeux à deux",
   description: "Une table privée de jeux à deux, en français.",
+};
+
+export const viewport: Viewport = {
+  themeColor: "#100819",
+  colorScheme: "dark",
+  viewportFit: "cover",
 };
 
 // Pas de `force-dynamic` ici : il désactiverait le cache de route pour tout
