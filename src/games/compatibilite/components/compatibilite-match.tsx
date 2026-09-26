@@ -79,6 +79,9 @@ export function CompatibiliteMatch({ matchId }: { matchId: string }) {
       if (action.type === "NEXT" && current.phase === "reveal") {
         return { ...current, allowedActions: current.allowedActions.filter((allowed) => allowed !== "NEXT") };
       }
+      if (action.type === "SKIP_QUESTION" && current.phase === "answering") {
+        return { ...current, question: null, allowedActions: [], skipsRemaining: Math.max(0, current.skipsRemaining - 1) };
+      }
       return null;
     });
     if (next) setSelected(null);
@@ -104,7 +107,7 @@ export function CompatibiliteMatch({ matchId }: { matchId: string }) {
         </div>
         <p>{CATEGORY_LABELS[view.category]}</p></MatchToolbar>
         <div aria-live="polite" className="table-status" data-urgent={remaining !== null && remaining <= 3}>
-          <span>{phaseLabel(view, me.pseudo, opponent.pseudo)}</span>
+          <span>{view.phase === "answering" && view.question === null ? "Question suivante…" : phaseLabel(view, me.pseudo, opponent.pseudo)}</span>
           {remaining !== null && view.phase === "reveal" && <strong className={remaining <= 3 ? "text-[var(--yellow)]" : "text-white"}>{remaining}s</strong>}
         </div>
         {error && <p role="alert" className="mt-3 rounded-2xl table-error px-4 py-3 text-sm">{error}</p>}

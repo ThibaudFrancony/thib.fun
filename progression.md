@@ -71,6 +71,7 @@ Ce fichier décrit la réalité du dépôt et non les seules capacités prévues
 ### 26/09/2026 — Compatibilité : choix verrouillé sans attendre le serveur
 
 - Présent dans le code : sur `SUBMIT_CHOICE`, le choix propre est verrouillé et le statut local passe aussitôt à « en attente de l'autre » ; `NEXT` retire immédiatement le bouton déjà pressé. La vue anticipée est liée au match, à la version et à la phase du snapshot ; la projection serveur reprend la main dès son arrivée ou après refus. `SKIP_QUESTION` attend toujours la nouvelle question serveur, mais profite de la vue reçue avec le POST sans second aller-retour.
+- Complément : `SKIP_QUESTION` masque immédiatement l'ancienne question et affiche « Question suivante… » ; le contenu de remplacement vient du serveur.
 - Vérifications : tests ciblés (10/10), `pnpm test:matrix` (11 pass, 5 not-run), `pnpm typecheck`, `pnpm test` (90 fichiers, 561 réussis + 2 échecs attendus), `pnpm content:validate`, `pnpm docs:check`, lint ciblé et build Next webpack verts. Lint global : les deux erreurs préexistantes de chat et `use-is-narrow` restent présentes.
 - Limites : pas de recette réelle à deux sessions, pas de Docker (opt-in). Aucun score, choix adverse ou question n'est anticipé.
 - Contradiction : aucune avec `AGENTS.md`.
