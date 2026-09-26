@@ -27,6 +27,7 @@ export function BombpartyMatch({ matchId }: { matchId: string }) {
   const router = useRouter();
   const [word, setWord] = useState("");
   const [lexicon, setLexicon] = useState<ReadonlySet<string> | null>(null);
+  const [lexiconUnavailable, setLexiconUnavailable] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
   const [predicted, setPredicted] = useState<{ version: number; phaseId: string; word: string } | null>(null);
   const [now, setNow] = useState(() => Date.now());
@@ -67,9 +68,11 @@ export function BombpartyMatch({ matchId }: { matchId: string }) {
       .then((data: { words?: unknown } | null) => {
         if (!controller.signal.aborted && Array.isArray(data?.words) && data.words.every((item) => typeof item === "string")) {
           setLexicon(new Set(data.words));
+        } else if (!controller.signal.aborted) {
+          setLexiconUnavailable(true);
         }
       })
-      .catch(() => undefined);
+      .catch(() => { if (!controller.signal.aborted) setLexiconUnavailable(true); });
     return () => controller.abort();
   }, [matchId]);
 
@@ -90,6 +93,9 @@ export function BombpartyMatch({ matchId }: { matchId: string }) {
     players: serverView.players.map((player, seat) => ({ ...player, active: seat !== serverView.mySeat })) as BombpartyView["players"],
   } satisfies BombpartyView : serverView;
   const isMyTurn = view !== null && view.phase === "playing" && view.activePlayerId !== null && view.players[view.mySeat].id === view.activePlayerId;
+  const localVerdict = view && lexicon && word.trim()
+    ? checkBombpartyWordLocally(word, view.sequence, lexicon, view.acceptedWords.map((item) => item.word))
+    : null;
   const turnKey = view ? `${view.turn}:${view.sequence}:${view.activeSeat}` : null;
 
   useEffect(() => {
@@ -156,12 +162,11 @@ export function BombpartyMatch({ matchId }: { matchId: string }) {
                   const submitted = word;
                   if (submitted.trim().length === 0) return;
                   setLocalError(null);
-                  if (lexicon) {
-                    const verdict = checkBombpartyWordLocally(submitted, view.sequence, lexicon, view.acceptedWords.map((item) => item.word));
-                    if (verdict !== "valid") {
-                      setLocalError(localWordError(verdict));
-                      return;
-                    }
+                  if (localVerdict && localVerdict !== "valid") {
+                    setLocalError(localWordError(localVerdict));
+                    return;
+                  }
+                  if (localVerdict === "valid") {
                     setPredicted({ version: match.version, phaseId: match.phaseId, word: submitted.trim() });
                   }
                   void send({ type: "SUBMIT_WORD", word: submitted }, submitted);
@@ -184,7 +189,10 @@ export function BombpartyMatch({ matchId }: { matchId: string }) {
                   className="w-full rounded-2xl border-2 px-4 py-3 text-lg font-bold"
                   style={{ borderColor: ACCENT }}
                 />
-                <button type="submit" disabled={busy || word.trim().length === 0} className="mt-3 w-full rounded-full table-primary px-4 py-3 font-bold text-white  disabled:opacity-50">
+                <p aria-live="polite" className="mt-2 min-h-5 text-sm font-bold table-muted">
+                  {localVerdict === "valid" ? "Mot reconnu · prêt à envoyer" : localVerdict ? localWordError(localVerdict) : lexicon ? "Saisis un mot pour le vérifier" : lexiconUnavailable ? "Vérification par le serveur" : "Chargement du dictionnaire…"}
+                </p>
+                <button type="submit" disabled={busy || word.trim().length === 0 || (localVerdict !== null && localVerdict !== "valid")} className="mt-3 w-full rounded-full table-primary px-4 py-3 font-bold text-white  disabled:opacity-50">
                   {busy ? "Envoi…" : "Valider"}
                 </button>
               </form>
