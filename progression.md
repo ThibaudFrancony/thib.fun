@@ -17,6 +17,13 @@ Ce fichier décrit la réalité du dépôt et non les seules capacités prévues
 
 **Diagnostic du 13 septembre : le code des neuf jeux est présent, mais leur disponibilité fonctionnelle n'est pas acquise.** L'[audit complet](docs/audit-code-2026-09-13.md) et le [plan pas à pas](docs/plan-correction-2026-09-13.md) identifient 29 défauts de code/produit et 6 observations d'infrastructure : blocages du worker, abandon/forfait, présence, finalisation, réseau, sécurité et parcours incomplets. L'étape 1 est appliquée au harnais de tests ; le contrat commun de l'étape 2 est intégré à `main` (`d885079`), le raccordement SQL de l'étape 3 est versionné dans `6130c99` et sa validation PostgreSQL isolée ainsi que sa concurrence à deux sessions sont désormais démontrées localement. L'inspection Supabase du 16 septembre rapporte 33 migrations distantes, alignées avec les fichiers locaux, mais elle reste strictement en lecture seule. Quatre parties actives (trois TTMC et une Géographie), dix jobs échus en attente et deux joueurs engagés dans plusieurs parties doivent être préservés en production. Aucun secret, traitement de donnée, migration distante, écriture Vault, déploiement ou opération de reprise n'a été effectué dans la présente session. Les observations datées ci-dessous restent historiques ; l'audit et le préflight Étape 10 prévalent pour les limitations actuelles.
 
+### 26/09/2026 — Compatibilité : choix verrouillé sans attendre le serveur
+
+- Présent dans le code : sur `SUBMIT_CHOICE`, le choix propre est verrouillé et le statut local passe aussitôt à « en attente de l'autre » ; `NEXT` retire immédiatement le bouton déjà pressé. La vue anticipée est liée au match, à la version et à la phase du snapshot ; la projection serveur reprend la main dès son arrivée ou après refus. `SKIP_QUESTION` attend toujours la nouvelle question serveur, mais profite de la vue reçue avec le POST sans second aller-retour.
+- Vérifications : tests ciblés (10/10), `pnpm test:matrix` (11 pass, 5 not-run), `pnpm typecheck`, `pnpm test` (90 fichiers, 561 réussis + 2 échecs attendus), `pnpm content:validate`, `pnpm docs:check`, lint ciblé et build Next webpack verts. Lint global : les deux erreurs préexistantes de chat et `use-is-narrow` restent présentes.
+- Limites : pas de recette réelle à deux sessions, pas de Docker (opt-in). Aucun score, choix adverse ou question n'est anticipé.
+- Contradiction : aucune avec `AGENTS.md`.
+
 ### 26/09/2026 — Vue de commande affichée avant relecture du match
 
 - Constat confirmé : `server_commit_match` renvoie déjà la vue personnelle validée, mais `useResourceNetwork.send` attendait un GET du match avant de la montrer ; cette attente ajoute un aller-retour visible aux neuf jeux.

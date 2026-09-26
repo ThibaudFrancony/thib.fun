@@ -6,6 +6,7 @@ import { MotionConfetti } from "@/components/motion-confetti";
 import { useRouter } from "next/navigation";
 import type { CompatibiliteAction, CompatibiliteView, CompatibilityRound } from "@/games/compatibilite/types";
 import { parseMatchSnapshot, useResourceNetwork } from "@/lib/network-sync";
+import { useOptimisticMatch } from "@/lib/optimistic-match";
 
 type MatchResponse = {
   matchId: string;
@@ -57,6 +58,7 @@ export function CompatibiliteMatch({ matchId }: { matchId: string }) {
     }),
     onSnapshotApplied,
   });
+  const { view: optimisticView, send: sendVisual } = useOptimisticMatch<CompatibiliteView, CompatibiliteAction, MatchResponse>(match, networkSend);
 
   useEffect(() => {
     const clock = window.setInterval(() => setNow(Date.now()), 1000);
@@ -64,14 +66,28 @@ export function CompatibiliteMatch({ matchId }: { matchId: string }) {
   }, []);
 
   async function send(action: CompatibiliteAction) {
-    const next = await networkSend(action);
+    const next = await sendVisual(action, (current) => {
+      if (action.type === "SUBMIT_CHOICE" && current.phase === "answering" && !current.mySubmitted) {
+        return {
+          ...current,
+          myChoice: action.optionId,
+          mySubmitted: true,
+          players: current.players.map((player, seat) => seat === current.mySeat ? { ...player, submitted: true } : player) as CompatibiliteView["players"],
+          allowedActions: current.allowedActions.filter((allowed) => allowed !== "SUBMIT_CHOICE" && allowed !== "SKIP_QUESTION"),
+        };
+      }
+      if (action.type === "NEXT" && current.phase === "reveal") {
+        return { ...current, allowedActions: current.allowedActions.filter((allowed) => allowed !== "NEXT") };
+      }
+      return null;
+    });
     if (next) setSelected(null);
   }
 
   if (error && !match) return <main className="table-page table-compatibilite min-h-screen px-5 py-12"><div role="alert" className="mx-auto max-w-xl rounded-2xl table-error p-5">{error}</div></main>;
   if (!match) return <main className="table-page table-compatibilite min-h-screen px-5 py-12"><div className="mx-auto max-w-xl rounded-3xl border border-[var(--line)] table-surface p-8 text-center table-muted">Chargement de la partie…</div></main>;
 
-  const view = match.view;
+  const view = optimisticView ?? match.view;
   const me = view.players[view.mySeat];
   const opponent = view.players[(1 - view.mySeat) as 0 | 1];
   const remaining = match.deadlineAt ? Math.max(0, Math.ceil((Date.parse(match.deadlineAt) - (now + serverOffset)) / 1000)) : null;
