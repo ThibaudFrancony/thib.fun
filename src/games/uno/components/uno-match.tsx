@@ -9,6 +9,7 @@ import { cardLabel } from "@/games/uno/deck";
 import { UnoCard } from "@/games/uno/components/uno-card";
 import {
   predictDrawnView,
+  predictKeptDrawnView,
   predictPenaltyTakeView,
   predictPlayedView,
   type DrawnCardPrediction,
@@ -16,6 +17,7 @@ import {
   type PlayedCardPrediction,
 } from "@/games/uno/optimistic";
 import { parseMatchSnapshot, useResourceNetwork } from "@/lib/network-sync";
+import { useOptimisticMatch } from "@/lib/optimistic-match";
 
 type MatchResponse = { matchId: string; roomId: string; gameSlug: string; status: string; version: number; phaseId: string; deadlineAt: string | null; deadlineKind: string | null; serverNow: string; view: UnoView };
 export type PendingPlay = { type: "PLAY_CARD"; cardId: string } | { type: "PLAY_DRAWN" };
@@ -343,6 +345,12 @@ export function UnoMatch({ matchId }: { matchId: string }) {
     return networkSend(action);
   }
 
+  const { view: optimisticKeepView, send: sendVisual } = useOptimisticMatch<UnoView, UnoAction, MatchResponse>(match, networkSend);
+
+  function keepDrawn() {
+    void sendVisual({ type: "KEEP_DRAWN" }, predictKeptDrawnView);
+  }
+
   function refuse(cardId: string) {
     setShakeCardId(cardId);
     if (shakeTimerRef.current !== null) window.clearTimeout(shakeTimerRef.current);
@@ -406,7 +414,7 @@ export function UnoMatch({ matchId }: { matchId: string }) {
   // Vue affichée : la projection serveur, remplacée le temps de l'aller-retour
   // par la suite anticipée du coup (défausse, pioche préchargée ou prise de
   // pénalité). Les commandes, elles, gardent toujours la version serveur.
-  const serverView = match.view;
+  const serverView = optimisticKeepView ?? match.view;
   // La prise de pénalité reste affichée tant que le serveur n'a pas confirmé
   // que l'attente est vidée (fin de l'animation puis bascule au serveur).
   const takeResolved = pendingTake !== null
@@ -599,7 +607,7 @@ export function UnoMatch({ matchId }: { matchId: string }) {
                   <div className="uno-drawn-actions">
                     <p>{isMyTurn ? "Jouer ou garder ?" : "Son choix…"}</p>
                     {isMyTurn && (
-                      <button type="button" disabled={!view.actions.canKeepDrawn || busy} onClick={() => void send({ type: "KEEP_DRAWN" })}>
+                      <button type="button" disabled={!view.actions.canKeepDrawn || busy} onClick={keepDrawn}>
                         Garder
                       </button>
                     )}

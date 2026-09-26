@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { predictDrawnView, predictPenaltyTakeView, predictPlayedView } from "@/games/uno/optimistic";
+import { predictDrawnView, predictKeptDrawnView, predictPenaltyTakeView, predictPlayedView } from "@/games/uno/optimistic";
 import type { UnoCard, UnoView } from "@/games/uno/types";
 
 function viewFor(seat: 0 | 1, overrides: Partial<UnoView> = {}): UnoView {
@@ -33,6 +33,22 @@ function viewFor(seat: 0 | 1, overrides: Partial<UnoView> = {}): UnoView {
 }
 
 describe("vues optimistes UNO", () => {
+  it("passe immédiatement la main quand la carte piochée est gardée", () => {
+    const drawn = { id: "drawn", color: "red" as const, symbol: "7" as const };
+    const view = viewFor(0, {
+      phase: "after_draw",
+      hand: [...viewFor(0).hand, drawn],
+      drawnCard: drawn,
+      actions: { canDraw: false, canPlay: false, canPlayDrawn: true, canKeepDrawn: true, canResign: true },
+    });
+    const predicted = predictKeptDrawnView(view);
+    expect(predicted?.activeSeat).toBe(1);
+    expect(predicted?.players[1].active).toBe(true);
+    expect(predicted?.hand).toEqual(view.hand);
+    expect(predicted?.drawnCard).toBeNull();
+    expect(predicted?.actions.canKeepDrawn).toBe(false);
+    expect(predicted?.turns).toBe(view.turns + 1);
+  });
   it("passe la main à l'adversaire à la fin du vol d'une carte normale", () => {
     const view = viewFor(0, {
       hand: [

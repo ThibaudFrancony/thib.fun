@@ -106,6 +106,19 @@ export function predictDrawnView(view: UnoView, draw: DrawnCardPrediction): UnoV
   };
 }
 
+/** La carte piochée est déjà dans la main ; la garder passe simplement le tour. */
+export function predictKeptDrawnView(view: UnoView): UnoView | null {
+  if (view.phase !== "after_draw" || view.activeSeat !== view.mySeat || !view.actions.canKeepDrawn || !view.drawnCard) return null;
+  return withActiveSeat({
+    ...view,
+    phase: "playing",
+    drawnCard: null,
+    playableCardIds: [],
+    actions: idleActions(view),
+    turns: view.turns + 1,
+  }, otherSeat(view.mySeat));
+}
+
 /**
  * Vue pendant une prise de pénalité en bloc : toutes les cartes connues
  * occupent leur place finale dans la main (le composant masque celles encore
