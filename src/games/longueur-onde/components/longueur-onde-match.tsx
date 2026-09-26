@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import type { LongueurOndeAction, LongueurOndeResultView, LongueurOndeView } from "@/games/longueur-onde/types";
 import { dialArcPath, positionToDialPoint } from "@/games/longueur-onde/dial";
 import { parseMatchSnapshot, useResourceNetwork } from "@/lib/network-sync";
+import { useOptimisticMatch } from "@/lib/optimistic-match";
 
 type MatchResponse = {
   matchId: string;
@@ -33,7 +34,7 @@ export function LongueurOndeMatch({ matchId }: { matchId: string }) {
     busy,
     serverOffset,
     refresh,
-    send,
+    send: networkSend,
   } = useResourceNetwork<MatchResponse, LongueurOndeAction>({
     resourceId: matchId,
     snapshotUrl: `/api/matches/${matchId}`,
@@ -48,6 +49,24 @@ export function LongueurOndeMatch({ matchId }: { matchId: string }) {
       body: { commandId, expectedVersion, action },
     }),
   });
+  const { view: optimisticView, send: sendVisual } = useOptimisticMatch<LongueurOndeView, LongueurOndeAction, MatchResponse>(match, networkSend);
+
+  function send(action: LongueurOndeAction) {
+    return sendVisual(action, (current) => {
+      if (action.type === "SUBMIT_CLUE" && current.phase === "clue" && current.isClueGiver) {
+        const clue = action.clue.trim();
+        if (!clue || /[0-9\r\n]|https?:\/\//i.test(clue)) return null;
+        return { ...current, phase: "guessing", clue, allowedActions: current.allowedActions.filter((allowed) => allowed !== "SUBMIT_CLUE") };
+      }
+      if (action.type === "SUBMIT_GUESS" && current.phase === "guessing" && !current.isClueGiver) {
+        return { ...current, myGuess: action.position, allowedActions: current.allowedActions.filter((allowed) => allowed !== "SUBMIT_GUESS") };
+      }
+      if (action.type === "NEXT" && current.phase === "reveal") {
+        return { ...current, allowedActions: current.allowedActions.filter((allowed) => allowed !== "NEXT") };
+      }
+      return null;
+    });
+  }
 
   useEffect(() => {
     const clock = window.setInterval(() => setNow(Date.now()), 1000);
@@ -57,12 +76,12 @@ export function LongueurOndeMatch({ matchId }: { matchId: string }) {
   if (error && !match) return <main className="table-page table-longueur-onde min-h-screen px-5 py-12"><div role="alert" className="mx-auto max-w-xl rounded-2xl table-error p-5">{error}</div></main>;
   if (!match) return <main className="table-page table-longueur-onde min-h-screen px-5 py-12"><div className="mx-auto max-w-xl rounded-3xl border border-[var(--line)] table-surface p-8 text-center table-muted">Chargement de la partie…</div></main>;
 
-  const view = match.view;
+  const view = optimisticView ?? match.view;
   const me = view.players[view.mySeat];
   const opponent = view.players[(1 - view.mySeat) as 0 | 1];
   const draftClue = clueDraft.round === view.round ? clueDraft.value : "";
   const draftGuess = guessDraft.round === view.round ? guessDraft.value : 50;
-  const remaining = match.deadlineAt ? Math.max(0, Math.ceil((Date.parse(match.deadlineAt) - (now + serverOffset)) / 1000)) : null;
+  const remaining = view.phase === match.view.phase && match.deadlineAt ? Math.max(0, Math.ceil((Date.parse(match.deadlineAt) - (now + serverOffset)) / 1000)) : null;
   const displayGuess = view.myGuess ?? (view.phase === "guessing" && !view.isClueGiver ? draftGuess : null);
 
   return (
@@ -85,7 +104,8 @@ export function LongueurOndeMatch({ matchId }: { matchId: string }) {
           {view.phase === "clue" && view.isClueGiver && <div className="mt-5"><label htmlFor="longueur-onde-clue" className="text-sm font-bold">Ton indice</label><textarea id="longueur-onde-clue" value={draftClue} maxLength={120} onChange={(event) => setClueDraft({ round: view.round, value: event.target.value })} rows={2} placeholder="Un exemple concret, sans donner la position" className="mt-2 w-full resize-none rounded-2xl border border-[var(--line)] table-surface px-4 py-3 leading-6 outline-none focus:border-[var(--table-accent)] focus:ring-2 focus:ring-[var(--table-accent)]" /><div className="mt-2 flex items-center justify-between gap-3 text-xs table-muted"><span>{draftClue.length} / 120</span></div></div>}
           {view.phase === "clue" && !view.isClueGiver && <Waiting text={`Attends l'indice de ${opponent.pseudo}.`} />}
           {view.phase === "guessing" && view.isClueGiver && <Waiting text={`${opponent.pseudo} place l'aiguille. Ta cible reste privée.`} />}
-          {view.phase === "guessing" && !view.isClueGiver && <div className="mt-5"><label htmlFor="longueur-onde-position" className="text-sm font-bold">Place ton aiguille</label><input id="longueur-onde-position" type="range" min={0} max={100} step={1} value={displayGuess ?? 50} disabled={busy || view.myGuess !== null} onChange={(event) => setGuessDraft({ round: view.round, value: Number(event.target.value) })} className="mt-5 h-3 w-full cursor-pointer accent-[var(--table-accent)]" aria-valuetext={`${displayGuess ?? 50} sur 100`} /><div className="mt-2 flex justify-between text-xs font-bold table-muted"><span>{view.axis.leftLabel}</span><output htmlFor="longueur-onde-position" className="rounded-full table-tint px-3 py-1 table-accent">{displayGuess ?? 50}</output><span>{view.axis.rightLabel}</span></div></div>}
+          {view.phase === "guessing" && !view.isClueGiver && view.myGuess === null && <div className="mt-5"><label htmlFor="longueur-onde-position" className="text-sm font-bold">Place ton aiguille</label><input id="longueur-onde-position" type="range" min={0} max={100} step={1} value={displayGuess ?? 50} disabled={busy || view.myGuess !== null} onChange={(event) => setGuessDraft({ round: view.round, value: Number(event.target.value) })} className="mt-5 h-3 w-full cursor-pointer accent-[var(--table-accent)]" aria-valuetext={`${displayGuess ?? 50} sur 100`} /><div className="mt-2 flex justify-between text-xs font-bold table-muted"><span>{view.axis.leftLabel}</span><output htmlFor="longueur-onde-position" className="rounded-full table-tint px-3 py-1 table-accent">{displayGuess ?? 50}</output><span>{view.axis.rightLabel}</span></div></div>}
+          {view.phase === "guessing" && !view.isClueGiver && view.myGuess !== null && <Waiting text="Position envoyée · en attente de la révélation…" />}
           {view.phase === "reveal" && <div key={`lo-r-${view.round}`} className="mt-5 rounded-2xl table-tint p-4 text-center table-accent motion-reveal" style={{ position: "relative" }}>{view.lastPoints !== null && view.lastPoints >= 2 ? <MotionConfetti /> : null}<p className="text-sm font-bold">Cible {view.target} · aiguille {view.myGuess ?? "—"}</p><p className="mt-1 text-2xl font-black">{view.lastPoints} point{view.lastPoints === 1 ? "" : "s"}{view.lastError === null ? "" : ` · ${view.lastError} d'écart`}</p></div>}
           <div className="mt-6 flex flex-wrap items-center justify-end gap-3">{view.phase === "clue" && view.isClueGiver && <button type="button" disabled={busy || draftClue.trim().length === 0} onClick={() => void send({ type: "SUBMIT_CLUE", clue: draftClue })} className="rounded-full px-6 py-3 font-bold text-white disabled:cursor-not-allowed disabled:opacity-40" data-primary="true">Envoyer</button>}{view.phase === "guessing" && !view.isClueGiver && view.myGuess === null && <button type="button" disabled={busy} onClick={() => void send({ type: "SUBMIT_GUESS", position: displayGuess ?? 50 })} className="rounded-full px-6 py-3 font-bold text-white" data-primary="true">Valider</button>}{view.phase === "reveal" && view.allowedActions.includes("NEXT") && <button type="button" disabled={busy} onClick={() => void send({ type: "NEXT" })} className="rounded-full px-6 py-3 font-bold text-white" data-primary="true">Continuer</button>}</div>
         </section>}
