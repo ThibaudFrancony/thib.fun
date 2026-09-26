@@ -5,6 +5,7 @@ import { MatchToolbar } from "@/components/match-toolbar";
 import { useRouter } from "next/navigation";
 import type { SkyjoAction, SkyjoCellView, SkyjoView } from "@/games/skyjo/types";
 import { parseMatchSnapshot, useResourceNetwork } from "@/lib/network-sync";
+import { useOptimisticMatch } from "@/lib/optimistic-match";
 
 type MatchResponse = {
   matchId: string;
@@ -66,6 +67,7 @@ export function SkyjoMatch({ matchId }: { matchId: string }) {
     }),
     onSnapshotApplied,
   });
+  const { view: optimisticView, send: sendVisual } = useOptimisticMatch<SkyjoView, SkyjoAction, MatchResponse>(match, networkSend);
 
   useEffect(() => {
     const clockTimer = window.setInterval(() => setNow(Date.now()), 1000);
@@ -73,21 +75,40 @@ export function SkyjoMatch({ matchId }: { matchId: string }) {
   }, []);
 
   async function send(action: SkyjoAction): Promise<void> {
-    const next = await networkSend(action);
+    const next = await sendVisual(action, (current) => {
+      if (action.type === "REVEAL_INITIAL" && current.phase === "setup") {
+        return { ...current, allowedActions: current.allowedActions.filter((allowed) => allowed !== "REVEAL_INITIAL") };
+      }
+      if (action.type === "TAKE_DRAW" && current.phase === "choose_source") {
+        return { ...current, phase: "resolve_draw", held: { hidden: true }, drawCount: Math.max(0, current.drawCount - 1), allowedActions: [] };
+      }
+      if (action.type === "TAKE_DISCARD" && current.phase === "choose_source" && current.discardTop !== null) {
+        return { ...current, phase: "replace_discard", held: { source: "discard", value: current.discardTop }, discardTop: null, discardCount: Math.max(0, current.discardCount - 1), allowedActions: [] };
+      }
+      if ((action.type === "REPLACE" || action.type === "DISCARD_AND_REVEAL") && (current.phase === "replace_discard" || current.phase === "resolve_draw")) {
+        const nextSeat = (1 - current.mySeat) as 0 | 1;
+        return { ...current, phase: "choose_source", activeSeat: nextSeat, activePlayerId: current.players[nextSeat].id, held: null, allowedActions: [], players: current.players.map((player, seat) => ({ ...player, active: seat === nextSeat })) as SkyjoView["players"] };
+      }
+      if (action.type === "NEXT" && current.phase === "round_reveal") {
+        return { ...current, acknowledged: true, allowedActions: current.allowedActions.filter((allowed) => allowed !== "NEXT") };
+      }
+      return null;
+    });
     if (next) {
       setSelected([]);
       setTargetSlot(null);
     }
   }
 
-  const remaining = match?.deadlineAt ? Math.max(0, Math.ceil((Date.parse(match.deadlineAt) - (now + serverOffset)) / 1000)) : null;
+  const remaining = match?.deadlineAt && (!optimisticView || optimisticView.phase === match.view.phase)
+    ? Math.max(0, Math.ceil((Date.parse(match.deadlineAt) - (now + serverOffset)) / 1000)) : null;
   if (error && !match) {
     return <main className="table-page table-skyjo min-h-screen px-5 py-12"><div role="alert" className="mx-auto max-w-xl rounded-2xl table-error p-5">{error}</div></main>;
   }
   if (!match) {
     return <main className="table-page table-skyjo min-h-screen px-5 py-12"><div className="mx-auto max-w-xl rounded-3xl border border-[var(--line)] table-surface p-8 text-center table-muted">Chargement de la partie…</div></main>;
   }
-  const view = match.view;
+  const view = optimisticView ?? match.view;
   const isMyTurn = view.activePlayerId !== null && view.players[view.mySeat].id !== null && view.activeSeat === view.mySeat && view.phase !== "finished" && view.phase !== "round_reveal";
   const me = view.players[view.mySeat];
   const opponent = view.players[(1 - view.mySeat) as 0 | 1];
@@ -133,7 +154,7 @@ export function SkyjoMatch({ matchId }: { matchId: string }) {
               }}
               picked={view.phase === "setup" ? selected : targetSlot === null ? [] : [targetSlot]}
               target={targetSlot}
-              disabled={busy || (!view.allowedActions.includes("REVEAL_INITIAL") && view.phase === "setup") || (view.phase !== "setup" && view.phase !== "resolve_draw" && view.phase !== "replace_discard") || (view.phase !== "setup" && !isMyTurn)}
+              disabled={(busy && view.phase === match.view.phase) || (!view.allowedActions.includes("REVEAL_INITIAL") && view.phase === "setup") || (view.phase !== "setup" && view.phase !== "resolve_draw" && view.phase !== "replace_discard") || (view.phase !== "setup" && !isMyTurn)}
             />
           </div>
         </section>}
@@ -296,15 +317,15 @@ function HeldPanel({ view, busy, targetSlot, onReplace, onReveal }: {
   const style = heldValue === null ? null : valueStyle(heldValue);
   return (
     <section className="mx-auto mt-5 max-w-xl rounded-3xl border-2 table-border-accent table-tint p-5 text-center">
-      <p className="text-xs font-black uppercase tracking-[0.16em] table-accent">Carte en main · {heldValue}</p>
+      <p className="text-xs font-black uppercase tracking-[0.16em] table-accent">Carte en main · {heldValue ?? "?"}</p>
       {style && <div className="mx-auto mt-3 grid h-24 w-16 place-items-center rounded-xl text-3xl font-black" style={{ backgroundColor: style.background, color: style.color }}>{heldValue}</div>}
 
       <div className="mt-4 flex flex-wrap justify-center gap-2">
-        <button type="button" disabled={targetSlot === null || busy} onClick={onReplace} className="rounded-full table-primary px-4 py-3 text-sm font-bold text-white">
+        <button type="button" disabled={targetSlot === null || heldValue === null || busy} onClick={onReplace} className="rounded-full table-primary px-4 py-3 text-sm font-bold text-white">
           Remplacer
         </button>
         {view.phase === "resolve_draw" && (
-          <button type="button" disabled={!canReveal || busy} onClick={onReveal} className="rounded-full border table-border-accent table-surface px-4 py-3 text-sm font-bold table-accent">
+          <button type="button" disabled={!canReveal || heldValue === null || busy} onClick={onReveal} className="rounded-full border table-border-accent table-surface px-4 py-3 text-sm font-bold table-accent">
             Révéler
           </button>
         )}
