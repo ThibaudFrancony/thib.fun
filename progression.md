@@ -17,6 +17,15 @@ Ce fichier décrit la réalité du dépôt et non les seules capacités prévues
 
 **Diagnostic du 13 septembre : le code des neuf jeux est présent, mais leur disponibilité fonctionnelle n'est pas acquise.** L'[audit complet](docs/audit-code-2026-09-13.md) et le [plan pas à pas](docs/plan-correction-2026-09-13.md) identifient 29 défauts de code/produit et 6 observations d'infrastructure : blocages du worker, abandon/forfait, présence, finalisation, réseau, sécurité et parcours incomplets. L'étape 1 est appliquée au harnais de tests ; le contrat commun de l'étape 2 est intégré à `main` (`d885079`), le raccordement SQL de l'étape 3 est versionné dans `6130c99` et sa validation PostgreSQL isolée ainsi que sa concurrence à deux sessions sont désormais démontrées localement. L'inspection Supabase du 16 septembre rapporte 33 migrations distantes, alignées avec les fichiers locaux, mais elle reste strictement en lecture seule. Quatre parties actives (trois TTMC et une Géographie), dix jobs échus en attente et deux joueurs engagés dans plusieurs parties doivent être préservés en production. Aucun secret, traitement de donnée, migration distante, écriture Vault, déploiement ou opération de reprise n'a été effectué dans la présente session. Les observations datées ci-dessous restent historiques ; l'audit et le préflight Étape 10 prévalent pour les limitations actuelles.
 
+### 26/09/2026 — Vue de commande affichée avant relecture du match
+
+- Constat confirmé : `server_commit_match` renvoie déjà la vue personnelle validée, mais `useResourceNetwork.send` attendait un GET du match avant de la montrer ; cette attente ajoute un aller-retour visible aux neuf jeux.
+- Présent dans le code : le transport affiche temporairement la vue retournée par le reçu SQL à la version committée, sans considérer l'ancienne échéance comme actuelle ; le GET reste obligatoire pour récupérer le nouveau phaseId, le statut et l'heure officielle. La version canonique reste celle du GET et pilote Realtime, les commandes suivantes et le polling, y compris quand la vue committée est finale. Aucun changement d'API, de moteur ou de schéma.
+- Vérifié : test ciblé de la fusion vue committée/snapshot (7/7), `pnpm test:matrix` (11 pass, 5 not-run), `pnpm typecheck`, `pnpm test` (89 fichiers, 560 réussis + 2 échecs attendus), `pnpm content:validate`, `pnpm docs:check`, lint ciblé du transport et build Next webpack. Le lint global retrouve seulement les deux erreurs préexistantes déjà consignées dans l'entrée BombParty.
+- Limites : la réponse du POST reste soumise à la latence réseau ; les anticipations avant cette réponse sont traitées dans chaque jeu. Recette réelle à deux sessions non effectuée ; Docker opt-in non lancé.
+- Difficulté : le premier typecheck a signalé `Property 'view' does not exist on type 'TSnapshot'` après l'introduction du rendu générique ; accès au champ borné par un contrôle de type, puis typecheck vert.
+- Contradiction : aucune avec `AGENTS.md` ; la vue provient du commit serveur.
+
 ### 26/09/2026 — BombParty : contrôle lexical instantané pendant la partie
 
 - Demande : précharger le lexique dans le navigateur et afficher immédiatement si un mot est recevable, avec passage de main visuel avant confirmation serveur.
@@ -521,6 +530,10 @@ Ce fichier décrit la réalité du dépôt et non les seules capacités prévues
 | Longueur d'onde | `longueur-onde` | 🟢 | Pack local original généré et validé : 80 axes opposés, 30 quotidien/25 culture/25 absurde, labels bornés, exemples de tutoriel hors partie, manifest et migration/RPC versionnés. Moteur pur versionné (`longueur-onde-1`/`longueur-onde-engine-1`), indice borné et filtré, cible secrète, estimation tactile, révélation, score coopératif, projection sans fuite, résultat/historique sans victoire-défaite, API/worker durable, UI violette sobre, page `/jeux/longueur-onde`, registre `ready`, 16 tests dédiés. Étape 5 corrige la jointure `match_id`, les triggers coopératifs et le cumul des métriques ; les migrations initiale `20260911210000_longueur_onde_ready.sql` et corrective `20260911233839_longueur_onde_cooperative_result_triggers.sql` restent immuables et appliquées à distance. | L'historique distant contient les 33 migrations locales jusqu'à l'additive Étape 8, mais aucune recette de production ou à deux sessions n'est validée ; préserver les engagements avant toute reprise. |
 
 ## Difficultés rencontrées pendant le développement
+
+### 26/09/2026 — Type générique de la vue confirmée
+
+- Le premier `pnpm typecheck` du changement réseau a échoué sur `network-sync.ts:477` : le type générique `TSnapshot` ne garantit pas un champ `view`. L'affichage anticipé est désormais conditionné à la présence contrôlée de ce champ ; le typecheck suivant, le test ciblé et le lint ciblé passent.
 
 ### 26/09/2026 — Patch BombParty et lint global préexistant
 

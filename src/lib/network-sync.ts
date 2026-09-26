@@ -29,6 +29,30 @@ export type PendingNetworkCommand = {
 
 export type NetworkStatus = UserRealtimeStatus | "ONLINE" | "RECONNECTING";
 
+export type CommittedView = {
+  resourceId: string;
+  baseVersion: number;
+  committedVersion: number;
+  view: Record<string, unknown>;
+};
+
+/** Show the committed actor view while a fresh GET supplies phase metadata. */
+export function withCommittedView<TSnapshot extends VersionedSnapshot>(
+  canonical: TSnapshot | null,
+  resourceId: string,
+  committed: CommittedView | null,
+): TSnapshot | null {
+  if (
+    !canonical
+    || !committed
+    || committed.resourceId !== resourceId
+    || canonical.version < committed.baseVersion
+    || canonical.version >= committed.committedVersion
+    || !isRecord((canonical as VersionedSnapshot & { view?: unknown }).view)
+  ) return canonical;
+  return { ...canonical, version: committed.committedVersion, view: committed.view, deadlineAt: null } as TSnapshot;
+}
+
 export type SnapshotRefreshOptions = {
   force?: boolean;
   minimumVersion?: number;
@@ -222,6 +246,7 @@ export function useResourceNetwork<TSnapshot extends VersionedSnapshot, TAction>
   const busyRef = useRef(false);
 
   const [snapshotState, setSnapshotState] = useState<TSnapshot | null>(null);
+  const [committedViewState, setCommittedViewState] = useState<CommittedView | null>(null);
   const [pendingState, setPendingState] = useState<PendingNetworkCommand | null>(null);
   const [errorState, setErrorState] = useState<{ resourceId: string; message: string } | null>(null);
   const [busyState, setBusyState] = useState({ resourceId: initialOptions.resourceId, value: false });
@@ -463,6 +488,16 @@ export function useResourceNetwork<TSnapshot extends VersionedSnapshot, TAction>
           }
           options.onCommandAccepted?.(data, action);
           const committedVersion = responseVersion(data);
+          if (
+            committedVersion !== null
+            && committedVersion > base.version
+            && isRecord(data.view)
+            && isRecord((base as VersionedSnapshot & { view?: unknown }).view)
+          ) {
+            // The database receipt already contains the actor's committed
+            // projection. Render it while GET catches up with phase/deadline.
+            setCommittedViewState({ resourceId, baseVersion: base.version, committedVersion, view: data.view });
+          }
           setPending(null);
           const next = await refresh({ force: true, minimumVersion: committedVersion ?? undefined });
           if (!next && generation === generationRef.current) {
@@ -503,11 +538,14 @@ export function useResourceNetwork<TSnapshot extends VersionedSnapshot, TAction>
     }
   }, [currentResource, refresh, setError, setPending]);
 
-  const currentSnapshot = snapshotState && initialOptions.getResourceId(snapshotState) === initialOptions.resourceId
+  const canonicalSnapshot = snapshotState && initialOptions.getResourceId(snapshotState) === initialOptions.resourceId
     ? snapshotState
     : null;
+  const currentSnapshot = withCommittedView(canonicalSnapshot, initialOptions.resourceId, committedViewState);
   const busy = busyState.resourceId === initialOptions.resourceId && busyState.value;
-  const finished = currentSnapshot ? initialOptions.isFinished(currentSnapshot) : false;
+  // Transport lifecycle follows the canonical snapshot, never the temporary
+  // response projection: a failed follow-up GET must not disable polling.
+  const finished = canonicalSnapshot ? initialOptions.isFinished(canonicalSnapshot) : false;
   const error = errorState?.resourceId === initialOptions.resourceId ? errorState.message : null;
   const opponentLastSeenAt = opponentState.resourceId === initialOptions.resourceId ? opponentState.value : null;
   const serverOffset = serverOffsetState.resourceId === initialOptions.resourceId ? serverOffsetState.value : 0;

@@ -9,6 +9,7 @@ import {
   pendingCommandMatches,
   shouldApplySnapshot,
   shouldRefreshFromHeartbeat,
+  withCommittedView,
   type PendingNetworkCommand,
   type VersionedSnapshot,
 } from "@/lib/network-sync";
@@ -27,6 +28,16 @@ describe("synchronisation des vues versionnées", () => {
     expect(shouldApplySnapshot(snapshot(2), snapshot(1))).toBe(false);
     expect(shouldApplySnapshot(snapshot(2), snapshot(2))).toBe(false);
     expect(shouldApplySnapshot(snapshot(2), snapshot(3))).toBe(true);
+  });
+
+  it("affiche la vue reçue au commit avant le GET puis laisse gagner le snapshot confirmé", () => {
+    const base = { ...snapshot(4), phaseId: "old", deadlineAt: "2026-09-26T20:00:00Z" };
+    const committed = { resourceId: "match-a", baseVersion: 4, committedVersion: 5, view: { phase: "reveal" } };
+    expect(withCommittedView(base, "match-a", committed)).toEqual({ ...base, version: 5, view: { phase: "reveal" }, deadlineAt: null });
+    const confirmed = { ...base, version: 5, phaseId: "new", view: { phase: "reveal" } };
+    expect(withCommittedView(confirmed, "match-a", committed)).toBe(confirmed);
+    expect(withCommittedView(base, "match-b", committed)).toBe(base);
+    expect(withCommittedView({ ...base, version: 3 }, "match-a", committed)).toEqual({ ...base, version: 3 });
   });
 
   it("déduit la reprise HTTP d'un heartbeat plus récent sans confondre les deux versions", () => {
