@@ -79,7 +79,7 @@ Jeu de 150 exemples labellisés : 40 corrects exacts/alias, 40 fautes et paraphr
 ## 7. Autres corpus
 
 - Géographie : communes françaises métropolitaines + Corse, codes INSEE stables, coordonnées et population sourcées (référentiels publics à vérifier), limites cartographiques avec licence/provenance. Deux communes homonymes ont labels département explicites. Pas de géocodage externe en partie.
-- BombParty : lexique français versionné avec licence compatible, mots acceptés fixés à l'import. Les séquences de 2–3 lettres ne sont pas nécessairement des syllabes linguistiques. Index substring préparé, aucune suggestion inventée par LLM.
+- BombParty : lexique français versionné avec licence compatible, mots acceptés fixés à l'import. Les séquences de 2–3 lettres ne sont pas nécessairement des syllabes linguistiques. Index substring préparé, aucune suggestion inventée par LLM. Depuis le 26/09/2026, les participants peuvent charger les formes normalisées du pack de leur partie pour un retour local instantané ; ce lexique est donc consultable dans le navigateur, tandis que le serveur valide toujours le coup final.
 - Compatibilité : questions originales avec 2–4 options, catégories et niveau de sensibilité, pas de notation psychologique prétendue.
 - Longueur d'onde : axes opposés originaux avec ordre fixe gauche/droite. Aucun indice préfabriqué obligatoire, mais exemples tutoriels hors parties.
 

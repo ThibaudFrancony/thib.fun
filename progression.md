@@ -1,6 +1,6 @@
 # Progression du projet
 
-Dernière mise à jour : 25 septembre 2026
+Dernière mise à jour : 26 septembre 2026
 Branche de référence : `main`
 Référence du cycle de l'étape 3 : `6130c99` — `fix: wire transactional match commits`
 Référence du cycle de l'étape 4 : `9968878` — `fix: restore worker dispatcher and quiz judgments`, poussé sur `origin/main` et vérifié
@@ -16,6 +16,16 @@ Ce fichier décrit la réalité du dépôt et non les seules capacités prévues
 - ⚠️ dépendance ou décision externe non vérifiée.
 
 **Diagnostic du 13 septembre : le code des neuf jeux est présent, mais leur disponibilité fonctionnelle n'est pas acquise.** L'[audit complet](docs/audit-code-2026-09-13.md) et le [plan pas à pas](docs/plan-correction-2026-09-13.md) identifient 29 défauts de code/produit et 6 observations d'infrastructure : blocages du worker, abandon/forfait, présence, finalisation, réseau, sécurité et parcours incomplets. L'étape 1 est appliquée au harnais de tests ; le contrat commun de l'étape 2 est intégré à `main` (`d885079`), le raccordement SQL de l'étape 3 est versionné dans `6130c99` et sa validation PostgreSQL isolée ainsi que sa concurrence à deux sessions sont désormais démontrées localement. L'inspection Supabase du 16 septembre rapporte 33 migrations distantes, alignées avec les fichiers locaux, mais elle reste strictement en lecture seule. Quatre parties actives (trois TTMC et une Géographie), dix jobs échus en attente et deux joueurs engagés dans plusieurs parties doivent être préservés en production. Aucun secret, traitement de donnée, migration distante, écriture Vault, déploiement ou opération de reprise n'a été effectué dans la présente session. Les observations datées ci-dessous restent historiques ; l'audit et le préflight Étape 10 prévalent pour les limitations actuelles.
+
+### 26/09/2026 — BombParty : contrôle lexical instantané pendant la partie
+
+- Demande : précharger le lexique dans le navigateur et afficher immédiatement si un mot est recevable, avec passage de main visuel avant confirmation serveur.
+- Présent dans le code : route authentifiée et limitée aux participants `/api/matches/[matchId]/bombparty-lexicon`, contrôle du pack ID et de son checksum, envoi des 431 formes normalisées (fichier source 16 378 octets) ; vérification locale de la forme, de la séquence et des mots déjà joués ; passage de main provisoire et attente de la nouvelle syllabe dès qu'un mot passe ces contrôles. Aucun score, résultat, échéance ou syllabe n'est calculé dans le navigateur. Le serveur conserve la validation finale et un refus restaure sa projection.
+- Décision de périmètre : oui, le lexique était auparavant privé côté serveur. L'utilisateur a explicitement approuvé son exposition aux deux joueurs pour réduire le délai ressenti ; `AGENTS.md`, la fiche BombParty et les contrats de contenu/API sont alignés.
+- Validé localement : `pnpm test:matrix` (11 pass, 5 not-run), `pnpm typecheck`, `pnpm test` (89 fichiers, 559 réussis + 2 échecs attendus), `pnpm content:validate`, `pnpm docs:check`, lint ciblé des quatre fichiers TypeScript modifiés et `pnpm exec next build --webpack` (route lexique présente). Le lint global échoue sur deux erreurs de fichiers issus du pull préalable et non modifiés ici : `message-list.tsx:106` (ref pendant le rendu) et `use-is-narrow.ts:13` (setState synchrone dans un effet).
+- Limites : une partie déjà ouverte dont le pack ne correspond plus au pack chargé n'obtient pas de prévalidation locale et repasse par le serveur ; la décision d'échéance peut encore corriger un mot localement valide. Recette réelle à deux sessions et suites Docker non exécutées (Docker opt-in).
+- Difficultés rencontrées : une première application de patch a échoué parce que le sélecteur de la ligne d'erreur UI ne correspondait pas au fichier actuel ; aucun fichier de ce patch n'a été appliqué et l'édition a été reprise par petites modifications vérifiées. Le lint global échoue pour les deux défauts préexistants décrits ci-dessus ; le périmètre BombParty passe son lint ciblé.
+- Prochaine étape utile : vérifier en deux sessions sous réseau ralenti, puis poursuivre les huit autres jeux.
 
 ### 25/09/2026 — Push incrémentaux par modification indépendante
 
@@ -511,6 +521,11 @@ Ce fichier décrit la réalité du dépôt et non les seules capacités prévues
 | Longueur d'onde | `longueur-onde` | 🟢 | Pack local original généré et validé : 80 axes opposés, 30 quotidien/25 culture/25 absurde, labels bornés, exemples de tutoriel hors partie, manifest et migration/RPC versionnés. Moteur pur versionné (`longueur-onde-1`/`longueur-onde-engine-1`), indice borné et filtré, cible secrète, estimation tactile, révélation, score coopératif, projection sans fuite, résultat/historique sans victoire-défaite, API/worker durable, UI violette sobre, page `/jeux/longueur-onde`, registre `ready`, 16 tests dédiés. Étape 5 corrige la jointure `match_id`, les triggers coopératifs et le cumul des métriques ; les migrations initiale `20260911210000_longueur_onde_ready.sql` et corrective `20260911233839_longueur_onde_cooperative_result_triggers.sql` restent immuables et appliquées à distance. | L'historique distant contient les 33 migrations locales jusqu'à l'additive Étape 8, mais aucune recette de production ou à deux sessions n'est validée ; préserver les engagements avant toute reprise. |
 
 ## Difficultés rencontrées pendant le développement
+
+### 26/09/2026 — Patch BombParty et lint global préexistant
+
+- Échec confirmé : le premier patch multi-fichiers n'a pas trouvé la ligne `role="alert"` dans le composant BombParty, car la classe réelle contient aussi `mx-auto max-w-md`. Aucun fichier de cette tentative n'a été appliqué ; reprise en deux patches exacts, typecheck et tests ciblés réussis.
+- Échec confirmé : `pnpm lint` global échoue après le pull sur `src/components/chat/message-list.tsx:106` (`react-hooks/refs`) et `src/lib/use-is-narrow.ts:13` (`react-hooks/set-state-in-effect`). Ces fichiers ne font pas partie de BombParty et étaient déjà présents dans `1c8a752`. Le lint ciblé des fichiers BombParty modifiés passe ; réparation des deux défauts à traiter séparément.
 
 ### 23/09/2026 — Démarrage de l’aperçu local pour captures desktop
 

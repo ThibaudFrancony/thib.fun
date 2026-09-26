@@ -41,6 +41,7 @@ type MatchCommand = {
 | POST `/rooms/:id/commands` | commandId, expectedVersion, type, payload | roomView |
 | POST `/rooms/:id/heartbeat` | matchId? | serverTime + présence des membres |
 | GET `/matches/:id` | — | matchView personnelle et serverTime |
+| GET `/matches/:id/bombparty-lexicon` | — | participants BombParty uniquement : formes normalisées du pack de la partie pour validation locale instantanée ; lexique consultable par les deux joueurs (décision du 26/09/2026) |
 | POST `/matches/:id/commands` | MatchCommand | matchView personnelle ; 202 si correction en cours |
 | GET `/history` | cursor?, game?, outcome? | 20 entrées, nextCursor |
 | GET `/history/:matchId` | — | résultat + résumés révélés pour participant |
@@ -95,7 +96,7 @@ Le chat utilise un second canal privé `chat:<userId>`, abonné dès le chargeme
 
 À l'ouverture d'une page : s'abonner, attendre SUBSCRIBED, puis charger snapshot ; ce séquencement évite un trou entre lecture et abonnement. À chaque invalidation version supérieure, recharger via GET. Fusionner les relectures concurrentes ; conserver le plus grand version, ignorer réponses hors ordre. À la reconnexion et au retour au premier plan : recharger systématiquement. Si un événement n'arrive jamais, le heartbeat toutes les 15 s permet de vérifier la version et relire. Le heartbeat retourne donc également `roomVersion` et `matchVersion` courantes ; cette précision complète sa ligne de route.
 
-Realtime peut manquer, répéter ou retarder un message ; aucune règle ne dépend d'un message unique. Après réponse POST, appliquer directement le snapshot si plus récent sans attendre Broadcast. Afficher sélection/hover optimistes localement, jamais score ou carte piochée inventés.
+Realtime peut manquer, répéter ou retarder un message ; aucune règle ne dépend d'un message unique. Après réponse POST, appliquer directement le snapshot si plus récent sans attendre Broadcast. Afficher les actions localement avant réponse serveur quand leurs conséquences visibles sont déterministes, puis réconcilier avec le snapshot ou revenir en arrière sur refus. Ne jamais inventer score, carte piochée ou information cachée. BombParty peut vérifier un mot avec le lexique préchargé et afficher un passage de main provisoire ; l'échéance et la syllabe suivante restent serveur.
 
 ## 5. Temps et absence
 

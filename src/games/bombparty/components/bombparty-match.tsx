@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import type { BombpartyAction, BombpartyView } from "@/games/bombparty/types";
 import { parseMatchSnapshot, useResourceNetwork } from "@/lib/network-sync";
 import { splitAroundSequence } from "@/games/bombparty/highlight";
+import { checkBombpartyWordLocally, type LocalWordVerdict } from "@/games/bombparty/local-check";
 
 type MatchResponse = {
   matchId: string;
@@ -25,6 +26,9 @@ const ACCENT = "var(--table-accent)";
 export function BombpartyMatch({ matchId }: { matchId: string }) {
   const router = useRouter();
   const [word, setWord] = useState("");
+  const [lexicon, setLexicon] = useState<ReadonlySet<string> | null>(null);
+  const [localError, setLocalError] = useState<string | null>(null);
+  const [predicted, setPredicted] = useState<{ version: number; phaseId: string; word: string } | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const inputRef = useRef<HTMLInputElement | null>(null);
   const lastTurnKey = useRef<string | null>(null);
@@ -56,14 +60,35 @@ export function BombpartyMatch({ matchId }: { matchId: string }) {
     return () => window.clearInterval(clockTimer);
   }, []);
 
+  useEffect(() => {
+    const controller = new AbortController();
+    void fetch(`/api/matches/${matchId}/bombparty-lexicon`, { cache: "no-store", signal: controller.signal })
+      .then(async (response) => response.ok ? response.json() : null)
+      .then((data: { words?: unknown } | null) => {
+        if (!controller.signal.aborted && Array.isArray(data?.words) && data.words.every((item) => typeof item === "string")) {
+          setLexicon(new Set(data.words));
+        }
+      })
+      .catch(() => undefined);
+    return () => controller.abort();
+  }, [matchId]);
+
   async function send(action: BombpartyAction, submittedWord?: string): Promise<void> {
     const next = await networkSend(action);
     if (next && submittedWord !== undefined) {
       setWord("");
     }
+    setPredicted(null);
   }
 
-  const view = match?.view ?? null;
+  const serverView = match?.view ?? null;
+  const prediction = predicted && match?.version === predicted.version && match.phaseId === predicted.phaseId ? predicted : null;
+  const view = serverView && prediction ? {
+    ...serverView,
+    activeSeat: (1 - serverView.mySeat) as 0 | 1,
+    activePlayerId: serverView.players[1 - serverView.mySeat].id,
+    players: serverView.players.map((player, seat) => ({ ...player, active: seat !== serverView.mySeat })) as BombpartyView["players"],
+  } satisfies BombpartyView : serverView;
   const isMyTurn = view !== null && view.phase === "playing" && view.activePlayerId !== null && view.players[view.mySeat].id === view.activePlayerId;
   const turnKey = view ? `${view.turn}:${view.sequence}:${view.activeSeat}` : null;
 
@@ -75,7 +100,7 @@ export function BombpartyMatch({ matchId }: { matchId: string }) {
     }
   }, [turnKey, isMyTurn]);
 
-  const remaining = match?.deadlineAt ? Math.max(0, Math.ceil((Date.parse(match.deadlineAt) - (now + serverOffset)) / 1000)) : null;
+  const remaining = !prediction && match?.deadlineAt ? Math.max(0, Math.ceil((Date.parse(match.deadlineAt) - (now + serverOffset)) / 1000)) : null;
 
   if (error && !match) {
     return <main className="table-page table-bombparty min-h-screen px-5 py-12"><div role="alert" className="mx-auto max-w-xl rounded-2xl table-error p-5">{error}</div></main>;
@@ -121,7 +146,7 @@ export function BombpartyMatch({ matchId }: { matchId: string }) {
 
         {view.phase === "playing" && <section aria-label="Séquence à jouer" className="mt-6 rounded-[2rem] border border-[var(--line)] table-panel p-6 text-center sm:p-8">
 
-          <p key={`bomb-seq-${view.sequence}`} aria-live="polite" className="table-bomb-sequence"><span className="motion-syllable">{view.sequence}</span></p>
+          <p key={`bomb-seq-${view.sequence}`} aria-live="polite" className="table-bomb-sequence"><span className="motion-syllable">{prediction ? "…" : view.sequence}</span></p>
           {view.phase === "playing" && (
             isMyTurn ? (
               <form
@@ -130,6 +155,15 @@ export function BombpartyMatch({ matchId }: { matchId: string }) {
                   event.preventDefault();
                   const submitted = word;
                   if (submitted.trim().length === 0) return;
+                  setLocalError(null);
+                  if (lexicon) {
+                    const verdict = checkBombpartyWordLocally(submitted, view.sequence, lexicon, view.acceptedWords.map((item) => item.word));
+                    if (verdict !== "valid") {
+                      setLocalError(localWordError(verdict));
+                      return;
+                    }
+                    setPredicted({ version: match.version, phaseId: match.phaseId, word: submitted.trim() });
+                  }
                   void send({ type: "SUBMIT_WORD", word: submitted }, submitted);
                 }}
               >
@@ -139,7 +173,7 @@ export function BombpartyMatch({ matchId }: { matchId: string }) {
                   id="bombparty-word"
                   type="text"
                   value={word}
-                  onChange={(event) => setWord(event.target.value)}
+                  onChange={(event) => { setWord(event.target.value); setLocalError(null); }}
                   placeholder={`Un mot avec « ${view.sequence} »…`}
                   autoComplete="off"
                   autoCorrect="off"
@@ -155,10 +189,10 @@ export function BombpartyMatch({ matchId }: { matchId: string }) {
                 </button>
               </form>
             ) : (
-              <p className="mt-5 text-sm font-bold table-muted">{opponent.pseudo} cherche un mot…</p>
+              <p className="mt-5 text-sm font-bold table-muted">{prediction ? `« ${prediction.word} » accepté localement · nouvelle syllabe en préparation…` : `${opponent.pseudo} cherche un mot…`}</p>
             )
           )}
-          {error && <p role="alert" className="mx-auto mt-4 max-w-md rounded-xl table-error px-3 py-2 text-sm">{error}</p>}
+          {(localError || error) && <p role="alert" className="mx-auto mt-4 max-w-md rounded-xl table-error px-3 py-2 text-sm">{localError || error}</p>}
         </section>}
 
         {view.phase === "finished" && <FinishedPanel view={view} back={() => router.push("/jeux/bombparty")} />}
@@ -166,6 +200,15 @@ export function BombpartyMatch({ matchId }: { matchId: string }) {
       </div>
     </main>
   );
+}
+
+function localWordError(verdict: Exclude<LocalWordVerdict, "valid">): string {
+  switch (verdict) {
+    case "invalid": return "Écris un seul mot, sans tiret ni apostrophe.";
+    case "missing_sequence": return "Ce mot ne contient pas la syllabe demandée.";
+    case "unknown": return "Ce mot est absent du dictionnaire.";
+    case "used": return "Ce mot a déjà été utilisé dans cette partie.";
+  }
 }
 
 function phaseLabel(view: BombpartyView, isMyTurn: boolean, opponentPseudo: string): string {

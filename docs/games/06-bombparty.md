@@ -16,7 +16,7 @@ Pack immutable manifest avec source/licence/checksum et règles de normalisation
 
 Importer lexique revu/licencié, cible >= 50000 formes acceptées pour jouabilité, mais publier un niveau seulement après couverture effective. Générer index `sequence -> sorted wordIds[]` pour tous substrings contigus de longueur 2/3. Catégories par nombre total de mots : easy >=200, normal 50..199, hard 10..49. Pour choisir une séquence en partie, exiger au moins 5 mots **encore inutilisés**, et éviter les 5 dernières séquences si possible. Si aucun candidat ne reste dans difficulté, élargir au pool easy/normal/hard avec >=5, puis >=1 ; si rien reste, fin draw `dictionary_exhausted`.
 
-Pas de recherche linéaire sur tout le dictionnaire à chaque validation. Set normalisé pour membership + index préparé pour séquences. Cache serveur immuable par checksum, chargé depuis pack privé ou artefact serveur ; fichier jamais intégré accidentellement dans bundle du jeu compétitif. État match ne stocke que packId/checksum, séquence et mots utilisés, pas le lexique complet.
+Pas de recherche linéaire sur tout le dictionnaire à chaque validation. Set normalisé pour membership + index préparé pour séquences. Cache serveur immuable par checksum, chargé depuis pack privé ou artefact serveur ; fichier jamais intégré accidentellement dans le bundle statique du jeu compétitif. Depuis la décision du 26/09/2026, la route authentifiée `/api/matches/:id/bombparty-lexicon` transmet aux deux participants les formes normalisées du pack courant pour la validation locale instantanée. Le lexique devient donc consultable par ces joueurs ; l'index de sélection des séquences reste côté serveur. État match ne stocke que packId/checksum, séquence et mots utilisés, pas le lexique complet.
 
 ## 3. Temps réel et arbitrage
 
@@ -39,7 +39,7 @@ type State = {
 };
 ```
 
-Vue contient séquence, vies, actif, chrono, derniers 10 mots acceptés, compteur total ; historique déroulable des mots acceptés autorisé. Pas de liste de suggestions ou de mots possibles en compétition. `SUBMIT_WORD {word:string}` seulement actif ; `RESIGN`/`CLAIM_FORFEIT` communs. Pas de commande client « explode » ni « addLife ». Un numéro de tour est identifié par phaseId.
+Vue contient séquence, vies, actif, chrono, derniers 10 mots acceptés, compteur total ; historique déroulable des mots acceptés autorisé. Pas de liste de suggestions ou de mots possibles dans l'interface compétitive, même si le lexique est transmis aux participants pour la vérification locale. `SUBMIT_WORD {word:string}` seulement actif ; `RESIGN`/`CLAIM_FORFEIT` communs. Pas de commande client « explode » ni « addLife ». Un numéro de tour est identifié par phaseId.
 
 Score individuel = mots valides, mais outcome décidé par vies/fin ci-dessus. Metrics `{validWords,timeouts,livesRemaining,longestWordLength,meanAcceptedResponseMs}` ; conserver sumResponseMs/count pour moyenne. Réponse mesurée début tour -> heure de commit. Round_results : un enregistrement par tour clos avec sequence/word? /actor/outcome/responseMs/livesAfter. Stats par difficulté/rulesVersion pour records ; entraînement exclu des duels.
 
