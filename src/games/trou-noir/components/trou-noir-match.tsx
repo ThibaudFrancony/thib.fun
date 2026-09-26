@@ -5,6 +5,7 @@ import { MatchToolbar, MatchDetails } from "@/components/match-toolbar";
 import { useRouter } from "next/navigation";
 import type { TrouNoirAction, TrouNoirView } from "@/games/trou-noir/types";
 import { parseMatchSnapshot, useResourceNetwork } from "@/lib/network-sync";
+import { useOptimisticMatch } from "@/lib/optimistic-match";
 
 type MatchResponse = {
   matchId: string;
@@ -42,7 +43,7 @@ export function TrouNoirMatch({ matchId }: { matchId: string }) {
     busy,
     serverOffset,
     refresh,
-    send,
+    send: networkSend,
   } = useResourceNetwork<MatchResponse, TrouNoirAction>({
     resourceId: matchId,
     snapshotUrl: `/api/matches/${matchId}`,
@@ -58,16 +59,32 @@ export function TrouNoirMatch({ matchId }: { matchId: string }) {
     }),
     onSnapshotApplied,
   });
+  const { view: optimisticView, send: sendVisual } = useOptimisticMatch<TrouNoirView, TrouNoirAction, MatchResponse>(match, networkSend);
+
+  function send(action: TrouNoirAction) {
+    return sendVisual(action, (current) => {
+      if (action.type === "SUBMIT_ANSWER" && current.phase === "answering" && current.question?.addresseeIsMe) {
+        return { ...current, phase: "judging", judging: { submitted: true, mine: true }, allowedActions: current.allowedActions.filter((allowed) => allowed !== "SUBMIT_ANSWER") };
+      }
+      if (action.type === "CONTEST" && current.phase === "reveal" && current.reveal) {
+        return { ...current, reveal: { ...current.reveal, contestable: false }, allowedActions: current.allowedActions.filter((allowed) => allowed !== "CONTEST") };
+      }
+      if ((action.type === "NEXT" || action.type === "RESOLVE_CONTEST") && current.phase === "reveal") {
+        return { ...current, allowedActions: current.allowedActions.filter((allowed) => allowed !== action.type) };
+      }
+      return null;
+    });
+  }
 
   useEffect(() => {
     const clockTimer = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(clockTimer);
   }, []);
 
-  const remaining = match?.deadlineAt
+  const remaining = optimisticView?.phase === match?.view.phase && match?.deadlineAt
     ? Math.max(0, Math.ceil((Date.parse(match.deadlineAt) - (now + serverOffset)) / 1000))
     : null;
-  const expired = match?.deadlineAt ? Date.parse(match.deadlineAt) - (now + serverOffset) <= 0 : false;
+  const expired = optimisticView?.phase === match?.view.phase && match?.deadlineAt ? Date.parse(match.deadlineAt) - (now + serverOffset) <= 0 : false;
 
   if (error && !match) {
     return (
@@ -83,7 +100,7 @@ export function TrouNoirMatch({ matchId }: { matchId: string }) {
       </main>
     );
   }
-  const view = match.view;
+  const view = optimisticView ?? match.view;
   const me = view.players[view.mySeat];
   const opponent = view.players[(1 - view.mySeat) as 0 | 1];
   const isMyTurn = view.phase === "answering" && view.question?.addresseeIsMe === true;
