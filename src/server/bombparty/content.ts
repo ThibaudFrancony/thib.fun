@@ -8,10 +8,10 @@ import { normalizeBombpartyWord } from "@/games/bombparty/normalize";
 import type { BombpartyContent, BombpartyWordEntry } from "@/games/bombparty/types";
 import { createAdminClient } from "@/server/supabase/admin";
 
-const EXPECTED_PACK_ID = "bombparty-fr-seed-2026-09";
-const EXPECTED_LICENSE = "CC0-1.0";
+const EXPECTED_PACK_ID = "bombparty-fr-2026-09-26";
+const EXPECTED_LICENSE = "MPL-2.0 AND CC-BY-SA-4.0 AND GFDL";
 // Pack strictement partagé : toute dérive du fichier doit échouer au chargement.
-const EXPECTED_CHECKSUM = "a6b74cd6950107f917b7d206b8601d80f15876fe6139fe30318e9514c22a0a39";
+const EXPECTED_CHECKSUM = "933cd7342ba35bdb70d25812e68bfb8bc9429badbe0709b51fe61c1fc1d82afb";
 
 const filePackSchema = z.object({
   packId: z.string(),
@@ -48,10 +48,9 @@ function buildIndex(entries: BombpartyWordEntry[]): Record<string, string[]> {
 }
 
 /**
- * Charge le pack lexical partagé et immuable depuis
- * content/bombparty/lexicon.json. Le fichier n'est jamais modifié ni élargi
- * ici : les formes sont validées par la normalisation stricte et dédupliquées
- * sur la forme normalisée (deux variantes = un seul mot utilisé).
+ * Charge le pack lexical partagé depuis content/bombparty/lexicon.json.
+ * Le chargeur ne fabrique aucun mot : il valide la normalisation stricte
+ * et déduplique sur la forme normalisée (deux variantes = un seul mot utilisé).
  */
 export async function loadBombpartyContent(): Promise<BombpartyContent> {
   if (cached) return cached;

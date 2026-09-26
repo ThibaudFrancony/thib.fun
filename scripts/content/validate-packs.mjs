@@ -69,10 +69,10 @@ assertPack(longueurOndeManifest, longueurOnde, { kind: "spectrums", slug: "longu
 
 const bombpartyBytes = await readFile(resolve(ROOT, "content/bombparty/lexicon.json"));
 const bombparty = JSON.parse(bombpartyBytes.toString("utf8"));
-assert(bombparty.packId === "bombparty-fr-seed-2026-09", "Pack BombParty: packId inattendu");
-assert(bombparty.license === "CC0-1.0", "Pack BombParty: licence inattendue");
-assert(Array.isArray(bombparty.words) && bombparty.words.length === 431, "Pack BombParty: quantité incohérente");
-assert(checksumBytes(bombpartyBytes) === "a6b74cd6950107f917b7d206b8601d80f15876fe6139fe30318e9514c22a0a39", "Pack BombParty: checksum incohérent");
+assert(bombparty.packId === "bombparty-fr-2026-09-26", "Pack BombParty: packId inattendu");
+assert(bombparty.license === "MPL-2.0 AND CC-BY-SA-4.0 AND GFDL", "Pack BombParty: licence inattendue");
+assert(Array.isArray(bombparty.words) && bombparty.words.length === 514607, "Pack BombParty: quantité incohérente");
+assert(checksumBytes(bombpartyBytes) === "933cd7342ba35bdb70d25812e68bfb8bc9429badbe0709b51fe61c1fc1d82afb", "Pack BombParty: checksum incohérent");
 
-console.log("Packs valides en lecture seule : Géographie 380 villes/96 départements ; Trou Noir 120 questions ; TTMC 440 questions/22 thèmes ; Compatibilité 160 questions ; Longueur d'onde 80 axes ; BombParty 431 formes.");
+console.log("Packs valides en lecture seule : Géographie 380 villes/96 départements ; Trou Noir 120 questions ; TTMC 440 questions/22 thèmes ; Compatibilité 160 questions ; Longueur d'onde 80 axes ; BombParty 514607 formes.");
 console.log("Seuils réels : Trou Noir 120/300 questions et 24/60 par catégorie (launchReady=false) ; TTMC 22/30 thèmes, configurations 20/15 et 30/20 disponibles, 50/30 refusée.");

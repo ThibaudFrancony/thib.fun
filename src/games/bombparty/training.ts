@@ -39,11 +39,37 @@ export type TrainingCandidate = {
   length: number;
 };
 
+const trainingWordsById = new WeakMap<BombpartyContent, Map<string, BombpartyContent["words"][number]>>();
+const trainingNormalized = new WeakMap<BombpartyContent, Set<string>>();
+
+function trainingWordById(content: BombpartyContent): Map<string, BombpartyContent["words"][number]> {
+  const cached = trainingWordsById.get(content);
+  if (cached) return cached;
+  const map = new Map<string, BombpartyContent["words"][number]>();
+  for (const entry of content.words) map.set(entry.id, entry);
+  trainingWordsById.set(content, map);
+  return map;
+}
+
+function trainingNormalizedSet(content: BombpartyContent): Set<string> {
+  const cached = trainingNormalized.get(content);
+  if (cached) return cached;
+  const set = new Set<string>();
+  for (const entry of content.words) set.add(entry.normalizedForm);
+  trainingNormalized.set(content, set);
+  return set;
+}
+
 /** Candidats contenant la séquence, triés longueur croissante puis ordre alphabétique. */
 export function trainingCandidatesFor(content: BombpartyContent, sequence: string): TrainingCandidate[] {
   const seen = new Set<string>();
   const candidates: TrainingCandidate[] = [];
-  for (const entry of content.words) {
+  const indexed = content.bySequence[sequence];
+  const entries = indexed && indexed.length > 0 ? indexed.flatMap((id) => {
+    const entry = trainingWordById(content).get(id);
+    return entry ? [entry] : [];
+  }) : content.words;
+  for (const entry of entries) {
     if (seen.has(entry.normalizedForm)) continue;
     seen.add(entry.normalizedForm);
     if (!entry.normalizedForm.includes(sequence)) continue;
@@ -92,7 +118,7 @@ export function checkTrainingWord(
   const normalized = normalizeBombpartyWord(rawWord);
   if (normalized === null) return { valid: false, reason: "INVALID" };
   if (!normalized.includes(sequence)) return { valid: false, reason: "MISSING_SEQUENCE" };
-  const known = content.words.some((entry) => entry.normalizedForm === normalized);
+  const known = trainingNormalizedSet(content).has(normalized);
   if (!known) return { valid: false, reason: "UNKNOWN" };
   if (usedNormalized.has(normalized)) return { valid: false, reason: "ALREADY_USED" };
   return { valid: true, normalized };

@@ -129,9 +129,43 @@ function unusedCount(wordIds: readonly string[], wordById: ReadonlyMap<string, s
   let count = 0;
   for (const id of wordIds) {
     const normalized = wordById.get(id);
-    if (normalized !== undefined && !used.has(normalized)) count += 1;
+    if (normalized !== undefined && !used.has(normalized)) {
+      count += 1;
+      // Les seuils de tirage sont 5 puis 1 : inutile de parcourir les centaines
+      // de milliers de formes d'une syllabe fréquente.
+      if (count >= 5) return count;
+    }
   }
   return count;
+}
+
+const wordIdsByContent = new WeakMap<BombpartyContent, Map<string, string>>();
+
+function wordIdsFor(content: BombpartyContent): Map<string, string> {
+  const cached = wordIdsByContent.get(content);
+  if (cached) return cached;
+  const map = new Map<string, string>();
+  for (const entry of content.words) map.set(entry.id, entry.normalizedForm);
+  wordIdsByContent.set(content, map);
+  return map;
+}
+
+/** Évite de revalider tout l'index à chaque coup : le chargeur l'a déjà fait. */
+function contentFromContext(value: unknown): BombpartyContent {
+  if (
+    typeof value === "object" &&
+    value !== null &&
+    "packId" in value &&
+    "packChecksum" in value &&
+    "words" in value &&
+    "bySequence" in value &&
+    Array.isArray((value as BombpartyContent).words) &&
+    typeof (value as BombpartyContent).bySequence === "object" &&
+    (value as BombpartyContent).bySequence !== null
+  ) {
+    return value as BombpartyContent;
+  }
+  return bombpartyContentSchema.parse(value);
 }
 
 /**
@@ -144,8 +178,7 @@ export function chooseBombpartySequence(
   content: BombpartyContent,
   options: { usedWords: ReadonlySet<string>; recentSequences: readonly string[]; difficulty: BombpartyDifficulty; entropyValue: number },
 ): string | null {
-  const wordById = new Map<string, string>();
-  for (const entry of content.words) wordById.set(entry.id, entry.normalizedForm);
+  const wordById = wordIdsFor(content);
   const sequences = Object.keys(content.bySequence).sort();
   const stats = sequences.map((sequence) => {
     const ids = content.bySequence[sequence] ?? [];
@@ -171,11 +204,16 @@ export function chooseBombpartySequence(
   return pick(avoidRecent(stats.filter((item) => item.unused >= 1)));
 }
 
+const wordsByNormalized = new WeakMap<BombpartyContent, Map<string, BombpartyContent["words"][number]>>();
+
 function wordByNormalized(content: BombpartyContent): Map<string, BombpartyContent["words"][number]> {
+  const cached = wordsByNormalized.get(content);
+  if (cached) return cached;
   const map = new Map<string, BombpartyContent["words"][number]>();
   for (const entry of content.words) {
     if (!map.has(entry.normalizedForm)) map.set(entry.normalizedForm, entry);
   }
+  wordsByNormalized.set(content, map);
   return map;
 }
 
@@ -252,7 +290,7 @@ function roundRecord(
 
 export function initializeBombparty(configInput: unknown, ctx: BombpartyEngineContext): BombpartyTransition {
   const config = bombpartyRuntimeConfigSchema.parse(configInput);
-  const content = bombpartyContentSchema.parse(ctx.content);
+  const content = contentFromContext(ctx.content);
   const firstSeat = config.firstSeat ?? ((entropyUnit(ctx.entropy, 0) < 0.5 ? 0 : 1) as Seat);
   const sequence = chooseBombpartySequence(content, {
     usedWords: new Set(),
@@ -299,7 +337,7 @@ export function reduceBombparty(
   const state = bombpartyStateSchema.parse(stateInput);
   const action = bombpartyActionSchema.parse(actionInput);
   const config = bombpartyConfigSchema.parse(configInput);
-  const content = bombpartyContentSchema.parse(ctx.content);
+  const content = contentFromContext(ctx.content);
   if (state.phase === "finished") throw new BombpartyRuleError("MATCH_FINISHED");
   const actorSeat = seatForActor(ctx);
 
@@ -461,7 +499,7 @@ export function onBombpartyDeadline(
 ): BombpartyTransition {
   const state = bombpartyStateSchema.parse(stateInput);
   const config = bombpartyConfigSchema.parse(configInput);
-  const content = bombpartyContentSchema.parse(ctx.content);
+  const content = contentFromContext(ctx.content);
   if (state.phase === "finished") throw new BombpartyRuleError("MATCH_FINISHED");
   if (state.phase !== "playing" || kind !== "turn_timeout") throw new BombpartyRuleError("STALE_DEADLINE");
 

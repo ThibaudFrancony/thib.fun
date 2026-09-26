@@ -26,7 +26,7 @@ Le suivi opérationnel détaillé et maintenu après chaque changement se trouve
 | Trou Noir | Implémenté | Moteur, projection, correction, UI, worker, pack/RPC et tests présents ; recette à deux sessions et benchmark IA à finaliser |
 | TTMC | Implémenté | Pack 22 thèmes/440 questions ; recette à deux sessions et benchmark IA à finaliser |
 | Bataille navale | Implémenté | Moteur, projection, API/worker, UI, migration distante vérifiée ; E2E à finaliser |
-| BombParty + entraînement | Implémenté | Pack inchangé ; E2E et mesure de latence à finaliser |
+| BombParty + entraînement | Implémenté | Pack `bombparty-fr-2026-09-26`, 514 607 formes (Grammalecte 7.7, Lexique 4, Wiktionnaire) ; E2E et mesure de latence à finaliser |
 | Skyjo | Implémenté | Moteur, projection, API/worker, UI ; E2E à finaliser |
 | UNO | Implémenté | Moteur, projection, API/worker ; UI refondue en DA spatiale le 19/09 (assets `public/uno/`, composant `UnoCard`) ; cumul +2/+4 entre eux sans mélange depuis les règles `uno-2` (19/09, attente/riposte/prise, victoire immédiate sur dernière carte de pénalité) ; fluidité du 19/09 : vues optimistes à l'atterrissage des vols, fenêtre de pioche de 8 cartes et prise de pénalité animée carte par carte (`nextDrawCards`/`nextDrawPlayable` au seul joueur actif, décision consignée) ; animations d'arrivée supprimées après les vols ; E2E fixtures 19/19 desktop et mobile |
 | Compatibilité | Implémenté | Moteur, contenu 160 questions, API/worker, UI ; E2E à finaliser |
