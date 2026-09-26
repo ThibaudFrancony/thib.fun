@@ -56,6 +56,7 @@ Ce fichier décrit la réalité du dépôt et non les seules capacités prévues
 ### 26/09/2026 — Géographie : placement immédiat et confirmation de sélection continue
 
 - Présent dans le code : `PLACE_CITY` fige immédiatement le point propre, marque le joueur comme ayant soumis et affiche l'attente de l'autre, sans révéler le point adverse ni créditer de points. Le point provisoire est restauré si le serveur refuse. Pendant l'enchaînement `SET_CITY_SELECTION` puis `CONFIRM_CITY_SELECTION`, la recherche et les boutons sont verrouillés et indiquent « Confirmation… » sans pause cliquable entre les deux appels.
+- Complément : « Continuer » après la révélation est verrouillé dès le clic et indique l'attente de l'adversaire ; la manche suivante reste déterminée par le serveur.
 - Vérifications : test moteur ciblé (15/15), `pnpm test:matrix` (11 pass, 5 not-run), `pnpm typecheck`, `pnpm test` (90 fichiers, 561 réussis + 2 échecs attendus), `pnpm content:validate`, `pnpm docs:check`, lint ciblé et build Next webpack verts. Le lint global retrouve uniquement les deux erreurs préexistantes du chat et de `use-is-narrow`.
 - Limites : pas de recette réelle à deux sessions ni Docker (opt-in). Les villes retenues et les distances restent serveur ; pas de changement de moteur, projection persistée ou schéma.
 - Contradiction : aucune avec `AGENTS.md`.

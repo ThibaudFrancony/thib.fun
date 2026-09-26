@@ -82,6 +82,9 @@ export function GeographyMatch({ matchId }: { matchId: string }) {
     const next = snapshot !== match
       ? await networkSend(action, snapshot)
       : await sendVisual(action, (current) => {
+          if (action.type === "NEXT" && current.phase === "reveal" && !current.acknowledged) {
+            return { ...current, acknowledged: true };
+          }
           if (action.type !== "PLACE_CITY" || current.phase !== "placing" || current.players[current.mySeat].submitted) return null;
           return {
             ...current,
@@ -181,7 +184,7 @@ function PlacingPanel({ view, canPlace, pendingPoint, busy, confirm }: { view: G
 }
 
 function RevealPanel({ view, avatars, busy, next }: { view: GeoView; avatars: Record<string, string>; busy: boolean; next: () => void }) {
-  return <div key={`geo-reveal-${view.round}`} className="geo-side-content motion-reveal"><p className="geo-kicker geo-kicker-warm">Révélation</p><h2 className="geo-panel-title">{view.lastRound?.target.name}</h2><p className="geo-target-department">{view.lastRound?.target.departmentName}</p><div className="geo-round-results">{view.players.map((player) => <div key={player.id} className="geo-round-result"><div className="geo-round-player"><Avatar name={player.pseudo} preset={player.avatarPreset ?? "avatar-1"} imageUrl={avatars[player.id] ?? null} size={28} /><div><span>{player.pseudo}</span><small>{view.lastRound?.placements[player.seat] ? `${view.lastRound.placements[player.seat]?.distanceKm.toFixed(1)} km` : "Temps écoulé · 0 point"}</small></div></div><strong>{view.lastRound?.placements[player.seat]?.points ?? 0} pts</strong></div>)}</div><button disabled={busy} onClick={next} className="geo-primary-button">{busy ? "Actualisation…" : "Continuer"}</button></div>;
+  return <div key={`geo-reveal-${view.round}`} className="geo-side-content motion-reveal"><p className="geo-kicker geo-kicker-warm">Révélation</p><h2 className="geo-panel-title">{view.lastRound?.target.name}</h2><p className="geo-target-department">{view.lastRound?.target.departmentName}</p><div className="geo-round-results">{view.players.map((player) => <div key={player.id} className="geo-round-result"><div className="geo-round-player"><Avatar name={player.pseudo} preset={player.avatarPreset ?? "avatar-1"} imageUrl={avatars[player.id] ?? null} size={28} /><div><span>{player.pseudo}</span><small>{view.lastRound?.placements[player.seat] ? `${view.lastRound.placements[player.seat]?.distanceKm.toFixed(1)} km` : "Temps écoulé · 0 point"}</small></div></div><strong>{view.lastRound?.placements[player.seat]?.points ?? 0} pts</strong></div>)}</div><button disabled={busy || view.acknowledged} onClick={next} className="geo-primary-button">{view.acknowledged ? "En attente de l’adversaire…" : "Continuer"}</button></div>;
 }
 
 function FinishedPanel({ view, back }: { view: GeoView; back: () => void }) {
