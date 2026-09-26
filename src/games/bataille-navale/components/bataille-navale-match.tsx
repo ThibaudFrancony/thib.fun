@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { NAVAL_SHIP_CATALOG } from "@/games/bataille-navale/config";
 import type { NavalAction, NavalShipView, NavalShotView, NavalView } from "@/games/bataille-navale/types";
 import { parseMatchSnapshot, useResourceNetwork } from "@/lib/network-sync";
+import { useOptimisticMatch } from "@/lib/optimistic-match";
 
 type MatchResponse = {
   matchId: string;
@@ -95,6 +96,7 @@ export function BatailleNavaleMatch({ matchId }: { matchId: string }) {
   const [tab, setTab] = useState<"shots" | "fleet">("shots");
   const [zoom, setZoom] = useState(false);
   const [now, setNow] = useState(() => Date.now());
+  const [pendingShot, setPendingShot] = useState<{ row: number; col: number; version: number; phaseId: string } | null>(null);
 
   const {
     snapshot: match,
@@ -102,7 +104,7 @@ export function BatailleNavaleMatch({ matchId }: { matchId: string }) {
     busy,
     serverOffset,
     refresh,
-    send,
+    send: networkSend,
   } = useResourceNetwork<MatchResponse, NavalAction>({
     resourceId: matchId,
     snapshotUrl: `/api/matches/${matchId}`,
@@ -117,14 +119,37 @@ export function BatailleNavaleMatch({ matchId }: { matchId: string }) {
       body: { commandId, expectedVersion, action },
     }),
   });
+  const { view: optimisticView, send: sendVisual } = useOptimisticMatch<NavalView, NavalAction, MatchResponse>(match, networkSend);
+
+  async function send(action: NavalAction): Promise<MatchResponse | null> {
+    if (action.type === "FIRE" && match) setPendingShot({ row: action.row, col: action.col, version: match.version, phaseId: match.phaseId });
+    const next = await sendVisual(action, (current) => {
+      if (action.type === "READY_FLEET" && current.phase === "setup" && !current.myReady) {
+        return { ...current, myReady: true, allowedActions: current.allowedActions.filter((allowed) => allowed !== "SET_FLEET" && allowed !== "RANDOMIZE_FLEET" && allowed !== "READY_FLEET") };
+      }
+      if (action.type === "FIRE" && current.phase === "playing" && current.activeSeat === current.mySeat) {
+        const nextSeat = (1 - current.mySeat) as 0 | 1;
+        return {
+          ...current,
+          activeSeat: nextSeat,
+          activePlayerId: current.players[nextSeat].id,
+          players: current.players.map((player, seat) => ({ ...player, active: seat === nextSeat })) as NavalView["players"],
+          allowedActions: current.allowedActions.filter((allowed) => allowed !== "FIRE"),
+        };
+      }
+      return null;
+    });
+    if (action.type === "FIRE") setPendingShot(null);
+    return next;
+  }
 
   useEffect(() => {
     const clockTimer = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(clockTimer);
   }, []);
 
-  const view = match?.view ?? null;
-  const remaining = match?.deadlineAt ? Math.max(0, Math.ceil((Date.parse(match.deadlineAt) - (now + serverOffset)) / 1000)) : null;
+  const view = optimisticView ?? match?.view ?? null;
+  const remaining = view?.activeSeat === match?.view.activeSeat && match?.deadlineAt ? Math.max(0, Math.ceil((Date.parse(match.deadlineAt) - (now + serverOffset)) / 1000)) : null;
 
   if (error && !match) {
     return <main className="naval-page table-page table-naval naval-shell--state"><div role="alert" className="naval-state-card">{error}</div></main>;
@@ -166,7 +191,7 @@ export function BatailleNavaleMatch({ matchId }: { matchId: string }) {
             <div key={`naval-tab-${tab}`} className="naval-game-layout motion-word-in">
               <section aria-label="Grille de tirs" className={`naval-panel naval-board-panel ${tab === "shots" ? "" : "hidden md:block"}`}>
                 <p className="naval-board-title">Tes tirs · <strong>{opponent.pseudo}</strong></p>
-                <FireGrid view={view} busy={busy} zoom={zoom} onFire={(row, col) => void send({ type: "FIRE", row, col })} />
+                <FireGrid view={view} busy={busy} zoom={zoom} pendingShot={pendingShot && pendingShot.version === match.version && pendingShot.phaseId === match.phaseId ? pendingShot : null} onFire={(row, col) => void send({ type: "FIRE", row, col })} />
               </section>
               <section aria-label="Ma flotte" className={`naval-panel naval-board-panel ${tab === "fleet" ? "" : "hidden md:block"}`}>
                 <p className="naval-board-title"><strong>Ta flotte</strong></p>
@@ -215,7 +240,7 @@ function shotState(shot: NavalShotView): "miss" | "hit" | "sunk" {
   return shot.result;
 }
 
-function FireGrid({ view, busy, zoom, onFire }: { view: NavalView; busy: boolean; zoom: boolean; onFire: (row: number, col: number) => void }) {
+function FireGrid({ view, busy, zoom, pendingShot, onFire }: { view: NavalView; busy: boolean; zoom: boolean; pendingShot: Cell | null; onFire: (row: number, col: number) => void }) {
   const [selected, setSelected] = useState<{ row: number; col: number } | null>(null);
   const [focus, setFocus] = useState({ row: 0, col: 0 });
   const [hoverCell, setHoverCell] = useState<Cell | null>(null);
@@ -242,6 +267,9 @@ function FireGrid({ view, busy, zoom, onFire }: { view: NavalView; busy: boolean
           const row = Math.floor(index / 10);
           const col = index % 10;
           const shot = shotMap.get(`${row}:${col}`);
+          if (!shot && pendingShot?.row === row && pendingShot.col === col) {
+            return <div key={index} role="gridcell" aria-label={`${cellLabel(row, col)}, tir envoyé, résultat en attente`} className="naval-cell" data-state="pending">◎</div>;
+          }
           const isSelected = selected?.row === row && selected?.col === col;
           const isMyLast = view.lastShot?.by === view.mySeat && view.lastShot.shot.row === row && view.lastShot.shot.col === col;
           if (shot) {

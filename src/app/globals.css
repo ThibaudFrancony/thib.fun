@@ -3821,6 +3821,8 @@ div.naval-cell[data-state="ship"] { border-color: #7ef0d455; background: linear-
 
 div.naval-cell[data-state="water"] { background: #0a2238cc; color: #5b7594; }
 
+div.naval-cell[data-state="pending"] { border-color: var(--naval-accent-strong); background: #7ef0d433; color: #eafff9; box-shadow: inset 0 0 0 1px var(--naval-accent-strong); }
+
 div.naval-cell[data-state="miss"] { background: #20344d; color: #9db4cf; animation: navalSplash 260ms ease both; }
 
 div.naval-cell[data-state="hit"] { border-color: #ffe49a99; background: #f4c95d; color: #5b3b00; animation: navalHitFlash 220ms ease both; }
