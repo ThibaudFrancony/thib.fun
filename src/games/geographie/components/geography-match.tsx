@@ -9,6 +9,7 @@ import type { GeoAction } from "@/games/geographie/types";
 import type { GeoPoint } from "@/games/geographie/scoring";
 import type { GeoView } from "@/games/geographie/types";
 import { parseMatchSnapshot, useResourceNetwork } from "@/lib/network-sync";
+import { useOptimisticMatch } from "@/lib/optimistic-match";
 import { useRoomAvatars } from "@/lib/room-avatars";
 
 type MatchResponse = { matchId: string; roomId: string; status: string; mode: string; version: number; phaseId: string; deadlineAt: string | null; deadlineKind: string | null; serverNow: string; view: GeoView };
@@ -20,6 +21,7 @@ export function GeographyMatch({ matchId }: { matchId: string }) {
   const [query, setQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Array<{ id: string; name: string; departmentName: string }>>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [confirmingSelection, setConfirmingSelection] = useState(false);
   const [cityLabels, setCityLabels] = useState<Record<string, { id: string; name: string; departmentName: string }>>({});
   const selectionDirtyRef = useRef(false);
 
@@ -57,6 +59,7 @@ export function GeographyMatch({ matchId }: { matchId: string }) {
     }),
     onSnapshotApplied,
   });
+  const { view: optimisticView, send: sendVisual } = useOptimisticMatch<GeoView, GeoAction, MatchResponse>(match, networkSend);
 
   const memberIds = match ? match.view.players.map((player) => player.id) : [];
   const avatars = useRoomAvatars(match?.roomId ?? null, memberIds);
@@ -74,22 +77,40 @@ export function GeographyMatch({ matchId }: { matchId: string }) {
   }, [match, query]);
 
   async function send(action: GeoAction, snapshot: MatchResponse | null = match): Promise<MatchResponse | null> {
-    const next = await networkSend(action, snapshot);
+    const placedPoint = action.type === "PLACE_CITY" ? { latitude: action.latitude, longitude: action.longitude } : null;
+    if (placedPoint) setPendingPoint(null);
+    const next = snapshot !== match
+      ? await networkSend(action, snapshot)
+      : await sendVisual(action, (current) => {
+          if (action.type !== "PLACE_CITY" || current.phase !== "placing" || current.players[current.mySeat].submitted) return null;
+          return {
+            ...current,
+            players: current.players.map((player, seat) => seat === current.mySeat
+              ? { ...player, submitted: true, active: false, placement: { latitude: action.latitude, longitude: action.longitude } }
+              : player) as GeoView["players"],
+          };
+        });
+    if (!next && placedPoint) setPendingPoint(placedPoint);
     if (next && action.type === "SET_CITY_SELECTION") selectionDirtyRef.current = false;
     return next;
   }
 
   async function confirmSelection() {
-    if (!match?.view.challenge || selectedIds.length !== match.view.challenge.required || busy) return;
-    const saved = await send({ type: "SET_CITY_SELECTION", cityIds: selectedIds });
-    if (!saved) return;
-    await send({ type: "CONFIRM_CITY_SELECTION" }, saved);
+    if (!match?.view.challenge || selectedIds.length !== match.view.challenge.required || busy || confirmingSelection) return;
+    setConfirmingSelection(true);
+    try {
+      const saved = await send({ type: "SET_CITY_SELECTION", cityIds: selectedIds });
+      if (!saved) return;
+      await send({ type: "CONFIRM_CITY_SELECTION" }, saved);
+    } finally {
+      setConfirmingSelection(false);
+    }
   }
 
   const remaining = match?.deadlineAt ? Math.max(0, Math.ceil((Date.parse(match.deadlineAt) - (now + serverOffset)) / 1000)) : null;
   if (error && !match) return <main className="geo-page geo-state-page"><div role="alert" className="geo-error geo-state-message">{error}</div></main>;
   if (!match) return <main className="geo-page geo-state-page"><div className="geo-panel geo-loading-panel">Chargement de la partie…</div></main>;
-  const view = match.view;
+  const view = optimisticView ?? match.view;
   const me = view.players[view.mySeat];
   // Placements simultanés : actif tant que le joueur n'a pas validé.
   const canPlace = view.phase === "placing" && !me.submitted;
@@ -115,7 +136,7 @@ export function GeographyMatch({ matchId }: { matchId: string }) {
         <div aria-live="polite" aria-atomic="true" className="geo-status-bar" data-urgent={remaining !== null && remaining <= 10}>
           <span>{phaseLabel(view, canPlace)}</span>{remaining !== null && <span className="geo-timer">{remaining}s</span>}
         </div>
-        {view.phase === "select_cities" && <ChallengeSelection view={view} query={query} setQuery={setQuery} results={searchResults} selectedIds={selectedIds} toggle={(id) => { selectionDirtyRef.current = true; setSelectedIds((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]); }} labels={cityLabels} onSave={() => void send({ type: "SET_CITY_SELECTION", cityIds: selectedIds })} onConfirm={() => void confirmSelection()} busy={busy} />}
+        {view.phase === "select_cities" && <ChallengeSelection view={view} query={query} setQuery={setQuery} results={searchResults} selectedIds={selectedIds} toggle={(id) => { selectionDirtyRef.current = true; setSelectedIds((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]); }} labels={cityLabels} onSave={() => void send({ type: "SET_CITY_SELECTION", cityIds: selectedIds })} onConfirm={() => void confirmSelection()} busy={busy || confirmingSelection} />}
         {(view.phase === "placing" || view.phase === "reveal") && (
           <div className="geo-game-layout">
             <div className="geo-map-column">
@@ -151,7 +172,7 @@ function ChallengeSelection({ view, query, setQuery, results, selectedIds, toggl
   const challenge = view.challenge;
   if (!challenge) return null;
   const selectedCities = selectedIds.map((id) => labels[id] ?? results.find((city) => city.id === id)).filter((city): city is { id: string; name: string; departmentName: string } => Boolean(city));
-  return <section className="geo-panel geo-challenge-panel"><div className="geo-panel-heading geo-challenge-heading"><div><p className="geo-kicker geo-kicker-accent">Mode défi</p><h2 className="geo-panel-title">Propose {challenge.required} ville{challenge.required > 1 ? "s" : ""}</h2></div><span className="geo-count-badge">{selectedIds.length} / {challenge.required}</span></div><input disabled={challenge.myConfirmed} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Rechercher une ville ou un département" className="geo-input" aria-label="Rechercher une ville" /><div className="geo-city-results">{results.map((city) => <button type="button" key={city.id} disabled={challenge.myConfirmed} onClick={() => toggle(city.id)} className="geo-city-option" data-selected={selectedIds.includes(city.id)}><span>{city.name}</span><small>{city.departmentName}</small></button>)}</div>{selectedCities.length > 0 && <div className="geo-selected-cities">{selectedCities.map((city) => <span key={city.id} className="geo-city-chip">{city.name} · {city.departmentName}</span>)}</div>}<div className="geo-form-actions"><button disabled={busy || challenge.myConfirmed || selectedIds.length !== challenge.required} onClick={onSave} className="geo-secondary-button">Enregistrer</button><button disabled={busy || challenge.myConfirmed || selectedIds.length !== challenge.required} onClick={onConfirm} className="geo-primary-button">Confirmer</button></div></section>;
+  return <section className="geo-panel geo-challenge-panel"><div className="geo-panel-heading geo-challenge-heading"><div><p className="geo-kicker geo-kicker-accent">Mode défi</p><h2 className="geo-panel-title">Propose {challenge.required} ville{challenge.required > 1 ? "s" : ""}</h2></div><span className="geo-count-badge">{selectedIds.length} / {challenge.required}</span></div><input disabled={busy || challenge.myConfirmed} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Rechercher une ville ou un département" className="geo-input" aria-label="Rechercher une ville" /><div className="geo-city-results">{results.map((city) => <button type="button" key={city.id} disabled={busy || challenge.myConfirmed} onClick={() => toggle(city.id)} className="geo-city-option" data-selected={selectedIds.includes(city.id)}><span>{city.name}</span><small>{city.departmentName}</small></button>)}</div>{selectedCities.length > 0 && <div className="geo-selected-cities">{selectedCities.map((city) => <span key={city.id} className="geo-city-chip">{city.name} · {city.departmentName}</span>)}</div>}<div className="geo-form-actions"><button disabled={busy || challenge.myConfirmed || selectedIds.length !== challenge.required} onClick={onSave} className="geo-secondary-button">Enregistrer</button><button disabled={busy || challenge.myConfirmed || selectedIds.length !== challenge.required} onClick={onConfirm} className="geo-primary-button">{busy ? "Confirmation…" : "Confirmer"}</button></div></section>;
 }
 
 function PlacingPanel({ view, canPlace, pendingPoint, busy, confirm }: { view: GeoView; canPlace: boolean; pendingPoint: GeoPoint | null; busy: boolean; confirm: () => void }) {
